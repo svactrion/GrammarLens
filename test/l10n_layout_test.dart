@@ -186,10 +186,10 @@ final _sites = <_Site>[
       expect(find.byKey(const ValueKey('planCard_Annual')), findsOneWidget);
       expect(find.byKey(const ValueKey('planCard_Monthly')), findsOneWidget);
       expect(find.byKey(PremiumScreen.compareKey), findsOneWidget);
-      // At 320 pt the table is the stacked layout (no strip header): its
-      // first row, in this language, is on screen.
+      // V13c (fix round 2): the board's table, its heading in this
+      // language.
       final l10n = tester.element(find.byType(PremiumScreen)).l10n;
-      expect(find.text(l10n.paywallRowDailyTest), findsWidgets);
+      expect(find.text(l10n.paywallCompareTitle), findsOneWidget);
     },
   ),
   _Site(

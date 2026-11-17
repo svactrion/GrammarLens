@@ -2597,34 +2597,6 @@
   "@paywallFailed": {
     "description": "After a purchase that could not start."
   },
-  "paywallRowDailyTest": "Daily Test, refreshed every day",
-  "@paywallRowDailyTest": {
-    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
-  },
-  "paywallRowTopicPractice": "Topic Practice, all {count} topics",
-  "@paywallRowTopicPractice": {
-    "description": "Paywall comparison row; {count} is the real number of topics. 'Topic Practice' is the feature name.",
-    "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "5"
-      }
-    }
-  },
-  "paywallRowWeakSpots": "Practice your weak spots",
-  "@paywallRowWeakSpots": {
-    "description": "Comparison table row."
-  },
-  "paywallRowLengths": "Sessions of {lengths} questions",
-  "@paywallRowLengths": {
-    "description": "Comparison table row; {lengths} joined with paywallListOr.",
-    "placeholders": {
-      "lengths": {
-        "type": "String",
-        "example": "3, 5 or 10"
-      }
-    }
-  },
   "paywallFreePerDay": "{count} a day",
   "@paywallFreePerDay": {
     "description": "The free column's weak-spot value, long form.",
@@ -2635,23 +2607,50 @@
       }
     }
   },
-  "paywallFreePerDayShort": "{count}/day",
-  "@paywallFreePerDayShort": {
-    "description": "The free column's weak-spot value when the long form does not fit.",
+  "paywallCompareTitle": "Free vs Premium",
+  "@paywallCompareTitle": {
+    "description": "V13c's heading above the Free/Premium table."
+  },
+  "paywallCompareAiPractice": "AI practice",
+  "@paywallCompareAiPractice": {
+    "description": "V13c row: AI-graded practice sessions per day."
+  },
+  "paywallCompareWeakSpots": "Weak-spot practice",
+  "@paywallCompareWeakSpots": {
+    "description": "V13c row: practice built from the user's weak spots."
+  },
+  "paywallCompareTopics": "All {count} topics",
+  "@paywallCompareTopics": {
+    "description": "V13c row: every grammar topic; count is the real number of topics.",
     "placeholders": {
       "count": {
-        "type": "int",
-        "example": "1"
+        "type": "int"
       }
     }
   },
-  "paywallHeaderFree": "FREE",
-  "@paywallHeaderFree": {
-    "description": "The comparison table's free column header (uppercase in English)."
+  "paywallCompareLength": "Session length",
+  "@paywallCompareLength": {
+    "description": "V13c row: questions per practice session."
   },
-  "paywallHeaderPremium": "PREMIUM",
-  "@paywallHeaderPremium": {
-    "description": "The comparison table's Premium column header (uppercase in English). 'Premium' is the brand: never translated."
+  "paywallCompareClimb": "Monthly Climb",
+  "@paywallCompareClimb": {
+    "description": "V13c row: the monthly mountain climb."
+  },
+  "paywallCompareNote": "Cancel anytime. Your climb, medals and weak spots stay if you go back to free.",
+  "@paywallCompareNote": {
+    "description": "V13c: the green note under the table."
+  },
+  "paywallCompareValue": "{tier}: {value}",
+  "@paywallCompareValue": {
+    "description": "Screen-reader text for one table cell, e.g. 'Free: 1 a day'.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
   },
   "paywallTierFree": "Free",
   "@paywallTierFree": {

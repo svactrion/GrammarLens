@@ -99,6 +99,12 @@ class PremiumScreen extends StatefulWidget {
   static const timelineKey = ValueKey('premium_trial_timeline');
   static const compareKey = ValueKey('premium_compare');
 
+  /// V13c (fix round 2): the one-piece Premium column, the companion beside
+  /// the heading, and the green note under the table.
+  static const premiumColumnKey = ValueKey('premium_compare_column');
+  static const compareCompanionKey = ValueKey('premium_compare_companion');
+  static const compareNoteKey = ValueKey('premium_compare_note');
+
   /// V13a / V13c: a plan's and a comparison row's entrance.
   static ValueKey<String> planRevealKey(int i) =>
       ValueKey('premium_plan_reveal_$i');
@@ -535,6 +541,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       child: _ComparisonTable(
                           theme: theme,
                           colorScheme: colorScheme,
+                          hero: _userAvatar,
                           reveal: _scroll),
                     ),
                     if (_trialDays(selectedTerms?.trial) case final days?) ...[
@@ -1565,20 +1572,6 @@ class _StatusMessage extends StatelessWidget {
   }
 }
 
-class _ComparisonRow {
-  final String label;
-  final bool free;
-  final String? freeLabel;
-  final bool premium;
-
-  const _ComparisonRow({
-    required this.label,
-    required this.free,
-    this.freeLabel,
-    required this.premium,
-  });
-}
-
 /// Row 4's question counts, joined the way a sentence would ("3, 5 or 10"
 /// — no Oxford comma) rather than a plain comma list, and read off
 /// [PracticeLength] so this can't drift from what session lengths the app
@@ -1589,58 +1582,330 @@ String _joinWithOr(List<String> items, AppLocalizations l10n) {
       items.sublist(0, items.length - 1).join(l10n.listSeparator), items.last);
 }
 
-/// Four rows (down from five): "Questions from your own mistakes" and
-/// "Targeted weak-spot practice" used to describe the same underlying
-/// capability twice, both showing free as "—" — which was also wrong.
-/// `launchPracticeSet` (practice_launch.dart) genuinely grants a free user
-/// [StorageService.freeDailyPracticeLimit] such sessions per day; merged
-/// into one row with that real value, read from the constant rather than
-/// retyped, so it can't drift from the actual quota again.
-///
-/// [weakSpotFreeLabel] is the only piece [_ComparisonTable] varies at
-/// build time — it picks between the full "N a day" phrasing and an
-/// abbreviated "N/day" once it's measured whether the full phrase fits
-/// the free-value column on one line at the current width (see that
-/// class's own doc comment on the overlap this replaced).
-List<_ComparisonRow> _buildComparisonRows(
-        String weakSpotFreeLabel, AppLocalizations l10n) =>
-    [
-      _ComparisonRow(
-        label: l10n.paywallRowDailyTest,
-        free: true,
-        premium: true,
+/// A value in V13c's Free or Premium column.
+sealed class _CompareValue {
+  const _CompareValue();
+}
+
+class _CompareText extends _CompareValue {
+  final String text;
+  const _CompareText(this.text);
+}
+
+class _CompareCheck extends _CompareValue {
+  const _CompareCheck();
+}
+
+class _CompareNone extends _CompareValue {
+  const _CompareNone();
+}
+
+/// One V13c row: an icon tile, a label, the Free and the Premium value.
+class _CompareRow {
+  final IconData icon;
+  final String label;
+  final _CompareValue free;
+  final _CompareValue premium;
+
+  const _CompareRow(this.icon, this.label, this.free, this.premium);
+}
+
+/// One Daily Test a day, free or Premium (the shared daily set).
+const _dailyTestsPerDay = 1;
+
+/// V13c's rows (fix round 2, item 3), each value read from the app's real
+/// rules so the table cannot drift from them: one Daily Test a day for
+/// everyone; AI practice [StorageService.freeDailyPracticeLimit] vs
+/// [StorageService.dailySessionLimit] a day; weak-spot practice in both;
+/// every topic ([practiceTopics]) in Premium only; a free session is
+/// always [PracticeLength.quick] (`practice_launch.dart`), Premium picks
+/// any [PracticeLength]; the Monthly Climb in both.
+List<_CompareRow> _compareRows(AppLocalizations l10n) {
+  String perDay(int n) => l10n.paywallFreePerDay(n);
+  return [
+    _CompareRow(
+        Icons.today_rounded,
+        l10n.featureDailyTest,
+        _CompareText(perDay(_dailyTestsPerDay)),
+        _CompareText(perDay(_dailyTestsPerDay))),
+    _CompareRow(
+        Icons.auto_awesome_rounded,
+        l10n.paywallCompareAiPractice,
+        _CompareText(perDay(StorageService.freeDailyPracticeLimit)),
+        _CompareText(perDay(StorageService.dailySessionLimit))),
+    _CompareRow(Icons.track_changes_rounded, l10n.paywallCompareWeakSpots,
+        const _CompareCheck(), const _CompareCheck()),
+    _CompareRow(
+        Icons.menu_book_rounded,
+        l10n.paywallCompareTopics(practiceTopics().length),
+        const _CompareNone(),
+        const _CompareCheck()),
+    _CompareRow(
+        Icons.timer_outlined,
+        l10n.paywallCompareLength,
+        _CompareText('${PracticeLength.quick.questionCount}'),
+        _CompareText(PracticeLength.values
+            .map((l) => '${l.questionCount}')
+            .join(' · '))),
+    _CompareRow(Icons.landscape_rounded, l10n.paywallCompareClimb,
+        const _CompareCheck(), const _CompareCheck()),
+  ];
+}
+
+/// V13c-PaywallCompare (fix round 2, item 3, the board's values): the
+/// heading "Free vs Premium" with the user's companion hopping at its end;
+/// a card whose Premium column is one piece from the header to the last row
+/// (2 px orange border, soft orange fill, a 4 px lip, a navy "Premium" pill
+/// on top); six rows of an icon tile and a label; Free checks are grey
+/// outlines, Premium checks filled green, "—" grey; then the green
+/// "Cancel anytime" note. The rows appear 40 ms apart the first time they
+/// scroll into view (a fade only).
+class _ComparisonTable extends StatelessWidget {
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final Avatar hero;
+
+  /// The page's scroll, for the rows' entrance.
+  final ScrollController? reveal;
+
+  const _ComparisonTable({
+    required this.theme,
+    required this.colorScheme,
+    required this.hero,
+    this.reveal,
+  });
+
+  /// The board's column widths (V13c: `minmax(0, 1fr) 76px 92px`).
+  static const double freeWidth = 76;
+  static const double premiumWidth = 92;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final rows = _compareRows(l10n);
+    final valueStyle = theme.textTheme.bodyMedium!
+        .withWeight(FontWeight.w900)
+        .copyWith(fontSize: 14, height: 1.2);
+
+    String spoken(String tier, _CompareValue v) => switch (v) {
+          _CompareText(:final text) => l10n.paywallCompareValue(tier, text),
+          _CompareCheck() => l10n.paywallIncludedIn(tier),
+          _CompareNone() => l10n.paywallNotIncludedIn(tier),
+        };
+
+    Widget value(_CompareValue v, {required bool premium}) => switch (v) {
+          _CompareText(:final text) => FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(text,
+                  maxLines: 1,
+                  style:
+                      valueStyle.copyWith(color: premium ? c.navy : c.muted)),
+            ),
+          _CompareCheck() => Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: premium ? c.green : null,
+                border: premium
+                    ? null
+                    : Border.all(color: c.disabledLabel, width: 2),
+              ),
+              child: Icon(Icons.check_rounded,
+                  size: 16, color: premium ? c.onNavy : c.disabledLabel),
+            ),
+          _CompareNone() => Container(
+              width: 26,
+              height: 26,
+              decoration:
+                  BoxDecoration(shape: BoxShape.circle, color: c.disabledFill),
+              child:
+                  Icon(Icons.remove_rounded, size: 16, color: c.disabledLabel),
+            ),
+        };
+
+    Widget row(int i) {
+      final r = rows[i];
+      return RevealOnScroll(
+        key: PremiumScreen.rowRevealKey(i),
+        scroll: reveal,
+        delay: _rowStagger * i,
+        child: Semantics(
+          key: ValueKey('comparisonRow_${r.label}'),
+          container: true,
+          label: [
+            r.label,
+            spoken(l10n.paywallTierFree, r.free),
+            spoken(l10n.featurePremium, r.premium),
+          ].join('. '),
+          excludeSemantics: true,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 54),
+            decoration: i == 0
+                ? null
+                : BoxDecoration(border: Border(top: BorderSide(color: c.line))),
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              Expanded(
+                child: Row(children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                        color: c.sky, borderRadius: BorderRadius.circular(10)),
+                    child: Icon(r.icon, size: 18, color: c.onSky),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(r.label,
+                        style: theme.textTheme.bodyMedium!
+                            .withWeight(FontWeight.w800)
+                            .copyWith(
+                                fontSize: 15, height: 1.2, color: c.text)),
+                  ),
+                ]),
+              ),
+              SizedBox(
+                  width: freeWidth,
+                  child: Center(child: value(r.free, premium: false))),
+              SizedBox(
+                  width: premiumWidth,
+                  child: Center(child: value(r.premium, premium: true))),
+            ]),
+          ),
+        ),
+      );
+    }
+
+    final card = Container(
+      key: const Key('comparisonTable'),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: c.line, width: 2),
+        boxShadow: [BoxShadow(color: c.lip, offset: const Offset(0, 4))],
       ),
-      _ComparisonRow(
-        label: l10n.paywallRowTopicPractice(practiceTopics().length),
-        free: false,
-        premium: true,
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 6),
+      child: Stack(clipBehavior: Clip.none, children: [
+        // The Premium column, one piece from the header to the last row.
+        PositionedDirectional(
+          end: 0,
+          top: -6,
+          bottom: 2,
+          width: premiumWidth,
+          child: DecoratedBox(
+            key: PremiumScreen.premiumColumnKey,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [c.cream, c.orangeSoft],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: c.orange, width: 2),
+              boxShadow: [
+                BoxShadow(color: c.orangeDeep, offset: const Offset(0, 4))
+              ],
+            ),
+          ),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ExcludeSemantics(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                const Spacer(),
+                SizedBox(
+                  width: freeWidth,
+                  child: Text(l10n.paywallTierFree,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium!
+                          .withWeight(FontWeight.w900)
+                          .copyWith(fontSize: 13, color: c.muted)),
+                ),
+                SizedBox(
+                  width: premiumWidth,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: c.navy,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(l10n.featurePremium,
+                            maxLines: 1,
+                            style: theme.textTheme.labelMedium!
+                                .withWeight(FontWeight.w800)
+                                .copyWith(fontSize: 12, color: c.onNavy)),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+          for (var i = 0; i < rows.length; i++) row(i),
+        ]),
+      ]),
+    );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: Text(l10n.paywallCompareTitle,
+                style: theme.textTheme.titleLarge!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(fontSize: 22, height: 1.4, color: c.text)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        CompanionView(
+            key: PremiumScreen.compareCompanionKey,
+            hero: hero,
+            mood: CompanionMood.cheer,
+            size: 60,
+            ambient: CompanionAmbient.hop,
+            decorative: true),
+      ]),
+      const SizedBox(height: 14),
+      card,
+      const SizedBox(height: 14),
+      Container(
+        key: PremiumScreen.compareNoteKey,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: c.greenSoft,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.verified_user_outlined, size: 18, color: c.onGreenSoft),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(l10n.paywallCompareNote,
+                style: theme.textTheme.bodySmall!
+                    .withWeight(FontWeight.w700)
+                    .copyWith(fontSize: 13, height: 1.4, color: c.onGreenSoft)),
+          ),
+        ]),
       ),
-      _ComparisonRow(
-        label: l10n.paywallRowWeakSpots,
-        free: false,
-        freeLabel: weakSpotFreeLabel,
-        premium: true,
-      ),
-      _ComparisonRow(
-        label: l10n.paywallRowLengths(_joinWithOr(
-            PracticeLength.values.map((l) => '${l.questionCount}').toList(),
-            l10n)),
-        free: false,
-        premium: true,
-      ),
-    ];
+    ]);
+  }
+}
+
+/// V13c: the table's rows appear this far apart.
+const _rowStagger = Duration(milliseconds: 40);
 
 /// Measures a single line of [text] in [style] at the context's current
-/// [TextScaler] — the shared primitive behind every fixed-but-Dynamic-
-/// Type-aware column width in [_ComparisonTable], so none of them drift
-/// out of sync with each other or need a `FittedBox(scaleDown)` safety
-/// net (the previous design's actual bug: a fixed-pixel column didn't fit
-/// its own header word at the *default* text scale, let alone a larger
-/// one).
-///
-/// Measured in the style the text is *drawn* in — [style] merged over the
-/// ambient [DefaultTextStyle], which carries the app font — not in the
-/// platform default font, which is narrower and shorter than Nunito Sans.
+/// [TextScaler], in the style it is drawn in ([style] merged over the
+/// ambient [DefaultTextStyle], which carries the app font).
 double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   final painter = TextPainter(
     text: TextSpan(
@@ -1653,634 +1918,6 @@ double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   return painter.width;
 }
 
-final TextStyle _freeValueStyle =
-    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
-
-/// The Free/Premium comparison table. The Premium column reads as one
-/// continuous, rounded, highlighted strip running from the header down to
-/// the last row — not per-cell coloring — built from each row independently
-/// painting its own [_PremiumStripCell] flush against its neighbors (zero
-/// gap, matching fill color, only the very first/last corners rounded) so
-/// adjacent cells visually fuse into one strip regardless of how tall any
-/// individual row happens to be (a wrapped label at large Dynamic Type
-/// grows only *that* row — see [_ComparisonRowLine]'s own doc comment).
-///
-/// Strip color is `colorScheme.secondaryContainer`/`onSecondaryContainer`
-/// in light mode — not `colorScheme.secondary`, which the previous
-/// per-cell-icon design used and which measures only 2.53:1 against
-/// `secondaryContainer` in dark mode (fails the 3:1 non-text minimum).
-/// Dark mode uses `colorScheme.surfaceContainerHighest` for the fill
-/// instead of `secondaryContainer` (visual-polish batch, same date as
-/// this comment): the saturated navy read as too dominant a block of
-/// color against the dark body, and `onSecondaryContainer` still holds
-/// 9.34:1 against this calmer neutral fill (measured, up from 7.13:1 —
-/// still comfortably clears both the 4.5:1 text and 3:1 icon minimums).
-/// Light mode is untouched — its 9.79:1 pairing was never the complaint.
-class _ComparisonTable extends StatelessWidget {
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  /// V13c: the page's scroll; the rows appear 40 ms apart the first time
-  /// they scroll into view (a fade only: the table's measured geometry
-  /// never moves).
-  final ScrollController? reveal;
-
-  const _ComparisonTable(
-      {required this.theme, required this.colorScheme, this.reveal});
-
-  /// The Premium column's width — enough for "PREMIUM" at the *current*
-  /// text scale, measured directly via [_measureTextWidth] rather than a
-  /// fixed constant, so this is correct at any Dynamic Type setting.
-  double _premiumColumnWidth(BuildContext context) {
-    final width = _measureTextWidth(
-        context, context.l10n.paywallHeaderPremium, _headerStyle);
-    // Horizontal padding inside the strip on each side, plus a floor so a
-    // single small checkmark icon never makes the strip look pinched.
-    return (width + 28).clamp(56, double.infinity);
-  }
-
-  /// Row heights are computed up front (measured, not `IntrinsicHeight`) —
-  /// `IntrinsicHeight` combined with an `Expanded` child is a known
-  /// unreliable pairing (Flutter asks a flex child for its "intrinsic"
-  /// height independent of the width it will actually be allocated, which
-  /// can under-measure badly): this surfaced as a real overflow at 2.0x
-  /// text scale during this batch's own testing, not a hypothetical
-  /// concern. A fixed, measured height per row type — enough for the
-  /// header's own single line, or two lines for a data row's label — is
-  /// simpler and doesn't have that failure mode; a label short enough to
-  /// need only one line just centers within the extra room.
-  double _measuredHeight(BuildContext context, TextStyle style, int maxLines) {
-    final painter = TextPainter(
-      text:
-          TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    return painter.height + 10; // 5 top + 5 bottom padding, both row types
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final rowDividerColor =
-            colorScheme.outlineVariant.withValues(alpha: 0.4);
-        final premiumWidth = _premiumColumnWidth(context);
-
-        // The free-value column ("FREE" header, checkmark/dash, and the
-        // weak-spot row's own quota text) used to share a flex factor with
-        // the row label in one Row — which split the row 50/50 regardless
-        // of how much either side actually needed, squeezed "1 a day" into
-        // a narrow sliver that wrapped to two lines, and let that second
-        // line silently paint outside the row's fixed height (a *vertical*
-        // RenderFlex overflow, which Flutter doesn't report the way it
-        // does a horizontal one — the exact reason ordinary overflow tests
-        // never caught this). Giving the free-value column its own
-        // measured, non-flexible width instead — sized to fit its own
-        // longest real content on one line — makes that vertical overflow
-        // structurally impossible: the label gets every remaining pixel
-        // to itself and wraps only within its own column, and the
-        // free-value column never needs more than one line because it was
-        // sized for exactly the text it holds.
-        const freeColumnHorizontalPadding = 24.0; // 12 each side
-        // Below this much room for the label column, a two-line wrapped
-        // label stops being legible — the threshold this table falls back
-        // to the shorter "N/day" phrasing at, rather than an untested
-        // guess: PRD copy review confirmed 96pt is the narrowest a label
-        // like "Practice your weak spots" reads comfortably at 2 lines,
-        // 13sp, on this table's own font.
-        const minLabelWidth = 96.0;
-        final freeHeaderWidth = _measureTextWidth(
-            context, context.l10n.paywallHeaderFree, _headerStyle);
-        // The checkmark icon (_ComparisonCell's `included` branch) is 20pt
-        // square — included as a width candidate so the column is never
-        // narrower than the icon itself even if every text candidate
-        // measures smaller (not the case today, but keeps this correct if
-        // the header/quota text ever gets shorter than that).
-        const checkmarkWidth = 20.0;
-        const limit = StorageService.freeDailyPracticeLimit;
-        final longFreeText = context.l10n.paywallFreePerDay(limit);
-        final shortFreeText = context.l10n.paywallFreePerDayShort(limit);
-        final longFreeWidth =
-            _measureTextWidth(context, longFreeText, _freeValueStyle);
-        final shortFreeWidth =
-            _measureTextWidth(context, shortFreeText, _freeValueStyle);
-
-        double columnWidthFor(double freeTextWidth) =>
-            [freeHeaderWidth, checkmarkWidth, freeTextWidth]
-                .reduce((a, b) => a > b ? a : b) +
-            freeColumnHorizontalPadding;
-
-        var freeText = longFreeText;
-        var freeColumnWidth = columnWidthFor(longFreeWidth);
-        var availableForLabel =
-            constraints.maxWidth - premiumWidth - freeColumnWidth;
-        if (availableForLabel < minLabelWidth) {
-          freeText = shortFreeText;
-          freeColumnWidth = columnWidthFor(shortFreeWidth);
-          availableForLabel =
-              constraints.maxWidth - premiumWidth - freeColumnWidth;
-        }
-
-        // The table only counts as fitting if every label reads in full in
-        // the two lines a row is sized for. A label that needs a third line
-        // would be cut off with an ellipsis, and a sales table must not clip
-        // what it sells. Measured exactly as drawn: same style, same text
-        // scale, and the label cell's width minus its own padding.
-        final labelStyle =
-            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
-        bool everyLabelFitsInTwoLines() {
-          final textWidth = availableForLabel - _labelCellHorizontalPadding;
-          if (textWidth <= 0) return false;
-          for (final row in _buildComparisonRows(freeText, context.l10n)) {
-            final painter = TextPainter(
-              text: TextSpan(
-                text: row.label,
-                style: DefaultTextStyle.of(context).style.merge(labelStyle),
-              ),
-              textDirection: Directionality.of(context),
-              textScaler: MediaQuery.textScalerOf(context),
-              maxLines: 2,
-            )..layout(maxWidth: textWidth);
-            if (painter.didExceedMaxLines) return false;
-          }
-          return true;
-        }
-
-        // Even the shortest phrasing leaves the label less than
-        // [minLabelWidth], or a label would be clipped: three columns no
-        // longer fit (a narrow screen or a large text size). Rather than
-        // squeeze, clip or scroll, stack each row: label on top at full
-        // width, its Free and Premium values on one line below. No content
-        // is dropped and nothing scrolls sideways.
-        if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
-          return _StackedComparison(
-            key: const Key('comparisonStacked'),
-            rows: _buildComparisonRows(longFreeText, context.l10n),
-            theme: theme,
-            colorScheme: colorScheme,
-          );
-        }
-
-        final rows = _buildComparisonRows(freeText, context.l10n);
-        final headerHeight = _measuredHeight(context, _headerStyle, 1);
-        final dataRowHeight = _measuredHeight(context, labelStyle, 2);
-
-        return Container(
-          key: const Key('comparisonTable'),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              _ComparisonHeaderRow(
-                colorScheme: colorScheme,
-                freeColumnWidth: freeColumnWidth,
-                premiumWidth: premiumWidth,
-                height: headerHeight,
-              ),
-              for (var i = 0; i < rows.length; i++)
-                RevealOnScroll(
-                  key: PremiumScreen.rowRevealKey(i),
-                  scroll: reveal,
-                  delay: _rowStagger * i,
-                  child: _ComparisonRowLine(
-                    // Identifies each row's own rendered rect for the
-                    // geometry regression tests guarding the vertical-
-                    // overflow class of bug this table used to have — see
-                    // this class's own doc comment.
-                    key: ValueKey('comparisonRow_${rows[i].label}'),
-                    row: rows[i],
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    freeColumnWidth: freeColumnWidth,
-                    premiumWidth: premiumWidth,
-                    height: dataRowHeight,
-                    showDivider: i != rows.length - 1,
-                    dividerColor: rowDividerColor,
-                    isLastRow: i == rows.length - 1,
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// V13c: the table's rows appear this far apart.
-const _rowStagger = Duration(milliseconds: 40);
-
-/// The label cell's own horizontal padding in [_ComparisonRowLine]; the
-/// table's fit check subtracts it from the label column to get the text width.
-const double _labelCellLeftPadding = 20;
-const double _labelCellRightPadding = 8;
-const double _labelCellHorizontalPadding =
-    _labelCellLeftPadding + _labelCellRightPadding;
-
-final TextStyle _headerStyle =
-    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
-
-/// The comparison table's fallback when its three columns do not fit (see
-/// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
-/// out top to bottom. Each row is a label with its full width and natural
-/// height (no ellipsis, no fixed height), then a [Wrap] of two tier chips so
-/// they fall onto separate lines instead of overflowing at the largest text
-/// sizes. The Premium chip keeps the table's Premium-strip colors, so the
-/// two layouts read as one visual language.
-class _StackedComparison extends StatelessWidget {
-  final List<_ComparisonRow> rows;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _StackedComparison({
-    super.key,
-    required this.rows,
-    required this.theme,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++)
-            Container(
-              key: ValueKey('comparisonRow_${rows[i].label}'),
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
-                border: i == rows.length - 1
-                    ? null
-                    : Border(bottom: BorderSide(color: dividerColor)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    rows[i].label,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _StackedTierChip(
-                        tier: context.l10n.paywallTierFree,
-                        included: rows[i].free,
-                        valueLabel: rows[i].freeLabel,
-                        fill: colorScheme.surfaceContainerHighest,
-                        foreground: colorScheme.onSurfaceVariant,
-                        dashColor: colorScheme.outline,
-                      ),
-                      _StackedTierChip(
-                        tier: context.l10n.featurePremium,
-                        included: rows[i].premium,
-                        fill: colorScheme.brightness == Brightness.dark
-                            ? colorScheme.surfaceContainerHighest
-                            : colorScheme.secondaryContainer,
-                        foreground: colorScheme.onSecondaryContainer,
-                        dashColor: colorScheme.onSecondaryContainer,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One "Free" or "Premium" value in [_StackedComparison]: the tier name in
-/// the header style, then the same glyph the table uses (or [valueLabel]
-/// when the row has a specific free quota such as "1 a day").
-class _StackedTierChip extends StatelessWidget {
-  final String tier;
-  final bool included;
-  final String? valueLabel;
-  final Color fill;
-  final Color foreground;
-  final Color dashColor;
-
-  const _StackedTierChip({
-    required this.tier,
-    required this.included,
-    this.valueLabel,
-    required this.fill,
-    required this.foreground,
-    required this.dashColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      // A Wrap, not a Row: at the largest text sizes the tier name and its
-      // value must be free to fall onto two lines inside the chip rather
-      // than overflow it.
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 2,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            tier.toUpperCase(),
-            style: _headerStyle.copyWith(color: foreground),
-          ),
-          if (valueLabel != null)
-            // The quota is part of the visible text; screen readers get the
-            // whole phrase from it, so it needs no separate semantics label.
-            Text(
-              valueLabel!,
-              style: _freeValueStyle.copyWith(color: foreground),
-            )
-          else
-            _ComparisonCell(
-              included: included,
-              includedColor: foreground,
-              dashColor: dashColor,
-              tier: tier,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonHeaderRow extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final double freeColumnWidth;
-  final double premiumWidth;
-  final double height;
-
-  const _ComparisonHeaderRow({
-    required this.colorScheme,
-    required this.freeColumnWidth,
-    required this.premiumWidth,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Purely a spacer matching the label column's own left padding —
-          // "FREE" itself now lives in the fixed-width column below, the
-          // same one every row's checkmark/dash/quota-text renders in, so
-          // the header centers on exactly the same x-position as what it
-          // labels (docs/design-audit.md's own "FREE should share a center
-          // with the ticks and dividers below it" finding).
-          const Expanded(child: SizedBox.shrink()),
-          SizedBox(
-            width: freeColumnWidth,
-            child: Center(
-              child: Text(
-                context.l10n.paywallHeaderFree,
-                style: _headerStyle.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-          _PremiumStripCell(
-            key: const Key('premiumStripHeader'),
-            colorScheme: colorScheme,
-            width: premiumWidth,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            child: Text(
-              context.l10n.paywallHeaderPremium,
-              maxLines: 1,
-              style: _headerStyle.copyWith(
-                color: colorScheme.onSecondaryContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One data row, split into three siblings sharing one [Row]: the label
-/// (an [Expanded] carrying its own bottom divider, with the whole
-/// remaining width to itself), the free-value column (a fixed
-/// [freeColumnWidth] — see [_ComparisonTable]'s own doc comment for why
-/// this is measured rather than flexed), and the Premium strip cell.
-/// [CrossAxisAlignment.stretch] plus a fixed, pre-measured [height] (see
-/// [_ComparisonTable._measuredHeight] — deliberately *not*
-/// `IntrinsicHeight`, which doesn't combine reliably with an `Expanded`
-/// child; that pairing under-measured badly enough to genuinely overflow
-/// at 2.0x text scale during this batch's own testing) makes every column
-/// match the row's own height. The label itself is capped at two lines
-/// with an ellipsis rather than wrapping indefinitely, since [height] is
-/// sized for exactly two lines; the free-value text is capped at one —
-/// [freeColumnWidth] is sized so it never actually needs to wrap.
-class _ComparisonRowLine extends StatelessWidget {
-  final _ComparisonRow row;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-  final double freeColumnWidth;
-  final double premiumWidth;
-  final double height;
-  final bool showDivider;
-  final Color dividerColor;
-  final bool isLastRow;
-
-  const _ComparisonRowLine({
-    super.key,
-    required this.row,
-    required this.theme,
-    required this.colorScheme,
-    required this.freeColumnWidth,
-    required this.premiumWidth,
-    required this.height,
-    required this.showDivider,
-    required this.dividerColor,
-    required this.isLastRow,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final divider =
-        showDivider ? Border(bottom: BorderSide(color: dividerColor)) : null;
-
-    return SizedBox(
-      height: height,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: DecoratedBox(
-              decoration: BoxDecoration(border: divider),
-              child: Padding(
-                // Start and end, not left and right (1.4.0 B3): the label
-                // cell mirrors under RTL.
-                padding: const EdgeInsetsDirectional.fromSTEB(
-                    _labelCellLeftPadding, 5, _labelCellRightPadding, 5),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    row.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: freeColumnWidth,
-            child: DecoratedBox(
-              decoration: BoxDecoration(border: divider),
-              child: Center(
-                child: row.freeLabel != null
-                    ? Text(
-                        row.freeLabel!,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall
-                            ?.withWeight(FontWeight.w700)
-                            .copyWith(
-                                fontSize: 12,
-                                color: colorScheme.onSurfaceVariant),
-                      )
-                    : _ComparisonCell(
-                        included: row.free,
-                        includedColor: colorScheme.onSurfaceVariant,
-                        dashColor: colorScheme.outline,
-                        tier: context.l10n.paywallTierFree,
-                      ),
-              ),
-            ),
-          ),
-          _PremiumStripCell(
-            colorScheme: colorScheme,
-            width: premiumWidth,
-            borderRadius: isLastRow
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : null,
-            child: _ComparisonCell(
-              included: row.premium,
-              includedColor: colorScheme.onSecondaryContainer,
-              dashColor: colorScheme.onSecondaryContainer,
-              tier: context.l10n.featurePremium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One segment of the continuous Premium strip — see [_ComparisonTable]'s
-/// own doc comment for why this is built as N adjacent same-color cells
-/// (one per row) rather than a single overlay spanning the table: it
-/// makes per-row height (a wrapped label at large Dynamic Type) a
-/// non-issue, since each cell simply fills whatever height its own row
-/// turns out to need.
-class _PremiumStripCell extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final double width;
-  final BorderRadius? borderRadius;
-  final Widget child;
-
-  const _PremiumStripCell({
-    super.key,
-    required this.colorScheme,
-    required this.width,
-    required this.borderRadius,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Dark mode's own calmer fill — see _ComparisonTable's doc comment.
-    final fillColor = colorScheme.brightness == Brightness.dark
-        ? colorScheme.surfaceContainerHighest
-        : colorScheme.secondaryContainer;
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: fillColor,
-        borderRadius: borderRadius,
-      ),
-      alignment: Alignment.center,
-      child: child,
-    );
-  }
-}
-
-/// One table cell: a checkmark or an em-dash, standing in for a boolean a
-/// screen reader can't read visually. [Semantics.excludeSemantics] replaces
-/// whatever VoiceOver/TalkBack would otherwise announce for the glyph
-/// itself (a checkmark icon is normally silent; an em-dash would be read
-/// literally) with an actual sentence — never two cells in a row both
-/// announcing as an unqualified "checkmark."
-class _ComparisonCell extends StatelessWidget {
-  final bool included;
-  final Color includedColor;
-  final Color dashColor;
-  final String tier;
-
-  const _ComparisonCell({
-    required this.included,
-    required this.includedColor,
-    required this.dashColor,
-    required this.tier,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: included
-          ? context.l10n.paywallIncludedIn(tier)
-          : context.l10n.paywallNotIncludedIn(tier),
-      excludeSemantics: true,
-      // Forces this into its own semantics node instead of merging its
-      // label into whatever ancestor node it would otherwise combine
-      // with (the row's label text, in this layout) — each cell needs to
-      // be independently reachable by its own exact label.
-      container: true,
-      child: included
-          ? Icon(Icons.check_rounded, size: 20, color: includedColor)
-          : Text(
-              '—',
-              style: TextStyle(color: dashColor, fontSize: 16)
-                  .withWeight(FontWeight.w600),
-            ),
-    );
-  }
-}
-
-/// The plan's saving ("Save 24%"), on the warm surface (the mockup's
-/// colours, O1): onWarm on warm, 7.96:1 (light) and 7.82:1 (dark).
 class _Badge extends StatelessWidget {
   final String label;
 

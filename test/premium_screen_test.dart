@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/app_colors.dart';
+import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/motion.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:grammar_lens/widgets/pressable_button.dart';
@@ -21,7 +23,6 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 import 'support/l10n_support.dart';
 
@@ -320,7 +321,9 @@ void main() {
   // alone would do it.
   Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(finder, 300);
-    await tester.ensureVisible(finder);
+    // Centred, not at the top: the longer V13c page (fix round 2) can now
+    // scroll a plan under the pinned top bar.
+    await Scrollable.ensureVisible(tester.element(finder), alignment: .5);
     await tester.pumpAndSettle();
     await tester.tap(finder);
     await tester.pumpAndSettle();
@@ -368,62 +371,6 @@ void main() {
     // carry this claim entirely, rather than relocating it — its absence
     // is the fix, not a specific replacement sentence.
     expect(find.textContaining('forever'), findsNothing);
-  });
-
-  testWidgets(
-      'the comparison table lists exactly the four real features (merged '
-      'down from five), Daily Test free on both sides, weak-spot practice '
-      'free at its real quota, and the rest Premium-only', (tester) async {
-    // bySemanticsLabel needs the semantics tree actually built, which
-    // (unlike a real device with an accessibility service running) is off
-    // by default in a plain widget test. Disposed explicitly at the end
-    // of this test body — addTearDown runs too late for the framework's
-    // own end-of-test "no handle left open" check.
-    final semantics = tester.ensureSemantics();
-
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    await openComparison(tester);
-    final header = find.text('FREE');
-    await tester.scrollUntilVisible(header, 300);
-
-    expect(header, findsOneWidget);
-    expect(find.text('PREMIUM'), findsOneWidget);
-
-    expect(find.text('Daily Test, refreshed every day'), findsOneWidget);
-    expect(find.text('Topic Practice, all 5 topics'), findsOneWidget);
-    // "Questions from your own mistakes" and "Targeted weak-spot practice"
-    // used to be two separate rows, both wrongly showing free as "—" —
-    // merged into one, with the real per-day quota
-    // (StorageService.freeDailyPracticeLimit) shown as text, not a
-    // checkmark/dash.
-    expect(find.text('Questions from your own mistakes'), findsNothing);
-    expect(find.text('Targeted weak-spot practice'), findsNothing);
-    // 1.2.0: the benefits card has a line of the same name; the row is the
-    // table's own.
-    expect(
-        find.descendant(
-            of: find.byKey(const Key('comparisonTable')),
-            matching: find.text('Practice your weak spots')),
-        findsOneWidget);
-    expect(
-      find.text('${StorageService.freeDailyPracticeLimit} a day'),
-      findsOneWidget,
-    );
-    // Session lengths read off PracticeLength, not hardcoded — see
-    // premium_screen.dart's _joinWithOr.
-    expect(find.text('Sessions of 3, 5 or 10 questions'), findsOneWidget);
-    // Never claims unlimited anywhere on the table.
-    expect(find.textContaining('Unlimited'), findsNothing);
-    expect(find.textContaining('unlimited'), findsNothing);
-
-    // Daily Test is free (checkmark); Topic Practice and Sessions are not
-    // (dash); the merged weak-spot row uses its own text value instead of
-    // either glyph, so it contributes to neither count. Premium includes
-    // all four rows.
-    expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
-    expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(2));
-    expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
-    semantics.dispose();
   });
 
   testWidgets(
@@ -1125,30 +1072,6 @@ void main() {
     // real-font assertions.
 
     testWidgets(
-        "the PREMIUM header doesn't overflow at 1.3x or 2.0x text scale "
-        '(replaces the old FittedBox(scaleDown) safety net with a real '
-        'measured width)', (tester) async {
-      for (final scale in [1.3, 2.0]) {
-        await pumpAt(
-          tester,
-          size: const Size(375, 667),
-          textScale: scale,
-          service: _FakeSubscriptionService(offering: null),
-        );
-        await openComparison(tester);
-        // At large scales the table falls back to the stacked layout (see
-        // the "stacked comparison" group); either way nothing may overflow.
-        await tester.scrollUntilVisible(
-          find.byKey(const ValueKey('comparisonRow_Practice your weak spots')),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(tester.takeException(), isNull,
-            reason: 'overflow at ${scale}x text scale');
-      }
-    });
-
-    testWidgets(
         'no overflow anywhere at 320pt or 375pt width, default text scale',
         (tester) async {
       for (final width in [320.0, 375.0]) {
@@ -1231,7 +1154,9 @@ void main() {
     }
 
     List<Avatar?> avatarsShown(WidgetTester tester) => tester
-        .widgetList<CompanionView>(find.byType(CompanionView))
+        .widgetList<CompanionView>(find.descendant(
+            of: find.byKey(PremiumScreen.heroKey),
+            matching: find.byType(CompanionView)))
         .map((tile) => tile.hero)
         .toList();
 
@@ -1306,9 +1231,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(CompanionView), findsNWidgets(3));
-      for (final tile
-          in tester.widgetList<CompanionView>(find.byType(CompanionView))) {
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNWidgets(3));
+      for (final tile in tester.widgetList<CompanionView>(find.descendant(
+          of: find.byKey(PremiumScreen.heroKey),
+          matching: find.byType(CompanionView)))) {
         expect(tile.hero, isNotNull,
             reason: 'no tile should fall back to the null/placeholder '
                 'branch in the hero');
@@ -1354,7 +1284,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(CompanionView), findsNWidgets(3));
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNWidgets(3));
     });
 
     for (final width in [320.0, 390.0]) {
@@ -1376,7 +1310,9 @@ void main() {
             ),
           ));
           await tester.pumpAndSettle();
-          final tiles = find.byType(CompanionView);
+          final tiles = find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView));
           // 1.2.0 (O11): three at every width.
           const count = 3;
           expect(tiles, findsNWidgets(count));
@@ -1634,183 +1570,6 @@ void main() {
     });
   });
 
-  group(
-      'the free-value column (bugfix batch: no longer shares a flex '
-      "factor with the row label, which used to squeeze the weak-spot "
-      'row\'s "1 a day" into a narrow sliver that silently overflowed '
-      "its row vertically — a failure mode ordinary overflow tests don't "
-      'catch, since Flutter only reports a *horizontal* RenderFlex '
-      'overflow as an exception)', () {
-    Future<void> pumpAt(
-      WidgetTester tester, {
-      required Size size,
-      required double textScale,
-    }) async {
-      tester.view.physicalSize = size * 2.0;
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      tester.platformDispatcher.textScaleFactorTestValue = textScale;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService:
-                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-    }
-
-    for (final size in [
-      const Size(320, 700),
-      const Size(375, 700),
-      const Size(393, 852),
-    ]) {
-      for (final scale in [1.0, 1.3]) {
-        testWidgets(
-            'the weak-spot row\'s label, its free value, and the row '
-            'itself never overlap at ${size.width.toInt()}x'
-            '${size.height.toInt()} @${scale}x textScale', (tester) async {
-          await pumpAt(tester, size: size, textScale: scale);
-          expect(tester.takeException(), isNull);
-
-          final row = find.byKey(
-            const ValueKey('comparisonRow_Practice your weak spots'),
-          );
-          await tester.scrollUntilVisible(row, 300);
-          final rowRect = tester.getRect(row);
-
-          final labelRect = tester.getRect(
-            find.descendant(
-              of: row,
-              matching: find.text('Practice your weak spots'),
-            ),
-          );
-          // Either "1 a day" (the common case) or the "1/day" fallback at
-          // the narrowest widths — either way, exactly one free-value
-          // text renders, on one line.
-          final freeValueFinder = find.descendant(
-            of: row,
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is Text &&
-                  (widget.data == '1 a day' || widget.data == '1/day'),
-            ),
-          );
-          expect(freeValueFinder, findsOneWidget);
-          final freeValueRect = tester.getRect(freeValueFinder);
-
-          expect(labelRect.overlaps(freeValueRect), isFalse,
-              reason: 'the label and the free-value text must never '
-                  'occupy the same screen space');
-          expect(
-            rowRect.top <= freeValueRect.top &&
-                freeValueRect.bottom <= rowRect.bottom,
-            isTrue,
-            reason: 'the free value must stay within its own row\'s '
-                'vertical bounds, not spill into the divider or the row '
-                'below it — this is exactly the silent, non-throwing '
-                'overflow this batch fixed',
-          );
-        });
-      }
-    }
-  });
-
-  testWidgets(
-      'the FREE header shares a horizontal center with the checkmarks '
-      'below it, not just a right edge', (tester) async {
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    await openComparison(tester);
-    final freeHeader = find.text('FREE');
-    await tester.scrollUntilVisible(freeHeader, 300);
-    final freeHeaderCenterX = tester.getCenter(freeHeader).dx;
-
-    final firstRow = find.byKey(
-      const ValueKey('comparisonRow_Daily Test, refreshed every day'),
-    );
-    // Row 1 is free (a checkmark, not text) — its free-column check mark
-    // is the first "Included in Free" glyph in the tree, distinct from
-    // that same row's Premium-column check mark.
-    final freeCheck = find
-        .descendant(of: firstRow, matching: find.byIcon(Icons.check_rounded))
-        .first;
-    final freeCheckCenterX = tester.getCenter(freeCheck).dx;
-
-    expect((freeHeaderCenterX - freeCheckCenterX).abs(), lessThan(1.0),
-        reason: 'FREE and the column of checkmarks/dashes beneath it must '
-            'share one x-center, not just happen to line up at the right '
-            'edge');
-  });
-
-  group(
-      'the Premium strip\'s fill color (visual-polish batch: dark mode '
-      'no longer uses the same saturated secondaryContainer as light '
-      'mode)', () {
-    testWidgets(
-        'dark theme: the strip fills with the calmer surfaceContainerHighest',
-        (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(Brightness.dark),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(offering: null),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-
-      final strip = find.byKey(const Key('premiumStripHeader'));
-      await tester.scrollUntilVisible(strip, 300);
-      final container = tester.widget<Container>(
-        find.descendant(of: strip, matching: find.byType(Container)).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(
-        decoration.color,
-        buildAppTheme(Brightness.dark).colorScheme.surfaceContainerHighest,
-      );
-    });
-
-    testWidgets('light theme: the strip keeps secondaryContainer, unchanged',
-        (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(offering: null),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-
-      final strip = find.byKey(const Key('premiumStripHeader'));
-      await tester.scrollUntilVisible(strip, 300);
-      final container = tester.widget<Container>(
-        find.descendant(of: strip, matching: find.byType(Container)).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(
-        decoration.color,
-        buildAppTheme(Brightness.light).colorScheme.secondaryContainer,
-      );
-    });
-  });
-
   testWidgets(
       'V13c: Free vs Premium is on the page, after the plans, with no '
       'toggle; "See plans" scrolls to the plans', (tester) async {
@@ -2039,7 +1798,9 @@ void main() {
           lessThanOrEqualTo(viewportHeight));
 
       final monthly = find.byKey(const ValueKey('planCard_Monthly'));
-      await tester.ensureVisible(monthly);
+      // Centred (fix round 2: the longer V13c page can scroll a card to the
+      // very top, which says nothing about reaching both).
+      await Scrollable.ensureVisible(tester.element(monthly), alignment: .5);
       await tester.pumpAndSettle();
       expect(tester.getRect(monthly).bottom, lessThanOrEqualTo(footerTop));
       expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))).top,
@@ -2206,7 +1967,11 @@ void main() {
         // The text above it keeps more room than before (373 and 369 pt).
         expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
-        expect(find.byType(CompanionView), findsNothing);
+        expect(
+            find.descendant(
+                of: find.byKey(PremiumScreen.heroKey),
+                matching: find.byType(CompanionView)),
+            findsNothing);
         // ...which lifts the content: the headline and the start of the
         // benefits card are in view (1.2.0: the comparison table is behind
         // "Compare Free & Premium" and the plan cards come after the
@@ -2356,282 +2121,28 @@ void main() {
         (tester) async {
       await pumpMeasured(tester,
           size: const Size(390, 844), textSize: AppTextSize.medium);
-      expect(find.byType(CompanionView), findsWidgets);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsWidgets);
 
       await pumpMeasured(tester,
           size: const Size(390, 699), textSize: AppTextSize.medium);
-      expect(find.byType(CompanionView), findsNothing);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNothing);
 
       await pumpMeasured(tester,
           size: const Size(390, 700), textSize: AppTextSize.medium);
-      expect(find.byType(CompanionView), findsWidgets);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsWidgets);
     });
-  });
-
-  group(
-      'stacked comparison layout (launch checklist item 3): when the three '
-      'table columns do not fit, rows stack — no horizontal scroll, no '
-      'dropped content, no overflow', () {
-    Future<void> pumpAt(
-      WidgetTester tester, {
-      required Size size,
-      required double textScale,
-      required Brightness brightness,
-      required bool pricingLoaded,
-    }) async {
-      tester.view.physicalSize = size * 2.0;
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      tester.platformDispatcher.textScaleFactorTestValue = textScale;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(brightness),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(
-              offering: pricingLoaded ? _offeringWithBothPlans() : null,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-    }
-
-    const labels = [
-      'Daily Test, refreshed every day',
-      'Topic Practice, all 5 topics',
-      'Practice your weak spots',
-      'Sessions of 3, 5 or 10 questions',
-    ];
-
-    // The two launch-checklist targets: 320x667 at 2x text and 375x667 at 3x.
-    for (final target in [
-      (size: const Size(320, 667), scale: 2.0),
-      (size: const Size(375, 667), scale: 3.0),
-    ]) {
-      for (final brightness in Brightness.values) {
-        for (final pricingLoaded in [true, false]) {
-          testWidgets(
-              'stacks cleanly at ${target.size.width.toInt()}x'
-              '${target.size.height.toInt()} @${target.scale}x text, '
-              '$brightness, pricing ${pricingLoaded ? 'loaded' : 'unavailable'}',
-              (tester) async {
-            await pumpAt(
-              tester,
-              size: target.size,
-              textScale: target.scale,
-              brightness: brightness,
-              pricingLoaded: pricingLoaded,
-            );
-            final stacked = find.byKey(const Key('comparisonStacked'));
-            await tester.scrollUntilVisible(stacked, 300,
-                scrollable: find.byType(Scrollable).first);
-            await tester.pumpAndSettle();
-
-            expect(tester.takeException(), isNull,
-                reason: 'no overflow anywhere on the screen');
-            expect(find.byKey(const Key('comparisonTable')), findsNothing);
-
-            // Never a sideways scroller inside the comparison.
-            expect(
-              find.descendant(
-                of: stacked,
-                matching: find.byWidgetPredicate((w) =>
-                    w is SingleChildScrollView &&
-                    w.scrollDirection == Axis.horizontal),
-              ),
-              findsNothing,
-            );
-
-            // Nothing dropped: every label is present in full (no maxLines /
-            // ellipsis on a stacked label), plus the free quota phrase.
-            for (final label in labels) {
-              final text =
-                  find.descendant(of: stacked, matching: find.text(label));
-              expect(text, findsOneWidget, reason: label);
-              expect(tester.widget<Text>(text).maxLines, isNull);
-              expect(tester.widget<Text>(text).overflow, isNull);
-            }
-            expect(find.descendant(of: stacked, matching: find.text('1 a day')),
-                findsOneWidget);
-
-            // Every row and everything in it stays inside the screen width.
-            final screenWidth = target.size.width;
-            for (final label in labels) {
-              final row = find.byKey(ValueKey('comparisonRow_$label'));
-              final rowRect = tester.getRect(row);
-              expect(rowRect.left, greaterThanOrEqualTo(0));
-              expect(rowRect.right, lessThanOrEqualTo(screenWidth));
-              for (final tier in ['FREE', 'PREMIUM']) {
-                final chip =
-                    find.descendant(of: row, matching: find.text(tier));
-                final chipRect = tester.getRect(chip);
-                expect(chipRect.left, greaterThanOrEqualTo(rowRect.left));
-                expect(chipRect.right, lessThanOrEqualTo(rowRect.right),
-                    reason: '$tier chip inside its row');
-              }
-            }
-
-            // Screen readers still get one explicit sentence per cell.
-            expect(
-                find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
-            expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
-            expect(find.bySemanticsLabel('Not included in Free'),
-                findsNWidgets(2));
-          });
-        }
-      }
-    }
-
-    // The pricing-unavailable card has its own icon + sentence + retry row.
-    // It keeps that row on normal screens and drops the retry below the
-    // sentence only when the row cannot fit.
-    for (final config in [
-      (size: const Size(393, 852), scale: 1.0, stacked: false),
-      (size: const Size(375, 667), scale: 1.0, stacked: false),
-      (size: const Size(320, 667), scale: 2.0, stacked: true),
-      (size: const Size(375, 667), scale: 3.0, stacked: true),
-    ]) {
-      testWidgets(
-          'the unavailable card ${config.stacked ? 'stacks its retry' : 'stays one row'} '
-          'at ${config.size.width.toInt()}x${config.size.height.toInt()} '
-          '@${config.scale}x text', (tester) async {
-        await pumpAt(
-          tester,
-          size: config.size,
-          textScale: config.scale,
-          brightness: Brightness.light,
-          pricingLoaded: false,
-        );
-        final card = find.byKey(const Key('pricingUnavailableCard'));
-        await tester.scrollUntilVisible(card, 300,
-            scrollable: find.byType(Scrollable).first);
-        final message = find.descendant(
-            of: card, matching: find.textContaining("Prices aren't"));
-        final retry =
-            find.descendant(of: card, matching: find.text('Try again'));
-        expect(tester.takeException(), isNull);
-        final cardRect = tester.getRect(card);
-        expect(tester.getRect(retry).right, lessThanOrEqualTo(cardRect.right));
-        expect(
-            tester.getRect(message).right, lessThanOrEqualTo(cardRect.right));
-        if (config.stacked) {
-          expect(tester.getRect(retry).top,
-              greaterThanOrEqualTo(tester.getRect(message).bottom));
-        } else {
-          expect(tester.getRect(retry).left,
-              greaterThanOrEqualTo(tester.getRect(message).right));
-        }
-      });
-    }
-
-    // Which layout each size gets, measured in the real font. The rule: the
-    // three-column table only where every label reads in full in its two
-    // lines; anywhere a label would be cut off with an ellipsis, stacked.
-    // Sizes with no clipping keep the existing table unchanged.
-    const keepTable = <(double, double)>[
-      (360, 1.0),
-      (375, 1.0),
-      (390, 1.0),
-      (393, 1.0),
-      (414, 1.0),
-      (430, 1.0),
-      (360, 1.1),
-      (375, 1.1),
-      (390, 1.1),
-      (393, 1.1),
-      (414, 1.1),
-      (430, 1.1),
-      (375, 1.15),
-      (390, 1.15),
-      (393, 1.15),
-      (414, 1.15),
-      (430, 1.15),
-      (414, 1.3),
-      (430, 1.3),
-    ];
-    // Sizes where the previous table cut a label to two lines with an
-    // ellipsis (320 @1x among them) plus every size beyond. 1.2.0 Batch 1:
-    // the type scale's smaller default text (batch0-report.md Q5) fits the
-    // labels at 360 @1.15x and 393 @1.3x, so those two moved to keepTable;
-    // the rule itself is unchanged. 1.2.0 Q18: the 14 pt side padding below
-    // 360 pt (16 before) gives the table room to fit at 320 @1x too.
-    // 1.2.0 Batch 12: the paywall's page edge is the mockup's 20 pt (15
-    // under 360 pt; 18 and 14 before), so the table is 2 pt narrower on each
-    // side and three more sizes stack: 320 @1x, 360 @1.15x, 393 @1.3x. The
-    // rule is unchanged: a table only where no label is cut.
-    const nowStacked = <(double, double)>[
-      (320, 1.0),
-      (360, 1.15),
-      (393, 1.3),
-      (320, 1.1),
-      (320, 1.15),
-      (320, 1.3),
-      (360, 1.3),
-      (375, 1.3),
-      (390, 1.3),
-      (375, 1.5),
-      (393, 1.5),
-      (430, 1.5),
-      (320, 2.0),
-      (375, 2.0),
-      (430, 2.0),
-      (320, 3.0),
-      (375, 3.0),
-      (430, 3.0),
-    ];
-
-    for (final entry in [
-      ...keepTable.map((c) => (c, true)),
-      ...nowStacked.map((c) => (c, false)),
-    ]) {
-      final (size, scale) = entry.$1;
-      final expectTable = entry.$2;
-      for (final pricingLoaded in [true, false]) {
-        testWidgets(
-            '${expectTable ? 'keeps the table' : 'stacks'} at '
-            '${size.toInt()}x667 @${scale}x text, pricing '
-            '${pricingLoaded ? 'loaded' : 'unavailable'}', (tester) async {
-          await pumpAt(
-            tester,
-            size: Size(size, 667),
-            textScale: scale,
-            brightness: Brightness.light,
-            pricingLoaded: pricingLoaded,
-          );
-          final layout = find.byKey(
-              Key(expectTable ? 'comparisonTable' : 'comparisonStacked'));
-          await tester.scrollUntilVisible(layout, 300,
-              scrollable: find.byType(Scrollable).first);
-          expect(tester.takeException(), isNull);
-          expect(
-            find.byKey(
-                Key(expectTable ? 'comparisonStacked' : 'comparisonTable')),
-            findsNothing,
-          );
-
-          // The invariant behind the rule: whichever layout is on screen,
-          // no label is cut off.
-          for (final label in labels) {
-            final text = find.descendant(
-              of: find.byKey(ValueKey('comparisonRow_$label')),
-              matching: find.text(label),
-            );
-            expect(tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
-                isFalse,
-                reason: '"$label" is clipped at ${size.toInt()} @${scale}x');
-          }
-          if (expectTable) {
-            expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
-          }
-        });
-      }
-    }
   });
 
   group('the 1.2.0 paywall (additional screens Batch 12)', () {
@@ -2948,7 +2459,9 @@ void main() {
         await tester.pumpAndSettle();
         // Fix round 2: the board's companions (V13: 70, 110, 64).
         final tiles = tester
-            .widgetList<CompanionView>(find.byType(CompanionView))
+            .widgetList<CompanionView>(find.descendant(
+                of: find.byKey(PremiumScreen.heroKey),
+                matching: find.byType(CompanionView)))
             .toList();
         expect(tiles, hasLength(3));
         expect(tiles[1].hero, avatar);
@@ -3202,6 +2715,158 @@ void main() {
     });
   });
 
+  group('V13c Free vs Premium (fix round 2, item 3: the board)', () {
+    Future<void> pumpTable(WidgetTester tester,
+        {Size size = const Size(390, 844),
+        double textScale = 1,
+        Brightness brightness = Brightness.light}) async {
+      tester.view.physicalSize = size * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(brightness),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(UserProfile(
+              name: 'Ada',
+              learningGoal: LearningGoal.work,
+              avatar: Avatar.values[3])),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+          find.byKey(PremiumScreen.compareNoteKey), 300);
+      await tester.pumpAndSettle();
+    }
+
+    final table = find.byKey(const Key('comparisonTable'));
+
+    String rowText(WidgetTester tester, String label) => tester
+        .widgetList<Text>(find.descendant(
+            of: find.byKey(ValueKey('comparisonRow_$label')),
+            matching: find.byType(Text)))
+        .map((t) => t.data)
+        .join(' | ');
+
+    testWidgets(
+        'the heading, the companion at its end, the six rows with '
+        'the real rules, the green note', (tester) async {
+      await pumpTable(tester);
+      expect(find.text('Free vs Premium'), findsOneWidget);
+      final companion = tester
+          .widget<CompanionView>(find.byKey(PremiumScreen.compareCompanionKey));
+      expect(companion.hero, Avatar.values[3]);
+      expect(companion.ambient, CompanionAmbient.hop);
+      expect(tester.getCenter(find.byKey(PremiumScreen.compareCompanionKey)).dx,
+          greaterThan(tester.getCenter(find.text('Free vs Premium')).dx));
+
+      expect(rowText(tester, 'Daily Test'), 'Daily Test | 1 a day | 1 a day');
+      expect(
+          rowText(tester, 'AI practice'),
+          'AI practice | ${StorageService.freeDailyPracticeLimit} a day | '
+          '${StorageService.dailySessionLimit} a day');
+      expect(rowText(tester, 'Weak-spot practice'), 'Weak-spot practice');
+      final topics = 'All ${practiceTopics().length} topics';
+      expect(rowText(tester, topics), topics);
+      expect(
+          rowText(tester, 'Session length'), 'Session length | 3 | 3 · 5 · 10');
+      expect(rowText(tester, 'Monthly Climb'), 'Monthly Climb');
+      expect(find.byKey(PremiumScreen.compareNoteKey), findsOneWidget);
+      expect(
+          find.text('Cancel anytime. Your climb, medals and weak spots stay '
+              'if you go back to free.'),
+          findsOneWidget);
+      // Free and Premium headers: the navy pill on the column.
+      expect(find.descendant(of: table, matching: find.text('Free')),
+          findsOneWidget);
+      expect(find.descendant(of: table, matching: find.text('Premium')),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'free checks are grey outlines, Premium checks filled green, '
+        '"—" grey', (tester) async {
+      await pumpTable(tester);
+      final c = AppColors.light;
+      BoxDecoration circle(String label, int index) => tester
+          .widget<Container>(find
+              .ancestor(
+                  of: find
+                      .descendant(
+                          of: find.byKey(ValueKey('comparisonRow_$label')),
+                          matching: find.byType(Icon))
+                      .at(index),
+                  matching: find.byType(Container))
+              .first)
+          .decoration! as BoxDecoration;
+      // Index 0 is the row's icon tile's icon.
+      final free = circle('Weak-spot practice', 1);
+      expect(free.color, isNull);
+      expect((free.border! as Border).top.color, c.disabledLabel);
+      final premium = circle('Weak-spot practice', 2);
+      expect(premium.color, c.green);
+      final none = circle('All ${practiceTopics().length} topics', 1);
+      expect(none.color, c.disabledFill);
+    });
+
+    testWidgets(
+        'the Premium column is one piece from the header to the last '
+        'row: 2 px orange border, soft orange fill, the navy pill on top',
+        (tester) async {
+      await pumpTable(tester);
+      final column = find.byKey(PremiumScreen.premiumColumnKey);
+      final box =
+          tester.widget<DecoratedBox>(column).decoration as BoxDecoration;
+      final c = AppColors.light;
+      expect(
+          (box.border! as Border).top, BorderSide(color: c.orange, width: 2));
+      expect((box.gradient! as LinearGradient).colors, [c.cream, c.orangeSoft]);
+      final rect = tester.getRect(column);
+      expect(rect.width, 92);
+      final pill = tester
+          .getRect(find.descendant(of: table, matching: find.text('Premium')));
+      expect(pill.top, greaterThan(rect.top));
+      final last = tester
+          .getRect(find.byKey(const ValueKey('comparisonRow_Monthly Climb')));
+      expect(rect.bottom, greaterThanOrEqualTo(last.bottom - 4));
+      expect(rect.top, lessThan(pill.top));
+    });
+
+    testWidgets('reads each row as one sentence to VoiceOver', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpTable(tester);
+      expect(
+          find.bySemanticsLabel('AI practice. Free: 1 a day. Premium: 5 a day'),
+          findsOneWidget);
+      expect(
+          find.bySemanticsLabel(
+              'Weak-spot practice. Included in Free. Included in Premium'),
+          findsOneWidget);
+      semantics.dispose();
+    });
+
+    for (final (size, scale) in [
+      (const Size(320, 568), 1.0),
+      (const Size(390, 844), 1.3),
+      (const Size(428, 926), 2.0),
+    ]) {
+      for (final brightness in Brightness.values) {
+        testWidgets('no overflow at $size, text ×$scale, $brightness',
+            (tester) async {
+          await pumpTable(tester,
+              size: size, textScale: scale, brightness: brightness);
+          expect(tester.takeException(), isNull);
+          expect(table, findsOneWidget);
+        });
+      }
+    }
+  });
+
   group('V13 motion (fix round 2, item 2)', () {
     setUp(() => AppMotion.loopsEnabled = true);
     tearDown(() => AppMotion.loopsEnabled = false);
@@ -3241,7 +2906,9 @@ void main() {
     testWidgets('the side companions float, the middle one hops',
         (tester) async {
       await pumpLive(tester);
-      final trio = find.byType(CompanionView);
+      final trio = find.descendant(
+          of: find.byKey(PremiumScreen.heroKey),
+          matching: find.byType(CompanionView));
       expect(trio, findsNWidgets(3));
       final side = <double>[], middle = <double>[];
       for (var t = 0; t < 3200; t += 100) {

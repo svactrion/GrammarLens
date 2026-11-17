@@ -210,7 +210,6 @@ final _review = RegExp('Review');
 /// Keys whose value is the English one in every language, with the reason.
 const _sameEverywhere = {
   'featurePremium', // the brand
-  'paywallHeaderPremium', // the brand, uppercase
   'offerChip', // the brand, uppercase
   'paywallBadge', // the brand, uppercase
   // The topic titles name English grammar points and match the hint cards
