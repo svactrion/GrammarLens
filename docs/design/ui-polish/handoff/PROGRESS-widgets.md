@@ -17,7 +17,7 @@ marked done.
 | W0 Plan | done | see W0 |
 | W1 Bridge, URL scheme, routing | done | see W1 |
 | W2 Widget extension + SwiftUI views | done | see W2 |
-| W3 App-side payload | not started | |
+| W3 App-side payload | done | see W3 |
 | W4 Reminder engine | not started | |
 | W5 UI (N01, N03, V24), captures | not started | |
 | W6 Final pass, merge, docs | not started | |
@@ -97,6 +97,30 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
   orange) and opens Home; it has no text to translate. The gallery's own
   names ("Climb", "Tip") and descriptions are fixed English in the extension
   (the extension cannot read the app's language before the app has run).
+
+- **DW3-1 One hook for "the state changed".** The widgets (and the
+  reminders, W4) must follow the Daily Test, practice, the profile and the
+  language. · Calls from every screen vs. one hook in storage. ·
+  **`StorageService.onChanged`**, called after the writes that matter
+  (`completeDailyTest`, `recordFreePracticeStarted`, `recordSessionStarted`,
+  `recordPracticeCompletion`, `saveUserProfile`, `setLanguage`,
+  `resetProgressData`), pointed by the app at `DeviceSync.requestUpdate`;
+  plus launch, resume (a new day or month) and a device-language change
+  from `app.dart`. `DeviceSync` coalesces requests and uses no timers (no
+  pending timer can leak into a widget test).
+- **DW3-2 The mountain's and the month's names are translated** on the
+  widget ("Glutgipfel · November"), as the app shows them; only topic names
+  and hint lines stay English (SPEC §3.7).
+- **DW3-3 "5 questions · 2 min"** is the board's short form for the widget;
+  Home keeps "about 2 minutes".
+- **DW3-4 The next month's mountain is read, never recorded.** When the
+  next midnight starts a new month the payload already points at that
+  month's crops; its theme comes from a stored row if one exists, else from
+  the rotation (`ClimbThemeRotation.shownFor`), without writing a row (Home
+  records it when the month is shown, as today).
+- **DW3-5 Images are written once per key.** File names carry what they
+  depend on (`avatar_14.png`, `mountain_<theme>_d<days>_s<step>_<mode>.png`);
+  a run renders only missing files and deletes the ones no entry uses.
 
 ## Blocked / not verified
 
@@ -484,3 +508,55 @@ Verified:
 
 Not verified here: the widgets on a real home screen (W5 adds them on the
 simulator), on a device (owner).
+
+## W3 — App-side payload
+
+Status: **done**.
+
+What was built:
+- `lib/services/widget_payload.dart`: the pure builder
+  `buildWidgetPayload(WidgetInput, AppLocalizations)` → schema 1 (now +
+  next local midnight, countdown lines 1–24 h when done), the tip picker
+  `widgetTipFor` (the most frequent weak spot's topic → one `kTopicHints`
+  line per local day, split at ": "; no weak spot → a Daily Test topic by
+  the day, "TIP OF THE DAY"), and `widgetCrop` (the medium crop around the
+  avatar's trail point, the avatar's point inside it).
+- `lib/services/widget_images.dart`: asset → crop / square → PNG with
+  `dart:ui` (1092 × 510 mountain, 240 × 240 avatar).
+- `lib/services/widget_sync.dart`: reads profile, today's set, climb steps,
+  month points, the month's theme, the top weak spot; writes images and
+  `payload.json` through the bridge; deletes unused files; reloads the
+  widgets. Nothing happens without the App Group or before onboarding.
+- `lib/services/device_sync.dart` + `StorageService.onChanged` + `app.dart`
+  (DW3-1): launch, resume, Daily Test, practice, profile, language.
+- ARB: 11 new `widget*` keys in all 8 languages (Arabic, Japanese, Korean,
+  Turkish, German, Spanish, Portuguese translated here); reused
+  `homeDailyEyebrow`, `firstClimbStep`, `restSeeYou`.
+
+Verified:
+- `flutter analyze`: no issues; `flutter test`: 2550 passed.
+- `test/widget_payload_test.dart` (24): the board's copy waiting and done,
+  countdown keys 1–24, the midnight entry (next step; same step when not
+  done; a new month's mountain, step 1, no points; never past the month's
+  days), tips (weak spot, daily rotation, lines without ": ", general),
+  Turkish and Arabic, every locale has every string, the crop stays inside
+  the image with the avatar inside the crop for every day of 28–31-day
+  months, the crop's shape; four fixtures in `test/fixtures/widget_payloads/`
+  compared without timestamps (time-zone independent; checked with
+  `TZ=America/New_York`).
+- `test/widget_sync_test.dart` (10): real assets rendered to 240 × 240 and
+  1092 × 510 PNGs, files written once and replaced on a new step, the next
+  month's crops on the last day, German and Arabic, nothing without the App
+  Group or a profile; `DeviceSync` coalescing (found and fixed a re-entrancy
+  bug: a job's synchronous request started a nested run), failing jobs;
+  `StorageService.onChanged` fires on the five writes tested and not on
+  reads (real SQLite through ffi).
+- Swift: `xcodebuild test` RunnerTests 17 passed, none skipped:
+  `testDartFixtures` decodes the Dart fixtures and renders them (Arabic
+  mirrored, Turkish copy fits) into `build/widget-snapshots/`.
+- Simulator: the seeded app (Sam, Glacier Peak, 14 steps) wrote
+  `payload.json`, `avatar_14.png` and `mountain_glacier_peak_d30_s14_{light,dark}.png`
+  into the real App Group container
+  (`xcrun simctl get_app_container … group.com.ahmettayfur.grammarlens`):
+  "Step 15 is waiting", "Glacier Peak · November · 14/30", "TIP FOR YOU ·
+  MODAL VERBS".
