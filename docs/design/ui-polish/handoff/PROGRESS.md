@@ -699,3 +699,61 @@ Decisions:
 Not done / gaps:
 - The plans do not enter from below on scroll, the table rows do not
   appear 40 ms apart, and the "See plans" arrow does not nudge.
+
+## B9 — Profile
+
+Status: **done**.
+
+Commits: `f98eac1` (Profile, name sheet, medals layer, language, data, credits, the dialog fix, tests), `5c39c65` (gallery). Strings in `2981ab0`.
+
+What was built:
+- V23 (`widgets/profile_stage.dart` in `screens/settings_screen.dart`): the
+  companion on its coloured stage (it waves when tapped) with "Change"
+  (→ R06); the navy ribbon settling from 12 pt below with the name,
+  "Climbing with <Hero>" and the pencil (→ PF04); three stat tiles (this
+  month's points, step, weak spots saved). The medal shelf, its progress
+  card and every settings row stay as they were.
+- PF02 (`widgets/medals_layer.dart`): "See all" opens every medal over the
+  blurred profile (blur 0 → 10, panel 0.92 → 1), by year, newest first, the
+  running month grey, the Welcome badge last; X or a tap outside closes it.
+- PF03: a medal in the layer opens the existing medal detail (the medal
+  large, month, theme, outcome, steps and points).
+- PF04: the pencil opens a sheet above the keyboard where the companion
+  asks "What should I call you?"; Save (light haptic) stores the trimmed
+  name (40 characters at most, as in onboarding) and shows "Name saved"
+  with Undo, which puts the previous name back.
+- R07 (`screens/language_picker_screen.dart`): each language its own card
+  in its own name, the selected one navy with a gold check; selection
+  haptic; the note that questions stay in English (existing) on top.
+- R08 (`screens/data_screen.dart`): the reset confirmation is the companion
+  dialog (sad, heavy haptic as it opens), "Keep my progress" primary and
+  "Reset progress data" the quiet red action; texts unchanged.
+- R09 (`screens/credits_screen.dart`): three companions greet on top
+  (floating, the middle one waving); the attribution text is unchanged.
+- The companion dialog now closes once: a second tap while the card closes
+  no longer pops the page under it (found by the Data screen's double-tap
+  test).
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2424 passed** (+ the
+  medals layer test).
+- Updated: `profile_layout_test` (V23, PF04 with Undo, PF02 and PF03, the
+  40-character rule), `settings_screen_test`, `data_screen_test`,
+  `data_screen_final_test`, `l10n_test`, `credits_screen_test`.
+- Simulator (gallery): V23 (+ scrolled), PF02, PF03, PF04, R07, R08, R09.
+
+Decisions:
+- **D9-1 No "since <month year>"** on the ribbon: the app stores no date the
+  profile was made. Shown: "Climbing with <Hero>".
+- **D9-2 The medal shelf keeps the existing strip** (horizontal, every
+  medal) rather than the thick 3-medal shelf image; "See all" adds the
+  board's layer on top of it.
+- **D9-3 PF03 is the existing medal detail** (a dialog), opened from the
+  layer; the Hero flight from shelf to sheet is not built.
+- **D9-4 The language options lost keyboard focus traversal** (they are
+  pressable cards, not InkWells); VoiceOver reads them as selected
+  buttons as before.
+
+Not done / gaps:
+- The ribbon's medal-settle and the numbers' count-up in PF03 are not
+  animated; the layer opens with a fade and scale, not a Hero flight.
