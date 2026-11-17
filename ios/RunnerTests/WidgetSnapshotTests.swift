@@ -111,6 +111,10 @@ final class WidgetSnapshotTests: XCTestCase {
     for name in names {
       let data = try Data(contentsOf: folder.appendingPathComponent(name))
       let payload = try XCTUnwrap(WidgetPayload.decode(data), name)
+      // The app writes these files (W3); here the sample images stand in.
+      for entry in payload.entries {
+        try WidgetSamples.copyImages(to: entry.climb.images)
+      }
       try renderAll(payload: payload, suffix: (name as NSString).deletingPathExtension)
     }
   }
@@ -175,6 +179,14 @@ enum WidgetSamples {
     ] {
       let image = source(path).map { crop($0) } ?? solid(.darkGray, CGSize(width: 1092, height: 510))
       AppGroupStore.write(try XCTUnwrap(image.pngData()), name: name)
+    }
+  }
+
+  /// The sample images under the names a payload gives.
+  static func copyImages(to images: WidgetPayload.Images) throws {
+    for (from, to) in [(avatar, images.avatar), (light, images.mountainLight), (dark, images.mountainDark)]
+    where from != to {
+      AppGroupStore.write(try XCTUnwrap(AppGroupStore.read(from)), name: to)
     }
   }
 

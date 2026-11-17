@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "writtenAt": 1795001400,
+  "rtl": false,
+  "entries": [
+    {
+      "validFrom": 1795001400,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "GÜNLÜK TEST",
+        "title": "2. adım seni bekliyor",
+        "subtitle": "5 soru · 2 dk",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "2. adıma bir test kaldı",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test bekliyor",
+        "button": "Başla",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://daily-test",
+        "label": "GÜNÜN İPUCU · GERUND VS. INFINITIVE",
+        "rule": "After a preposition",
+        "example": "always -ing",
+        "footer": "Her gün yeni bir ipucu",
+        "boxLabel": "GÜNLÜK TEST",
+        "button": "Başla",
+        "done": false
+      }
+    },
+    {
+      "validFrom": 1795035600,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "GÜNLÜK TEST",
+        "title": "2. adım seni bekliyor",
+        "subtitle": "5 soru · 2 dk",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "2. adıma bir test kaldı",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test bekliyor",
+        "button": "Başla",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://daily-test",
+        "label": "GÜNÜN İPUCU · MODAL VERBS",
+        "rule": "modal + base verb",
+        "example": "no \"to\", no \"-s\"",
+        "footer": "Her gün yeni bir ipucu",
+        "boxLabel": "GÜNLÜK TEST",
+        "button": "Başla",
+        "done": false
+      }
+    }
+  ]
+}
