@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-17
+    notes: "Home-screen widgets (Climb small and medium, Tip medium) and daily reminder notifications (one a day, chosen time, settings under Profile) built on branch widgets-notifications with the app's own iOS bridge; no new package, nothing leaves the device. Not merged, not shipped, not checked on a device."
+  - version:
+    date: 2026-11-17
     notes: "UI polish built on branch ui-polish: new Home with the mountain and the rest scene, Daily Test with per-question Check and new results, Review with the free ticket, practice screens, one-page paywall, Profile, first-wave topics in code but switched off. Not merged, not shipped, not checked on a device."
   - version: 1.4.0
     date: 2026-11-07
@@ -29,13 +32,10 @@ recent:
   - version: 1.4.0
     date: 2026-11-05
     notes: "App Store screenshots and metadata for eight localizations (112 screenshots) uploaded to App Store Connect."
-  - version: 1.3.0
-    date: 2026-11-02
-    notes: "First public release on the App Store (build 6): redesigned Home, Review and Profile, two-step onboarding, new paywall, new question screen with topic hints and one answer box per blank."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
-  - "Home-screen widget (1.5.0) and a daily reminder notification: a separate task after the UI polish"
+  - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications, not merged, not checked on a device; owner: extension signing, App Group registration, device check"
   - "P15: outage detection"
   - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish; fix round 2 after the owner's first device test built and checked on the simulator, not merged), then a new feature as a 4th navbar tab"
   - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): code on the UI polish branch, hidden until the question-quality check and owner review"

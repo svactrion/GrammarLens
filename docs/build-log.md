@@ -14283,6 +14283,55 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   remaining decisions in `docs/design/ui-polish/handoff/PROGRESS.md`
   ("Fix round 1").
 
+## 2026-11-17 (home-screen widgets and daily reminders on branch `widgets-notifications`; not merged, not shipped)
+
+- **[Product]** The owner split the widgets (W01) and the reminders (N01,
+  N02, N03, V24's switch) out of the UI polish into their own task
+  (`docs/design/ui-polish/handoff/TASK-widgets.md`), on a worktree branched
+  from `ui-polish`, with fixed decisions: no new package (our own
+  `MethodChannel`), App Group `group.com.ahmettayfur.grammarlens`, the
+  extension `com.ahmettayfur.grammarlens.widgets`, at most one reminder a
+  day in a fixed priority, nothing leaving the device, no new analytics.
+- **[Engineering]** iOS: `GrammarLensBridge` (App Group files, widget
+  reloads, `grammarlens://daily-test | home | review` links, cold and warm,
+  through Flutter's scene-delegate hook), `ReminderScheduler`
+  (`UNUserNotificationCenter`: local calendar triggers, the companion as an
+  attachment, nothing shown in front, taps → links), Runner's App Group
+  entitlement and URL scheme; the `GrammarLensWidgets` WidgetKit extension
+  ("Climb" small + medium, "Tip" medium; payload schema 1; an hourly
+  countdown and the midnight "waiting" entry) added by
+  `tool/ios/configure_xcode_project.rb` (the `xcodeproj` gem; no signing
+  settings).
+- **[Engineering]** Dart: the pure payload builder (texts from the ARB
+  files, the tip from the top weak spot's hint lines, the mountain cropped
+  around the avatar's trail point), `WidgetSync` writing images and
+  `payload.json` to the App Group; the pure seven-day reminder planner and
+  `ReminderSync`; `DeviceSync` runs both at launch, on resume and after the
+  storage writes that change them (`StorageService.onChanged`); reminder
+  settings in a new table (DB v27); N01, N03 (Profile → Notifications) and
+  V24's row; 48 new strings in all 8 languages.
+- **[Verified]** `flutter analyze` and `flutter test` at every step (final
+  numbers in `PROGRESS-widgets.md`); Swift RunnerTests (bridge, payload,
+  timeline, reminder requests, `ImageRenderer` snapshots of every widget and
+  state, including the Dart builder's fixtures); on the iPhone 18 Pro
+  simulator: the App Group payload written by the real app, the widgets
+  added from the system gallery in their waiting and done states, a widget
+  tap opening the Daily Test, cold and warm links, N01 / N03 / V24 and the
+  iOS dialog, **a real reminder delivered** ("Fox is waiting at First
+  Camp …"), Arabic + dark + the largest text on N01, N03, V24 and the
+  widgets.
+- **[Not verified]** Nothing on a device (signing, App Group provisioning,
+  widgets and reminders on a real phone). On the simulator a delivered
+  reminder's tap did not open the app and the companion thumbnail did not
+  show, though iOS stored the attachment.
+- **[Found]** `flutter build ios --simulator` fails on this machine before
+  any code (Flutter 3.44.6 vs. Xcode 27.2's `lipo -verify_arch`); single-
+  simulator builds work. The disk filled during a build (308 MB free); only
+  this run's own build folder was removed.
+- **[Open]** Owner steps (signing the extension, registering the App
+  Group, the device check) and the merge with `ui-polish`'s fix round 2
+  (V24f also needs the reminder row) are listed in `PROGRESS-widgets.md`.
+
 ## 2026-11-17 (UI polish fix round 2 on branch `ui-polish`; not merged, not shipped)
 
 - **[Product]** After the owner's first device test (iPhone 14 Plus), SPEC

@@ -20,6 +20,7 @@ import '../models/error_entry.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/practice_length.dart';
+import '../models/reminder_settings.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
 import '../models/user_profile.dart';
@@ -31,8 +32,16 @@ import 'welcome_badge_rules.dart';
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
+  /// Called after a write that changes what the home-screen widgets or the
+  /// reminders show (TASK-widgets W3/W4): the Daily Test, practice, the
+  /// profile, the language, a reset. The app points it at
+  /// `DeviceSync.requestUpdate`; null otherwise.
+  static void Function()? onChanged;
+
+  void _changed() => onChanged?.call();
+
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 26;
+  static const _dbVersion = 27;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -123,6 +132,21 @@ class StorageService {
     CREATE TABLE IF NOT EXISTS language_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       language TEXT NOT NULL
+    )
+  ''';
+
+  /// The reminder settings (TASK-widgets N01, N03): one row, the four kinds,
+  /// the time of day and whether our own question was asked. No row means
+  /// reminders were never turned on and the question never asked.
+  static const _createReminderSettingsTable = '''
+    CREATE TABLE IF NOT EXISTS reminder_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      daily_test INTEGER NOT NULL,
+      free_ticket INTEGER NOT NULL,
+      close_to_medal INTEGER NOT NULL,
+      new_mountain INTEGER NOT NULL,
+      minutes INTEGER NOT NULL,
+      ask TEXT NOT NULL
     )
   ''';
 
@@ -412,6 +436,7 @@ class StorageService {
         await db.execute(_createAiConsentTable);
         await db.execute(_createOneTimeFlagsTable);
         await db.execute(_createClimbMonthThemesTable);
+        await db.execute(_createReminderSettingsTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -625,6 +650,12 @@ class StorageService {
         if (oldVersion < 26) {
           await db.execute(_createLanguageSettingsTable);
         }
+
+        // v26 -> v27: reminder_settings (TASK-widgets W4); no row is
+        // "never turned on, never asked", so nothing to fill in.
+        if (oldVersion < 27) {
+          await db.execute(_createReminderSettingsTable);
+        }
       },
     );
   }
@@ -824,10 +855,31 @@ class StorageService {
       {'id': 0, 'language': language.storageValue},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    _changed();
   }
 
   /// The latest AI-provider permission decision, or null if the user has never
   /// been asked.
+  /// The reminder settings; the defaults (all off, 20:00, not asked) when
+  /// none are stored.
+  Future<ReminderSettings> getReminderSettings() async {
+    final db = await _database;
+    final rows = await db.query('reminder_settings', where: 'id = 0');
+    return rows.isEmpty
+        ? const ReminderSettings()
+        : ReminderSettings.fromMap(rows.single);
+  }
+
+  Future<void> setReminderSettings(ReminderSettings settings) async {
+    final db = await _database;
+    await db.insert(
+      'reminder_settings',
+      settings.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    _changed();
+  }
+
   Future<AiConsent?> getAiConsent() async {
     final db = await _database;
     final rows = await db.query('ai_consent', limit: 1);
@@ -919,6 +971,7 @@ class StorageService {
       ON CONFLICT(topic_id) DO UPDATE SET
         questions_answered = questions_answered + excluded.questions_answered
     ''', [topicId, questionsAnswered]);
+    _changed();
   }
 
   static String _todayKey() =>
@@ -950,6 +1003,7 @@ class StorageService {
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
     ''', [_todayKey()]);
+    _changed();
   }
 
   /// How many free-tier "Practice this" sessions this device has started
@@ -981,6 +1035,7 @@ class StorageService {
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
     ''', [_todayKey()]);
+    _changed();
   }
 
   String get currentDayKey => _todayKey();
@@ -1102,7 +1157,7 @@ class StorageService {
     final db = await _database;
     final setDay = day ?? _todayKey();
     final timestamp = completedAt ?? DateTime.now();
-    return db.transaction((txn) async {
+    final saved = await db.transaction((txn) async {
       final rows = await txn
           .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
       if (rows.isEmpty || rows.single['completed_at'] != null) return false;
@@ -1176,6 +1231,8 @@ class StorageService {
       );
       return true;
     });
+    _changed();
+    return saved;
   }
 
   /// Month boundaries use the same original local day keys as Daily Test.
@@ -1576,6 +1633,7 @@ class StorageService {
       profile.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    _changed();
   }
 
   /// Claims [key]: true for the first caller ever, false for every later one.
@@ -1661,6 +1719,7 @@ class StorageService {
     batch.delete('error_entries');
     batch.delete('topic_practice_stats');
     await batch.commit(noResult: true);
+    _changed();
   }
 
   /// Debug-only: deletes the saved profile so the app treats this like a

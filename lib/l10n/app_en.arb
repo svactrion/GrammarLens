@@ -4402,6 +4402,320 @@
   "@commonUndo": {
     "description": "A snackbar's undo action (SY02), e.g. after 'Name saved'."
   },
+  "widgetStepWaiting": "Step {step} is waiting",
+  "@widgetStepWaiting": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): the title. {step} is the step today's test reaches.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestLength": "{count} questions · {minutes} min",
+  "@widgetTestLength": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): how long today's test is.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetDoneToday": "Done today",
+  "@widgetDoneToday": {
+    "description": "Home-screen widgets (W01): today's Daily Test is done (the small widget's label, the medium widget's chip, the tip's box)."
+  },
+  "widgetNextTestIn": "Next test in {hours} h",
+  "@widgetNextTestIn": {
+    "description": "Home-screen widgets, test done (W01): whole hours until the next Daily Test (local midnight), rounded up, 1 to 24. 'h' is the short form of hours.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "widgetStepOneTestAway": "Step {step} is one test away",
+  "@widgetStepOneTestAway": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the title.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestWaiting": "Test waiting",
+  "@widgetTestWaiting": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the status chip."
+  },
+  "widgetStart": "Start",
+  "@widgetStart": {
+    "description": "Home-screen widgets (W01): the button that opens today's Daily Test."
+  },
+  "widgetTipLabel": "TIP FOR YOU · {topic}",
+  "@widgetTipLabel": {
+    "description": "Home-screen tip widget (W01): the label above a tip picked from the user's weak spot. {topic} is the topic's English name in capitals (topic names stay English).",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "ARTICLES"
+      }
+    }
+  },
+  "widgetTipLabelGeneral": "TIP OF THE DAY · {topic}",
+  "@widgetTipLabelGeneral": {
+    "description": "Home-screen tip widget (W01): the label when the user has no weak spot yet (a general topic tip). {topic} is the topic's English name in capitals.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "ARTICLES"
+      }
+    }
+  },
+  "widgetTipFooter": "From your weak spots · new tip daily",
+  "@widgetTipFooter": {
+    "description": "Home-screen tip widget (W01): the line at the bottom when the tip comes from a weak spot."
+  },
+  "widgetTipFooterGeneral": "A new tip every day",
+  "@widgetTipFooterGeneral": {
+    "description": "Home-screen tip widget (W01): the line at the bottom of a general tip (no weak spot yet)."
+  },
+  "reminderDailyTitleAt": "{buddy} is waiting at {place}",
+  "@reminderDailyTitleAt": {
+    "description": "Daily Test reminder notification (N02): the title. {buddy} is the companion's name, {place} the last save point the user reached on this month's mountain (e.g. First Camp).",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "place": {
+        "type": "String",
+        "example": "First Camp"
+      }
+    }
+  },
+  "reminderDailyTitleOn": "{buddy} is waiting on {mountain}",
+  "@reminderDailyTitleOn": {
+    "description": "Daily Test reminder notification (N02): the title before any save point is reached. {buddy} is the companion's name, {mountain} this month's mountain.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "reminderDailyBody": "Today’s {count} questions take about {minutes} minutes. Step {step} is one test away.",
+  "@reminderDailyBody": {
+    "description": "Daily Test reminder notification (N02): the text. {step} is the step today's test reaches.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      },
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "reminderMedalTitle": "So close to {tier}",
+  "@reminderMedalTitle": {
+    "description": "Close-to-a-medal reminder notification (N02): the title. {tier} is the medal's name (Bronze, Silver, Gold).",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "reminderMedalBody": "{points, plural, =1{Just 1 point to go this month.} other{Just {points} points to go this month.}}",
+  "@reminderMedalBody": {
+    "description": "Close-to-a-medal reminder notification (N02): the text. {points} is 1 to 5.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "reminderTicketTitle": "Your free ticket is back",
+  "@reminderTicketTitle": {
+    "description": "Free-ticket reminder notification (N02): the title."
+  },
+  "reminderTicketBody": "Practise “{topic}” with AI feedback.",
+  "@reminderTicketBody": {
+    "description": "Free-ticket reminder notification (N02): the text. {topic} is the user's most frequent weak spot (English, as Review shows it).",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "The With Superlatives"
+      }
+    }
+  },
+  "reminderTicketBodyGeneral": "Practise a weak spot with AI feedback.",
+  "@reminderTicketBodyGeneral": {
+    "description": "Free-ticket reminder notification (N02): the text when the user has no weak spot yet."
+  },
+  "reminderMountainTitle": "A new mountain: {mountain}",
+  "@reminderMountainTitle": {
+    "description": "New-mountain reminder notification (first day of a month): the title. {mountain} is the new month's mountain.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Glacier Peak"
+      }
+    }
+  },
+  "reminderMountainBody": "{buddy} is at the start. Step 1 is one test away.",
+  "@reminderMountainBody": {
+    "description": "New-mountain reminder notification: the text. {buddy} is the companion's name.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "softAskBubble": "Want me to nudge you tomorrow?",
+  "@softAskBubble": {
+    "description": "Reminder question sheet (N01): the companion's bubble."
+  },
+  "softAskTitle": "When do you have 2 minutes?",
+  "@softAskTitle": {
+    "description": "Reminder question sheet (N01): the heading above the time choices."
+  },
+  "softAskMorning": "Morning",
+  "@softAskMorning": {
+    "description": "Reminder question sheet (N01): the 08:30 choice."
+  },
+  "softAskLunch": "Lunch break",
+  "@softAskLunch": {
+    "description": "Reminder question sheet (N01): the 12:30 choice."
+  },
+  "softAskEvening": "Evening",
+  "@softAskEvening": {
+    "description": "Reminder question sheet (N01): the 20:00 choice."
+  },
+  "softAskPick": "Pick a time",
+  "@softAskPick": {
+    "description": "Reminder question sheet (N01): the choice that opens a time wheel."
+  },
+  "softAskNote": "One reminder a day, only if you haven’t practiced yet.",
+  "@softAskNote": {
+    "description": "Reminder question sheet (N01): the promise under the choices."
+  },
+  "softAskTurnOn": "Turn on reminders",
+  "@softAskTurnOn": {
+    "description": "Reminder question sheet (N01): the main button; iOS asks for permission next."
+  },
+  "softAskNotNow": "Not now",
+  "@softAskNotNow": {
+    "description": "Reminder question sheet (N01): the text button; the question is not asked again on its own."
+  },
+  "notifTitle": "Notifications",
+  "@notifTitle": {
+    "description": "Notification settings (N03): the page title and its row in Profile's settings."
+  },
+  "notifDailyTitle": "Daily Test reminder",
+  "@notifDailyTitle": {
+    "description": "Notification settings (N03): the Daily Test reminder's switch."
+  },
+  "notifDailyBody": "Only if you haven’t done today’s test.",
+  "@notifDailyBody": {
+    "description": "Notification settings (N03): the Daily Test reminder's line."
+  },
+  "notifDailyTime": "Every day at {time}",
+  "@notifDailyTime": {
+    "description": "Notification settings (N03): the chip with the reminder's time; a tap opens the time wheel. {time} is like 20:00.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "20:00"
+      }
+    }
+  },
+  "notifTicketTitle": "Free ticket is back",
+  "@notifTicketTitle": {
+    "description": "Notification settings (N03): the free-ticket switch (free users only)."
+  },
+  "notifTicketBody": "When your free practice resets.",
+  "@notifTicketBody": {
+    "description": "Notification settings (N03): the free-ticket switch's line."
+  },
+  "notifMedalTitle": "Close to a medal",
+  "@notifMedalTitle": {
+    "description": "Notification settings (N03): the close-to-a-medal switch."
+  },
+  "notifMedalBody": "When you’re {points} points or less away.",
+  "@notifMedalBody": {
+    "description": "Notification settings (N03): the close-to-a-medal switch's line. {points} is 5.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "notifMountainTitle": "New mountain",
+  "@notifMountainTitle": {
+    "description": "Notification settings (N03): the new-mountain switch."
+  },
+  "notifMountainBody": "On the first day of each month.",
+  "@notifMountainBody": {
+    "description": "Notification settings (N03): the new-mountain switch's line."
+  },
+  "notifPromise": "I’ll never send more than one reminder a day.",
+  "@notifPromise": {
+    "description": "Notification settings (N03): the companion's promise under the switches."
+  },
+  "notifDeniedTitle": "Notifications are off for GrammarLens",
+  "@notifDeniedTitle": {
+    "description": "Notification settings (N03): shown when iOS notifications are off for the app."
+  },
+  "notifDeniedBody": "Turn them on in iOS Settings to get your reminders.",
+  "@notifDeniedBody": {
+    "description": "Notification settings (N03): how to turn iOS notifications back on."
+  },
+  "notifDeniedSnack": "Notifications are off in iOS Settings.",
+  "@notifDeniedSnack": {
+    "description": "Snackbar after turning reminders on while iOS notifications are off for the app."
+  },
+  "notifOpenSettings": "Open Settings",
+  "@notifOpenSettings": {
+    "description": "Opens this app's page in iOS Settings (N03, and the snackbar's action)."
+  },
+  "reminderTimeTitle": "Reminder time",
+  "@reminderTimeTitle": {
+    "description": "The reminder time wheel's heading (N01's 'Pick a time', N03, V24)."
+  },
+  "reminderTimeSemantics": "Reminder time, {time}. Change",
+  "@reminderTimeSemantics": {
+    "description": "VoiceOver label of the reminder time button on the rest scene (V24). {time} is like 20:00.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "20:00"
+      }
+    }
+  },
+  "restRemind": "Remind me tomorrow",
+  "@restRemind": {
+    "description": "The rest scene (V24): the switch that turns on tomorrow's Daily Test reminder."
+  },
   "restDreamingOf": "{hero} is dreaming of…",
   "@restDreamingOf": {
     "description": "V24f: the dream bubble's label over today's weak spot (shown in capitals).",

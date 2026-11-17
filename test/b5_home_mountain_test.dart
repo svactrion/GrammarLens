@@ -167,7 +167,8 @@ void main() {
       now = now.add(const Duration(minutes: 1));
       await tester.pump(const Duration(minutes: 1));
       expect(find.text('10:23'), findsOneWidget);
-      // No reminder switch on this board (§1.10).
+      // No reminder row without one given (previews); Home gives it one
+      // (TASK-widgets fixed decision 7).
       expect(find.byType(Switch), findsNothing);
       await tester.pumpWidget(const SizedBox());
     });
