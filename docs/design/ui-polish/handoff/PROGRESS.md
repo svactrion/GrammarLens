@@ -635,3 +635,67 @@ Not done / gaps:
   number does not roll.
 - V18's skeleton bars are faint on the card colour.
 - V19's "Next" slide-in and V21's mastery step are not animated.
+
+## B8 — Paywall
+
+Status: **done**.
+
+Commits: `2981ab0` (paywall, PW05, strings, tests), `f303bad` (gallery).
+
+What was built (`screens/premium_screen.dart`, one scrolling page, §1.7):
+- V13: the companions, the headline with the user's name ("Turn today's
+  mistake into progress, <name>."; the old line when no name is known),
+  the weak spot line, the three benefit rows and "See plans" (scrolls to
+  the plans). No price boxes on the first view; the pinned footer keeps the
+  orange trial button, the full price / renewal line and Restore · Terms ·
+  Privacy, as before.
+- V13a: the plans (the existing vertical list, yearly preselected) after
+  "See plans"; the pinned button's text follows the selected plan
+  (existing).
+- V13c: Free vs Premium is always on the page after the plans (the toggle
+  is gone), then the trial timeline ("Today: everything in Premium
+  unlocks. Nothing to pay." / "Day N: the trial ends and the plan starts.
+  Cancel before then to pay nothing."), shown only with a trial counted in
+  days or weeks. Once the plans have scrolled away, "<Plan> plan" sits
+  above the pinned button.
+- The comparison row counts the real topics ("Topic Practice, all N
+  topics", `practiceTopics().length`), as the benefits row already did.
+- V13b: the close button opens, once per app session, the companion dialog
+  (sad): "Leaving already, <name>?", a line about the weak spots (no
+  discount), the trial button (starts the purchase) and "Continue with
+  free" (closes with `method: close_button`); light haptic. Without an
+  offer, while purchasing or after a purchase, the close button closes as
+  before.
+- PW05 (`screens/premium_on_screen.dart`): after a purchase or a trial
+  start, a navy celebration page — turning rays, the cheering companion,
+  "Premium is on!", the three unlocked things (real counts) sliding in 120
+  ms apart, "Your free trial ends on <date>." when a trial in days started,
+  confetti once, success haptic; Continue closes the paywall with no
+  dismissal event (as the footer's Continue). Pending and failed purchases
+  keep the footer messages.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2428 passed**.
+- `premium_screen_test`: the comparison on the page after the plans and
+  "See plans"; V13b (first close asks, sad companion, no discount, "Continue
+  with free" logs `close_button`, a second paywall closes at once; the
+  primary starts the purchase); success opens PW05 (end date with a trial,
+  none without) and its Continue fires onDone and returns, with no
+  `paywall_dismissed`. `l10n_layout_test` reads the table without a toggle.
+- Simulator (gallery, the debug fixture offering): V13, V13a, V13c, V13b,
+  PW05.
+
+Decisions:
+- **D8-1 The comparison is always on the page** (§1.7 "13 → 13a → 13c");
+  the 1.2.0 "Compare Free & Premium" toggle is removed.
+- **D8-2 V13b once per app session** (a static flag; a new launch asks
+  again), and only when the trial button would work (an offer loaded).
+- **D8-3 The trial timeline names no reminder**: the app sends no
+  notifications (N01–N03 are out of this run), so it says only what is
+  true — today unlocks, day N the plan starts unless cancelled.
+- **D8-4 The headline keeps the 1.2.0 line when no name is stored**; with a
+  name it is the board's personal line.
+
+Not done / gaps:
+- The plans do not enter from below on scroll, the table rows do not
+  appear 40 ms apart, and the "See plans" arrow does not nudge.
