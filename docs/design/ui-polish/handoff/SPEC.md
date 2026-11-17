@@ -1,4 +1,6 @@
-# GrammarLens UI polish — design specification (final, v9, 2026-11-17)
+# GrammarLens UI polish — design specification (final, v10, 2026-11-17)
+
+v10 (after the owner's first device test): §1.14–§1.16, V05, V05b, V24, the new V24f, V24s, V13r and PW05r.
 
 The design was made on a claude.ai design canvas ("GrammarLens — Tüm Ekranlar
 ve Senaryolar", page "Yeni tasarım — gruplar"). This folder is a complete,
@@ -82,6 +84,19 @@ Reading the boards:
 12. The goal choice (V05) is stored only; it does not change content. Copy must
     not promise personalised questions.
 13. No new packages, no new analytics events, no new data collected.
+14. **Goal options: four** (V05): Exam prep, Work, School & university (new,
+    stored as `school`; user property `learning_goal` gains the value
+    `school`), Everyday English. Still stored only; it changes no content.
+15. **Free users' rest scene leads to Premium** (V24f, flow V24s): the same
+    camp, but the sheet shows the user's own weak spot of the day, a strip of
+    1 used + 4 locked tickets and one action, "Wake Fox up · 7 days free",
+    which wakes the companion and opens the contextual paywall (V13r). After a
+    trial starts, PW05r sends the user straight into that weak spot's practice.
+    The paywall never opens by itself. Premium users keep the plain V24.
+    Copy never promises faster climbing (steps come only from the Daily Test).
+16. **Getting ready lasts at least 4 s** (V05b): each stop takes at least
+    1.2 s, then 0.6 s of celebration; the bar still never passes a stop before
+    its work has finished.
 
 ## 2. Scope
 
@@ -217,7 +232,9 @@ types, R10 leave) → V10 Results → V11 Welcome badge → V12 First step on th
 mountain → V13 Paywall (13a, 13c, 13b on close) → Home (V14).
 
 Later days: V15 (Home, test waiting) → Daily Test → Home (V14, done) → Review
-(V16 …) → practice (R01 …) → rest scene (V24) when every daily right is used.
+(V16 …) → practice (R01 …) → rest scene when every daily right is used
+(V24 for Premium; V24f for free users, which can lead to Premium: V24s → V13r
+→ PW05r → practice).
 
 ## 5. Screens
 
@@ -340,8 +357,12 @@ most 4 Hz); Continue goes from disabled to active in 200 ms once a name is
 entered.
 Haptics: Continue: light.
 
-**V05-Goal — big cards, the buddy reacts.** The app's three goals as large
-cards: Exam prep, Work, Everyday English. The selected card gets a navy frame
+**V05-Goal — big cards, the buddy reacts.** Four goals as large cards:
+Exam prep ("IELTS, TOEFL or another English exam"), Work ("Emails, reports
+and professional English"), School & university ("Homework, essays and
+academic writing", book icon, purple tile #EFE6FB / #5B3BA8), Everyday English
+("Write with confidence every day"). Every place that lists or edits the goal
+shows all four. The selected card gets a navy frame
 and lifts, the companion pops out of its corner in the cheer pose with a
 4-piece confetti burst, and a short reaction line appears inside the card
 ("Work it is! I'll cheer you on."). Progress bar on top ("2 of 3"), "Skip for
@@ -362,11 +383,11 @@ its bubble names the goal ("Work English, here we come!"); rays turn, clouds
 drift, sparkles glint; at 100 confetti bursts from the flag. A "Your climb"
 card at the bottom reflects the choices (name, buddy, goal, this month's
 mountain and its step count, "5 questions a day").
-Behaviour (§1.6): each task owns one third; while a task runs the bar eases
-towards its stop and never passes it until the task has finished. Total at
-least 1.8 s so it can be read; if the work is fast it finishes without
-artificial waiting beyond that; past 8 s show the R11 error pattern with
-"Try again". Then V06 after 600 ms.
+Behaviour (§1.6, §1.16): each task owns one third; while a task runs the bar
+eases towards its stop and never passes it until the task has finished. Each
+stop takes at least 1.2 s, so the screen shows for at least 4 s; if a task
+is slower, the bar waits at its stop with the companion thinking; past 8 s
+show the R11 error pattern with "Try again". Then V06 after 600 ms.
 Motion: stop reached: check pops (easeOutBack), its row goes from faded to
 full colour; companion inspect → cheer cross-fade 200 ms + hop; chips enter
 120 ms apart; 6 confetti pieces from the flag at 100.
@@ -422,7 +443,8 @@ Haptics: arrival: light; "Step 1 of 30": success.
 
 **V12b-ClimbStoryboard** — the three key frames of V12 (wide, close, wide).
 
-**V24-DayComplete — rest scene.** Shown only per §1.8. The camp at the
+**V24-DayComplete — rest scene (Premium).** Shown only per §1.8, to Premium
+users once 5/5 sessions are used. Free users get V24f instead. The camp at the
 companion's own step: tent behind, campfire in front (logs image; the flame is
 drawn on top of the logs, its base in the middle of the pile), warm ground
 light, rising sparks, the companion asleep (sleep pose + Zzz), "See you
@@ -432,6 +454,39 @@ Motion: two flame layers flicker in opposite phase (0.5 s and 0.38 s); sparks
 rise in 1.4 s; ground light breathes (1.6 s); Zzz 2.4 s; the countdown
 updates every minute.
 Haptics: none.
+
+**V24f-RestFree — rest scene for free users, bridging to Premium.** Same
+camp, with three changes:
+1. No "See you tomorrow" chip and no "Zzz": the sleeping companion has a
+   dream bubble instead ("FOX IS DREAMING OF…" + today's weak spot, three
+   small cloud dots from the head). No weak spot today → no dream bubble.
+2. The sheet header: moon, "All done for today", two small done ticks
+   (Daily Test 4/5, Free ticket used) and, right-aligned, the countdown to the
+   next free Daily Test.
+3. The Premium card (navy → #2A1E5C gradient, thin gold border, slow glint):
+   "PREMIUM" chip + "Not sleepy yet?", title "Keep practising today", a strip
+   of five mini tickets (1 used: dashed, grey, "USED"; 4 locked: orange with a
+   lock), "Free: 1 ticket a day · Premium: 5 a day", "Practise <weak spot> now,
+   with AI feedback on every answer." (no weak spot: "Pick any of the 5 topics
+   …" with the real topic count) and the orange button "Wake Fox up · 7 days
+   free" (the user's own companion name).
+Behaviour: free users only; the card is part of the page, never a modal; the
+paywall opens only from the button, with paywall source `rest_scene` on the
+existing `paywall_viewed` event. The board's "Remind me tomorrow" row belongs
+to the separate notifications task: leave it out on this branch.
+Motion: dream dots appear one by one (200 ms apart), the bubble floats
+(3.2 s); the Premium card slides up 300 ms after the scene; locked tickets pop
+60 ms apart; glint every 3.6 s.
+Haptics: none on open (the screen's one haptic rule); button: medium.
+
+**V24s-RestToPremium — the flow (storyboard).** 24f → tap "Wake Fox up" →
+the card glows, the fire grows (300 ms), the companion cross-fades sleep →
+wave (200 ms) and hops, the Zzz/dream fades, a bubble says "I'm awake! One
+more round?" → 600 ms later V13r rises from the bottom (450 ms spring) →
+trial starts → PW05r → that weak spot's practice (V18). Closing V13r (X):
+V13b once per session, then back to 24f and the companion falls asleep again
+(400 ms).
+Haptics: Wake Fox up: medium; the wake-up hop: light.
 
 **R04-MonthCard — month recap.** The finished month's mountain fills the card
 edge to edge (no blurred side fill); the trail with its gold dots; steps,
@@ -687,6 +742,19 @@ no discount; primary "Start my free trial", secondary "Continue with free"
 Motion: background dims in 200 ms; card pops (500 ms).
 Haptics: opens: light; Start: medium.
 
+**V13r-PaywallRest — the paywall opened from the rest scene.** The same
+paywall page (13 → 13a → 13c, same pinned CTA, price line and links); only the
+top changes: an evening camp strip (the month's dark background, the awake
+companion waving, the campfire), the "GRAMMARLENS PREMIUM" chip, title
+"<Hero> is wide awake, <name>.", subline "Keep practising today. Your free
+ticket is used, Premium adds 4 more.", a "PRACTISE IT NOW" card with today's
+weak spot ("saved today → right after your trial starts"), then benefits in
+this order: "5 practice sessions a day" (Today: 4 more. Every day after: 5.),
+"AI feedback on every answer", "All N grammar topics".
+Motion: continues from V24s (scene stays on top, page rises); companion
+waves, fire flickers; otherwise as V13.
+Haptics: CTA: medium; X: light (→ 13b).
+
 **PW05-PremiumOn — purchase done.** One celebration screen after a purchase or
 trial start: the companion cheers, the three unlocked things are listed, the
 trial's end date is written plainly. Pending and failed purchases keep the
@@ -696,6 +764,12 @@ Motion: rays turn, companion hops twice; benefits slide in from the side
 Haptics: screen opens: success.
 
 ### 5.8 Profile and settings
+
+**PW05r-PremiumOnRest — trial started from the rest scene.** PW05 with
+"<Hero> is ready. Let's go!", the third perk "4 more sessions today, 5 every
+day", and the button "Practise <weak spot>" that opens that weak spot's
+practice directly (V18), not Home. No weak spot: "Pick a topic" → R01.
+Motion and haptics: PW05.
 
 **V23-Profile — profile.** The companion on a coloured stage with a "Change"
 button (→ R06); a ribbon under it with the name and "Climbing with <Hero> ·
