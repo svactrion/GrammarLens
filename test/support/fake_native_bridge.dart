@@ -12,7 +12,7 @@ class FakeNativeBridge implements NativeBridge {
   String? initial;
   final files = <String, Uint8List>{};
   int reloads = 0;
-  bool available = true;
+  bool available = false;
   final _links = StreamController<String>.broadcast();
 
   void pushLink(String url) => _links.add(url);

@@ -31,6 +31,14 @@ import 'welcome_badge_rules.dart';
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
+  /// Called after a write that changes what the home-screen widgets or the
+  /// reminders show (TASK-widgets W3/W4): the Daily Test, practice, the
+  /// profile, the language, a reset. The app points it at
+  /// `DeviceSync.requestUpdate`; null otherwise.
+  static void Function()? onChanged;
+
+  void _changed() => onChanged?.call();
+
   static const _defaultDbName = 'grammar_lens.db';
   static const _dbVersion = 26;
 
@@ -824,6 +832,7 @@ class StorageService {
       {'id': 0, 'language': language.storageValue},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    _changed();
   }
 
   /// The latest AI-provider permission decision, or null if the user has never
@@ -919,6 +928,7 @@ class StorageService {
       ON CONFLICT(topic_id) DO UPDATE SET
         questions_answered = questions_answered + excluded.questions_answered
     ''', [topicId, questionsAnswered]);
+    _changed();
   }
 
   static String _todayKey() =>
@@ -950,6 +960,7 @@ class StorageService {
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
     ''', [_todayKey()]);
+    _changed();
   }
 
   /// How many free-tier "Practice this" sessions this device has started
@@ -981,6 +992,7 @@ class StorageService {
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
     ''', [_todayKey()]);
+    _changed();
   }
 
   String get currentDayKey => _todayKey();
@@ -1102,7 +1114,7 @@ class StorageService {
     final db = await _database;
     final setDay = day ?? _todayKey();
     final timestamp = completedAt ?? DateTime.now();
-    return db.transaction((txn) async {
+    final saved = await db.transaction((txn) async {
       final rows = await txn
           .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
       if (rows.isEmpty || rows.single['completed_at'] != null) return false;
@@ -1176,6 +1188,8 @@ class StorageService {
       );
       return true;
     });
+    _changed();
+    return saved;
   }
 
   /// Month boundaries use the same original local day keys as Daily Test.
@@ -1576,6 +1590,7 @@ class StorageService {
       profile.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    _changed();
   }
 
   /// Claims [key]: true for the first caller ever, false for every later one.
@@ -1661,6 +1676,7 @@ class StorageService {
     batch.delete('error_entries');
     batch.delete('topic_practice_stats');
     await batch.commit(noResult: true);
+    _changed();
   }
 
   /// Debug-only: deletes the saved profile so the app treats this like a

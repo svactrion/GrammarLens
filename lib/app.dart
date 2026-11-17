@@ -15,10 +15,12 @@ import 'screens/settings_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/app_link.dart';
 import 'services/claude_service.dart';
+import 'services/device_sync.dart';
 import 'services/medal_finalization.dart';
 import 'services/native_bridge.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
+import 'services/widget_sync.dart';
 import 'theme.dart';
 import 'utils/app_messenger.dart';
 import 'utils/debug_tools.dart';
@@ -86,6 +88,22 @@ class _GrammarLensAppState extends State<GrammarLensApp>
 
   /// Bumped by a `grammarlens://daily-test` link; Home opens the Daily Test.
   final ValueNotifier<int> _dailyTestLinks = ValueNotifier(0);
+
+  /// The widgets' payload (W3) and the reminder plan (W4), kept in step
+  /// with the app: at launch, on resume, and after every storage write that
+  /// changes them (`StorageService.onChanged`).
+  late final DeviceSync _deviceSync = DeviceSync([
+    WidgetSync(
+      storage: _storageService,
+      bridge: _bridge,
+      locale: _interfaceLocale,
+      clock: widget.clock,
+    ).run,
+  ]);
+
+  /// The locale the interface shows now (the widgets and reminders use it).
+  Locale _interfaceLocale() => effectiveAppLocale(
+      _language, WidgetsBinding.instance.platformDispatcher.locales);
   int _tabIndex = 0;
 
   /// The look of the last tab switch (`_switchTab`).
@@ -134,6 +152,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _loadLanguage();
     _loadProfile();
     unawaited(_linkRouter.start());
+    DeviceSync.current = _deviceSync;
+    StorageService.onChanged = DeviceSync.requestUpdate;
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
     if (ClimbDebugControls.available) {
       ClimbDebugControls.instance.addListener(_onDebugPlay);
@@ -148,6 +168,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     WidgetsBinding.instance.removeObserver(this);
     _linkRouter.dispose();
     _dailyTestLinks.dispose();
+    if (identical(DeviceSync.current, _deviceSync)) {
+      DeviceSync.current = null;
+      StorageService.onChanged = null;
+    }
     super.dispose();
   }
 
@@ -196,6 +220,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     if (state == AppLifecycleState.resumed) {
       _analyticsService.appResumed();
       _finalizeMedalMonths();
+      // A new day or month while away: the widgets and reminders follow.
+      _deviceSync.request();
     }
   }
 
@@ -205,7 +231,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// locale on its own; `ui_language` follows too.
   @override
   void didChangeLocales(List<Locale>? locales) {
-    if (_fixedLocale == null) _reportUiLanguage(locales);
+    if (_fixedLocale == null) {
+      _reportUiLanguage(locales);
+      // The device's language is the interface's: widgets and reminders too.
+      _deviceSync.request();
+    }
   }
 
   /// Launch only, never on resume: old unfinished Daily Test sets
@@ -256,6 +286,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
         _profile = profile;
         _profileLoading = false;
       });
+      _deviceSync.request();
     }
   }
 
@@ -302,6 +333,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   void _setLanguage(AppLanguage language) {
     if (language == _language) return;
     setState(() => _language = language);
+    // Also after the stored write (StorageService.onChanged); this one
+    // covers a storage failure.
+    _deviceSync.request();
     unawaited(_storageService.setLanguage(language).catchError((_) {}));
     _reportUiLanguage();
   }
@@ -450,6 +484,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
                       dayZeroCompleted = false,
                       firstClimbShown = false}) =>
                   setState(() {
+                _deviceSync.request();
                 _profile = profile;
                 _initialPendingClimb = pendingClimb;
                 _offerDay0Paywall = dayZeroCompleted;
