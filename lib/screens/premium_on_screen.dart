@@ -5,12 +5,21 @@ import '../app_colors.dart';
 import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../motion.dart';
+import '../services/storage_service.dart';
 import '../theme.dart';
 import '../utils/haptics.dart';
 import '../widgets/companion_view.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/pressable_button.dart';
 import '../widgets/rays.dart';
+
+/// PW05r's difference from PW05: a trial started from the free users'
+/// rest scene (SPEC §1.15).
+class PremiumOnRest {
+  /// Today's weak spot, or null (the button then opens the topics).
+  final String? weakSpot;
+  const PremiumOnRest({this.weakSpot});
+}
 
 /// PW05: one celebration screen after a purchase or a trial start. The
 /// companion cheers (two hops) under turning rays, the three unlocked
@@ -26,12 +35,19 @@ class PremiumOnScreen extends StatefulWidget {
   /// When the free trial ends, or null when no trial was started.
   final DateTime? trialEnds;
 
+  /// PW05r (fix round 2, item 11): "<Hero> is ready. Let's go!", the third
+  /// perk "N more sessions today, M every day", and a button that opens
+  /// today's weak spot's practice ("Practise <weak spot>"; without one,
+  /// "Pick a topic"). It pops with true like Continue.
+  final PremiumOnRest? rest;
+
   const PremiumOnScreen({
     super.key,
     required this.hero,
     required this.topics,
     required this.sessions,
     this.trialEnds,
+    this.rest,
   });
 
   static const continueKey = ValueKey('premium_on_continue');
@@ -53,11 +69,23 @@ class _PremiumOnScreenState extends State<PremiumOnScreen> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final reduced = AppMotion.reduced(context);
-    final items = [
-      (Icons.menu_book_rounded, l10n.paywallOnTopics(widget.topics)),
-      (Icons.bolt_rounded, l10n.paywallOnSessions(widget.sessions)),
-      (Icons.auto_awesome_rounded, l10n.paywallOnFeedback),
-    ];
+    final rest = widget.rest;
+    const free = StorageService.freeDailyPracticeLimit;
+    final items = rest == null
+        ? [
+            (Icons.menu_book_rounded, l10n.paywallOnTopics(widget.topics)),
+            (Icons.bolt_rounded, l10n.paywallOnSessions(widget.sessions)),
+            (Icons.auto_awesome_rounded, l10n.paywallOnFeedback),
+          ]
+        : [
+            (Icons.chat_bubble_outline_rounded, l10n.paywallOnFeedback),
+            (Icons.menu_book_rounded, l10n.paywallOnTopics(widget.topics)),
+            (
+              Icons.track_changes_rounded,
+              l10n.paywallOnRestSessions(
+                  widget.sessions - free, widget.sessions)
+            ),
+          ];
     final ends = widget.trialEnds;
     return Scaffold(
       backgroundColor: c.navyDeep,
@@ -111,7 +139,11 @@ class _PremiumOnScreenState extends State<PremiumOnScreen> {
                             const SizedBox(height: 14),
                             Semantics(
                               header: true,
-                              child: Text(l10n.paywallOnTitle,
+                              child: Text(
+                                  rest == null
+                                      ? l10n.paywallOnTitle
+                                      : l10n.paywallOnRestTitle(
+                                          widget.hero.name(l10n)),
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.headlineMedium!
                                       .withWeight(FontWeight.w900)
@@ -177,7 +209,13 @@ class _PremiumOnScreenState extends State<PremiumOnScreen> {
                 const SizedBox(height: 12),
                 PressableButton(
                   key: PremiumOnScreen.continueKey,
-                  label: l10n.commonContinue,
+                  label: rest == null
+                      ? l10n.commonContinue
+                      : rest.weakSpot == null
+                          ? l10n.paywallOnRestPickTopic
+                          : l10n.paywallOnRestPractise(rest.weakSpot!),
+                  trailingIcon:
+                      rest == null ? null : Icons.arrow_forward_rounded,
                   tone: ButtonTone.orange,
                   haptic: ButtonHaptic.medium,
                   onPressed: () => Navigator.of(context).pop(true),

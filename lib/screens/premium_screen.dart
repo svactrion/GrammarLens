@@ -12,9 +12,11 @@ import '../utils/haptics.dart';
 import '../widgets/companion_dialog.dart';
 import '../widgets/companion_view.dart';
 import '../widgets/pressable_button.dart';
+import '../widgets/rest_scene.dart';
 import 'premium_on_screen.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
+import '../models/climb_theme.dart';
 import '../models/practice_length.dart';
 import '../models/user_profile.dart';
 import '../services/analytics_service.dart';
@@ -75,6 +77,13 @@ class PremiumScreen extends StatefulWidget {
   /// line, keeping the headline identical across entry points.
   final String? sourceContext;
 
+  /// V13r (SPEC §1.15): opened from the free users' rest scene. Only the
+  /// top changes (the evening camp with the awake companion, "<Hero> is
+  /// wide awake", today's weak spot, the benefits in V13r's order); after a
+  /// trial starts PW05r sends the user straight into that practice: the
+  /// screen pops with `true` when they choose it.
+  final PaywallRest? rest;
+
   PremiumScreen({
     super.key,
     required this.storageService,
@@ -83,6 +92,7 @@ class PremiumScreen extends StatefulWidget {
     SubscriptionService? subscriptionService,
     this.onDone,
     this.sourceContext,
+    this.rest,
   }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
   // The headline, the same from every entry point: `paywallHeadline`.
@@ -98,6 +108,11 @@ class PremiumScreen extends StatefulWidget {
   static const selectedPlanKey = ValueKey('premium_selected_plan');
   static const timelineKey = ValueKey('premium_trial_timeline');
   static const compareKey = ValueKey('premium_compare');
+
+  /// V13r: the rest-scene top, its awake companion and its weak spot card.
+  static const restTopKey = ValueKey('premium_rest_top');
+  static const restCompanionKey = ValueKey('premium_rest_companion');
+  static const restSpotKey = ValueKey('premium_rest_spot');
 
   /// V13c (fix round 2): the one-piece Premium column, the companion beside
   /// the heading, and the green note under the table.
@@ -352,12 +367,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
           trialEnds: trialDays == null
               ? null
               : DateTime.now().add(Duration(days: trialDays)),
+          rest: widget.rest == null
+              ? null
+              : PremiumOnRest(weakSpot: widget.rest!.weakSpot),
         ),
         transitionsBuilder: (_, a, __, child) =>
             FadeTransition(opacity: a, child: child),
       ),
     );
-    if (done == true && mounted) _dismiss();
+    if (done == true && mounted) {
+      _practiseNext = widget.rest != null;
+      _dismiss();
+    }
   }
 
   Future<void> _restore() async {
@@ -389,8 +410,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
       );
     }
     widget.onDone?.call();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(_practiseNext ? true : null);
   }
+
+  /// PW05r's "Practise <weak spot>" was chosen (V13r only): the rest
+  /// scene opens that practice once this screen has closed.
+  bool _practiseNext = false;
 
   String get _supportingText {
     final source = widget.sourceContext?.trim();
@@ -455,27 +480,38 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   children: [
                     // Decorative, and 133 pt a short screen (an iPhone SE)
                     // cannot spare: dropped under 700 pt tall.
-                    if (!shortScreen) ...[
-                      _AvatarHero(centerAvatar: _userAvatar),
-                      const SizedBox(height: 9),
-                    ],
-                    const Center(child: _PremiumLabel()),
-                    const SizedBox(height: 12),
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        _userName.trim().isEmpty
-                            ? context.l10n.paywallHeadline
-                            : context.l10n
-                                .paywallHeadlineName(_userName.trim()),
-                        textAlign: TextAlign.center,
-                        style: _headlineStyle(theme, size.width),
+                    if (widget.rest case final rest?)
+                      _RestTop(
+                        rest: rest,
+                        hero: _userAvatar,
+                        name: _userName.trim(),
+                        trial: _trialDays(selectedTerms?.trial) != null,
+                        headlineStyle: _headlineStyle(theme, size.width),
+                        compact: shortScreen,
+                      )
+                    else ...[
+                      if (!shortScreen) ...[
+                        _AvatarHero(centerAvatar: _userAvatar),
+                        const SizedBox(height: 9),
+                      ],
+                      const Center(child: _PremiumLabel()),
+                      const SizedBox(height: 12),
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          _userName.trim().isEmpty
+                              ? context.l10n.paywallHeadline
+                              : context.l10n
+                                  .paywallHeadlineName(_userName.trim()),
+                          textAlign: TextAlign.center,
+                          style: _headlineStyle(theme, size.width),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    _SupportingLine(text: _supportingText),
-                    const SizedBox(height: 21),
-                    const _BenefitsCard(),
+                      const SizedBox(height: 8),
+                      _SupportingLine(text: _supportingText),
+                      const SizedBox(height: 21),
+                      const _BenefitsCard(),
+                    ],
                     const SizedBox(height: 8),
                     // V13: no price boxes on the first view; "See plans"
                     // scrolls to them (13 → 13a → 13c on one page).
@@ -962,6 +998,228 @@ class _AvatarHero extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What V13r (the paywall opened from the free users' rest scene, SPEC
+/// §1.15) needs to draw its top: the month's camp and today's weak spot
+/// (null when there is none).
+class PaywallRest {
+  final ClimbTheme theme;
+  final String? weakSpot;
+
+  const PaywallRest({required this.theme, this.weakSpot});
+}
+
+/// The free trial, in days, the paywall would promise on its preselected
+/// annual plan: only when the store has one and says this user is eligible,
+/// the paywall's own rule; null otherwise (and on any error). V24f's button
+/// says "· N days free" only with it.
+Future<int?> paywallTrialDays(SubscriptionService service) async {
+  try {
+    final offering = await service.getOfferings();
+    final package = offering?.annual ?? offering?.monthly;
+    final intro = package?.storeProduct.introductoryPrice;
+    if (package == null || intro == null) return null;
+    final id = package.storeProduct.identifier;
+    final eligibility = await service.checkTrialEligibility([id]);
+    if (eligibility[id] != TrialEligibility.eligible) return null;
+    return _trialDays(_trialDurationInDays(intro));
+  } catch (_) {
+    return null;
+  }
+}
+
+/// V13r's top (fix round 2, item 11): an evening camp strip (the month's
+/// night art, the awake companion waving, the campfire), the "GRAMMARLENS
+/// PREMIUM" chip, "<Hero> is wide awake, <name>.", the subline, a
+/// "PRACTISE IT NOW" card with today's weak spot, then the benefits in
+/// V13r's order. The rest of the page (plans, table, CTA) is V13's.
+class _RestTop extends StatelessWidget {
+  final PaywallRest rest;
+  final Avatar hero;
+  final String name;
+  final bool trial;
+  final TextStyle headlineStyle;
+  final bool compact;
+
+  const _RestTop({
+    required this.rest,
+    required this.hero,
+    required this.name,
+    required this.trial,
+    required this.headlineStyle,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    const free = StorageService.freeDailyPracticeLimit;
+    const sessions = StorageService.dailySessionLimit;
+    final heroName = hero.name(l10n);
+    final lengths = _joinWithOr(
+        PracticeLength.values.map((l) => '${l.questionCount}').toList(), l10n);
+    final spot = rest.weakSpot;
+    Widget benefit(IconData icon, String title, String body) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                  color: c.sky, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, size: 20, color: c.onSky),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: theme.textTheme.titleSmall!
+                          .withWeight(FontWeight.w900)
+                          .copyWith(fontSize: 16, color: c.text)),
+                  Text(body,
+                      style:
+                          theme.textTheme.bodyMedium!.copyWith(color: c.muted)),
+                ],
+              ),
+            ),
+          ]),
+        );
+    return Column(
+      key: PremiumScreen.restTopKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The evening camp, the companion awake (V24s continues here).
+        ExcludeSemantics(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: SizedBox(
+              height: compact ? 120 : 160,
+              child: Stack(fit: StackFit.expand, children: [
+                Image.asset(rest.theme.backgroundFor(Brightness.dark),
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(0, .55),
+                    excludeFromSemantics: true),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        c.nightTop.withValues(alpha: .25),
+                        c.nightBottom.withValues(alpha: .55),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: const Alignment(-.1, 1.15),
+                  child: CompanionView(
+                      key: PremiumScreen.restCompanionKey,
+                      hero: hero,
+                      mood: CompanionMood.wave,
+                      size: compact ? 96 : 120,
+                      decorative: true),
+                ),
+                const Align(
+                  alignment: Alignment(.42, .95),
+                  child: SizedBox(width: 50, height: 64, child: Campfire()),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Center(child: _PremiumLabel()),
+        const SizedBox(height: 10),
+        Semantics(
+          header: true,
+          child: Text(
+            name.isEmpty
+                ? l10n.paywallRestTitleNoName(heroName)
+                : l10n.paywallRestTitle(heroName, name),
+            textAlign: TextAlign.center,
+            style: headlineStyle,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.paywallRestSubline(sessions - free),
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge!.copyWith(color: c.muted),
+        ),
+        if (spot != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            key: PremiumScreen.restSpotKey,
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            decoration: lipCard(c, radius: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.paywallRestPractiseNow,
+                    style: theme.textTheme.labelMedium!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.navy, letterSpacing: 1.2)),
+                const SizedBox(height: 6),
+                Text(spot,
+                    style: theme.textTheme.titleLarge!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.text)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: c.redSoft,
+                          borderRadius: BorderRadius.circular(999)),
+                      child: Text(l10n.paywallRestSavedToday,
+                          style: theme.textTheme.labelMedium!
+                              .withWeight(FontWeight.w800)
+                              .copyWith(color: c.onRedSoft)),
+                    ),
+                    Text(
+                        trial
+                            ? l10n.paywallRestAfterTrial
+                            : l10n.paywallRestAfterPremium,
+                        style: theme.textTheme.labelLarge!
+                            .withWeight(FontWeight.w800)
+                            .copyWith(color: c.navy)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: lipCard(c, radius: 22),
+          child: Column(children: [
+            benefit(
+                Icons.track_changes_rounded,
+                l10n.paywallRestSessionsTitle(sessions),
+                l10n.paywallRestSessionsBody(sessions - free, sessions)),
+            benefit(Icons.chat_bubble_outline_rounded,
+                l10n.paywallRestFeedbackTitle, l10n.paywallRestFeedbackBody),
+            benefit(
+                Icons.menu_book_rounded,
+                l10n.paywallRestTopicsTitle(practiceTopics().length),
+                l10n.paywallRestTopicsBody(lengths)),
+          ]),
+        ),
+      ],
     );
   }
 }

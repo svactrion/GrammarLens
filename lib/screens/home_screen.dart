@@ -28,6 +28,7 @@ import '../services/monthly_medal_rules.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../theme.dart';
+import '../motion.dart';
 import '../utils/greeting.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
@@ -153,6 +154,9 @@ class HomeScreen extends StatefulWidget {
   /// The Daily Test card, for tests that measure or tap it.
   static const capsuleKey = ValueKey('home_score_capsule');
   static const restSceneKey = ValueKey('home_rest_scene');
+
+  /// PW05r's practice, opened from the rest scene's paywall (tests).
+  static const restPractiseKey = ValueKey('home_rest_practise');
   static const ticketKey = ValueKey('home_ticket');
   static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
@@ -173,6 +177,11 @@ class _HomeScreenState extends State<HomeScreen>
   // fail-closed default (never grant access nobody paid for while a check
   // is still in flight).
   bool _hasFullAccess = false;
+
+  /// V24f's "· N days free": the store's trial on the paywall's preselected
+  /// plan for this user, read once the free rest scene shows.
+  int? _restTrialDays;
+  bool _restTrialRequested = false;
 
   // One service for everything Daily Test on this Home (opening the test, its
   // result, the completion): its single-flight generation and the next day's
@@ -1032,13 +1041,14 @@ class _HomeScreenState extends State<HomeScreen>
         .then((_) => _refreshAfterDailyTest());
   }
 
-  void _openTopicPractice(BuildContext context) {
+  void _openTopicPractice(BuildContext context, {bool afterPurchase = false}) {
     // Gated by entitlement (PRD v2 §12.2/§12.3): free tier doesn't include
     // Topic Practice at all — a locked tap goes to the Premium screen
     // instead of ever reaching the real screen, same "no fake it"
     // reasoning as the daily session cap already applies to generation
-    // itself.
-    if (!_hasFullAccess) {
+    // itself. Right after a purchase (PW05r) the screen checks the
+    // entitlement itself; Home's flag may not have caught up yet.
+    if (!_hasFullAccess && !afterPurchase) {
       _openPremium(context);
       return;
     }
@@ -1086,6 +1096,68 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         )
         .then((_) => _loadWeakSpots());
+  }
+
+  /// Today's weak spot for the free rest scene (V24f): the most frequent.
+  WeakSpot? get _restWeakSpot => _weakSpots.isEmpty ? null : _weakSpots.first;
+
+  /// V24s → V13r: the paywall rises from the bottom (450 ms spring) with
+  /// the rest scene's top; source `rest_scene`. After a trial, PW05r's
+  /// "Practise <weak spot>" opens that weak spot's practice straight away
+  /// (V18), or the topics without one. Closing it returns to the scene.
+  Future<void> _openRestPaywall(BuildContext context) async {
+    widget.analyticsService.modeSelected(AnalyticsService.modePremium);
+    final spot = _restWeakSpot;
+    final reduced = AppMotion.reduced(context);
+    final practise = await Navigator.of(context).push<bool>(
+      PageRouteBuilder<bool>(
+        transitionDuration: reduced ? AppMotion.fast : AppMotion.sheet,
+        reverseTransitionDuration: reduced ? AppMotion.fast : AppMotion.base,
+        pageBuilder: (_, __, ___) => PremiumScreen(
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourceRestScene,
+          subscriptionService: widget.subscriptionService,
+          rest: PaywallRest(
+            theme: _climbTheme,
+            weakSpot: spot == null ? null : humanizeSlug(spot.errorType),
+          ),
+        ),
+        transitionsBuilder: (_, animation, __, child) => reduced
+            ? FadeTransition(opacity: animation, child: child)
+            : SlideTransition(
+                position: Tween(begin: const Offset(0, 1), end: Offset.zero)
+                    .animate(CurvedAnimation(
+                        parent: animation,
+                        curve: AppMotion.spring,
+                        reverseCurve: AppMotion.exit)),
+                child: child,
+              ),
+      ),
+    );
+    if (practise != true || !mounted || !context.mounted) return;
+    if (spot == null) {
+      _openTopicPractice(context, afterPurchase: true);
+      return;
+    }
+    final topic = kTopics.firstWhere((t) => t.id.name == spot.topicId,
+        orElse: () => kTopics.first);
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WeakSpotDetailScreen(
+          key: HomeScreen.restPractiseKey,
+          topic: topic,
+          spot: spot,
+          hero: widget.avatar,
+          claudeService: widget.claudeService,
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          subscriptionService: widget.subscriptionService,
+          startPractice: true,
+        ),
+      ),
+    );
+    if (mounted) _loadWeakSpots();
   }
 
   /// Single entry point to the merged Premium screen (PRD v2 §13.1) —
@@ -1166,6 +1238,12 @@ class _HomeScreenState extends State<HomeScreen>
     // V24 (SPEC §1.8): once every daily right is used, the rest scene
     // replaces Home's content.
     if (_restDay && _climbSteps != null && completion != null) {
+      if (!_hasFullAccess && !_restTrialRequested) {
+        _restTrialRequested = true;
+        unawaited(paywallTrialDays(widget.subscriptionService).then((days) {
+          if (mounted) setState(() => _restTrialDays = days);
+        }));
+      }
       final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
       return BrandScaffold(
         isTabRoot: true,
@@ -1184,12 +1262,28 @@ class _HomeScreenState extends State<HomeScreen>
             name: widget.userName,
             clock: widget.clock,
             capsule: capsule,
-            testLine: l10n.restTestLine(completion.correct,
-                completion.results.length, todayPoints ?? 0),
+            testLine: _hasFullAccess
+                ? l10n.restTestLine(completion.correct,
+                    completion.results.length, todayPoints ?? 0)
+                // V24f's done tick: "Daily Test 4/5".
+                : l10n.restDailyTestDone(
+                    completion.correct, completion.results.length),
             practiceLine: _hasFullAccess
                 ? l10n.restSessionsLine(
                     _sessionsToday, StorageService.dailySessionLimit)
                 : l10n.restTicketUsed,
+            // V24f (SPEC §1.15): free users' rest scene leads to Premium;
+            // Premium users keep V24.
+            offer: _hasFullAccess
+                ? null
+                : RestOffer(
+                    weakSpot: _restWeakSpot == null
+                        ? null
+                        : humanizeSlug(_restWeakSpot!.errorType),
+                    trialDays: _restTrialDays,
+                    topics: practiceTopics().length,
+                    onWake: () => _openRestPaywall(context),
+                  ),
           ),
         ],
       );

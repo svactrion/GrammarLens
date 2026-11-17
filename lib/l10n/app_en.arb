@@ -4401,5 +4401,236 @@
   "commonUndo": "Undo",
   "@commonUndo": {
     "description": "A snackbar's undo action (SY02), e.g. after 'Name saved'."
+  },
+  "restDreamingOf": "{hero} is dreaming of…",
+  "@restDreamingOf": {
+    "description": "V24f: the dream bubble's label over today's weak spot (shown in capitals).",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "restTodaysWeakSpot": "today’s weak spot",
+  "@restTodaysWeakSpot": {
+    "description": "V24f: under the weak spot in the dream bubble."
+  },
+  "restDailyTestDone": "Daily Test {correct}/{total}",
+  "@restDailyTestDone": {
+    "description": "V24f: the sheet header's first done tick.",
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "restFreeTicketUsed": "Free ticket used",
+  "@restFreeTicketUsed": {
+    "description": "V24f: the sheet header's second done tick."
+  },
+  "restNextFreeTest": "next free test",
+  "@restNextFreeTest": {
+    "description": "V24f: under the countdown to midnight."
+  },
+  "restNotSleepy": "Not sleepy yet?",
+  "@restNotSleepy": {
+    "description": "V24f: beside the PREMIUM chip on the Premium card."
+  },
+  "restKeepPractising": "Keep practising today",
+  "@restKeepPractising": {
+    "description": "V24f: the Premium card's title."
+  },
+  "restTicketUsedStub": "USED",
+  "@restTicketUsedStub": {
+    "description": "V24f: on the used mini ticket (capitals)."
+  },
+  "restTicketLocked": "Locked",
+  "@restTicketLocked": {
+    "description": "V24f: VoiceOver for a locked mini ticket."
+  },
+  "restFreeVsPremium": "Free: {free} ticket a day · Premium: {premium} a day",
+  "@restFreeVsPremium": {
+    "description": "V24f: under the ticket strip.",
+    "placeholders": {
+      "free": {
+        "type": "int"
+      },
+      "premium": {
+        "type": "int"
+      }
+    }
+  },
+  "restPractiseSpot": "Practise {spot} now, with AI feedback on every answer.",
+  "@restPractiseSpot": {
+    "description": "V24f: the Premium card's line with today's weak spot (topic names stay English).",
+    "placeholders": {
+      "spot": {
+        "type": "String"
+      }
+    }
+  },
+  "restPickAnyTopic": "Pick any of the {count} topics, with AI feedback on every answer.",
+  "@restPickAnyTopic": {
+    "description": "V24f: the Premium card's line when there is no weak spot today.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restWakeUp": "Wake {hero} up",
+  "@restWakeUp": {
+    "description": "V24f: the Premium card's button when no free trial applies.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "restWakeUpTrial": "Wake {hero} up · {days} days free",
+  "@restWakeUpTrial": {
+    "description": "V24f: the Premium card's button with the store's free trial.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "restAwake": "I’m awake! One more round?",
+  "@restAwake": {
+    "description": "V24s: the companion's bubble after waking up."
+  },
+  "paywallRestTitle": "{hero} is wide awake, {name}.",
+  "@paywallRestTitle": {
+    "description": "V13r: the paywall's title when opened from the rest scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestTitleNoName": "{hero} is wide awake.",
+  "@paywallRestTitleNoName": {
+    "description": "V13r: the title without a name.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestSubline": "Keep practising today. Your free ticket is used, Premium adds {more} more.",
+  "@paywallRestSubline": {
+    "description": "V13r: under the title.",
+    "placeholders": {
+      "more": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestPractiseNow": "PRACTISE IT NOW",
+  "@paywallRestPractiseNow": {
+    "description": "V13r: the weak spot card's label (capitals)."
+  },
+  "paywallRestSavedToday": "saved today",
+  "@paywallRestSavedToday": {
+    "description": "V13r: the chip under today's weak spot."
+  },
+  "paywallRestAfterTrial": "→ right after your trial starts",
+  "@paywallRestAfterTrial": {
+    "description": "V13r: beside 'saved today' when a free trial applies."
+  },
+  "paywallRestAfterPremium": "→ right after Premium starts",
+  "@paywallRestAfterPremium": {
+    "description": "V13r: beside 'saved today' without a free trial."
+  },
+  "paywallRestSessionsTitle": "{count} practice sessions a day",
+  "@paywallRestSessionsTitle": {
+    "description": "V13r benefit 1.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestSessionsBody": "Today: {today} more. Every day after: {count}.",
+  "@paywallRestSessionsBody": {
+    "description": "V13r benefit 1's line.",
+    "placeholders": {
+      "today": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestFeedbackTitle": "AI feedback on every answer",
+  "@paywallRestFeedbackTitle": {
+    "description": "V13r benefit 2."
+  },
+  "paywallRestFeedbackBody": "On every topic you practise.",
+  "@paywallRestFeedbackBody": {
+    "description": "V13r benefit 2's line."
+  },
+  "paywallRestTopicsTitle": "All {count} grammar topics",
+  "@paywallRestTopicsTitle": {
+    "description": "V13r benefit 3.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestTopicsBody": "Sessions of {lengths} questions.",
+  "@paywallRestTopicsBody": {
+    "description": "V13r benefit 3's line; lengths like '3, 5 or 10'.",
+    "placeholders": {
+      "lengths": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestTitle": "{hero} is ready. Let’s go!",
+  "@paywallOnRestTitle": {
+    "description": "PW05r: the title after a trial started from the rest scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestSessions": "{today} more sessions today, {count} every day",
+  "@paywallOnRestSessions": {
+    "description": "PW05r: the third unlocked thing.",
+    "placeholders": {
+      "today": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallOnRestPractise": "Practise {spot}",
+  "@paywallOnRestPractise": {
+    "description": "PW05r: the button that opens today's weak spot's practice.",
+    "placeholders": {
+      "spot": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestPickTopic": "Pick a topic",
+  "@paywallOnRestPickTopic": {
+    "description": "PW05r: the button when there is no weak spot (opens the topics)."
   }
 }

@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'support/recording_analytics_sink.dart';
+import 'package:grammar_lens/utils/text_format.dart';
+import 'package:grammar_lens/screens/premium_on_screen.dart';
+import 'package:grammar_lens/widgets/rest_scene.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -73,7 +78,31 @@ class _FakeSubscriptionService extends SubscriptionService {
   bool hasAccess;
   AccessListener? _listener;
 
-  _FakeSubscriptionService({this.hasAccess = false});
+  /// Fix round 2 (V24f → V13r → PW05r): an offering with a 7-day trial,
+  /// eligible, and a purchase that succeeds. Null: the real calls (they
+  /// never answer in a widget test).
+  final Offering? offering;
+  int purchases = 0;
+
+  _FakeSubscriptionService({this.hasAccess = false, this.offering});
+
+  @override
+  Future<Offering?> getOfferings() {
+    final o = offering;
+    return o == null ? super.getOfferings() : Future.value(o);
+  }
+
+  @override
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+          List<String> productIds) async =>
+      {for (final id in productIds) id: TrialEligibility.eligible};
+
+  @override
+  Future<PurchaseOutcome> purchasePackage(Package package) async {
+    purchases++;
+    emitAccessChange(true);
+    return PurchaseOutcome.success;
+  }
 
   @override
   Future<bool> get hasFullAccess async => hasAccess;
@@ -1016,8 +1045,10 @@ void main() {
       expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
       expect(find.byKey(HomeScreen.dailyTestCardKey), findsNothing);
       expect(find.text('All done for today'), findsOneWidget);
-      expect(find.text('4/5 · +9 points'), findsOneWidget);
-      expect(find.text('Ticket used'), findsOneWidget);
+      // Fix round 2: free users get V24f (SPEC §1.15).
+      expect(find.text('Daily Test 4/5'), findsOneWidget);
+      expect(find.text('Free ticket used'), findsOneWidget);
+      expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
       expect(find.byKey(HomeScreen.capsuleKey), findsOneWidget);
     });
 
@@ -1034,6 +1065,147 @@ void main() {
       expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
       const limit = StorageService.dailySessionLimit;
       expect(find.text('$limit/$limit sessions'), findsOneWidget);
+      // Premium users keep V24: no Premium card, no dream; the Zzz and
+      // "See you tomorrow".
+      expect(find.byKey(RestScene.premiumCardKey), findsNothing);
+      expect(find.byKey(RestScene.dreamKey), findsNothing);
+      expect(find.byKey(RestScene.seeYouKey), findsOneWidget);
+    });
+
+    group(
+        'fix round 2, item 11: the free rest scene leads to Premium '
+        '(V24f → V24s → V13r → PW05r)', () {
+      Future<(RecordingAnalyticsSink, _FakeSubscriptionService)> pumpRest(
+          WidgetTester tester,
+          {bool weakSpot = true}) async {
+        final sink = RecordingAnalyticsSink();
+        final subs = _FakeSubscriptionService(offering: _restOffering());
+        final storage = _FakeStorageService()
+          ..steps = 3
+          ..freeUsed = 1
+          ..weakSpots = weakSpot ? [_weakSpot()] : const []
+          ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5);
+        await pumpHome(tester,
+            storageService: storage,
+            subscriptionService: subs,
+            analyticsService: AnalyticsService(sink: sink),
+            size: const Size(428, 926));
+        return (sink, subs);
+      }
+
+      testWidgets(
+          'V24f: the dream bubble names today\'s weak spot; no Zzz and no '
+          '"See you tomorrow"; one used + four locked tickets; the button '
+          'states the store\'s trial; the paywall never opens by itself',
+          (tester) async {
+        final (sink, _) = await pumpRest(tester);
+        expect(find.byKey(RestScene.dreamKey), findsOneWidget);
+        expect(find.textContaining('IS DREAMING OF'), findsOneWidget);
+        expect(find.byKey(RestScene.seeYouKey), findsNothing);
+        expect(find.text('Free: 1 ticket a day · Premium: 5 a day'),
+            findsOneWidget);
+        for (var i = 0; i < StorageService.dailySessionLimit; i++) {
+          expect(find.byKey(RestScene.ticketKey(i)), findsOneWidget);
+        }
+        expect(find.text('USED'), findsOneWidget);
+        expect(find.byIcon(Icons.lock_rounded), findsNWidgets(4));
+        final hero = Avatar.values.first.name(en);
+        expect(find.text('Wake $hero up · 7 days free'), findsOneWidget);
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(sink.named('paywall_viewed'), isEmpty);
+      });
+
+      testWidgets('no weak spot: no dream bubble, the card names the topics',
+          (tester) async {
+        await pumpRest(tester, weakSpot: false);
+        expect(find.byKey(RestScene.dreamKey), findsNothing);
+        expect(
+            find.text('Pick any of the ${practiceTopics().length} topics, '
+                'with AI feedback on every answer.'),
+            findsOneWidget);
+      });
+
+      testWidgets(
+          'Wake → the companion wakes ("I\'m awake!"), then V13r rises with '
+          'source rest_scene; X → V13b once → back to the scene, asleep',
+          (tester) async {
+        PremiumScreen.resetExitReminder();
+        final (sink, _) = await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(RestScene.awakeBubbleKey), findsOneWidget);
+        expect(find.byType(PremiumScreen), findsNothing);
+        await tester.pumpAndSettle();
+        expect(find.byType(PremiumScreen), findsOneWidget);
+        expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+        expect(find.byKey(PremiumScreen.restSpotKey), findsOneWidget);
+        final viewed = sink.named('paywall_viewed');
+        expect(viewed, hasLength(1));
+        expect(viewed.single.parameters!['source'],
+            AnalyticsService.paywallSourceRestScene);
+        expect(AnalyticsService.paywallSourceRestScene, 'rest_scene');
+
+        await tester.tap(find.byKey(PremiumScreen.closeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.exitContinueFreeKey), findsOneWidget);
+        await tester.tap(find.byKey(PremiumScreen.exitContinueFreeKey));
+        await tester.pumpAndSettle();
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+        expect(find.byKey(RestScene.awakeBubbleKey), findsNothing);
+        expect(find.byKey(RestScene.dreamKey), findsOneWidget);
+      });
+
+      testWidgets(
+          'trial started → PW05r ("<Hero> is ready", "Practise <weak spot>") '
+          '→ straight into that weak spot\'s practice, not Home',
+          (tester) async {
+        final (_, subs) = await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(PremiumScreen.ctaKey));
+        await tester.pumpAndSettle();
+        expect(subs.purchases, 1);
+        // The paywall's hero is the stored profile's (none in this fake).
+        expect(find.textContaining('is ready. Let’s go!'), findsOneWidget);
+        expect(find.text('4 more sessions today, 5 every day'), findsOneWidget);
+        final spot = humanizeSlug(_weakSpot().errorType);
+        expect(find.text('Practise $spot'), findsOneWidget);
+        await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(find.byKey(HomeScreen.restPractiseKey), findsOneWidget);
+        expect(
+            tester
+                .widget<WeakSpotDetailScreen>(
+                    find.byKey(HomeScreen.restPractiseKey))
+                .startPractice,
+            isTrue);
+      });
+
+      testWidgets(
+          'no weak spot: PW05r says "Pick a topic" and opens the topics',
+          (tester) async {
+        await pumpRest(tester, weakSpot: false);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.restSpotKey), findsNothing);
+        await tester.tap(find.byKey(PremiumScreen.ctaKey));
+        await tester.pumpAndSettle();
+        expect(find.text('Pick a topic'), findsOneWidget);
+        await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(TopicPracticeScreen), findsOneWidget);
+      });
     });
 
     testWidgets('a done test with practice left is not a rest day',
@@ -1218,4 +1390,30 @@ void main() {
       });
     }
   }
+}
+
+/// V24f → V13r: an annual plan with a 7-day free trial (the paywall's
+/// preselected plan) and a monthly one.
+Offering _restOffering() {
+  const context = PresentedOfferingContext('default', null, null);
+  const annual = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    StoreProduct(
+        'grammarlens_premium_annual', '', 'Annual', 49.99, '\$49.99', 'USD',
+        introductoryPrice:
+            IntroductoryPrice(0, '\$0.00', 'P1W', 1, PeriodUnit.week, 1),
+        subscriptionPeriod: 'P1Y'),
+    context,
+  );
+  const monthly = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    StoreProduct(
+        'grammarlens_premium_monthly', '', 'Monthly', 5.99, '\$5.99', 'USD',
+        subscriptionPeriod: 'P1M'),
+    context,
+  );
+  return const Offering('default', '', {}, [monthly, annual],
+      monthly: monthly, annual: annual);
 }

@@ -93,6 +93,10 @@ class CompanionView extends StatefulWidget {
   /// The loop between one-shot moments; [hopping] wins.
   final CompanionAmbient ambient;
 
+  /// How long a change of pose cross-fades (V24s: waking 200 ms, falling
+  /// asleep again 400 ms).
+  final Duration poseSwitch;
+
   const CompanionView({
     super.key,
     required this.hero,
@@ -104,6 +108,7 @@ class CompanionView extends StatefulWidget {
     this.decorative = false,
     this.hopping = false,
     this.ambient = CompanionAmbient.mood,
+    this.poseSwitch = const Duration(milliseconds: 200),
   });
 
   /// The body's transform (tests read its motion).
@@ -461,7 +466,7 @@ class _CompanionViewState extends State<CompanionView>
       image = ColorFiltered(colorFilter: _sleepFilter, child: image);
     }
     image = AnimatedSwitcher(
-      duration: AppMotion.orInstant(context, const Duration(milliseconds: 200)),
+      duration: AppMotion.orInstant(context, widget.poseSwitch),
       child: KeyedSubtree(key: ValueKey(asset), child: image),
     );
 

@@ -254,6 +254,9 @@ class AppColors extends ThemeExtension<AppColors> {
   /// PF02's silver and bronze counters (the gold one is [goldSoft] /
   /// [goldDeep], the Welcome one [sky] / [onSky]); the same in both themes.
   static const silverSoft = Color(0xFFECEFF3);
+
+  /// V24f's Premium card runs from [navy] to this plum (both themes).
+  static const premiumPlum = Color(0xFF2A1E5C);
   static const onSilverSoft = Color(0xFF4B5563);
   static const bronzeSoft = Color(0xFFF6E7D8);
   static const onBronzeSoft = Color(0xFF8A5A2B);

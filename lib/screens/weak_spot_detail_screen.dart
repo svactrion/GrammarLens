@@ -41,6 +41,10 @@ class WeakSpotDetailScreen extends StatefulWidget {
   /// The user's buddy, saying the rule (R03).
   final Avatar? hero;
 
+  /// PW05r (SPEC §1.15): opened to practise at once, straight into the
+  /// preparing view (V18), after a trial started from the rest scene.
+  final bool startPractice;
+
   const WeakSpotDetailScreen({
     super.key,
     required this.topic,
@@ -50,6 +54,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
     required this.storageService,
     required this.analyticsService,
     required this.subscriptionService,
+    this.startPractice = false,
   });
 
   @override
@@ -79,6 +84,11 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
     super.initState();
     _mistakes = _loadMistakes();
     _loadAccess();
+    if (widget.startPractice) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _practice();
+      });
+    }
   }
 
   Future<void> _loadAccess() async {

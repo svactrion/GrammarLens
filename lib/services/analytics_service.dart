@@ -279,6 +279,11 @@ class AnalyticsService {
   /// user tap, so it sends no `mode_selected`).
   static const String paywallSourceDay0AfterClimb = 'day0_after_climb';
 
+  /// The free users' rest scene (V24f → V13r, SPEC §1.15): "Wake <Hero> up"
+  /// after every daily right is used. A new value of the existing `source`
+  /// parameter, not a new event (UI polish fix round 2).
+  static const String paywallSourceRestScene = 'rest_scene';
+
   /// `PremiumScreen`'s dismissal methods (`paywall_dismissed`) — the X in
   /// the band, the footer's "Maybe later", or a system back gesture/
   /// hardware back button (the one path not triggered by this app's own
