@@ -361,7 +361,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       PageRouteBuilder(
         transitionDuration: AppMotion.orInstant(context, AppMotion.slow),
         pageBuilder: (_, __, ___) => PremiumOnScreen(
-          hero: _userAvatar,
+          hero: widget.rest?.hero ?? _userAvatar,
           topics: practiceTopics().length,
           sessions: StorageService.dailySessionLimit,
           trialEnds: trialDays == null
@@ -483,8 +483,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     if (widget.rest case final rest?)
                       _RestTop(
                         rest: rest,
-                        hero: _userAvatar,
-                        name: _userName.trim(),
+                        hero: rest.hero ?? _userAvatar,
+                        name: (rest.name ?? _userName).trim(),
                         trial: _trialDays(selectedTerms?.trial) != null,
                         headlineStyle: _headlineStyle(theme, size.width),
                         compact: shortScreen,
@@ -1009,7 +1009,12 @@ class PaywallRest {
   final ClimbTheme theme;
   final String? weakSpot;
 
-  const PaywallRest({required this.theme, this.weakSpot});
+  /// The companion and the name the rest scene showed, so the paywall and
+  /// PW05r name the same hero (null: the stored profile's).
+  final Avatar? hero;
+  final String? name;
+
+  const PaywallRest({required this.theme, this.weakSpot, this.hero, this.name});
 }
 
 /// The free trial, in days, the paywall would promise on its preselected

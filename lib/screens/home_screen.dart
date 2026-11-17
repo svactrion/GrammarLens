@@ -1121,6 +1121,8 @@ class _HomeScreenState extends State<HomeScreen>
           rest: PaywallRest(
             theme: _climbTheme,
             weakSpot: spot == null ? null : humanizeSlug(spot.errorType),
+            hero: widget.avatar ?? Avatar.values.first,
+            name: widget.userName,
           ),
         ),
         transitionsBuilder: (_, animation, __, child) => reduced

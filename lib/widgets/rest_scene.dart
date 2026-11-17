@@ -68,6 +68,14 @@ class RestScene extends StatefulWidget {
 
   static const sceneHeight = 470.0;
 
+  /// V24f's scene is shorter, so the Premium card's button is on the first
+  /// view (the board's scene takes under half the screen).
+  static const freeSceneHeight = 300.0;
+
+  /// How far above the companion's step V24f's camera centres, in image
+  /// widths (about 130 pt at a phone's scale).
+  static const freeFocusLift = .13;
+
   static const dreamKey = ValueKey('rest_dream');
   static const awakeBubbleKey = ValueKey('rest_awake_bubble');
   static const premiumCardKey = ValueKey('rest_premium_card');
@@ -134,8 +142,14 @@ class _RestSceneState extends State<RestScene>
     final mm = (left.inMinutes % 60).toString().padLeft(2, '0');
     final days = widget.days.clamp(28, 31);
     final step = widget.steps.clamp(0, days);
-    final focus = ClimbRoute(days).stepAt(step);
     final offer = widget.offer;
+    // V24f's scene is shorter: the camera looks a little higher up the
+    // mountain so the companion sits near the scene's bottom, under the
+    // dream bubble (as on the board), not behind it.
+    final step0 = ClimbRoute(days).stepAt(step);
+    final focus = offer == null
+        ? step0
+        : Offset(step0.dx, step0.dy - RestScene.freeFocusLift);
     // The panel is the night's own colour in both themes (the board).
     final panel = c.nightTop;
     const onPanel = Colors.white;
@@ -143,7 +157,8 @@ class _RestSceneState extends State<RestScene>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          height: RestScene.sceneHeight,
+          height:
+              offer == null ? RestScene.sceneHeight : RestScene.freeSceneHeight,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
             child: Stack(
@@ -156,7 +171,8 @@ class _RestSceneState extends State<RestScene>
                     zoom: 2.4,
                     focus: focus,
                     overlay: (context, map) {
-                      final p = map.toBox(focus);
+                      // The camp stands at the companion's step.
+                      final p = map.toBox(step0);
                       final k = map.scale / 900;
                       return Stack(clipBehavior: Clip.none, children: [
                         // The tent behind the companion.
@@ -874,16 +890,21 @@ class _FreePanel extends StatelessWidget {
                   .copyWith(color: onPanel),
             ),
             const SizedBox(height: 12),
-            PressableButton(
-              key: RestScene.wakeKey,
-              label: days == null
-                  ? l10n.restWakeUp(hero.name(l10n))
-                  : l10n.restWakeUpTrial(hero.name(l10n), days),
-              tone: ButtonTone.orange,
-              trailingIcon: Icons.arrow_forward_rounded,
-              shine: true,
-              haptic: ButtonHaptic.medium,
-              onPressed: awake ? null : onWake,
+            // While the companion wakes the button stays orange (V24s) but
+            // takes no second tap.
+            IgnorePointer(
+              ignoring: awake,
+              child: PressableButton(
+                key: RestScene.wakeKey,
+                label: days == null
+                    ? l10n.restWakeUp(hero.name(l10n))
+                    : l10n.restWakeUpTrial(hero.name(l10n), days),
+                tone: ButtonTone.orange,
+                trailingIcon: Icons.arrow_forward_rounded,
+                shine: true,
+                haptic: ButtonHaptic.medium,
+                onPressed: onWake,
+              ),
             ),
           ],
         ),
