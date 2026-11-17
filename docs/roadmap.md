@@ -313,6 +313,60 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
   `e87b2f2`, `de5aa31`, `7e8ae6c`.
 
+#### UI polish + 4th tab (planned, opened 2026-11-17)
+
+Opened by the owner on 2026-11-17. **Design only so far; no code.** Design
+canvas: claude.ai artifact "GrammarLens — Tüm Ekranlar ve Senaryolar", page
+"Yeni tasarım — gruplar" (v9 on 2026-11-17; every screen grouped by area, each with a
+motion + haptics note for Claude Code). Asset briefs:
+`docs/design/ui-polish/asset-requests.md` (round 1, delivered) and
+`asset-requests-round2.md`. **Design final (v9, 2026-11-17); handed to Claude
+Code** as an offline package in `docs/design/ui-polish/handoff/` (`SPEC.md`,
+`TASK.md`, `ASSETS.md`, app-ready assets, every board as HTML and a static
+render). Implementation runs on branch `ui-polish`; not started at the time
+of writing.
+
+Owner decisions so far:
+- **Heroes: 9, each with 6 pose images** (Fox, Panda, Koala, Frog, Bird,
+  Giraffe, Cat, Sloth, Crab). All 54 poses delivered 2026-11-17 (Crab's six
+  last, from `asset-requests-crab.md`) and placed on the design canvas; the
+  files are in the owner's generated-assets folder, not yet copied into the
+  repo. The
+  expression kit (motion + shared props) layers on top of the poses and covers
+  the states that have no pose (wrong-answer "oops"). **Retired heroes
+  (owner, 2026-11-17):** users on Snail, Elephant, Bee, Chick, Turtle,
+  Penguin or Hedgehog move to Fox on first launch of the new build; the
+  seven leave the app (saved format `avatar_XX` unchanged).
+- **Companion picker: B1 turntable** (all 9 on a rotating stage, the front
+  one on the podium), used in onboarding and in Profile. A second button
+  opens a wheel of fortune that picks a buddy at random. *Proposed, not
+  decided:* the label "Try my luck", the rule that it never lands on the
+  current buddy, and the result line "<Buddy> picked you!". The other picker
+  trials (A, B2, B3) are dropped.
+- **Daily Test card: one fixed skeleton for loading / waiting / done**
+  (350 × 256; rows 28 · 100 · 52), so finishing the test changes only colours
+  and slot contents, never the card's size or alignment.
+- **Onboarding "getting ready" step** with a 0 → 100 bar whose three stops are
+  the app's real work (profile + buddy saved, today's Daily Test downloaded,
+  the month's mountain opened); in-between values are smoothing only.
+- Daily Test gets per-question feedback (graded on device from the set);
+  practice keeps batched AI evaluation at the end of the session.
+- Paywall: plans as a vertical list, hidden on first view (shown on scroll);
+  closing opens a pop-up with a sad companion, no discount.
+- **New practice topics, first wave — added on the backend together with the
+  UI work:** Conditionals, Passive Voice, Prepositions (time/place and
+  dependent prepositions), Relative Clauses, Comparatives & Superlatives. Each
+  goes through the question-quality check before it ships. Second wave
+  (later, not scheduled): Reported Speech, Quantifiers, used to / be used to,
+  Future Forms, Question Tags, wish / if only.
+- **Split out (owner, 2026-11-17):** the home-screen widgets (small +
+  medium) and the daily reminder notification are a separate task after the
+  UI polish run (they need an Xcode target, an App Group and a new package).
+- **First-wave topics in the UI polish run (owner, 2026-11-17):** app and
+  proxy code written but switched off; no deploy, no paid measurement; they
+  ship only after the question-quality check and the owner's review.
+- After the UI polish: decide a new feature for a 4th navbar tab.
+
 #### 1.4.1 (planned)
 
 Opened by the owner on 2026-11-05. Done on `main`, **not shipped**: neither is

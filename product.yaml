@@ -35,8 +35,10 @@ recent:
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
-  - "Home-screen widget (1.5.0)"
+  - "Home-screen widget (1.5.0) and a daily reminder notification: a separate task after the UI polish"
   - "P15: outage detection"
+  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, implementation on branch ui-polish not started), then a new feature as a 4th navbar tab"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): code on the UI polish branch, hidden until the question-quality check and owner review"
 
 monetization:
   model: subscription
@@ -59,4 +61,4 @@ links:
   app_store: https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346
   site_page: https://ahmettayfur.com/products/grammarlens/
 
-updated_at: 2026-11-10
+updated_at: 2026-11-17
