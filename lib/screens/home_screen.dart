@@ -241,6 +241,11 @@ class _HomeScreenState extends State<HomeScreen>
   /// the rest scene appeared, or a second Daily Test was finished.
   bool _softAskQueued = false;
   bool _restSceneSeen = false;
+
+  /// A check of [_maybeShowSoftAsk] is scheduled for the end of this frame
+  /// (fix round 3, A2: N01 opens on the first frame the rest scene is on
+  /// screen, whatever path led there).
+  bool _softAskCheckScheduled = false;
   String? _pendingClimbDay;
 
   /// Steps the pending completion earned, known only when it arrived through
@@ -407,6 +412,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // A route above Home closed, or Home's visibility changed: N01 may be
+    // waiting for exactly this (A2).
+    _scheduleSoftAskCheck();
     // A delayed save may finish while another route/tab covers Home.
     if (_pendingClimbDay != null && _homeVisible) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -448,6 +456,12 @@ class _HomeScreenState extends State<HomeScreen>
       _loadClimb();
     }
     if (!oldWidget.active && widget.active) {
+      // Home is the visible tab again: what another tab did today (the free
+      // ticket used on a practice from Review, A2) shows now, not at the
+      // next resume.
+      _loadTodaysDailyTest();
+      _loadPracticeUsage();
+      _scheduleSoftAskCheck();
       _showDay0Paywall();
       _presentMonthCard();
       _presentDebugMilestone();
@@ -473,6 +487,7 @@ class _HomeScreenState extends State<HomeScreen>
       _loadWeakSpots();
       _loadPracticeUsage();
       _showDay0Paywall();
+      _scheduleSoftAskCheck();
     }
   }
 
@@ -877,6 +892,7 @@ class _HomeScreenState extends State<HomeScreen>
   void _onMountainMotionEnd() {
     _climbAnimating = false;
     _armDay0Paywall(_day0PaywallDelay);
+    _scheduleSoftAskCheck();
   }
 
   /// The climb has landed, or there is none to wait for: opens the paywall
@@ -955,6 +971,19 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {
       // Storage unavailable: asked another time.
     }
+  }
+
+  /// Runs [_maybeShowSoftAsk] at the end of the current frame, once per
+  /// frame (A2): after a build that shows the rest scene, when Home becomes
+  /// the visible tab, when a route above it closes, on resume and when the
+  /// pawn lands. Does nothing when nothing is queued.
+  void _scheduleSoftAskCheck() {
+    if (_softAskCheckScheduled) return;
+    _softAskCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _softAskCheckScheduled = false;
+      if (mounted) _maybeShowSoftAsk();
+    });
   }
 
   /// Opens N01 when it is queued and Home is quiet: visible, no flow, no
@@ -1351,15 +1380,16 @@ class _HomeScreenState extends State<HomeScreen>
         }));
       }
       final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+      // The rest scene replaces the mountain: a step that was still walking
+      // never reports its end, so it no longer holds N01 back (A2).
+      _climbAnimating = false;
       // N01 the first time the rest scene is shown (once the stored answer
-      // is known).
+      // is known), checked after this frame, when the scene is on screen.
       if (!_restSceneSeen && _reminders.loaded) {
         _restSceneSeen = true;
-        if (_reminders.mayAsk) {
-          _softAskQueued = true;
-          _maybeShowSoftAsk();
-        }
+        if (_reminders.mayAsk) _softAskQueued = true;
       }
+      if (_softAskQueued) _scheduleSoftAskCheck();
       return BrandScaffold(
         isTabRoot: true,
         appBar: AppBar(
