@@ -391,3 +391,94 @@ Not done / gaps:
   existing 1.4.0 look.
 - V07's hint handle "nudge every 2.8 s" is not added (hint slider as in
   the app today, SPEC V07).
+
+## B5 — Home and mountain
+
+Status: **done**.
+
+Commits: `592ef64` (strings), `e6bf38b` (Home, rest scene, first climb, month change, tests), `00130c7` (gallery).
+
+What was built:
+- Home (`screens/home_screen.dart`, V15 / V14 / H04): the wordmark with the
+  score capsule (points, ring to the next medal, today's "+N"; a tap opens
+  Profile), the greeting, the DailyTestCard (`todo` / `done` / `loading`),
+  the mountain card with its bubble ("Step N is one test away!" / "Step N
+  opens tomorrow"), then for a free user the compact ticket ("Use it on:
+  <weak spot>", to Review) and the topic showcase (`widgets/home_practice.dart`:
+  the weak spot's topic "Picked for you", locked floating tiles, "Unlock
+  all N topics" to the paywall); for Premium the practice card ("Sessions
+  today n/5" segments, unlocked tiles, "Practice your weak spot").
+- H03: the mountain card's skeleton while the month loads.
+- V24 rest scene (`widgets/rest_scene.dart`): replaces Home's content only
+  when every daily right is used (§1.8: today's test done and the free
+  ticket used, or every Premium session); camp at the companion's step,
+  tent, campfire (logs image, two flame layers, sparks, ground light), the
+  companion asleep with Zzz, "See you tomorrow, <name>", the done tiles and
+  a countdown to local midnight updated every minute. No reminder switch.
+- V12 first climb (`screens/first_climb_screen.dart`): one camera on the
+  whole mountain (cover framing) wide → 2.2× → walk in 0.45 s hops with the
+  trail painting → wide; "Step 1 of N" pops on arrival (light + success);
+  bubble and Continue after the camera. Shown in the first-launch flow
+  after "Climb my first step".
+- R04 / R04b (`widgets/month_card_sheet.dart`): the month change as two
+  full-screen pages instead of the bottom sheet: the recap (header medal
+  that swaps bronze → silver, "<Tier> on <mountain>!", last month's
+  mountain edge to edge with gold step dots, steps / points / "to <next>",
+  the points bar filling stop by stop through `MonthlyMedalRules`'
+  thresholds with a jiggle and light haptic at each stop and success at the
+  month's medal, the near-miss line, "See my new mountain") and the new
+  mountain (rises 40 px + fade, flag pops, the companion drops and hops,
+  "A new mountain!", steps and medal lines, "Start climbing").
+- The first tab is labelled "Climb" (every board's nav bar).
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2438 passed**.
+- New tests: `b5_home_mountain_test` (V12 camera timeline, cover framing at
+  every 100 ms, arrival haptics, skip, Reduce Motion; V24 countdown to
+  midnight, minute updates, no switch); Home's new group in
+  `home_screen_test` (card lines and buttons, bubble, capsule → Profile,
+  ticket → Review, showcase → paywall, Premium practice card, live
+  entitlement change, order, rest scene for free and Premium and not with
+  practice left); `month_card_test` rewritten for R04 / R04b (bar stops,
+  haptics, medal, near-miss, fresh, closing, events); first-launch tests
+  walk through V12.
+- Simulator (gallery): V15, V14 (+ scrolled), H03, H04 (+ scrolled), V24,
+  V12, V12b (three key frames), R04, R04b.
+
+Decisions:
+- **D5-1 Home's avatar, weak spot list, topic strip and Review call-out
+  are gone** (V14 / V15 / H04 have none of them). The ticket takes the
+  call-out's job (to Review, the same slide), the showcase the strip's
+  (to the paywall, the same `source: home`), Premium's "Practice your weak
+  spot" the weak spot list's (the most frequent weak spot). The avatar is
+  still changed in Profile (R06).
+- **D5-2 Tab label "Climb".** Every board's nav bar says "Climb" (the app
+  said "Home"); the key `navHome` keeps its name, the 8 values change.
+- **D5-3 V12 is the first run's zoom.** When the Day-0 test earns a step,
+  the first-launch flow shows V12 full screen after "Climb my first step";
+  it claims the same one-time flag (`first_run_zoom`) and sends the same
+  `month_zoom_ended` (trigger `first_run`, outcome completed / skipped /
+  reduce_motion) Home's in-card zoom sent, so no new event. Home then skips
+  its in-card zoom but still walks the step on the card and opens the
+  Day-0 paywall after it, as before. With no step (all skipped), Home's
+  in-card zoom plays as before. The flow now takes the app's clock (tests
+  pin the month).
+- **D5-4 The month change is full screen** (R04 → R04b; R04b alone for
+  the fresh variant). It closes with "Start climbing" (`method: button`)
+  or the system back (`method: barrier`); a swipe down no longer exists
+  (the `drag` value stays in the enum, unused). Home's month-change zoom
+  after it is unchanged.
+- **D5-5 V24's practice tile** reads "Ticket used" for free users and
+  "n/5 sessions" for Premium; the countdown is `HH:MM` to local midnight
+  (the Daily Test's day boundary).
+- **D5-6 No trial promise on Home**: the showcase's button says "Unlock all
+  N topics" (the paywall states the offer, §1.7).
+
+Not done / gaps:
+- V15's gold ring pulse on the next step and V14's capsule "+9" pop are
+  the existing mountain and capsule visuals (the ring fill animates; no
+  separate pulse ring on the step).
+- H03's companion "think" pose and the 8 s R11 fallback come from the
+  shared DailyTestCard / Home load paths (no new timeout added).
+- R04's trail dots light in order (60 ms apart) but the bar's medal lines
+  glow by scale only.
