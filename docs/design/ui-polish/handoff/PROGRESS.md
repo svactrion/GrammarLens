@@ -553,3 +553,85 @@ Not done / gaps:
   midnight (the state is re-read when the tab is shown again).
 - R12's focus card glint and the weak spot cards' mastery fill are not
   drawn (D6-1).
+
+## B7 — Practice
+
+Status: **done**.
+
+Commits: `9ea926e` (strings), `9a8024d` (practice screens, first-wave topics in the app, tests), `1fc2a1c` (proxy, switched off), `d872413` (gallery).
+
+What was built:
+- R01 (`screens/topic_practice_screen.dart`): the header with the Premium
+  chip, "Pick a topic. AI reviews every answer.", the most repeated weak
+  spot's topic as a navy "Picked for you" card, then the topics two a row
+  in their colours (floating, 2 pt press, light haptic) with the real
+  status line. The list is `practiceTopics()`.
+- R02 (`screens/practice_length_picker.dart`): the existing 3 / 5 / 10
+  slider in the shared sheet, an orange knob and track, selection haptic at
+  each stop, the pressable orange Start whose label cross-fades.
+- V17 (`screens/ai_consent_screen.dart`): the same text, each section a
+  card with its icon fading in 40 ms after the one above, the navy
+  pressable "Agree and continue" (medium haptic), "Not now" unchanged.
+- V18 (`widgets/practice_preparing.dart`, through `PageLoading(topic:)`):
+  the thinking companion, three question skeletons and the topic's hint
+  cards rotating every 3 s under "Did you know?" — on Topic Practice, the
+  weak spot screen and Review.
+- V19 (`screens/practice_screen.dart`): "AI reviews all your answers when
+  you finish" above Skip / Next (hidden with the keyboard up and under
+  740 pt, as the Daily Test's buddy row).
+- V20 (`widgets/practice_reviewing.dart`): the inspecting companion, the
+  answers with the clay lens sweeping over them (3.2 s), a checklist ticking
+  0.8 s apart (light haptic each), an indeterminate bar; success haptic
+  when the result arrives.
+- V21 (`screens/results_screen.dart`): the cheering companion and "N/M
+  correct", feedback cards entering from below 60 ms apart with a Correct /
+  Needs work / Skipped pill and the existing breakdown; a free user out of
+  practice gets "Want another round today? Premium: up to 5 sessions a
+  day, every topic." with See Premium (same events and paywall source).
+- P08 (`showDailyLimitSheet` in `practice_launch.dart`): a sheet with the
+  sleeping companion, the full session counter and the existing text.
+- Practice R10: the leave confirmation is the companion dialog ("Keep
+  going" / "Leave").
+- First-wave topics (§1.11): `TopicId` gets Conditionals, Passive Voice,
+  Prepositions, Relative Clauses and Comparatives & Superlatives;
+  `kFirstWaveTopics` with icons, titles (English, like every topic title),
+  descriptions in 8 languages, hint cards, tile colours;
+  `kFirstWaveTopicsEnabled = false`; `practiceTopics()` adds them only when
+  on. The Daily Test keeps its five (`FallbackPool.problemWithSet` now
+  checks `kTopics`). Proxy: `FIRST_WAVE_TOPICS` and
+  `FIRST_WAVE_TOPICS_ENABLED = false` in `proxy/src/topics.ts`;
+  `topicById` / `isKnownTopicId` know them only when the flag is on;
+  `TOPICS` (the Daily Test's) is unchanged. Not deployed; no generation or
+  measurement was run.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2426 passed**.
+- New: `first_wave_topics_test` (flag off: Topic Practice shows the five
+  and no first-wave card; flag on: ten, every first-wave topic with its
+  title, description, hint card and colours, and a card on screen);
+  `proxy/test/topics.test.ts` (flag off: unknown ids, the five unchanged;
+  flag on: known). Proxy: `tsc --noEmit` clean; 8 test files touching
+  topics, 312 tests, passed (local vitest, nothing sent anywhere).
+- Updated: results, results footer, Topic Practice, length picker, exit
+  dialog, button rule, question and hint-card tests.
+- Simulator (gallery): R01, R02, V17, V18, V19, V20, V21, P08.
+
+Decisions:
+- **D7-1 No mastery strips** on R01 / V21 (D6-1).
+- **D7-2 P08 keeps the existing sentence** ("Come back tomorrow for more —
+  your progress is saved"): the board's "Fresh sessions open tomorrow,
+  right after your Daily Test" would tie sessions to the Daily Test, which
+  is not a rule. A free user at the limit still goes to the paywall
+  (existing flow), so "See Premium" is not on this sheet.
+- **D7-3 "Back to topics" stays** the results' button label (the board
+  says "Done"); same action.
+- **D7-4 `topicByName` knows the first-wave ids** (they are real, switched-
+  off topics); nothing stores them while the switch is off.
+- **D7-5 V17 has no extra consent switch**: the board's two buttons are the
+  consent (Agree / Not now); adding a toggle would change the 5.1.2(i) flow.
+
+Not done / gaps:
+- R02's ring and number keep the existing selection card's navy dial; the
+  number does not roll.
+- V18's skeleton bars are faint on the card colour.
+- V19's "Next" slide-in and V21's mastery step are not animated.
