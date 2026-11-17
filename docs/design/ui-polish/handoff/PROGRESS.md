@@ -757,3 +757,43 @@ Decisions:
 Not done / gaps:
 - The ribbon's medal-settle and the numbers' count-up in PF03 are not
   animated; the layer opens with a fade and scale, not a Hero flight.
+
+## B10 — System and themes
+
+Status: **done**.
+
+Commits: `5dabea0` (R11 on Home, the sweep and its fixes), `2aa88bd` (gallery).
+
+What was done:
+- R11 everywhere a load can fail: the Daily Test (B4), getting ready (B3)
+  and Review (B6) already use `ErrorState`; Home's month progress error now
+  does too (sad companion, "Try again" with dots, the same retry).
+  Generation and scoring failures keep the one snackbar (SY02).
+- SY02 everywhere: every message in `lib/` goes through `AppMessenger`
+  (no direct `showSnackBar` left); "Name saved" carries Undo.
+- SY03 dark theme: every new component takes its colours from `AppColors`
+  (light and dark tokens); dark captures of Home (SY03), Review, Profile,
+  the month recap, a question and the first climb.
+- Arabic (RTL), the largest text size and Reduce Motion: a sweep test
+  (`test/b10_system_pass_test.dart`) renders every new screen and component
+  — the Daily Test card's three states, the ticket's states, the score
+  capsule, the rest scene, the topic showcase and practice card, Review's
+  card and empty state, practice preparing and reviewing, the profile
+  stage, the error state, the first climb, the month recap and new
+  mountain, Premium on — at 320 pt in dark, in Arabic, at Large text with a
+  1.3 system scale and with Reduce Motion; nothing overflows or throws.
+  Arrows flip under RTL in every new button.
+- Found and fixed by the sweep: a ticket built already tearing read the
+  Reduce Motion setting before it could (now in `didChangeDependencies`);
+  the practice card's sessions row overflowed at 320 pt (the label wraps);
+  Premium on overflowed a 640 pt screen (its content scrolls, the button
+  stays).
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2477 passed** (52 of
+  them the sweep).
+- Simulator (gallery, `:dark`): SY03-DarkHome, V16, V23, R04, V07, V12.
+
+Not done / gaps:
+- Arabic and the largest text are checked by tests, not by simulator
+  captures (the gallery runs in English at the default size).
