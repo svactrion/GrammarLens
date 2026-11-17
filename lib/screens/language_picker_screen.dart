@@ -106,6 +106,11 @@ class _Option extends StatelessWidget {
       button: true,
       child: PressableCard(
         onTap: onTap,
+        // D9-4: Tab moves through the options in order; Enter or Space
+        // picks one. The look changes only with keyboard focus.
+        focusable: true,
+        // The option plays its own selection haptic (R07).
+        haptic: ButtonHaptic.none,
         child: AnimatedContainer(
           duration: AppMotion.orInstant(context, AppMotion.fast),
           constraints: const BoxConstraints(minHeight: 56),

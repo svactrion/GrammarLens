@@ -424,12 +424,19 @@ class _BusyDots extends StatelessWidget {
 
 /// A tappable card that moves down [travel] px on press (weak spot cards,
 /// topic cards) and plays its [haptic].
+///
+/// With [focusable] it also takes keyboard focus in reading order (Tab),
+/// Enter or Space activates it, and a [focusRadius] ring in the brand
+/// orange shows only while it has keyboard focus: a touch never changes
+/// its look (UI polish fix round 1, D9-4).
 class PressableCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
   final double travel;
   final ButtonHaptic haptic;
   final String? semanticLabel;
+  final bool focusable;
+  final double focusRadius;
 
   const PressableCard({
     super.key,
@@ -438,7 +445,12 @@ class PressableCard extends StatefulWidget {
     this.travel = 2,
     this.haptic = ButtonHaptic.light,
     this.semanticLabel,
+    this.focusable = false,
+    this.focusRadius = 18,
   });
+
+  /// The ring shown with keyboard focus.
+  static const focusRingKey = ValueKey('pressable_card_focus_ring');
 
   @override
   State<PressableCard> createState() => _PressableCardState();
@@ -447,8 +459,25 @@ class PressableCard extends StatefulWidget {
 class _PressableCardState extends State<PressableCard> {
   bool _pressed = false;
 
+  /// Keyboard focus is on the card (shown only in keyboard mode).
+  bool _focusRing = false;
+
   void _set(bool v) {
     if (_pressed != v && mounted) setState(() => _pressed = v);
+  }
+
+  void _activate() {
+    switch (widget.haptic) {
+      case ButtonHaptic.none:
+        break;
+      case ButtonHaptic.selection:
+        HapticMap.selection();
+      case ButtonHaptic.light:
+        HapticMap.light();
+      case ButtonHaptic.medium:
+        HapticMap.medium();
+    }
+    widget.onTap!();
   }
 
   @override
@@ -459,28 +488,43 @@ class _PressableCardState extends State<PressableCard> {
       transform: Matrix4.translationValues(0, _pressed ? widget.travel : 0, 0),
       child: widget.child,
     );
+    if (widget.focusable && _focusRing) {
+      child = DecoratedBox(
+        key: PressableCard.focusRingKey,
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.focusRadius),
+          border: Border.all(
+              color: AppColors.of(context).orange,
+              width: 3,
+              strokeAlign: BorderSide.strokeAlignOutside),
+        ),
+        child: child,
+      );
+    }
     child = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: enabled ? (_) => _set(true) : null,
       onTapUp: (_) => _set(false),
       onTapCancel: () => _set(false),
-      onTap: enabled
-          ? () {
-              switch (widget.haptic) {
-                case ButtonHaptic.none:
-                  break;
-                case ButtonHaptic.selection:
-                  HapticMap.selection();
-                case ButtonHaptic.light:
-                  HapticMap.light();
-                case ButtonHaptic.medium:
-                  HapticMap.medium();
-              }
-              widget.onTap!();
-            }
-          : null,
+      onTap: enabled ? _activate : null,
       child: child,
     );
+    if (widget.focusable) {
+      child = FocusableActionDetector(
+        enabled: enabled,
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
+            _activate();
+            return null;
+          }),
+        },
+        onShowFocusHighlight: (v) {
+          if (mounted && v != _focusRing) setState(() => _focusRing = v);
+        },
+        child: child,
+      );
+    }
     if (widget.semanticLabel != null) {
       child = Semantics(
         button: enabled,
