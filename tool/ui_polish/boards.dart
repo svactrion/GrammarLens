@@ -3,7 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
+import 'dart:math';
+
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
+import 'package:grammar_lens/models/learning_goal.dart';
+import 'package:grammar_lens/screens/avatar_picker_screen.dart';
+import 'package:grammar_lens/screens/getting_ready_screen.dart';
+import 'package:grammar_lens/screens/lucky_wheel_screen.dart';
+import 'package:grammar_lens/screens/mountain_intro_screen.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
+import 'package:grammar_lens/screens/welcome_screen.dart';
+import 'package:grammar_lens/widgets/launch_splash.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/companion_dialog.dart';
@@ -21,6 +32,49 @@ final Map<String, WidgetBuilder> galleryBoards = {
   'X03-HeroSet': (_) => const _HeroSet(),
   'X04-Ticket': (_) => const _TicketBoard(),
   'X05-DailyCard': (_) => const _DailyCardBoard(),
+  'V01-Splash': (_) => const LaunchSplash(),
+  'V02-Welcome': (_) => WelcomeScreen(onGetStarted: () {}),
+  'V03-Meet': (_) => OnboardingScreen(onComplete: (_) {}),
+  // Reached by the driver from V03 (taps): V03b, V04, V05.
+  'V03b-LuckyWheel': (_) => LuckyWheelScreen(
+      current: Avatar.fox,
+      // Seeded so the capture lands on the same hero every run.
+      random: Random(3),
+      primaryLabel: (h) => 'Climb with ${h.semanticLabel}'),
+  'V04-Name': (_) => OnboardingScreen(onComplete: (_) {}),
+  'V05-Goal': (_) => OnboardingScreen(onComplete: (_) {}),
+  'V05b-GettingReady': (_) => GettingReadyScreen(
+        name: 'Ada',
+        hero: Avatar.fox,
+        goal: LearningGoal.work,
+        monthName: 'November',
+        mountainName: 'Ember Peak',
+        steps: 30,
+        questionsPerDay: 5,
+        tasks: [
+          () => Future<void>.delayed(const Duration(milliseconds: 300)),
+          () => Future<void>.delayed(const Duration(milliseconds: 900)),
+          () => Future<void>.delayed(const Duration(seconds: 6)),
+        ],
+        onDone: () {},
+      ),
+  'V06-MountainIntro': (_) => MountainIntroScreen(
+        theme: ClimbThemes.emberPeak,
+        hero: Avatar.fox,
+        days: 30,
+        monthName: 'November',
+        onStart: () {},
+      ),
+  'R06-AvatarChange': (_) => Navigator(
+        onGenerateRoute: (_) => MaterialPageRoute(
+            builder: (_) => AvatarPickerScreen(
+                currentAvatar: Avatar.fox, onAvatarChanged: (_) {})),
+      ),
+  'R06s-B1-Turntable': (_) => OnboardingScreen(onComplete: (_) {}),
+  'R06s-D-Wheel': (_) => LuckyWheelScreen(
+      current: Avatar.fox,
+      random: Random(3),
+      primaryLabel: (h) => 'Climb with ${h.semanticLabel}'),
   'R10-Leave': (_) => const _OnMount(_openLeave, child: _QuestionBackdrop()),
   'R11-Offline': (_) => Scaffold(
         body: Center(
