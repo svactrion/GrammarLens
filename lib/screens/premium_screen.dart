@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -18,7 +21,6 @@ import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
-import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
@@ -892,19 +894,49 @@ class _AvatarHero extends StatelessWidget {
 
   const _AvatarHero({required this.centerAvatar});
 
-  static const double centerSize = 124;
-  static const double sideSize = 66;
+  /// The board's sizes (V13: 70, 110, 64; fix round 2 keeps the old 124 pt
+  /// row height so nothing below moves).
+  static const double centerSize = 110;
+  static const double leftSize = 70;
+  static const double rightSize = 64;
 
   @override
   Widget build(BuildContext context) {
     final others = _otherAvatarsFor(centerAvatar);
+    // V13 (fix round 2): the side companions float, the middle one hops,
+    // each over a soft shadow; CompanionView runs the loops (still under
+    // Reduce Motion).
+    Widget companion(Avatar a, double size, CompanionAmbient ambient) =>
+        SizedBox(
+          width: size,
+          height: size,
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned(
+              left: size * .22,
+              right: size * .22,
+              bottom: size * .01,
+              height: size * .08,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: .2),
+                    borderRadius: BorderRadius.circular(size),
+                  ),
+                ),
+              ),
+            ),
+            CompanionView(
+                hero: a, size: size, ambient: ambient, decorative: true),
+          ]),
+        );
     return Semantics(
       key: PremiumScreen.heroKey,
       label: context.l10n.paywallCompanion(centerAvatar.name(context.l10n)),
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
-          height: centerSize,
+          height: 124,
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -912,17 +944,11 @@ class _AvatarHero extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: AvatarTile(avatar: others[0], radius: sideSize / 2),
-                  ),
-                  const SizedBox(width: 8),
-                  AvatarTile(avatar: centerAvatar, radius: centerSize / 2),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: AvatarTile(avatar: others[1], radius: sideSize / 2),
-                  ),
+                  companion(others[0], leftSize, CompanionAmbient.float),
+                  const SizedBox(width: 4),
+                  companion(centerAvatar, centerSize, CompanionAmbient.hop),
+                  const SizedBox(width: 4),
+                  companion(others[1], rightSize, CompanionAmbient.float),
                 ],
               ),
             ),
@@ -1428,6 +1454,16 @@ class _Cta extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = AppPalette.of(context);
+    // V13: the pinned CTA shines and pulses (fix round 2: it had neither).
+    return CtaGlow(
+      enabled: onPressed != null,
+      color: theme.colorScheme.primary,
+      radius: 17,
+      child: _button(theme, palette),
+    );
+  }
+
+  Widget _button(ThemeData theme, AppPalette palette) {
     return FilledButton(
       key: PremiumScreen.ctaKey,
       onPressed: onPressed,
@@ -2786,8 +2822,12 @@ class _NudgingArrowState extends State<_NudgingArrow>
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _nudge,
+        // V13's `gl-float` 1.8 s (fix round 2: the board's motion, up 8 and
+        // back every 1.8 s, instead of a nudge that rested 60 % of the time).
         builder: (context, child) => Transform.translate(
-            offset: Offset(0, 6 * AppMotion.nudge(_nudge.value)), child: child),
+            offset:
+                Offset(0, -8 * (1 - math.cos(2 * math.pi * _nudge.value)) / 2),
+            child: child),
         child:
             Icon(Icons.arrow_downward_rounded, size: 18, color: widget.color),
       );

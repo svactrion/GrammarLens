@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/motion.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 import 'package:grammar_lens/utils/haptics.dart';
 import 'package:grammar_lens/screens/premium_on_screen.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -1212,7 +1214,9 @@ void main() {
       avatar: Avatar.values[6], // avatar_07, arbitrary but fixed
     );
 
-    // Reads each AvatarTile's own `avatar` property directly rather than
+    // Fix round 2 (V13): the trio is three CompanionViews (the side ones
+    // float, the middle one hops) instead of round AvatarTiles.
+    // Reads each CompanionView's own `hero` property directly rather than
     // scanning semantics labels — the hero collapses to one semantic node
     // (see _AvatarHero's own doc comment: the other four are decorative,
     // not individually meaningful to a screen reader), so which avatars
@@ -1227,8 +1231,8 @@ void main() {
     }
 
     List<Avatar?> avatarsShown(WidgetTester tester) => tester
-        .widgetList<AvatarTile>(find.byType(AvatarTile))
-        .map((tile) => tile.avatar)
+        .widgetList<CompanionView>(find.byType(CompanionView))
+        .map((tile) => tile.hero)
         .toList();
 
     testWidgets(
@@ -1302,10 +1306,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AvatarTile), findsNWidgets(3));
+      expect(find.byType(CompanionView), findsNWidgets(3));
       for (final tile
-          in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
-        expect(tile.avatar, isNotNull,
+          in tester.widgetList<CompanionView>(find.byType(CompanionView))) {
+        expect(tile.hero, isNotNull,
             reason: 'no tile should fall back to the null/placeholder '
                 'branch in the hero');
       }
@@ -1350,7 +1354,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(AvatarTile), findsNWidgets(3));
+      expect(find.byType(CompanionView), findsNWidgets(3));
     });
 
     for (final width in [320.0, 390.0]) {
@@ -1372,7 +1376,7 @@ void main() {
             ),
           ));
           await tester.pumpAndSettle();
-          final tiles = find.byType(AvatarTile);
+          final tiles = find.byType(CompanionView);
           // 1.2.0 (O11): three at every width.
           const count = 3;
           expect(tiles, findsNWidgets(count));
@@ -1380,18 +1384,32 @@ void main() {
           final rects =
               List.generate(count, (i) => tester.getRect(tiles.at(i)));
           final center = rects[count ~/ 2];
-          expect(center.center.dx, closeTo(width / 2, 0.01));
+          // The board's side companions are 70 and 64 pt (V13), so the
+          // centred row puts the middle one 3 pt off the centre.
+          expect(center.center.dx, closeTo(width / 2, 3.01));
           for (var i = 0; i < count; i++) {
             expect(rects[i].left, greaterThanOrEqualTo(0));
             expect(rects[i].right, lessThanOrEqualTo(width));
             if (i != count ~/ 2) expect(rects[i].width, lessThan(center.width));
             if (i > 0) {
+              // The board's 4 pt gap (V13, fix round 2).
               expect(
-                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(8));
+                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(4));
             }
           }
           expect(find.ancestor(of: tiles, matching: find.byType(Opacity)),
               findsNothing);
+          // The side ones float, the middle one hops.
+          expect(
+              tester
+                  .widgetList<CompanionView>(tiles)
+                  .map((c) => c.ambient)
+                  .toList(),
+              [
+                CompanionAmbient.float,
+                CompanionAmbient.hop,
+                CompanionAmbient.float
+              ]);
           expect(tester.takeException(), isNull);
         });
       }
@@ -2188,7 +2206,7 @@ void main() {
         // The text above it keeps more room than before (373 and 369 pt).
         expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
-        expect(find.byType(AvatarTile), findsNothing);
+        expect(find.byType(CompanionView), findsNothing);
         // ...which lifts the content: the headline and the start of the
         // benefits card are in view (1.2.0: the comparison table is behind
         // "Compare Free & Premium" and the plan cards come after the
@@ -2338,15 +2356,15 @@ void main() {
         (tester) async {
       await pumpMeasured(tester,
           size: const Size(390, 844), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsWidgets);
+      expect(find.byType(CompanionView), findsWidgets);
 
       await pumpMeasured(tester,
           size: const Size(390, 699), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsNothing);
+      expect(find.byType(CompanionView), findsNothing);
 
       await pumpMeasured(tester,
           size: const Size(390, 700), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsWidgets);
+      expect(find.byType(CompanionView), findsWidgets);
     });
   });
 
@@ -2928,14 +2946,16 @@ void main() {
           ),
         ));
         await tester.pumpAndSettle();
-        final tiles =
-            tester.widgetList<AvatarTile>(find.byType(AvatarTile)).toList();
+        // Fix round 2: the board's companions (V13: 70, 110, 64).
+        final tiles = tester
+            .widgetList<CompanionView>(find.byType(CompanionView))
+            .toList();
         expect(tiles, hasLength(3));
-        expect(tiles[1].avatar, avatar);
-        expect(tiles[1].radius * 2, 124);
-        expect(tiles[0].radius * 2, 66);
-        expect(tiles[2].radius * 2, 66);
-        expect({tiles[0].avatar, tiles[2].avatar}.contains(avatar), isFalse);
+        expect(tiles[1].hero, avatar);
+        expect(tiles[1].size, 110);
+        expect(tiles[0].size, 70);
+        expect(tiles[2].size, 64);
+        expect({tiles[0].hero, tiles[2].hero}.contains(avatar), isFalse);
       }
     });
 
@@ -3179,6 +3199,89 @@ void main() {
       expect(find.textContaining('3.33 per month'), findsOneWidget);
       expect(find.textContaining('59.88'), findsOneWidget);
       expect(find.textContaining('\$3.33'), findsNothing);
+    });
+  });
+
+  group('V13 motion (fix round 2, item 2)', () {
+    setUp(() => AppMotion.loopsEnabled = true);
+    tearDown(() => AppMotion.loopsEnabled = false);
+
+    Future<void> pumpLive(WidgetTester tester, {bool reduce = false}) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      if (reduce) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+            tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      }
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        ),
+      ));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    double lift(WidgetTester tester, Finder f) => tester
+        .widget<Transform>(
+            find.descendant(of: f, matching: find.byKey(CompanionView.bodyKey)))
+        .transform
+        .getTranslation()
+        .y;
+
+    testWidgets('the side companions float, the middle one hops',
+        (tester) async {
+      await pumpLive(tester);
+      final trio = find.byType(CompanionView);
+      expect(trio, findsNWidgets(3));
+      final side = <double>[], middle = <double>[];
+      for (var t = 0; t < 3200; t += 100) {
+        await tester.pump(const Duration(milliseconds: 100));
+        side.add(lift(tester, trio.at(0)));
+        middle.add(lift(tester, trio.at(1)));
+      }
+      double range(List<double> v) =>
+          v.reduce((a, b) => a > b ? a : b) - v.reduce((a, b) => a < b ? a : b);
+      expect(range(side), greaterThan(7));
+      expect(middle.reduce((a, b) => a < b ? a : b), lessThan(-14));
+    });
+
+    testWidgets('"See plans" arrow floats every 1.8 s', (tester) async {
+      await pumpLive(tester);
+      final arrow = find.ancestor(
+          of: find.byIcon(Icons.arrow_downward_rounded),
+          matching: find.byType(Transform));
+      final dys = <double>[];
+      for (var t = 0; t < 1800; t += 100) {
+        await tester.pump(const Duration(milliseconds: 100));
+        dys.add(
+            tester.widget<Transform>(arrow.first).transform.getTranslation().y);
+      }
+      expect(dys.reduce((a, b) => a < b ? a : b), lessThan(-7));
+    });
+
+    testWidgets('the CTA shines and pulses; not under Reduce Motion',
+        (tester) async {
+      await pumpLive(tester);
+      expect(find.byKey(CtaGlow.shineKey), findsOneWidget);
+      expect(find.byKey(CtaGlow.pulseKey), findsOneWidget);
+      expect(
+          find.ancestor(
+              of: find.byKey(PremiumScreen.ctaKey),
+              matching: find.byType(CtaGlow)),
+          findsOneWidget);
+      await pumpLive(tester, reduce: true);
+      expect(find.byKey(CtaGlow.shineKey), findsNothing);
+      expect(find.byKey(CtaGlow.pulseKey), findsNothing);
     });
   });
 }

@@ -311,7 +311,7 @@ class _PressableButtonState extends State<PressableButton>
 /// the sweep takes the first 55 %).
 class _Shine extends StatelessWidget {
   final Animation<double> animation;
-  const _Shine({required this.animation});
+  const _Shine({super.key, required this.animation});
 
   @override
   Widget build(BuildContext context) {
@@ -345,11 +345,113 @@ class _Shine extends StatelessWidget {
   }
 }
 
+/// The main-CTA effects for a button that is not a [PressableButton] (the
+/// paywall's FilledButton): the shine sweep inside it (`gl-shine`, 3 s) and
+/// the pulse ring behind it (`gl-pulse`, 1.8 s). Only while [enabled] and
+/// loops run (not under Reduce Motion).
+class CtaGlow extends StatefulWidget {
+  final bool enabled;
+  final Color color;
+  final double radius;
+  final Widget child;
+
+  const CtaGlow({
+    super.key,
+    required this.enabled,
+    required this.color,
+    required this.radius,
+    required this.child,
+  });
+
+  /// The shine band and the pulse ring (tests).
+  static const shineKey = ValueKey('cta_glow_shine');
+  static const pulseKey = ValueKey('cta_glow_pulse');
+
+  @override
+  State<CtaGlow> createState() => _CtaGlowState();
+}
+
+class _CtaGlowState extends State<CtaGlow> with TickerProviderStateMixin {
+  AnimationController? _shine;
+  AnimationController? _pulse;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(CtaGlow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  void _sync() {
+    final on = widget.enabled && AppMotion.loopsOn(context);
+    if (on && _shine == null) {
+      _shine = AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 3000))
+        ..repeat();
+      _pulse = AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 1800))
+        ..repeat();
+    } else if (!on && _shine != null) {
+      _shine!.dispose();
+      _pulse!.dispose();
+      _shine = null;
+      _pulse = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _shine?.dispose();
+    _pulse?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shine = _shine, pulse = _pulse;
+    if (shine == null || pulse == null) return widget.child;
+    final radius = BorderRadius.circular(widget.radius);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: _PulseRing(
+              key: CtaGlow.pulseKey,
+              animation: pulse,
+              color: widget.color,
+              radius: widget.radius,
+              lip: 0),
+        ),
+        widget.child,
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: radius,
+            child: _Shine(key: CtaGlow.shineKey, animation: shine),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// A ring that grows out of the button and fades (`gl-pulse`, 1.8 s loop).
 class _PulseRing extends StatelessWidget {
   final Animation<double> animation;
   final Color color;
-  const _PulseRing({required this.animation, required this.color});
+  final double radius;
+  final double lip;
+  const _PulseRing({
+    super.key,
+    required this.animation,
+    required this.color,
+    this.radius = PressableButton.radius,
+    this.lip = PressableButton.lip,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -362,11 +464,11 @@ class _PulseRing extends StatelessWidget {
             scaleX: 1 + .08 * t,
             scaleY: 1 + .45 * t,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: PressableButton.lip),
+              padding: EdgeInsets.only(bottom: lip),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: .45 * (1 - t)),
-                  borderRadius: BorderRadius.circular(PressableButton.radius),
+                  borderRadius: BorderRadius.circular(radius),
                 ),
               ),
             ),
