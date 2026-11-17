@@ -141,18 +141,46 @@ void main() {
   });
 
   testWidgets(
-      'normal motion animates the selection-card transitions over 180ms',
-      (tester) async {
+      'normal motion: the text cross-fades over 180 ms, the count rolls over '
+      '250 ms (R02)', (tester) async {
     await _openPicker(tester, initial: PracticeLength.standard);
 
-    for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
+    for (final (key, ms) in [
+      ('lengthTextSwitcher', 180),
+      ('lengthNumberSwitcher', 250),
+    ]) {
       final switcher = tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
-      expect(
-        switcher.duration,
-        const Duration(milliseconds: 180),
-        reason: key,
-      );
+      expect(switcher.duration, Duration(milliseconds: ms), reason: key);
     }
+  });
+
+  testWidgets(
+      'R02: the count rolls — a longer length comes in from below and the old '
+      'one leaves upwards; a shorter one the other way', (tester) async {
+    await _openPicker(tester, initial: PracticeLength.standard);
+    final dial = find.byKey(const Key('lengthNumberSwitcher'));
+    double y(String text) => tester
+        .getCenter(find.descendant(of: dial, matching: find.text(text)))
+        .dy;
+    final rest = y('5');
+
+    // 5 → 10: drag the knob to the last stop.
+    await tester.drag(find.byType(Slider), const Offset(400, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(y('10'), greaterThan(rest + 1), reason: 'comes in from below');
+    expect(y('5'), lessThan(rest - 1), reason: 'leaves upwards');
+    await tester.pumpAndSettle();
+    expect(y('10'), closeTo(rest, .5));
+
+    // 10 → 3: down.
+    await tester.drag(find.byType(Slider), const Offset(-800, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(y('3'), lessThan(rest - 1), reason: 'comes in from above');
+    expect(y('10'), greaterThan(rest + 1), reason: 'leaves downwards');
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: dial, matching: find.text('10')), findsNothing);
   });
 
   testWidgets(

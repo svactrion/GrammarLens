@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../app_colors.dart';
+import '../motion.dart';
 import '../utils/haptics.dart';
 import '../widgets/app_sheet.dart';
 import '../widgets/pressable_button.dart';
@@ -278,11 +279,11 @@ class _SelectionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       // Card color is fixed regardless of selection — only the dial and
-      // text inside change.
-      padding: const EdgeInsets.all(20),
+      // text inside change. R02: radius 26, padding 18 / 22.
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -299,7 +300,7 @@ class _SelectionCard extends StatelessWidget {
             ratio: practiceLengthDialRatio(selected),
             reduceMotion: reduceMotion,
           ),
-          const SizedBox(width: Spacing.lg),
+          const SizedBox(width: 22),
           Expanded(
             child: AnimatedSwitcher(
               key: const Key('lengthTextSwitcher'),
@@ -343,9 +344,13 @@ class _SelectionCard extends StatelessWidget {
 /// Deliberately not rebuilt via a keyed swap ([AnimatedSwitcher]) the way
 /// the card's text is — this widget's own State has to survive a selection
 /// change for [didUpdateWidget] to tween the ring smoothly between two
-/// ratios. The count text still gets the same discrete-swap treatment as
-/// before, just scoped to this widget's own internal [AnimatedSwitcher]
-/// instead of the whole card.
+/// ratios.
+///
+/// R02 (UI polish fix round 1): the board's ring — 104 pt, a thick navy arc
+/// on a pale track around a white disc, the count large in the middle. The
+/// ring fills to the new value in 250 ms and the count rolls like an
+/// odometer (up for a longer session, down for a shorter one), live while
+/// the knob is dragged from stop to stop. Reduce Motion: both just change.
 class _LengthDial extends StatefulWidget {
   final int questionCount;
   final double ratio;
@@ -363,8 +368,12 @@ class _LengthDial extends StatefulWidget {
 
 class _LengthDialState extends State<_LengthDial>
     with SingleTickerProviderStateMixin {
-  static const _size = 84.0;
-  static const _strokeWidth = 8.0;
+  /// The board's 104 pt ring (a 100 viewBox: radius 42, stroke 9).
+  static const _size = 104.0;
+  static const _strokeWidth = 9.4;
+
+  /// Whether the last change made the count larger: the number rolls up.
+  bool _rollUp = true;
 
   late final AnimationController _controller;
   late final CurvedAnimation _curve;
@@ -375,7 +384,7 @@ class _LengthDialState extends State<_LengthDial>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: AppMotion.base,
       // Starts "complete" so the very first frame shows widget.ratio
       // directly rather than animating in from zero on mount.
       value: 1,
@@ -387,6 +396,9 @@ class _LengthDialState extends State<_LengthDial>
   @override
   void didUpdateWidget(covariant _LengthDial oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.questionCount != widget.questionCount) {
+      _rollUp = widget.questionCount > oldWidget.questionCount;
+    }
     if (oldWidget.ratio == widget.ratio) return;
     final currentRatio = _ratioTween.evaluate(_curve);
     _ratioTween = Tween<double>(begin: currentRatio, end: widget.ratio);
@@ -409,9 +421,10 @@ class _LengthDialState extends State<_LengthDial>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final trackColor = colorScheme.onSecondaryContainer.withValues(alpha: 0.22);
+    final trackColor = colorScheme.onSecondaryContainer.withValues(alpha: 0.16);
     final fillColor = colorScheme.secondary;
     final textColor = colorScheme.onSecondaryContainer;
+    final discColor = AppColors.of(context).card;
 
     return SizedBox(
       width: _size,
@@ -429,20 +442,35 @@ class _LengthDialState extends State<_LengthDial>
                   strokeWidth: _strokeWidth,
                   trackColor: trackColor,
                   fillColor: fillColor,
+                  discColor: discColor,
                 ),
               ),
             ),
           ),
           AnimatedSwitcher(
             key: const Key('lengthNumberSwitcher'),
-            duration: widget.reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 180),
+            duration: widget.reduceMotion ? Duration.zero : AppMotion.base,
+            transitionBuilder: (child, animation) {
+              // The new count comes in from below when it grows (from
+              // above when it shrinks); the old one leaves the other way.
+              final incoming = child.key == ValueKey(widget.questionCount);
+              final dir = _rollUp ? 1.0 : -1.0;
+              return ClipRect(
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(0, incoming ? dir : -dir),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                      parent: animation, curve: AppMotion.enter)),
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+              );
+            },
             child: Text(
               '${widget.questionCount}',
               key: ValueKey(widget.questionCount),
-              style: TextStyle(fontSize: 28, color: textColor)
-                  .withWeight(FontWeight.w700),
+              style: TextStyle(fontSize: 35, color: textColor)
+                  .withWeight(FontWeight.w900),
             ),
           ),
         ],
@@ -457,11 +485,15 @@ class _DialPainter extends CustomPainter {
   final Color trackColor;
   final Color fillColor;
 
+  /// The disc inside the ring (R02: white on the light theme).
+  final Color discColor;
+
   const _DialPainter({
     required this.ratio,
     required this.strokeWidth,
     required this.trackColor,
     required this.fillColor,
+    required this.discColor,
   });
 
   @override
@@ -469,6 +501,8 @@ class _DialPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = (size.shortestSide - strokeWidth) / 2;
     final arcRect = Rect.fromCircle(center: center, radius: radius);
+
+    canvas.drawCircle(center, radius, Paint()..color = discColor);
 
     canvas.drawCircle(
       center,
@@ -501,7 +535,8 @@ class _DialPainter extends CustomPainter {
   bool shouldRepaint(covariant _DialPainter oldDelegate) =>
       oldDelegate.ratio != ratio ||
       oldDelegate.trackColor != trackColor ||
-      oldDelegate.fillColor != fillColor;
+      oldDelegate.fillColor != fillColor ||
+      oldDelegate.discColor != discColor;
 }
 
 /// A big, unmissable drag handle — a filled circle with a soft drop shadow
