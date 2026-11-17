@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
@@ -25,6 +26,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
@@ -1139,6 +1141,80 @@ void main() {
         // The last thing on Home scrolls fully into view.
         expect(tester.getRect(find.byKey(TopicShowcase.unlockKey)).bottom,
             lessThanOrEqualTo(844));
+      });
+    }
+  }
+
+  // Fix round 2, item 12 (V15): when Home first opens, the pawn and its
+  // next step are above the floating nav bar, on the owner's 6.7" phone and
+  // the 6.3" / 6.9" classes, early and late in the month. Measured in the
+  // app's font (loaded here, last in this file, so the tests above keep
+  // the test font's metrics).
+  for (final size in [
+    const Size(428, 926),
+    const Size(402, 874),
+    const Size(440, 956),
+  ]) {
+    for (final steps in [0, 3, 15, 28]) {
+      testWidgets(
+          'V15 first view at ${size.width.toInt()} × ${size.height.toInt()}, '
+          'step $steps: the pawn and its next step clear the nav bar',
+          (tester) async {
+        final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+        await (FontLoader('NunitoSans')..addFont(bytes)).load();
+        tester.view.physicalSize = size * 3.0;
+        tester.view.devicePixelRatio = 3.0;
+        tester.view.padding =
+            const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: FloatingNavShell(
+            selectedIndex: 0,
+            onTabChange: (_) {},
+            tabs: const [
+              NavShellTab(
+                  icon: Icons.landscape,
+                  activeIcon: Icons.landscape,
+                  label: 'Climb'),
+              NavShellTab(
+                  icon: Icons.history,
+                  activeIcon: Icons.history,
+                  label: 'Review'),
+              NavShellTab(
+                  icon: Icons.person,
+                  activeIcon: Icons.person,
+                  label: 'Profile'),
+            ],
+            body: HomeScreen(
+              active: true,
+              userName: 'Maximiliana Johanson',
+              claudeService: ClaudeService(),
+              storageService: _FakeStorageService()..steps = steps,
+              analyticsService: AnalyticsService(),
+              subscriptionService: _FakeSubscriptionService(),
+              clock: () => DateTime(2026, 11, 4, 15, 0),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+        final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+        final pawn = tester.getRect(find
+            .descendant(
+                of: find.byType(MonthlyMountain),
+                matching: find.byType(AvatarTile))
+            .first);
+        // 8 pt of air at 6.7" and 6.9"; at 6.3" on day 0 the camera is
+        // clamped at the art's bottom and the pawn's feet reach the bar's
+        // top edge (PROGRESS, fix round 2, item 12): never under it.
+        final margin = size.height < 900 && steps == 0 ? 0.0 : 8.0;
+        expect(pawn.bottom, lessThanOrEqualTo(bar.top - margin),
+            reason: 'pawn $pawn, bar $bar');
+        final next = find.byKey(MonthlyMountain.nextStepKey);
+        if (next.evaluate().isNotEmpty) {
+          expect(
+              tester.getRect(next).bottom, lessThanOrEqualTo(bar.top - margin));
+        }
       });
     }
   }
