@@ -46,8 +46,7 @@ void main() {
           child: Text(BrandWordmark.text, style: textStyle));
       final plainWidth = tester.getSize(find.byType(RichText)).width;
 
-      await pump(tester, brightness,
-          child: BrandWordmark(style: textStyle));
+      await pump(tester, brightness, child: BrandWordmark(style: textStyle));
       final root = paragraph(tester).text as TextSpan;
       final spans = leaves(tester);
       expect(root.toPlainText(), 'GrammarLens');
@@ -83,8 +82,8 @@ void main() {
       await tester.pump(LaunchTiming.intro);
       final spans = leaves(tester);
       expect(spans.map((s) => s.text), ['Grammar', 'Lens']);
-      expect(spans[1].style!.color,
-          buildAppTheme(brightness).colorScheme.primary);
+      expect(
+          spans[1].style!.color, buildAppTheme(brightness).colorScheme.primary);
       expect((paragraph(tester).text as TextSpan).style!.color,
           buildAppTheme(brightness).colorScheme.onSurface);
     });
@@ -107,15 +106,14 @@ void main() {
     expect(splash.fontWeight, FontWeight.w900);
     expect(splash.fontVariations, home.fontVariations);
     // Home's ratio at the brief's 34 pt: -1.4 / 34.
-    expect(splash.letterSpacing! / splash.fontSize!,
-        closeTo(-1.4 / 34, 0.0001));
+    expect(
+        splash.letterSpacing! / splash.fontSize!, closeTo(-1.4 / 34, 0.0001));
   });
 
   for (final brightness in Brightness.values) {
     testWidgets(
-        'Welcome (owner, 2026-10-06): two colours on the page colour in '
-        'dark mode, one colour on the brand orange in light mode '
-        '(${brightness.name})', (tester) async {
+        'Welcome (UI polish V02): the two-colour wordmark on the page colour '
+        'in both themes (${brightness.name})', (tester) async {
       final theme = buildAppTheme(brightness);
       await tester.pumpWidget(MaterialApp(
         theme: theme,
@@ -127,24 +125,17 @@ void main() {
       ));
       await tester.pump(const Duration(seconds: 2));
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
-      if (brightness == Brightness.dark) {
-        expect(scaffold.backgroundColor, const Color(0xFF151517));
-        expect(leaves(tester).map((s) => s.text), ['Grammar', 'Lens']);
-        expect(leaves(tester)[1].style!.color, theme.colorScheme.primary);
-      } else {
-        expect(scaffold.backgroundColor, theme.colorScheme.primary);
-        expect(find.byType(BrandWordmark), findsNothing);
-        expect(find.text('GrammarLens'), findsOneWidget);
-      }
+      expect(scaffold.backgroundColor, theme.colorScheme.surfaceContainerLow);
+      expect(leaves(tester).map((s) => s.text), ['Grammar', 'Lens']);
+      expect(leaves(tester)[1].style!.color, theme.colorScheme.primary);
     });
   }
 
   test(
       'every on-screen "GrammarLens" goes through BrandWordmark, except '
-      'Welcome and the theme preview\'s font sample', () {
+      'the theme preview\'s font sample', () {
     const allowed = {
       'lib/widgets/brand_wordmark.dart', // the widget itself
-      'lib/screens/welcome_screen.dart', // orange page in light mode
       'lib/screens/theme_preview_screen.dart', // a font sample
       'lib/app.dart', // MaterialApp.title, not drawn
     };
@@ -163,9 +154,11 @@ void main() {
       }
     }
     expect(offenders, isEmpty);
+    // UI polish: the onboarding steps (V03–V05) carry no wordmark; Welcome
+    // (V02) does.
     for (final file in [
       'lib/screens/home_screen.dart',
-      'lib/screens/onboarding_screen.dart',
+      'lib/screens/welcome_screen.dart',
       'lib/screens/premium_screen.dart',
       'lib/widgets/launch_splash.dart',
     ]) {
