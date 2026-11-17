@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
 import 'models/app_text_size.dart';
 
 // The whole ColorScheme is hand-built rather than derived via
@@ -817,6 +818,8 @@ ThemeData buildAppTheme(
     extensions: <ThemeExtension<dynamic>>[
       isDark ? SemanticColors.dark : SemanticColors.light,
       palette,
+      // The UI polish palette (SPEC §3.1).
+      isDark ? AppColors.dark : AppColors.light,
     ],
     scaffoldBackgroundColor: pageBg,
     appBarTheme: AppBarTheme(
