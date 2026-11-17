@@ -66,10 +66,6 @@
   "@commonCancel": {
     "description": "Button that closes an editor without saving."
   },
-  "commonDone": "Done",
-  "@commonDone": {
-    "description": "Button that closes a picker screen."
-  },
   "commonResetting": "Resetting…",
   "@commonResetting": {
     "description": "Shown on a reset button while the reset runs."
@@ -387,14 +383,6 @@
   "@aiConsentNotNowNote": {
     "description": "AI permission screen: under the buttons, what declining leaves. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
-  "avatarPickerTitle": "Choose your avatar",
-  "@avatarPickerTitle": {
-    "description": "Avatar picker: the title."
-  },
-  "avatarPickerHeading": "Pick your study buddy",
-  "@avatarPickerHeading": {
-    "description": "Avatar picker: the heading above the avatars."
-  },
   "goalExamPrep": "Exam prep",
   "@goalExamPrep": {
     "description": "Learning goal (onboarding): preparing for an English exam. Short title."
@@ -411,13 +399,13 @@
   "@goalWorkDetail": {
     "description": "Learning goal (onboarding): the line under 'Work'."
   },
-  "goalGeneral": "Everyday confidence",
+  "goalGeneral": "Everyday English",
   "@goalGeneral": {
-    "description": "Learning goal (onboarding): general English. Short title."
+    "description": "Learning goal: everyday English (onboarding V05, Profile)."
   },
-  "goalGeneralDetail": "General fluency, no specific goal",
+  "goalGeneralDetail": "Feel confident in daily conversations",
   "@goalGeneralDetail": {
-    "description": "Learning goal (onboarding): the line under 'Everyday confidence'."
+    "description": "Learning goal 'Everyday English': its description on the goal card."
   },
   "practiceLengthQuick": "Quick",
   "@practiceLengthQuick": {
@@ -451,17 +439,9 @@
   "@reviewSortFrequent": {
     "description": "Review: sort the weak spots by how often the mistake was made."
   },
-  "commonBack": "Back",
-  "@commonBack": {
-    "description": "Tooltip of a back button."
-  },
   "commonContinue": "Continue",
   "@commonContinue": {
     "description": "Button that moves to the next step."
-  },
-  "welcomeTagline": "Practice English grammar with instant, plain-language feedback — no jargon, no judgment, just what to fix and why.",
-  "@welcomeTagline": {
-    "description": "Welcome screen (first launch): the line under the wordmark."
   },
   "welcomeGetStarted": "Get started",
   "@welcomeGetStarted": {
@@ -481,25 +461,9 @@
       }
     }
   },
-  "onboardingCompanionEyebrow": "A little practice. Every day.",
-  "@onboardingCompanionEyebrow": {
-    "description": "Onboarding step 1: the small line above the heading."
-  },
-  "onboardingCompanionTitle": "Meet your learning companion.",
-  "@onboardingCompanionTitle": {
-    "description": "Onboarding step 1: the heading above the avatar carousel."
-  },
-  "onboardingCompanionSubtitle": "Five questions a day. A small step forward, together.",
-  "@onboardingCompanionSubtitle": {
-    "description": "Onboarding step 1: the line under the heading. 'Five' is the Daily Test's question count (DailyTestSet.questionCount), spelled out; test/onboarding_l10n_test.dart fails if the count changes."
-  },
-  "onboardingCarouselHint": "Swipe to choose · Change it later in Profile",
-  "@onboardingCarouselHint": {
-    "description": "Onboarding step 1: under the avatar carousel. 'Profile' must match navProfile."
-  },
-  "onboardingNameQuestion": "What should we call you?",
+  "onboardingNameQuestion": "What should I call you?",
   "@onboardingNameQuestion": {
-    "description": "Onboarding step 1: the name card's question."
+    "description": "Onboarding name step (V04): the buddy's question in its speech bubble."
   },
   "onboardingNameHint": "Your name",
   "@onboardingNameHint": {
@@ -509,28 +473,6 @@
   "@onboardingNameNote": {
     "description": "Onboarding step 1: under the name field."
   },
-  "onboardingGoalGreeting": "One more thing, {name}.",
-  "@onboardingGoalGreeting": {
-    "description": "Onboarding step 2: beside the learner's avatar; {name} is the name they typed.",
-    "placeholders": {
-      "name": {
-        "type": "String",
-        "example": "Ada"
-      }
-    }
-  },
-  "onboardingGoalEyebrow": "Help shape GrammarLens",
-  "@onboardingGoalEyebrow": {
-    "description": "Onboarding step 2: the small line above the heading. 'GrammarLens' is the app's name, never translated."
-  },
-  "onboardingGoalTitle": "What brings you to English?",
-  "@onboardingGoalTitle": {
-    "description": "Onboarding step 2: the heading above the learning goals."
-  },
-  "onboardingGoalSubtitle": "Choose what matters most to you. Your answer helps us decide what to improve next.",
-  "@onboardingGoalSubtitle": {
-    "description": "Onboarding step 2: the line under the heading."
-  },
   "onboardingPrivacyNote": "Your name stays on this device. Your goal is sent with app usage data, never with your name. Usage and crash data is collected.",
   "@onboardingPrivacyNote": {
     "description": "Onboarding step 2: the privacy line under the goals. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
@@ -538,14 +480,6 @@
   "onboardingDataLink": "How AI feedback uses your answers",
   "@onboardingDataLink": {
     "description": "Onboarding step 2: the link that opens 'Your data & AI'."
-  },
-  "onboardingStart": "Start my first test",
-  "@onboardingStart": {
-    "description": "Onboarding step 2: the button that saves and starts the first Daily Test."
-  },
-  "onboardingSkipGoal": "Skip goal & start",
-  "@onboardingSkipGoal": {
-    "description": "Onboarding step 2: finishes without a learning goal."
   },
   "onboardingDataTitle": "Your data & AI",
   "@onboardingDataTitle": {
@@ -586,20 +520,6 @@
   "onboardingDataGotIt": "Got it",
   "@onboardingDataGotIt": {
     "description": "'Your data & AI': the button that closes the dialog."
-  },
-  "firstLaunchSaving": "Setting things up…",
-  "@firstLaunchSaving": {
-    "description": "Shown while the new profile is saved at the end of onboarding."
-  },
-  "firstLaunchSaveFailed": "Could not save your profile: {error}",
-  "@firstLaunchSaveFailed": {
-    "description": "Snackbar when saving the new profile failed; {error} is the technical reason.",
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "example": "database is locked"
-      }
-    }
   },
   "featureDailyTest": "Daily Test",
   "@featureDailyTest": {
@@ -2831,28 +2751,6 @@
       }
     }
   },
-  "commonDismiss": "Dismiss",
-  "@commonDismiss": {
-    "description": "The action on a snackbar that closes it."
-  },
-  "carouselPrevious": "Previous companion",
-  "@carouselPrevious": {
-    "description": "Tooltip of the avatar carousel's left arrow."
-  },
-  "carouselNext": "Next companion",
-  "@carouselNext": {
-    "description": "Tooltip of the avatar carousel's right arrow."
-  },
-  "carouselSelected": "{avatar}, selected",
-  "@carouselSelected": {
-    "description": "VoiceOver: the avatar shown in the carousel's centre.",
-    "placeholders": {
-      "avatar": {
-        "type": "String",
-        "example": "Fox"
-      }
-    }
-  },
   "avatarKoala": "Koala",
   "@avatarKoala": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
@@ -3152,6 +3050,416 @@
       "total": {
         "type": "int",
         "example": "5"
+      }
+    }
+  },
+  "buddyTitle": "Choose your climbing buddy",
+  "@buddyTitle": {
+    "description": "Buddy picker (V03): the title in onboarding."
+  },
+  "buddySubtitle": "Swipe to meet all {count} · change anytime in Profile",
+  "@buddySubtitle": {
+    "description": "Buddy picker (V03): under the title; {count} is the number of buddies (9).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "buddySpeech": "“Hi! Let’s reach the summit together.”",
+  "@buddySpeech": {
+    "description": "Buddy picker (V03): what the buddy in front says, in quotes."
+  },
+  "buddyClimbWith": "Climb with {hero}",
+  "@buddyClimbWith": {
+    "description": "Buddy picker and wheel (V03, V03b) in onboarding: the main button. {hero} is the buddy's name.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "buddySave": "Save {hero}",
+  "@buddySave": {
+    "description": "Buddy picker and wheel from Profile (R06): the main button. {hero} is the buddy's name.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "buddyTryLuck": "Try my luck",
+  "@buddyTryLuck": {
+    "description": "Buddy picker (V03, R06): the second button; opens the wheel of fortune that picks a buddy at random."
+  },
+  "buddyChangeTitle": "Change your buddy",
+  "@buddyChangeTitle": {
+    "description": "Buddy picker from Profile (R06): the title."
+  },
+  "buddyChangeSubtitle": "Your progress stays the same",
+  "@buddyChangeSubtitle": {
+    "description": "Buddy picker from Profile (R06): under the title."
+  },
+  "buddyPrevious": "Previous buddy",
+  "@buddyPrevious": {
+    "description": "Buddy picker: the ‹ button's VoiceOver label."
+  },
+  "buddyNext": "Next buddy",
+  "@buddyNext": {
+    "description": "Buddy picker: the › button's VoiceOver label."
+  },
+  "buddyPosition": "Buddy {index} of {count}",
+  "@buddyPosition": {
+    "description": "Buddy picker: VoiceOver label of the dots under the name.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "1"
+      },
+      "count": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "wheelReadyTitle": "Let a buddy pick you",
+  "@wheelReadyTitle": {
+    "description": "Wheel of fortune (V03b), before the spin: the title."
+  },
+  "wheelReadySubtitle": "Spin the wheel. Whoever it lands on is your climbing buddy.",
+  "@wheelReadySubtitle": {
+    "description": "Wheel of fortune (V03b), before the spin: under the title."
+  },
+  "wheelSpin": "Spin the wheel",
+  "@wheelSpin": {
+    "description": "Wheel of fortune (V03b): the button that starts the spin."
+  },
+  "wheelSpinning": "Spinning…",
+  "@wheelSpinning": {
+    "description": "Wheel of fortune (V03b) while it spins: the title and the disabled button."
+  },
+  "wheelSpinningSubtitle": "Who will it be?",
+  "@wheelSpinningSubtitle": {
+    "description": "Wheel of fortune (V03b) while it spins: under the title."
+  },
+  "wheelFootReady": "Spin as often as you like · progress stays the same",
+  "@wheelFootReady": {
+    "description": "Wheel of fortune (V03b), before the spin: the small line under the button."
+  },
+  "wheelFootSpinning": "It never lands on your current buddy",
+  "@wheelFootSpinning": {
+    "description": "Wheel of fortune (V03b) while it spins: the small line under the button."
+  },
+  "wheelPicked": "{hero} picked you!",
+  "@wheelPicked": {
+    "description": "Wheel of fortune (V03b) after the spin: the title. {hero} is the buddy it landed on.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Frog"
+      }
+    }
+  },
+  "wheelLandedSubtitle": "Happy with it? You can spin again or go back.",
+  "@wheelLandedSubtitle": {
+    "description": "Wheel of fortune (V03b) after the spin: under the title."
+  },
+  "wheelSpinAgain": "Spin again",
+  "@wheelSpinAgain": {
+    "description": "Wheel of fortune (V03b) after the spin: the second button."
+  },
+  "wheelAllBuddies": "All buddies",
+  "@wheelAllBuddies": {
+    "description": "Wheel of fortune (V03b): the top-left button back to the turntable."
+  },
+  "welcomeTitle": "See your mistakes clearly.",
+  "@welcomeTitle": {
+    "description": "Welcome (V02): the big title."
+  },
+  "welcomeSubtitle": "Five questions a day. Plain-language feedback. A companion who climbs with you.",
+  "@welcomeSubtitle": {
+    "description": "Welcome (V02): under the title."
+  },
+  "welcomeWatch": "WATCH",
+  "@welcomeWatch": {
+    "description": "Welcome (V02): the small label of the demo card where a mistake is found and corrected; uppercase."
+  },
+  "onboardingNiceToMeet": "Nice to meet you, {name}!",
+  "@onboardingNiceToMeet": {
+    "description": "Onboarding goal step (V05): the buddy's greeting after the name. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalQuestion": "What brings you to English, {name}?",
+  "@onboardingGoalQuestion": {
+    "description": "Onboarding goal step (V05): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalPickOne": "Pick one. It helps us decide what to improve next.",
+  "@onboardingGoalPickOne": {
+    "description": "Onboarding goal step (V05): under the title. The goal changes no content; it only helps the team."
+  },
+  "onboardingStepShort": "{step} of {total}",
+  "@onboardingStepShort": {
+    "description": "Onboarding goal step (V05): next to the progress bar, e.g. '3 of 4'.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "onboardingSkipForNow": "Skip for now",
+  "@onboardingSkipForNow": {
+    "description": "Onboarding goal step (V05): the text button that continues with no goal."
+  },
+  "goalReactionExam": "“Exam prep it is! Let’s get you ready.”",
+  "@goalReactionExam": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "goalReactionWork": "“Work it is! I’ll cheer you on.”",
+  "@goalReactionWork": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "goalReactionGeneral": "“Everyday English it is! Let’s talk.”",
+  "@goalReactionGeneral": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "readyTitle": "Getting your climb ready, {name}",
+  "@readyTitle": {
+    "description": "Getting ready (V05b): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "readyRowSaved": "Name and buddy saved",
+  "@readyRowSaved": {
+    "description": "Getting ready (V05b): the first task's row."
+  },
+  "readyRowTest": "Today’s Daily Test downloaded",
+  "@readyRowTest": {
+    "description": "Getting ready (V05b): the second task's row. 'Daily Test' is the feature name."
+  },
+  "readyRowMountain": "{month}’s mountain opened",
+  "@readyRowMountain": {
+    "description": "Getting ready (V05b): the third task's row. {month} is this month's name (November).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      }
+    }
+  },
+  "readyBubbleExam": "Exam prep, here we come!",
+  "@readyBubbleExam": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Exam prep'."
+  },
+  "readyBubbleWork": "Work English, here we come!",
+  "@readyBubbleWork": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Work'."
+  },
+  "readyBubbleGeneral": "Everyday English, here we come!",
+  "@readyBubbleGeneral": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Everyday English'."
+  },
+  "readyBubbleNone": "Let’s climb!",
+  "@readyBubbleNone": {
+    "description": "Getting ready (V05b): the buddy's speech bubble when the goal was skipped."
+  },
+  "readyYourClimb": "YOUR CLIMB",
+  "@readyYourClimb": {
+    "description": "Getting ready (V05b): the label of the card that sums up the choices; uppercase."
+  },
+  "readyMountainChip": "{mountain} · {steps} steps",
+  "@readyMountainChip": {
+    "description": "Getting ready (V05b): a chip with this month's mountain and its number of steps (days in the month).",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "steps": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "readyPerDayChip": "{count} questions a day",
+  "@readyPerDayChip": {
+    "description": "Getting ready (V05b): a chip with the number of Daily Test questions (5).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "readyGoalExam": "Exam prep",
+  "@readyGoalExam": {
+    "description": "Getting ready (V05b): the goal chip for 'Exam prep'."
+  },
+  "readyGoalWork": "Work English",
+  "@readyGoalWork": {
+    "description": "Getting ready (V05b): the goal chip for 'Work'."
+  },
+  "readyGoalGeneral": "Everyday English",
+  "@readyGoalGeneral": {
+    "description": "Getting ready (V05b): the goal chip for 'Everyday English'."
+  },
+  "readyPercentSemantics": "{percent} percent ready",
+  "@readyPercentSemantics": {
+    "description": "Getting ready (V05b): VoiceOver label of the big percentage.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "68"
+      }
+    }
+  },
+  "mountainIntroEyebrow": "{month} · {mountain}",
+  "@mountainIntroEyebrow": {
+    "description": "This month's mountain (V06): the small line above the title, e.g. 'NOVEMBER · EMBER PEAK' (both uppercased by the app).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "NOVEMBER"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "EMBER PEAK"
+      }
+    }
+  },
+  "mountainIntroTitle": "This month’s mountain",
+  "@mountainIntroTitle": {
+    "description": "This month's mountain (V06): the title."
+  },
+  "mountainIntroBody": "A new mountain every month. Each Daily Test is one step up.",
+  "@mountainIntroBody": {
+    "description": "This month's mountain (V06): under the title. 'Daily Test' is the feature name."
+  },
+  "mountainIntroStart": "Take my first step",
+  "@mountainIntroStart": {
+    "description": "This month's mountain (V06): the button that starts the first Daily Test."
+  },
+  "commonDone": "Done",
+  "@commonDone": {
+    "description": "Button that closes a picker screen."
+  },
+  "avatarPickerTitle": "Choose your avatar",
+  "@avatarPickerTitle": {
+    "description": "Avatar picker: the title."
+  },
+  "avatarPickerHeading": "Pick your study buddy",
+  "@avatarPickerHeading": {
+    "description": "Avatar picker: the heading above the avatars."
+  },
+  "commonBack": "Back",
+  "@commonBack": {
+    "description": "Tooltip of a back button."
+  },
+  "welcomeTagline": "Practice English grammar with instant, plain-language feedback — no jargon, no judgment, just what to fix and why.",
+  "@welcomeTagline": {
+    "description": "Welcome screen (first launch): the line under the wordmark."
+  },
+  "onboardingCompanionEyebrow": "A little practice. Every day.",
+  "@onboardingCompanionEyebrow": {
+    "description": "Onboarding step 1: the small line above the heading."
+  },
+  "onboardingCompanionTitle": "Meet your learning companion.",
+  "@onboardingCompanionTitle": {
+    "description": "Onboarding step 1: the heading above the avatar carousel."
+  },
+  "onboardingCompanionSubtitle": "Five questions a day. A small step forward, together.",
+  "@onboardingCompanionSubtitle": {
+    "description": "Onboarding step 1: the line under the heading. 'Five' is the Daily Test's question count (DailyTestSet.questionCount), spelled out; test/onboarding_l10n_test.dart fails if the count changes."
+  },
+  "onboardingCarouselHint": "Swipe to choose · Change it later in Profile",
+  "@onboardingCarouselHint": {
+    "description": "Onboarding step 1: under the avatar carousel. 'Profile' must match navProfile."
+  },
+  "onboardingGoalGreeting": "One more thing, {name}.",
+  "@onboardingGoalGreeting": {
+    "description": "Onboarding step 2: beside the learner's avatar; {name} is the name they typed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalEyebrow": "Help shape GrammarLens",
+  "@onboardingGoalEyebrow": {
+    "description": "Onboarding step 2: the small line above the heading. 'GrammarLens' is the app's name, never translated."
+  },
+  "onboardingGoalTitle": "What brings you to English?",
+  "@onboardingGoalTitle": {
+    "description": "Onboarding step 2: the heading above the learning goals."
+  },
+  "onboardingGoalSubtitle": "Choose what matters most to you. Your answer helps us decide what to improve next.",
+  "@onboardingGoalSubtitle": {
+    "description": "Onboarding step 2: the line under the heading."
+  },
+  "onboardingStart": "Start my first test",
+  "@onboardingStart": {
+    "description": "Onboarding step 2: the button that saves and starts the first Daily Test."
+  },
+  "onboardingSkipGoal": "Skip goal & start",
+  "@onboardingSkipGoal": {
+    "description": "Onboarding step 2: finishes without a learning goal."
+  },
+  "firstLaunchSaving": "Setting things up…",
+  "@firstLaunchSaving": {
+    "description": "Shown while the new profile is saved at the end of onboarding."
+  },
+  "firstLaunchSaveFailed": "Could not save your profile: {error}",
+  "@firstLaunchSaveFailed": {
+    "description": "Snackbar when saving the new profile failed; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "commonDismiss": "Dismiss",
+  "@commonDismiss": {
+    "description": "The action on a snackbar that closes it."
+  },
+  "carouselPrevious": "Previous companion",
+  "@carouselPrevious": {
+    "description": "Tooltip of the avatar carousel's left arrow."
+  },
+  "carouselNext": "Next companion",
+  "@carouselNext": {
+    "description": "Tooltip of the avatar carousel's right arrow."
+  },
+  "carouselSelected": "{avatar}, selected",
+  "@carouselSelected": {
+    "description": "VoiceOver: the avatar shown in the carousel's centre.",
+    "placeholders": {
+      "avatar": {
+        "type": "String",
+        "example": "Fox"
       }
     }
   }
