@@ -304,6 +304,9 @@ void main() {
       'tr_waiting': buildWidgetPayload(_input(weak: null), _l10n('tr')),
       'ar_done': buildWidgetPayload(
           _input(done: true, steps: 2, rtl: true), _l10n('ar')),
+      'ar_done_late': buildWidgetPayload(
+          _input(done: true, steps: 15, rtl: true), _l10n('ar')),
+      'de_done': buildWidgetPayload(_input(done: true, steps: 15), _l10n('de')),
     };
     final update = Platform.environment['UPDATE_WIDGET_FIXTURES'] == 'true';
     for (final entry in cases.entries) {

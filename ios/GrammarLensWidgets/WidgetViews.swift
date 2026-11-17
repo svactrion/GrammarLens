@@ -93,16 +93,19 @@ struct ClimbSmallView: View {
           .foregroundColor(WidgetPalette.green)
           .lineLimit(1)
       }
+      // One line, as on W01 ("Step 2 of 30"); a longer translation scales
+      // down. The countdown may take two lines (Arabic, German).
       Text(climb.title)
         .font(WidgetFont.heavy(18))
         .foregroundColor(WidgetPalette.text(scheme))
-        .lineLimit(2)
-        .minimumScaleFactor(0.75)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
       Text(climb.countdownLine(hours: hoursLeft, medium: false))
         .font(WidgetFont.bold(11))
         .foregroundColor(WidgetPalette.muted(scheme))
-        .lineLimit(1)
+        .lineLimit(2)
         .minimumScaleFactor(0.8)
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 
@@ -297,7 +300,8 @@ struct TipMediumView: View {
         Text(tip.button)
           .font(WidgetFont.heavy(12))
           .lineLimit(1)
-          .minimumScaleFactor(0.7)
+          // "Heute erledigt" in a 104 pt box.
+          .minimumScaleFactor(0.55)
         if !tip.done {
           Image(systemName: "arrow.forward")
             .font(.system(size: 9, weight: .heavy))
@@ -305,7 +309,7 @@ struct TipMediumView: View {
         }
       }
       .foregroundColor(.white)
-      .padding(.horizontal, 12)
+      .padding(.horizontal, tip.done ? 8 : 12)
       .padding(.vertical, 6)
       .background(Capsule().fill(tip.done ? WidgetPalette.green : WidgetPalette.navy))
     }
