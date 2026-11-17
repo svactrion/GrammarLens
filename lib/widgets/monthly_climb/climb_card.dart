@@ -40,6 +40,15 @@ class ClimbCard extends StatelessWidget {
   /// fade in at the zoom's end. Null: always shown.
   final Animation<double>? chipOpacity;
 
+  /// The mountain window's height (the bubble sits at 44 % of it): Home's
+  /// fitted window (INTEGRATE 3b), else the full one.
+  final double windowHeight;
+
+  /// Below this window height (an iPhone SE's fitted window) the bubble
+  /// has no room between the chips and the pawn and is left out; the Daily
+  /// Test card above says the same.
+  static const bubbleMinWindow = 240.0;
+
   const ClimbCard({
     super.key,
     required this.mountain,
@@ -49,6 +58,7 @@ class ClimbCard extends StatelessWidget {
     required this.steps,
     required this.days,
     this.chipOpacity,
+    this.windowHeight = ClimbCamera.fullWindowHeight,
   });
 
   static const chipsKey = ValueKey('climb_card_chips');
@@ -207,11 +217,11 @@ class ClimbCard extends StatelessWidget {
                               ),
                             ]),
                       )),
-                  if (bubble != null)
+                  if (bubble != null && windowHeight >= bubbleMinWindow)
                     Positioned(
                       left: 20,
                       right: 20,
-                      top: ClimbCamera.windowHeight * .44,
+                      top: windowHeight * .44,
                       child: Center(
                         child: IgnorePointer(
                           child: SpeechBubble(

@@ -12,6 +12,7 @@ import '../utils/haptics.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import 'companion_view.dart';
+import 'floating_nav_shell.dart';
 import 'review_top_card.dart';
 import 'pressable_button.dart';
 import 'monthly_climb/climb_route.dart';
@@ -74,13 +75,23 @@ class RestScene extends StatefulWidget {
 
   static const sceneHeight = 470.0;
 
+  /// The camera's zoom on the mountain, V24 and V24f.
+  static const zoom = 2.4;
+
   /// V24f's scene is shorter, so the Premium card's button is on the first
   /// view (the board's scene takes under half the screen).
   static const freeSceneHeight = 300.0;
 
   /// How far above the companion's step V24f's camera centres, in image
-  /// widths (about 130 pt at a phone's scale).
+  /// widths (about 130 pt at a phone's scale), in the full free scene.
   static const freeFocusLift = .13;
+
+  /// INTEGRATE 3a: on Home's first view "Wake <Hero> up" stays this far
+  /// above the floating nav bar; the free scene gets shorter for it (on
+  /// 6.1" and 6.3" phones), never below [minFreeSceneHeight]. The reminder
+  /// row under the card may need a scroll.
+  static const wakeClearance = 8.0;
+  static const minFreeSceneHeight = 240.0;
 
   static const dreamKey = ValueKey('rest_dream');
   static const awakeBubbleKey = ValueKey('rest_awake_bubble');
@@ -99,6 +110,38 @@ class RestScene extends StatefulWidget {
 class _RestSceneState extends State<RestScene>
     with SingleTickerProviderStateMixin {
   Timer? _minute;
+
+  /// INTEGRATE 3a: V24f's scene height, fitted after layout so the Wake
+  /// button clears the floating nav bar ([RestScene.wakeClearance]).
+  double _freeHeight = RestScene.freeSceneHeight;
+  double? _navClearance;
+  final _cardSlotKey = GlobalKey();
+
+  void _fitFreeScene() {
+    final clearance = _navClearance;
+    final slot = _cardSlotKey.currentContext;
+    if (!mounted || widget.offer == null || clearance == null || slot == null) {
+      return;
+    }
+    final box = slot.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return;
+    final scrolled = Scrollable.maybeOf(slot)?.position.pixels ?? 0;
+    // The card's laid-out bottom (its slide-in only moves it at paint
+    // time) less its bottom padding is the button's bottom, as on the
+    // first view (scrolled to the top).
+    final wakeBottom = box.localToGlobal(Offset(0, box.size.height)).dy +
+        scrolled -
+        _FreePanel.cardPadding.bottom;
+    final barTop =
+        MediaQuery.sizeOf(context).height - (clearance - NavBarClearance.gap);
+    final over = wakeBottom - (barTop - RestScene.wakeClearance);
+    final height = (_freeHeight - over)
+        .clamp(RestScene.minFreeSceneHeight, RestScene.freeSceneHeight)
+        .toDouble();
+    if ((height - _freeHeight).abs() > .5) {
+      setState(() => _freeHeight = height);
+    }
+  }
 
   /// V24s: "Wake <Hero> up" was tapped: the companion is awake while the
   /// paywall is open; it falls asleep again when the paywall closes.
@@ -149,271 +192,293 @@ class _RestSceneState extends State<RestScene>
     final days = widget.days.clamp(28, 31);
     final step = widget.steps.clamp(0, days);
     final offer = widget.offer;
+    if (offer != null) {
+      _navClearance =
+          context.dependOnInheritedWidgetOfExactType<NavBarClearance>()?.value;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitFreeScene());
+    }
+    final sceneHeight = offer == null ? RestScene.sceneHeight : _freeHeight;
     // V24f's scene is shorter: the camera looks a little higher up the
     // mountain so the companion sits near the scene's bottom, under the
-    // dream bubble (as on the board), not behind it.
+    // dream bubble (as on the board), not behind it; in a fitted (shorter)
+    // scene it keeps the same distance from the bottom.
     final step0 = ClimbRoute(days).stepAt(step);
-    final focus = offer == null
-        ? step0
-        : Offset(step0.dx, step0.dy - RestScene.freeFocusLift);
+    Offset focusFor(double width) {
+      if (offer == null) return step0;
+      final scale =
+          SceneMap(Size(width, sceneHeight), zoom: RestScene.zoom).scale;
+      return Offset(
+          step0.dx,
+          step0.dy -
+              RestScene.freeFocusLift +
+              (RestScene.freeSceneHeight - sceneHeight) / 2 / scale);
+    }
+
     // The panel is the night's own colour in both themes (the board).
     final panel = c.nightTop;
     const onPanel = Colors.white;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          height:
-              offer == null ? RestScene.sceneHeight : RestScene.freeSceneHeight,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: MountainScene(
-                    theme: widget.theme,
-                    days: days,
-                    showFlag: false,
-                    zoom: 2.4,
-                    focus: focus,
-                    overlay: (context, map) {
-                      // The camp stands at the companion's step.
-                      final p = map.toBox(step0);
-                      final k = map.scale / 900;
-                      return Stack(clipBehavior: Clip.none, children: [
-                        // The tent behind the companion.
-                        Positioned(
-                          left: p.dx + 4 * k,
-                          top: p.dy - 120 * k,
-                          width: 130 * k,
-                          height: 110 * k,
-                          child: Image.asset('assets/climb/objects/tent.webp',
-                              fit: BoxFit.contain, excludeFromSemantics: true),
-                        ),
-                        // The companion asleep at its step.
-                        Positioned(
-                          left: p.dx - 70 * k,
-                          top: p.dy - 104 * k,
-                          width: 110 * k,
-                          height: 110 * k,
-                          child: AnimatedBuilder(
-                            animation: _hop,
-                            builder: (context, child) => Transform.translate(
-                                offset: Offset(0,
-                                    -16 * k * math.sin(math.pi * _hop.value)),
-                                child: child),
-                            child: CompanionView(
-                                hero: widget.hero,
-                                mood: _awake
-                                    ? CompanionMood.wave
-                                    : CompanionMood.sleep,
-                                // V24f: a dream bubble instead of the Zzz.
-                                showProp: offer == null,
-                                poseSwitch: _awake
-                                    ? const Duration(milliseconds: 200)
-                                    : const Duration(milliseconds: 400),
-                                size: 110 * k),
+    return LayoutBuilder(builder: (context, constraints) {
+      final width = constraints.maxWidth;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: sceneHeight,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: MountainScene(
+                      theme: widget.theme,
+                      days: days,
+                      showFlag: false,
+                      zoom: RestScene.zoom,
+                      focus: focusFor(width),
+                      overlay: (context, map) {
+                        // The camp stands at the companion's step.
+                        final p = map.toBox(step0);
+                        final k = map.scale / 900;
+                        return Stack(clipBehavior: Clip.none, children: [
+                          // The tent behind the companion.
+                          Positioned(
+                            left: p.dx + 4 * k,
+                            top: p.dy - 120 * k,
+                            width: 130 * k,
+                            height: 110 * k,
+                            child: Image.asset('assets/climb/objects/tent.webp',
+                                fit: BoxFit.contain,
+                                excludeFromSemantics: true),
                           ),
-                        ),
-                        // The campfire in front.
-                        Positioned(
-                          left: p.dx + 70 * k,
-                          top: p.dy - 40 * k,
-                          width: 76 * k,
-                          height: 96 * k,
-                          // V24s: the fire grows as the companion wakes.
-                          child: AnimatedScale(
-                            scale: _awake ? 1.25 : 1,
-                            alignment: Alignment.bottomCenter,
-                            duration: AppMotion.orInstant(
-                                context, const Duration(milliseconds: 300)),
-                            curve: AppMotion.pop,
-                            child: const Campfire(),
+                          // The companion asleep at its step.
+                          Positioned(
+                            left: p.dx - 70 * k,
+                            top: p.dy - 104 * k,
+                            width: 110 * k,
+                            height: 110 * k,
+                            child: AnimatedBuilder(
+                              animation: _hop,
+                              builder: (context, child) => Transform.translate(
+                                  offset: Offset(0,
+                                      -16 * k * math.sin(math.pi * _hop.value)),
+                                  child: child),
+                              child: CompanionView(
+                                  hero: widget.hero,
+                                  mood: _awake
+                                      ? CompanionMood.wave
+                                      : CompanionMood.sleep,
+                                  // V24f: a dream bubble instead of the Zzz.
+                                  showProp: offer == null,
+                                  poseSwitch: _awake
+                                      ? const Duration(milliseconds: 200)
+                                      : const Duration(milliseconds: 400),
+                                  size: 110 * k),
+                            ),
                           ),
-                        ),
-                        // The bubble above the sleeping companion, below
-                        // the name chip and the capsule.
-                        Positioned(
-                          left: p.dx - 120 * k,
-                          right: 16,
-                          top: math.max(72.0, p.dy - 104 * k - 74),
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 230),
-                              child: AnimatedSwitcher(
-                                duration: AppMotion.orInstant(
-                                    context, AppMotion.base),
-                                child: offer == null
-                                    ? SpeechBubble(
-                                        text: l10n.restBubble,
-                                        pointer: BubblePointer.bottomStart,
-                                        compact: true,
-                                      )
-                                    : _awake
-                                        ? SpeechBubble(
-                                            key: RestScene.awakeBubbleKey,
-                                            text: l10n.restAwake,
-                                            pointer: BubblePointer.bottomStart,
-                                            compact: true,
-                                          )
-                                        : offer.weakSpot == null
-                                            ? const SizedBox.shrink()
-                                            : _DreamBubble(
-                                                key: RestScene.dreamKey,
-                                                hero: widget.hero.name(l10n),
-                                                spot: offer.weakSpot!),
+                          // The campfire in front.
+                          Positioned(
+                            left: p.dx + 70 * k,
+                            top: p.dy - 40 * k,
+                            width: 76 * k,
+                            height: 96 * k,
+                            // V24s: the fire grows as the companion wakes.
+                            child: AnimatedScale(
+                              scale: _awake ? 1.25 : 1,
+                              alignment: Alignment.bottomCenter,
+                              duration: AppMotion.orInstant(
+                                  context, const Duration(milliseconds: 300)),
+                              curve: AppMotion.pop,
+                              child: const Campfire(),
+                            ),
+                          ),
+                          // The bubble above the sleeping companion, below
+                          // the name chip and the capsule.
+                          Positioned(
+                            left: p.dx - 120 * k,
+                            right: 16,
+                            top: math.max(72.0, p.dy - 104 * k - 74),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 230),
+                                child: AnimatedSwitcher(
+                                  duration: AppMotion.orInstant(
+                                      context, AppMotion.base),
+                                  child: offer == null
+                                      ? SpeechBubble(
+                                          text: l10n.restBubble,
+                                          pointer: BubblePointer.bottomStart,
+                                          compact: true,
+                                        )
+                                      : _awake
+                                          ? SpeechBubble(
+                                              key: RestScene.awakeBubbleKey,
+                                              text: l10n.restAwake,
+                                              pointer:
+                                                  BubblePointer.bottomStart,
+                                              compact: true,
+                                            )
+                                          : offer.weakSpot == null
+                                              ? const SizedBox.shrink()
+                                              : _DreamBubble(
+                                                  key: RestScene.dreamKey,
+                                                  hero: widget.hero.name(l10n),
+                                                  spot: offer.weakSpot!),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ]);
-                    },
-                  ),
-                ),
-                if (offer == null)
-                  PositionedDirectional(
-                    key: RestScene.seeYouKey,
-                    start: 12,
-                    top: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: panel.withValues(alpha: .82),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        l10n.restSeeYou(widget.name),
-                        style: theme.textTheme.labelLarge!
-                            .withWeight(FontWeight.w800)
-                            .copyWith(color: onPanel),
-                      ),
+                        ]);
+                      },
                     ),
                   ),
-                if (widget.capsule != null)
-                  PositionedDirectional(
-                      end: 10, top: 10, child: widget.capsule!),
-              ],
+                  if (offer == null)
+                    PositionedDirectional(
+                      key: RestScene.seeYouKey,
+                      start: 12,
+                      top: 14,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: panel.withValues(alpha: .82),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          l10n.restSeeYou(widget.name),
+                          style: theme.textTheme.labelLarge!
+                              .withWeight(FontWeight.w800)
+                              .copyWith(color: onPanel),
+                        ),
+                      ),
+                    ),
+                  if (widget.capsule != null)
+                    PositionedDirectional(
+                        end: 10, top: 10, child: widget.capsule!),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        if (offer != null)
-          _FreePanel(
-            offer: offer,
-            hero: widget.hero,
-            testLine: widget.testLine,
-            countdown: '$hh:$mm',
-            countdownSemantics:
-                l10n.restCountdownSemantics(left.inHours, left.inMinutes % 60),
-            awake: _awake,
-            onWake: _wake,
-            reminder: widget.reminder,
-          )
-        else
-          Container(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [c.nightTop, c.nightBottom],
+          const SizedBox(height: 12),
+          if (offer != null)
+            _FreePanel(
+              offer: offer,
+              hero: widget.hero,
+              testLine: widget.testLine,
+              countdown: '$hh:$mm',
+              countdownSemantics: l10n.restCountdownSemantics(
+                  left.inHours, left.inMinutes % 60),
+              awake: _awake,
+              onWake: _wake,
+              reminder: widget.reminder,
+              cardSlotKey: _cardSlotKey,
+            )
+          else
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [c.nightTop, c.nightBottom],
+                ),
+                borderRadius: BorderRadius.circular(26),
               ),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.nightlight_round, color: c.gold, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(l10n.restTitle,
-                        style: theme.textTheme.titleLarge!
-                            .withWeight(FontWeight.w900)
-                            .copyWith(color: onPanel)),
-                  ),
-                ]),
-                const SizedBox(height: 2),
-                Text(l10n.restBody,
-                    style: theme.textTheme.bodyMedium!
-                        .copyWith(color: onPanel.withValues(alpha: .75))),
-                const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(
-                      child: _DoneTile(
-                          title: l10n.featureDailyTest, line: widget.testLine)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: _DoneTile(
-                          title: l10n.restPracticeTitle,
-                          line: widget.practiceLine)),
-                ]),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .08),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.nightlight_round, color: c.gold, size: 20),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.restNextTest(step + 1).toUpperCase(),
-                            style: theme.textTheme.labelMedium!
-                                .withWeight(FontWeight.w900)
-                                .copyWith(
-                                    color: onPanel.withValues(alpha: .7),
-                                    letterSpacing: 1.1),
-                          ),
-                          const SizedBox(height: 8),
-                          StepBar(
-                            segments: [
-                              for (var i = 0; i < 10; i++)
-                                i <
-                                        (step % 10 == 0 && step > 0
-                                            ? 10
-                                            : step % 10)
-                                    ? c.gold
-                                    : null,
-                            ],
-                            track: Colors.white.withValues(alpha: .18),
-                            height: 6,
-                            gap: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Semantics(
-                      label: l10n.restCountdownSemantics(
-                          left.inHours, left.inMinutes % 60),
-                      excludeSemantics: true,
-                      child: Text(
-                        '$hh:$mm', // l10n-guard: a time span of numbers
-                        textScaler: TextScaler.noScaling,
-                        style: theme.textTheme.headlineMedium!
-                            .withWeight(FontWeight.w900)
-                            .copyWith(color: onPanel, fontFeatures: const [
-                          FontFeature.tabularFigures()
-                        ]),
-                      ),
+                      child: Text(l10n.restTitle,
+                          style: theme.textTheme.titleLarge!
+                              .withWeight(FontWeight.w900)
+                              .copyWith(color: onPanel)),
                     ),
                   ]),
-                ),
-                if (widget.reminder != null) ...[
-                  const SizedBox(height: 10),
-                  widget.reminder!,
+                  const SizedBox(height: 2),
+                  Text(l10n.restBody,
+                      style: theme.textTheme.bodyMedium!
+                          .copyWith(color: onPanel.withValues(alpha: .75))),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(
+                        child: _DoneTile(
+                            title: l10n.featureDailyTest,
+                            line: widget.testLine)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: _DoneTile(
+                            title: l10n.restPracticeTitle,
+                            line: widget.practiceLine)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .08),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.restNextTest(step + 1).toUpperCase(),
+                              style: theme.textTheme.labelMedium!
+                                  .withWeight(FontWeight.w900)
+                                  .copyWith(
+                                      color: onPanel.withValues(alpha: .7),
+                                      letterSpacing: 1.1),
+                            ),
+                            const SizedBox(height: 8),
+                            StepBar(
+                              segments: [
+                                for (var i = 0; i < 10; i++)
+                                  i <
+                                          (step % 10 == 0 && step > 0
+                                              ? 10
+                                              : step % 10)
+                                      ? c.gold
+                                      : null,
+                              ],
+                              track: Colors.white.withValues(alpha: .18),
+                              height: 6,
+                              gap: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Semantics(
+                        label: l10n.restCountdownSemantics(
+                            left.inHours, left.inMinutes % 60),
+                        excludeSemantics: true,
+                        child: Text(
+                          '$hh:$mm', // l10n-guard: a time span of numbers
+                          textScaler: TextScaler.noScaling,
+                          style: theme.textTheme.headlineMedium!
+                              .withWeight(FontWeight.w900)
+                              .copyWith(color: onPanel, fontFeatures: const [
+                            FontFeature.tabularFigures()
+                          ]),
+                        ),
+                      ),
+                    ]),
+                  ),
+                  if (widget.reminder != null) ...[
+                    const SizedBox(height: 10),
+                    widget.reminder!,
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 
@@ -765,6 +830,11 @@ class _FreePanel extends StatelessWidget {
   /// V24f's "Remind me tomorrow" row, under the Premium card (the board).
   final Widget? reminder;
 
+  /// Holds the card's slot (INTEGRATE 3a: the scene is fitted from it).
+  final Key? cardSlotKey;
+
+  static const cardPadding = EdgeInsets.fromLTRB(16, 14, 16, 16);
+
   const _FreePanel({
     required this.offer,
     required this.hero,
@@ -774,6 +844,7 @@ class _FreePanel extends StatelessWidget {
     required this.awake,
     required this.onWake,
     this.reminder,
+    this.cardSlotKey,
   });
 
   @override
@@ -807,7 +878,7 @@ class _FreePanel extends StatelessWidget {
       key: RestScene.premiumCardKey,
       duration: AppMotion.orInstant(context, AppMotion.base),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: _FreePanel.cardPadding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         gradient: LinearGradient(
@@ -987,6 +1058,7 @@ class _FreePanel extends StatelessWidget {
           const SizedBox(height: 14),
           // The card slides up 300 ms after the scene.
           TweenAnimationBuilder<double>(
+            key: cardSlotKey,
             tween: Tween(begin: reduced ? 1 : 0, end: 1),
             duration: reduced
                 ? Duration.zero

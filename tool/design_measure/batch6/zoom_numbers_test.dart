@@ -47,7 +47,7 @@ void main() {
       final window = tester.getRect(find.byType(MonthlyMountain));
       final card = tester.getRect(find.byType(ClimbCard));
       final w = window.width;
-      const h = ClimbCamera.windowHeight;
+      const h = ClimbCamera.fullWindowHeight;
       final camera = ClimbCamera(w);
       final route = ClimbRoute(31);
 

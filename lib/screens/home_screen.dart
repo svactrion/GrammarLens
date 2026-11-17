@@ -44,6 +44,7 @@ import '../widgets/monthly_climb/climb_card.dart';
 import '../widgets/monthly_climb/climb_camera.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/error_state.dart';
+import '../widgets/floating_nav_shell.dart';
 import '../widgets/monthly_climb/climb_debug_month_card.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
@@ -221,6 +222,13 @@ class _HomeScreenState extends State<HomeScreen>
   bool _loadingClimb = true;
   bool _climbLoadFailed = false;
   final _mountainKey = GlobalKey();
+
+  /// INTEGRATE 3b: the climb section (the card, or its skeleton) and the
+  /// mountain window's height fitted to it on first view.
+  final _climbSectionKey = GlobalKey();
+  double _climbWindowHeight = ClimbCamera.fullWindowHeight;
+  double? _navClearance;
+  (double, int, double)? _climbFitInputs;
   bool _dailyFlowActive = false;
 
   /// A Daily Test link waits for today's set to be read.
@@ -1397,6 +1405,12 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
+    // INTEGRATE 3b: the mountain window is fitted above the floating nav
+    // bar after each layout (there is no bar for a screen shown alone).
+    _navClearance =
+        context.dependOnInheritedWidgetOfExactType<NavBarClearance>()?.value;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitClimbWindow());
+
     final steps = _climbSteps;
     final topic = _weakSpots.isEmpty
         ? null
@@ -1545,9 +1559,42 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  /// INTEGRATE 3b: on Home's first view (scrolled to the top) the pawn and
+  /// the next step's ring stay [MonthlyMountain.firstViewClearance] above
+  /// the floating nav bar, on every day of the month: the window gets
+  /// shorter where its full height would put them under the bar (6.1" and
+  /// 6.3" phones, the iPhone SE); 6.7" and 6.9" keep the full window.
+  void _fitClimbWindow() {
+    final clearance = _navClearance;
+    final section = _climbSectionKey.currentContext;
+    if (!mounted || clearance == null || section == null) return;
+    if (_climbSteps == null && !_loadingClimb) return; // the error state
+    final box = section.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return;
+    final scrolled = Scrollable.maybeOf(section)?.position.pixels ?? 0;
+    // The window's top: under the card's plaque (half of it overlaps the
+    // frame), or under the skeleton's 18 pt.
+    final top = box.localToGlobal(Offset.zero).dy +
+        scrolled +
+        (_climbSteps != null ? ClimbCard.plaqueHeight(context) / 2 : 18);
+    final barTop =
+        MediaQuery.sizeOf(context).height - (clearance - NavBarClearance.gap);
+    final room = barTop - MonthlyMountain.firstViewClearance - top;
+    final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+    final inputs = (box.size.width, days, room.roundToDouble());
+    if (inputs == _climbFitInputs) return;
+    _climbFitInputs = inputs;
+    final height = MonthlyMountain.fitWindowHeight(
+        width: box.size.width, days: days, room: room);
+    if ((height - _climbWindowHeight).abs() > .5) {
+      setState(() => _climbWindowHeight = height);
+    }
+  }
+
   Widget _buildClimb(BuildContext context, {String? bubble}) {
     final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
     return Column(
+      key: _climbSectionKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // The card carries the title on its plaque (design decision K3);
@@ -1557,7 +1604,7 @@ class _HomeScreenState extends State<HomeScreen>
           // H03: the card's own shape as a skeleton until the month loads.
           Semantics(
             label: context.l10n.homeClimbLoading,
-            child: const _ClimbSkeleton(),
+            child: _ClimbSkeleton(windowHeight: _climbWindowHeight),
           )
         else if (_climbSteps == null) ...[
           Text(context.l10n.homeClimbTitle,
@@ -1577,6 +1624,7 @@ class _HomeScreenState extends State<HomeScreen>
                 steps: _climbSteps!,
                 days: days,
                 chipOpacity: _zoom.active ? _chipOpacity : null,
+                windowHeight: _climbWindowHeight,
                 mountain: MonthlyMountain(
                   key: ValueKey(_climbMonth),
                   days: days,
@@ -1591,6 +1639,7 @@ class _HomeScreenState extends State<HomeScreen>
                   nextStepPulse: !_loadingToday &&
                       _todaysCompletion == null &&
                       !_zoom.active,
+                  windowHeight: _climbWindowHeight,
                   labelAvoid: (width) => ClimbCard.chipRects(context,
                       width: width,
                       month: _climbMonth,
@@ -1624,7 +1673,8 @@ class _HomeScreenState extends State<HomeScreen>
 /// as shimmering skeletons, the size of the real card, so nothing jumps
 /// when it arrives.
 class _ClimbSkeleton extends StatelessWidget {
-  const _ClimbSkeleton();
+  final double windowHeight;
+  const _ClimbSkeleton({required this.windowHeight});
 
   @override
   Widget build(BuildContext context) {
@@ -1634,16 +1684,15 @@ class _ClimbSkeleton extends StatelessWidget {
         Container(
           width: double.infinity,
           margin: const EdgeInsets.only(top: 18),
-          height: ClimbCamera.windowHeight,
+          height: windowHeight,
           decoration: BoxDecoration(
             color: c.card,
             borderRadius: BorderRadius.circular(ClimbCard.frameRadius + 6),
             border: Border.all(color: c.line, width: 2),
           ),
           padding: const EdgeInsets.all(10),
-          child: const SkeletonBar(
-              height: ClimbCamera.windowHeight - 24,
-              radius: ClimbCard.frameRadius),
+          child: SkeletonBar(
+              height: windowHeight - 24, radius: ClimbCard.frameRadius),
         ),
         const Positioned(
           top: 0,

@@ -43,6 +43,9 @@ import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/score_capsule.dart';
 import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
+import 'package:grammar_lens/widgets/speech_bubble.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_card.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
 import 'package:grammar_lens/widgets/home_practice.dart';
 import 'package:grammar_lens/widgets/rest_reminder_row.dart';
 
@@ -1531,10 +1534,9 @@ void main() {
                 of: find.byType(MonthlyMountain),
                 matching: find.byType(AvatarTile))
             .first);
-        // 8 pt of air at 6.7" and 6.9"; at 6.3" on day 0 the camera is
-        // clamped at the art's bottom and the pawn's feet reach the bar's
-        // top edge (PROGRESS, fix round 2, item 12): never under it.
-        final margin = size.height < 900 && steps == 0 ? 0.0 : 8.0;
+        // INTEGRATE 3b: 16 pt of air on every size (fix round 2 allowed
+        // 0 at 6.3" on day 0; the window is fitted now).
+        const margin = MonthlyMountain.firstViewClearance;
         expect(pawn.bottom, lessThanOrEqualTo(bar.top - margin),
             reason: 'pawn $pawn, bar $bar');
         final next = find.byKey(MonthlyMountain.nextStepKey);
@@ -1545,6 +1547,224 @@ void main() {
       });
     }
   }
+
+  // INTEGRATE: Home inside the real floating nav shell, at a phone's size
+  // with its own safe-area insets, in the app's font.
+  Future<void> pumpShell(WidgetTester tester,
+      {required Size size,
+      required double top,
+      required double bottom,
+      required _FakeStorageService storage,
+      _FakeSubscriptionService? subs,
+      ReminderController? reminders}) async {
+    final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+    await (FontLoader('NunitoSans')..addFont(bytes)).load();
+    tester.view.physicalSize = size * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    tester.view.padding = FakeViewPadding(top: top * 3, bottom: bottom * 3);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: buildAppTheme(Brightness.light),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: FloatingNavShell(
+        selectedIndex: 0,
+        onTabChange: (_) {},
+        tabs: const [
+          NavShellTab(
+              icon: Icons.landscape,
+              activeIcon: Icons.landscape,
+              label: 'Climb'),
+          NavShellTab(
+              icon: Icons.history, activeIcon: Icons.history, label: 'Review'),
+          NavShellTab(
+              icon: Icons.person, activeIcon: Icons.person, label: 'Profile'),
+        ],
+        body: HomeScreen(
+          active: true,
+          userName: 'Ada',
+          claudeService: ClaudeService(),
+          storageService: storage,
+          analyticsService: AnalyticsService(),
+          subscriptionService: subs ?? _FakeSubscriptionService(),
+          reminders: reminders,
+          clock: () => DateTime(2026, 11, 4, 15, 0),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  // The phones INTEGRATE 3a / 3b name, with their safe-area insets: 6.1"
+  // (390 × 844), 6.1" Pro class (393 × 852), 6.3" (402 × 874), the
+  // iPhone SE (375 × 667), and the 6.7" / 6.9" classes.
+  const phones = [
+    (Size(390, 844), 47.0, 34.0),
+    (Size(393, 852), 59.0, 34.0),
+    (Size(402, 874), 62.0, 34.0),
+    (Size(375, 667), 20.0, 0.0),
+    (Size(428, 926), 47.0, 34.0),
+    (Size(440, 956), 62.0, 34.0),
+  ];
+
+  group('INTEGRATE 3b: the pawn and its next step on first view', () {
+    // November 2026 has 30 days: day 0, mid-month, the last step waiting
+    // (29 done) and the summit (30).
+    for (final (size, top, bottom) in phones) {
+      final se = size.height < 700;
+      for (final steps in [0, 15, 29, 30]) {
+        testWidgets(
+            '${size.width.toInt()} × ${size.height.toInt()}, step $steps: '
+            '${se ? 'not covered by' : '16 pt above'} the nav bar',
+            (tester) async {
+          await pumpShell(tester,
+              size: size,
+              top: top,
+              bottom: bottom,
+              storage: _FakeStorageService()..steps = steps);
+          final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+          final pawn = tester.getRect(find
+              .descendant(
+                  of: find.byType(MonthlyMountain),
+                  matching: find.byType(AvatarTile))
+              .first);
+          final margin = se ? 0.0 : MonthlyMountain.firstViewClearance;
+          expect(pawn.bottom, lessThanOrEqualTo(bar.top - margin),
+              reason: 'pawn $pawn, bar $bar');
+          expect(pawn.top, greaterThan(0));
+          final next = find.byKey(MonthlyMountain.nextStepKey);
+          if (steps < 30) {
+            expect(next, findsOneWidget);
+            expect(tester.getRect(next).bottom,
+                lessThanOrEqualTo(bar.top - margin));
+          }
+          final window = tester.getSize(find.byType(MonthlyMountain)).height;
+          // 6.7" and 6.9" keep the full window; smaller phones get a
+          // shorter one, never below the minimum.
+          if (size.height >= 900) {
+            expect(window, ClimbCamera.fullWindowHeight);
+          } else {
+            expect(window, lessThan(ClimbCamera.fullWindowHeight));
+            expect(window, greaterThanOrEqualTo(ClimbCamera.minWindowHeight));
+          }
+          // The bubble never covers the pawn; on the SE's short window it
+          // is left out.
+          final bubble = find.byType(SpeechBubble);
+          if (se) {
+            expect(bubble, findsNothing);
+          } else if (steps < 25) {
+            expect(tester.getRect(bubble).bottom, lessThan(pawn.top));
+          }
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+
+    testWidgets('a screen shown alone (no nav bar) keeps the full window',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService()..steps = 3);
+      expect(tester.getSize(find.byType(MonthlyMountain)).height,
+          ClimbCamera.fullWindowHeight);
+    });
+  });
+
+  group('INTEGRATE 3a: V24f with "Remind me tomorrow"', () {
+    _FakeStorageService restDay({bool asked = true}) => _FakeStorageService()
+      ..steps = 3
+      ..freeUsed = 1
+      ..weakSpots = [_weakSpot()]
+      ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+      ..reminderSettings = ReminderSettings(
+          ask: asked ? ReminderAsk.declined : ReminderAsk.notAsked);
+
+    ReminderController remindersFor(_FakeStorageService storage) =>
+        ReminderController(
+            storage: storage,
+            bridge: FakeNativeBridge()
+              ..permission = NotificationPermission.notDetermined);
+
+    for (final (size, top, bottom) in phones) {
+      final se = size.height < 700;
+      testWidgets(
+          '${size.width.toInt()} × ${size.height.toInt()}: '
+          '${se ? 'the row scrolls into view' : 'Wake is on the first view'}, '
+          'the row is under the Premium card', (tester) async {
+        final storage = restDay();
+        final reminders = remindersFor(storage);
+        addTearDown(reminders.dispose);
+        await pumpShell(tester,
+            size: size,
+            top: top,
+            bottom: bottom,
+            storage: storage,
+            subs: _FakeSubscriptionService(offering: _restOffering()),
+            reminders: reminders);
+        expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
+        final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+        final wake = tester.getRect(find.byKey(RestScene.wakeKey));
+        if (!se) {
+          expect(wake.bottom, lessThanOrEqualTo(bar.top),
+              reason: 'wake $wake, bar $bar');
+        }
+        final row = find.byType(RestReminderRow);
+        expect(row, findsOneWidget);
+        final card = tester.getRect(find.byKey(RestScene.premiumCardKey));
+        expect(tester.getRect(row).top, greaterThan(card.bottom));
+        // Scrolled, the row clears the bar and its switch can be used.
+        final outer = tester
+            .state<ScrollableState>(find.byType(Scrollable).first)
+            .position;
+        outer.jumpTo(outer.maxScrollExtent);
+        await tester.pumpAndSettle();
+        expect(
+            tester.getRect(row).bottom,
+            lessThanOrEqualTo(
+                tester.getRect(find.byKey(FloatingNavShell.barKey)).top));
+        expect(find.byKey(RestReminderRow.switchKey).hitTestable(),
+            findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets(
+        'N01 opens over whichever rest scene comes first: V24 (Premium)',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..sessions = StorageService.dailySessionLimit
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = remindersFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester,
+          storageService: storage,
+          subscriptionService: _FakeSubscriptionService(hasAccess: true),
+          reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byKey(RestScene.premiumCardKey), findsNothing);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      await tester.tap(find.byKey(ReminderSoftAsk.notNowKey));
+      await tester.pumpAndSettle();
+      expect(storage.reminderSettings!.ask, ReminderAsk.declined);
+      expect(find.byKey(RestReminderRow.switchKey), findsOneWidget);
+    });
+
+    testWidgets('N01 opens over whichever rest scene comes first: V24f (free)',
+        (tester) async {
+      final storage = restDay(asked: false);
+      final reminders = remindersFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester,
+          storageService: storage,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _restOffering()),
+          reminders: reminders);
+      expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      // The question opened by itself; the paywall did not.
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+  });
 }
 
 /// V24f → V13r: an annual plan with a 7-day free trial (the paywall's

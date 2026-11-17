@@ -109,6 +109,10 @@ class MonthlyMountain extends StatefulWidget {
   /// at the summit.
   final bool nextStepPulse;
 
+  /// The window's height: Home's fitted window ([fitWindowHeight],
+  /// INTEGRATE 3b), else the full one.
+  final double windowHeight;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -121,7 +125,51 @@ class MonthlyMountain extends StatefulWidget {
       this.zoomCrossFade = false,
       this.labelAvoid,
       this.debugHop,
-      this.nextStepPulse = false});
+      this.nextStepPulse = false,
+      this.windowHeight = ClimbCamera.fullWindowHeight});
+
+  /// How far above the floating nav bar's top the pawn and the next step's
+  /// ring stay on Home's first view (INTEGRATE 3b).
+  static const firstViewClearance = 16.0;
+
+  /// INTEGRATE 3b: the tallest window, at most
+  /// [ClimbCamera.fullWindowHeight], in which the pawn's feet and the next
+  /// step's ring stay within [room] points of the window's top on every day
+  /// of a [days]-day month, for a window [width] wide; never below
+  /// [ClimbCamera.minWindowHeight]. Day 0 decides on most phones: there the
+  /// camera is held by the art's bottom edge, so only a shorter window
+  /// lifts the pawn. One height for the whole month, so the card does not
+  /// change size from day to day.
+  static double fitWindowHeight(
+      {required double width, required int days, required double room}) {
+    final route = ClimbRoute(days);
+    double lowest(double height) {
+      final camera = ClimbCamera(width, windowHeight: height);
+      var bottom = 0.0;
+      for (var d = 0; d <= days; d++) {
+        final offset = camera.offsetFor(route.stepAt(d));
+        final tile = camera.avatarTileAt(route.arcAt(d.toDouble()));
+        // The feet stand on the step; the tile ends 3/58 of its side below.
+        final feet =
+            route.stepAt(d).dy * camera.scale - offset.dy + tile * 3 / 58;
+        bottom = math.max(bottom, feet);
+        if (d < days) {
+          final ring = route.stepAt(d + 1).dy * camera.scale -
+              offset.dy +
+              NextStepPulse.size / 2;
+          bottom = math.max(bottom, ring);
+        }
+      }
+      return bottom;
+    }
+
+    for (var h = ClimbCamera.fullWindowHeight;
+        h > ClimbCamera.minWindowHeight;
+        h -= 1) {
+      if (lowest(h) <= room) return h;
+    }
+    return ClimbCamera.minWindowHeight;
+  }
 
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
@@ -461,10 +509,11 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       label: l10n.climbMountainSemantics(theme.title(l10n), _shownSteps,
           widget.days, widget.avatar.name(l10n), savePoints),
       child: LayoutBuilder(builder: (context, constraints) {
-        final camera = ClimbCamera(constraints.maxWidth);
+        final camera = ClimbCamera(constraints.maxWidth,
+            windowHeight: widget.windowHeight);
         final image = camera.imageSize;
         return SizedBox(
-            height: ClimbCamera.windowHeight,
+            height: camera.windowHeight,
             child: ClipRect(
               child: ColoredBox(
                 // Shown only until the images have decoded.
