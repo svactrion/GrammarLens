@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
+import 'dart:async';
+import 'package:grammar_lens/models/review_sort_order.dart';
+import 'package:grammar_lens/models/topic_stats.dart';
+import 'package:grammar_lens/screens/first_climb_screen.dart';
+import 'package:grammar_lens/screens/home_screen.dart';
+import 'package:grammar_lens/services/month_transition.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/widgets/floating_nav_shell.dart';
+import 'package:grammar_lens/widgets/month_card_sheet.dart';
 
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -120,6 +129,62 @@ final Map<String, WidgetBuilder> galleryBoards = {
       nextAt: 150),
   // R10 over the real question screen: the driver taps the close button.
   'R10-Leave': (_) => _dailyTest(),
+  // B5: Home and the mountain (the real Home in the real tab shell, with
+  // fixed data).
+  'V15-HomeNextDay': (_) => _home(steps: 1, correct: 4, wrong: 1),
+  'V14-Home': (_) =>
+      _home(steps: 2, correct: 8, wrong: 2, doneToday: true, weakSpot: true),
+  'H03-HomeLoading': (_) => _home(steps: 1, loading: true),
+  'H04-HomePremium': (_) => _home(
+      steps: 2,
+      correct: 8,
+      wrong: 2,
+      doneToday: true,
+      weakSpot: true,
+      premium: true,
+      sessions: 2),
+  'V24-DayComplete': (_) =>
+      _home(steps: 3, correct: 13, wrong: 2, doneToday: true, freeUsed: 1),
+  'V12-Climb': (_) => FirstClimbScreen(
+      theme: ClimbThemes.emberPeak,
+      hero: Avatar.fox,
+      days: 30,
+      onContinue: () {}),
+  'V12b-ClimbStoryboard': (_) => FirstClimbScreen(
+      theme: ClimbThemes.emberPeak,
+      hero: Avatar.fox,
+      days: 30,
+      onContinue: () {}),
+  'R04-MonthCard': (_) => MonthCardSheet(
+        data: const MonthCardData(
+          year: 2026,
+          month: 11,
+          theme: ClimbThemes.emberPeak,
+          variant: MonthCardVariant.summary,
+          previousTheme: ClimbThemes.greenSlope,
+          previousYear: 2026,
+          previousMonth: 10,
+          tier: MedalTier.silver,
+          steps: 24,
+          days: 31,
+          score: 229,
+          nearMiss: (MedalTier.gold, 4),
+        ),
+        avatar: Avatar.fox,
+        onClose: () {},
+      ),
+  'R04b-NewMountain': (_) => MonthCardSheet(
+        data: const MonthCardData(
+          year: 2026,
+          month: 11,
+          theme: ClimbThemes.emberPeak,
+          variant: MonthCardVariant.fresh,
+          previousYear: 2026,
+          previousMonth: 10,
+        ),
+        avatar: Avatar.fox,
+        onClose: () {},
+      ),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
@@ -551,3 +616,148 @@ Widget _dailyTest({bool multiBlankFirst = false, bool errorLast = false}) =>
       onFinished: (_, __) {},
       onExit: () {},
     );
+
+/// A free (or [premium]) user's Home on 17 November 2026 at 9:41: [steps]
+/// climbed this month with [correct] and [wrong] answers; today's test done
+/// ([doneToday], 4 of 5 right) or waiting; one weak spot ([weakSpot]);
+/// today's free practice ([freeUsed]) and sessions; [loading]: the test
+/// and the month never arrive (H03).
+Widget _home({
+  required int steps,
+  int correct = 0,
+  int wrong = 0,
+  bool doneToday = false,
+  bool weakSpot = false,
+  bool premium = false,
+  int freeUsed = 0,
+  int sessions = 0,
+  bool loading = false,
+}) =>
+    Builder(builder: (context) {
+      final l10n = context.l10n;
+      return FloatingNavShell(
+        // The driver's scroll captures move Home's own list.
+        body: PrimaryScrollController(
+          controller: galleryScroll,
+          child: HomeScreen(
+            active: true,
+            userName: 'Ada',
+            avatar: Avatar.fox,
+            claudeService: ClaudeService(),
+            storageService: _GalleryHomeStorage(
+              steps: steps,
+              correct: correct,
+              wrong: wrong,
+              doneToday: doneToday,
+              weakSpot: weakSpot,
+              freeUsed: freeUsed,
+              sessions: sessions,
+              loading: loading,
+            ),
+            analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+            subscriptionService: _GallerySubs(premium),
+            clock: () => DateTime(2026, 11, 17, 9, 41),
+          ),
+        ),
+        tabs: [
+          NavShellTab(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: l10n.navHome),
+          NavShellTab(
+              icon: Icons.history_outlined,
+              activeIcon: Icons.history,
+              label: l10n.featureReview),
+          NavShellTab(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: l10n.navProfile),
+        ],
+        selectedIndex: 0,
+        onTabChange: (_) {},
+      );
+    });
+
+class _GallerySubs extends SubscriptionService {
+  final bool premium;
+  _GallerySubs(this.premium);
+  @override
+  Future<bool> get hasFullAccess async => premium;
+  @override
+  void addAccessListener(AccessListener listener) {}
+  @override
+  void removeAccessListener(AccessListener listener) {}
+}
+
+class _GalleryHomeStorage extends StorageService {
+  final int steps, correct, wrong, freeUsed, sessions;
+  final bool doneToday, weakSpot, loading;
+  _GalleryHomeStorage({
+    required this.steps,
+    required this.correct,
+    required this.wrong,
+    required this.doneToday,
+    required this.weakSpot,
+    required this.freeUsed,
+    required this.sessions,
+    required this.loading,
+  });
+
+  Future<T> _never<T>() => Completer<T>().future;
+
+  @override
+  Future<({int steps, int correct, int wrong, int skipped})> getClimbProgress(
+          int year, int month) =>
+      loading
+          ? _never()
+          : Future.value(
+              (steps: steps, correct: correct, wrong: wrong, skipped: 0));
+
+  @override
+  Future<String> resolveClimbMonthTheme(int year, int month) async =>
+      ClimbThemes.emberPeak.id;
+
+  @override
+  Future<DailyTestSet?> getDailyTestSetForToday() {
+    if (loading) return _never();
+    if (!doneToday) return Future.value(null);
+    final set = _galleryDaySet();
+    return Future.value(DailyTestSet(
+      day: set.day,
+      questions: set.questions,
+      completedAt: DateTime(2026, 11, 17, 9, 30),
+      answers: {
+        for (final (i, q) in set.questions.indexed)
+          q.item.id: i == 1 ? 'a' : q.correctAnswer,
+      },
+    ));
+  }
+
+  @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+
+  @override
+  Future<List<WeakSpot>> getWeakSpots(
+          {int limit = 10,
+          ReviewSortOrder sortOrder = ReviewSortOrder.recent}) async =>
+      weakSpot
+          ? [
+              WeakSpot(
+                topicId: 'articles',
+                errorType: 'missing_article',
+                frequency: 3,
+                lastSeen: DateTime(2026, 11, 16),
+              ),
+            ]
+          : const [];
+
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => const {};
+
+  @override
+  Future<int> getFreePracticeCountForToday() async => freeUsed;
+
+  @override
+  Future<int> getSessionCountForToday() async => sessions;
+}

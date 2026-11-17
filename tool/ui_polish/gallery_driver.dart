@@ -15,8 +15,13 @@ import 'package:flutter_driver/flutter_driver.dart';
 const _settleMs = <String, int>{
   'V05b-GettingReady': 2600,
   'V10-Results': 3200,
-  'V12-Climb': 2500,
+  'V12-Climb': 5400,
   'R04-MonthCard': 3500,
+  'R04b-NewMountain': 2800,
+  'V14-Home': 2200,
+  'V15-HomeNextDay': 2200,
+  'H04-HomePremium': 2200,
+  'V24-DayComplete': 2000,
   'V11-Badge': 2200,
   'R05-Medal': 2200,
   'PW05-PremiumOn': 2200,
@@ -25,6 +30,8 @@ const _settleMs = <String, int>{
 
 /// Long system boards: extra captures scrolled down by these offsets.
 const _scrollShots = <String, List<int>>{
+  'V14-Home': [520],
+  'H04-HomePremium': [520],
   'X04-Ticket': [420],
   'X05-DailyCard': [560],
   'V00-CompanionSystem': [500],
@@ -44,6 +51,20 @@ final _scripts = <String, Script>{
     await _wait(650);
     await shot('-mid');
     await _wait(1100);
+    await shot('');
+  },
+  // V12: the camera's key frames (V12b: wide, close, wide again) and the
+  // end with the bubble and Continue.
+  'V12b-ClimbStoryboard': (d, shot) async {
+    await _wait(150);
+    await shot('-1-wide');
+    await _wait(1950);
+    await shot('-2-close');
+    await _wait(2700);
+    await shot('-3-wide');
+  },
+  'H03-HomeLoading': (d, shot) async {
+    await _wait(900);
     await shot('');
   },
   'V03b-LuckyWheel': (d, shot) async {
