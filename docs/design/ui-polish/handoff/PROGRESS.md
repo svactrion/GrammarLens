@@ -117,6 +117,68 @@ Format: what · options · choice · why.
   in fix round 1:** a tool race, not the app (see fix round 1); V05 is
   recaptured.
 
+## Fix round 2 (owner device test, 2026-11-17)
+
+Status: **in progress**. Task: `FIX2.md` (SPEC v10). The owner tested the
+branch on his iPhone 14 Plus (428 × 926 pt); this round fixes what he found
+and adds the free users' rest scene → Premium flow. Everything is built and
+checked on the simulator; what only the phone can confirm is in "Owner
+device checks" below.
+
+First commit: `ca3a847` (SPEC v10, FIX2.md, the new and changed boards).
+
+### Simulator
+
+`iPhone 18 Pro Max` (`306F22C5-E6BE-4651-9715-7DF8FA7F0AB7`, iOS 27.2,
+6.9", 440 × 956 pt), the 6.7"–6.9" class FIX2 prefers. The iPhone 18 Pro
+(`49ECC1F0-…`) was already booted when this round started; it may be the
+widgets session's, so this round never installs, launches or captures on
+it, and never shuts it down. No simulator was created, erased or deleted
+(`simctl delete unavailable` found none).
+
+### 0. Disk space
+
+Free space (`df -h ~`): **before 6.5 GiB** (97 % used), **after 11 GiB**
+(95 % used).
+
+Deleted (only what §0 allows):
+- `flutter clean` in `~/GrammarLens`: `build/` (3.1 GB: `build/ios` 2.8 GB,
+  the capture folders of earlier rounds `ui-polish-captures` 74 MB and
+  `ui-polish-captures-pre-b11` 78 MB, test caches), `.dart_tool/` (764 MB),
+  the ephemeral iOS/macOS files. `flutter pub get` restored `.dart_tool`.
+- No other `build/` output folder exists in the repo. The `build/` folders
+  under `proxy/node_modules/*` are files of installed npm packages, not
+  build output; left alone.
+- Xcode DerivedData `Runner-gqpsqcemuvgmtpfubbjqojoydaim` (1.0 GB):
+  `WorkspacePath` = `/Users/ahmet/GrammarLens/ios/Runner.xcworkspace`,
+  checked before deleting. The `~/GrammarLens-widgets` one
+  (`Runner-fdbimsrcbtglzobktrwmmqsglozm`) was not touched.
+- `xcrun simctl delete unavailable`: ran, nothing was unavailable.
+
+Report only, **not touched** (the owner may run the command himself):
+
+| Space user | Size | Safe command (owner) |
+|---|---|---|
+| CoreSimulator devices (all) | 21 GB | `xcrun simctl erase <udid>` on one he no longer needs (wipes its apps), or delete it in Xcode → Devices |
+| · `Hemdem 16e` (`F9F073B8…`) | 5.7 GB | as above |
+| · `iPhone 18 Pro` (`49ECC1F0…`) | 5.3 GB | as above (the widgets session may use it) |
+| · `iPhone 18 Pro Max` (`306F22C5…`, this round's) | 3.4 GB | as above |
+| · `BirdPerch Test 17e` (`CCF0EAEF…`) | 3.2 GB | as above |
+| · `Hemdem 16` (`BA036CBC…`) | 3.1 GB | as above |
+| Simulator runtimes iOS 27.0 + 27.2 | 15.3 GB | `xcrun simctl runtime delete <id>` for iOS 27.0 if no simulator needs it |
+| `~/Library/Developer/Xcode/iOS DeviceSupport/iPhone14,8 27.0` | 6.4 GB | delete the folder; Xcode rebuilds it on the next device connect |
+| DerivedData `Seher-…` (`~/Projects/seher`) | 4.0 GB | `rm -rf ~/Library/Developer/Xcode/DerivedData/Seher-*` |
+| DerivedData `Runner-fdbimsrcb…` (`~/GrammarLens-widgets`) | 2.9 GB | only after the widgets session is finished |
+| DerivedData `ModuleCache.noindex` | 1.9 GB | rebuilt by Xcode; delete with Xcode closed |
+| DerivedData `BirdApp-…` (`~/Projects/BirdPerch`) | 1.2 GB | `rm -rf ~/Library/Developer/Xcode/DerivedData/BirdApp-*` |
+| DerivedData `Runner-adlzgtau…` (`~/Projects/ScanStash`) | 1.1 GB | `rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-adlzgtau*` |
+| DerivedData `SDKExplicitPrecompiledModules` | 850 MB | rebuilt by Xcode |
+| Repo: `proxy/node_modules/` (ignored) | 491 MB | `rm -rf proxy/node_modules` (then `npm ci` in `proxy/` before the next proxy job) |
+| `~/.pub-cache` | 248 MB | keep (every Flutter build needs it) |
+| Repo: `screenshots/icon-exploration/` (owner, untracked) | 22 MB | owner's material |
+| Repo: `proxy/eval/out/`, `proxy/.wrangler/` (ignored) | 4.4 MB, 2.4 MB | owner's eval output / wrangler cache |
+| Repo: `Claude outputs/` (owner, untracked) | 12 KB | owner's material |
+
 ## Fix round 1 (owner request, 2026-11-17)
 
 Status: **done**.
