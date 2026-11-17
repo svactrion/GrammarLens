@@ -69,6 +69,9 @@ class AppColors extends ThemeExtension<AppColors> {
   /// An empty progress segment / skeleton bar.
   final Color track;
 
+  /// V05b's bar track: the warm light track on the onboarding page.
+  final Color warmTrack;
+
   /// The page, card and border: the app's existing theme values
   /// (`surfaceContainerLow`, `surfaceContainerHigh`, `outlineVariant`) in
   /// both themes (SPEC §3.1 keeps them; SY03's #15141A / #211F27 are within
@@ -127,6 +130,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.skeleton,
     required this.skeletonHighlight,
     required this.track,
+    required this.warmTrack,
     required this.page,
     required this.card,
     required this.line,
@@ -182,6 +186,7 @@ class AppColors extends ThemeExtension<AppColors> {
     skeleton: Color(0x8CFFFFFF),
     skeletonHighlight: Color(0xD9FFFFFF),
     track: Color(0xFFE3DACB),
+    warmTrack: Color(0xFFF3DCC4),
     page: Color(0xFFF3EFE6),
     card: Color(0xFFFFFBF4),
     line: Color(0xFFDED5C6),
@@ -229,6 +234,7 @@ class AppColors extends ThemeExtension<AppColors> {
     skeleton: Color(0x26FFFFFF),
     skeletonHighlight: Color(0x4DFFFFFF),
     track: Color(0xFF34323C),
+    warmTrack: Color(0xFF3A2C22),
     page: Color(0xFF151517),
     card: Color(0xFF252528),
     line: Color(0xFF45454D),
@@ -337,6 +343,7 @@ class AppColors extends ThemeExtension<AppColors> {
       skeleton: l(skeleton, other.skeleton),
       skeletonHighlight: l(skeletonHighlight, other.skeletonHighlight),
       track: l(track, other.track),
+      warmTrack: l(warmTrack, other.warmTrack),
       page: l(page, other.page),
       card: l(card, other.card),
       line: l(line, other.line),
