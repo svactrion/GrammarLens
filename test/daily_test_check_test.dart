@@ -81,6 +81,61 @@ void main() {
     expect(field.readOnly, isTrue);
   });
 
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+        'V09: after a wrong answer the book flies from the weak spots line to '
+        'the Review tab\'s place (the bottom middle) and is gone; none for '
+        'a right answer${reduceMotion ? ' (Reduce Motion: no flight)' : ''}',
+        (tester) async {
+      if (reduceMotion) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+            tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      }
+      await pump(tester);
+      final book = find.byKey(DailyTestScreen.bookFlightKey);
+      await tester.enterText(
+          find.byKey(QuestionView.answerFieldKey), 'something wrong');
+      await tester.pump();
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pump();
+      // Waits for the line to pop in first.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(book, findsNothing);
+      if (reduceMotion) {
+        await tester.pumpAndSettle();
+        expect(book, findsNothing);
+        return;
+      }
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(book, findsOneWidget);
+      final line = tester.getCenter(find.text('This goes to your weak spots'));
+      final early = tester.getCenter(book);
+      await tester.pump(const Duration(milliseconds: 400));
+      final late = tester.getCenter(book);
+      const size = Size(402, 874);
+      expect(late.dy, greaterThan(line.dy), reason: 'down to the bar');
+      expect((late.dx - size.width / 2).abs(),
+          lessThan((early.dx - size.width / 2).abs() + .5),
+          reason: 'towards the middle tab');
+      await tester.pumpAndSettle();
+      expect(book, findsNothing);
+
+      // A right answer: no book.
+      await tester.tap(find.byKey(DailyTestScreen.continueKey));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(QuestionView.answerFieldKey),
+          set.questions[1].correctAnswer);
+      await tester.pump();
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(book, findsNothing);
+      }
+    });
+  }
+
   testWidgets(
       'through the whole test: the answers handed over are the ones checked',
       (tester) async {

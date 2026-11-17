@@ -75,6 +75,10 @@ class DailyTestScreen extends StatefulWidget {
   /// The part under the question before "Check" (the buddy, Skip, Check).
   static const footerKey = ValueKey('daily_test_footer');
 
+  /// V09: the book icon flying from "This goes to your weak spots" to the
+  /// Review tab's place in the nav bar.
+  static const bookFlightKey = ValueKey('daily_test_book_flight');
+
   @override
   State<DailyTestScreen> createState() => _DailyTestScreenState();
 }
@@ -94,6 +98,12 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
 
   /// A "+N" star flying into the chip (V08), by question.
   int? _flying;
+
+  /// V09: a book flying to the Review tab, by question; where it starts
+  /// (the weak spots line's icon) and the page it flies over.
+  int? _bookFlying;
+  final _bookIconKey = GlobalKey();
+  final _pageKey = GlobalKey();
 
   @override
   void initState() {
@@ -208,6 +218,9 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       _answers[question.item.id] = answer;
       _checks[question.item.id] = check;
       _flying = _currentIndex;
+      if (!check.isCorrect && !AppMotion.reduced(context)) {
+        _bookFlying = _currentIndex;
+      }
     });
     if (check.isCorrect) {
       HapticMap.success();
@@ -273,6 +286,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         body: SafeArea(
           bottom: false,
           child: Stack(
+            key: _pageKey,
             children: [
               Column(
                 children: [
@@ -331,11 +345,21 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                               name: widget.userName,
                               last: _isLastQuestion,
                               horizontalPadding: hPad,
+                              bookKey: _bookIconKey,
                               onContinue: _advance,
                             ),
                     ),
                 ],
               ),
+              if (_bookFlying != null)
+                _BookFlight(
+                  key: ValueKey('book_$_bookFlying'),
+                  from: _bookIconKey,
+                  page: _pageKey,
+                  onEnd: () {
+                    if (mounted) setState(() => _bookFlying = null);
+                  },
+                ),
               if (_flying != null && !AppMotion.reduced(context))
                 _FlyingStar(
                   key: ValueKey('star_$_flying'),
@@ -594,6 +618,9 @@ class _FeedbackPanel extends StatelessWidget {
   final String? name;
   final bool last;
   final double horizontalPadding;
+
+  /// The weak spots line's book icon: where V09's book flight starts.
+  final Key? bookKey;
   final VoidCallback onContinue;
 
   const _FeedbackPanel({
@@ -603,6 +630,7 @@ class _FeedbackPanel extends StatelessWidget {
     required this.name,
     required this.last,
     required this.horizontalPadding,
+    this.bookKey,
     required this.onContinue,
   });
 
@@ -708,7 +736,8 @@ class _FeedbackPanel extends StatelessWidget {
                     _Pop(
                       delay: const Duration(milliseconds: 250),
                       child: Row(children: [
-                        Icon(Icons.menu_book_outlined, size: 18, color: c.navy),
+                        Icon(Icons.menu_book_outlined,
+                            key: bookKey, size: 18, color: c.navy),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(l10n.checkGoesToWeakSpots,
@@ -777,6 +806,79 @@ class _Pop extends StatelessWidget {
           curve: AppMotion.pop),
       builder: (context, t, child) => Transform.scale(scale: t, child: child),
       child: child,
+    );
+  }
+}
+
+/// V09: once the weak spots line has popped in, its book icon flies to the
+/// Review tab's place in the nav bar (500 ms): down to the middle of the
+/// bottom edge, where the bar's middle tab sits under this full-screen
+/// test. It grows a little, then shrinks and fades as it arrives. Not built
+/// under Reduce Motion. Nothing is drawn if the line is gone (the user
+/// went on).
+class _BookFlight extends StatelessWidget {
+  final GlobalKey from;
+  final GlobalKey page;
+  final VoidCallback onEnd;
+  const _BookFlight(
+      {super.key, required this.from, required this.page, required this.onEnd});
+
+  /// After the line's pop (250 ms delay, then about 350 ms to settle).
+  static const delay = Duration(milliseconds: 600);
+  static const flight = Duration(milliseconds: 500);
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final total = delay + flight;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: total,
+      onEnd: onEnd,
+      builder: (context, v, child) {
+        final t = Curves.easeInOutCubic.transform(
+            ((v * total.inMilliseconds - delay.inMilliseconds) /
+                    flight.inMilliseconds)
+                .clamp(0.0, 1.0));
+        final icon = from.currentContext?.findRenderObject();
+        final stack = page.currentContext?.findRenderObject();
+        if (t == 0 ||
+            icon is! RenderBox ||
+            stack is! RenderBox ||
+            !icon.attached ||
+            !stack.attached) {
+          return const SizedBox.shrink();
+        }
+        final start = stack
+            .globalToLocal(icon.localToGlobal(icon.size.center(Offset.zero)));
+        final media = MediaQuery.of(context);
+        // The Review tab: the middle of the bar's three, about 44 pt above
+        // the bottom inset.
+        final end = Offset(stack.size.width / 2,
+            stack.size.height - media.padding.bottom - 44);
+        final p = Offset.lerp(start, end, t)!;
+        final arc = -math.sin(t * math.pi) * 36;
+        final scale = 1 + .5 * math.sin(t * math.pi) - .4 * t;
+        return Positioned(
+          left: p.dx - 14,
+          top: p.dy - 14 + arc,
+          child: Opacity(
+            opacity: t < .8 ? 1 : (1 - t) * 5,
+            child: Transform.scale(scale: scale, child: child),
+          ),
+        );
+      },
+      child: IgnorePointer(
+        child: KeyedSubtree(
+          key: DailyTestScreen.bookFlightKey,
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
+            child: Icon(Icons.menu_book_rounded, size: 18, color: c.navy),
+          ),
+        ),
+      ),
     );
   }
 }
