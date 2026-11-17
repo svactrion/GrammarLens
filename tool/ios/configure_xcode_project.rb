@@ -53,6 +53,7 @@ runner_group = project.main_group.children.find { |g| g.display_name == 'Runner'
 shared_group = group_for(project, 'Shared', 'Shared')
 
 ensure_source(runner, ensure_file(runner_group, 'GrammarLensBridge.swift', changes), changes)
+ensure_source(runner, ensure_file(runner_group, 'ReminderScheduler.swift', changes), changes)
 ensure_file(runner_group, 'Runner.entitlements', changes)
 ensure_source(runner, ensure_file(shared_group, 'AppGroupStore.swift', changes), changes)
 ensure_setting(runner, 'CODE_SIGN_ENTITLEMENTS', 'Runner/Runner.entitlements', changes)
@@ -144,7 +145,7 @@ end
   ensure_source(runner, ext_group.files.find { |r| r.path == f }, changes)
 end
 ensure_source(runner, payload_ref, changes)
-%w[WidgetSnapshotTests.swift WidgetTimelineTests.swift].each do |f|
+%w[WidgetSnapshotTests.swift WidgetTimelineTests.swift ReminderSchedulerTests.swift].each do |f|
   ensure_source(tests, ensure_file(tests_group, f, changes), changes)
 end
 

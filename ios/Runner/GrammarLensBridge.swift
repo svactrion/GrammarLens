@@ -3,8 +3,8 @@ import UIKit
 import WidgetKit
 
 /// The app's own Flutter ↔ iOS bridge (no package): App Group files for the
-/// widgets, widget reloads, the `grammarlens://` links and, from W4, the
-/// reminder notifications. One channel; every method answers with a plain
+/// widgets, widget reloads, the `grammarlens://` links and the reminder
+/// notifications (`ReminderScheduler`). One channel; every method answers with a plain
 /// value, never throws to Dart for an expected failure.
 final class GrammarLensBridge: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate {
   static let channelName = "com.ahmettayfur.grammarlens/bridge"
@@ -93,6 +93,19 @@ final class GrammarLensBridge: NSObject, FlutterPlugin, FlutterSceneLifeCycleDel
     case "widgets.reload":
       WidgetCenter.shared.reloadAllTimelines()
       result(true)
+    case "notifications.status":
+      ReminderScheduler.shared.status { result($0) }
+    case "notifications.request":
+      ReminderScheduler.shared.requestPermission { result($0) }
+    case "notifications.schedule":
+      let items = args["items"] as? [[String: Any]] ?? []
+      ReminderScheduler.shared.schedule(items) { result($0) }
+    case "notifications.cancelAll":
+      ReminderScheduler.shared.cancelAll { result(true) }
+    case "notifications.pending":
+      ReminderScheduler.shared.pending { result($0) }
+    case "settings.openNotifications":
+      result(ReminderScheduler.openSettings())
     case "links.initial":
       let link = pendingLink
       pendingLink = nil

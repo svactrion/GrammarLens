@@ -17,6 +17,7 @@
 		43F23EA9A30A4F50A31C8BFF /* GrammarLensBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */; };
 		68FFA86BFEF821815A06ACF8 /* GrammarLensWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A0D762525FBF8D7FFFC7A /* GrammarLensWidgets.swift */; };
 		6F115BEC3460DDEB600B5934 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
+		72233F4D1CB541E4111B6BA0 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
@@ -30,6 +31,7 @@
 		C011AFADDB876A00B261E1C7 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
 		C2BD31059CC91B8ED785A215 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6E9CD9AD85443489C6D611 /* Foundation.framework */; };
 		CE0154482D8665CD8EADFEE2 /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */; };
+		D762D66B099B609D8E18457A /* ReminderSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */; };
 		DB128510D836A099DB50E6C4 /* WidgetTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */; };
 		E6E1BF2EE16F356D0F668872 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91FC57F4A338B5F930347C70 /* WidgetViews.swift */; };
 		F0ED1C12DBC34F5DD7657CA1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4E4300B6BBE2C05C614DFB0C /* GoogleService-Info.plist */; };
@@ -78,6 +80,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReminderSchedulerTests.swift; sourceTree = "<group>"; };
 		0F7B5FDA95CE22BB3C9390E4 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
@@ -98,6 +101,7 @@
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		7B830C334B8A6CC4D428A892 /* GrammarLensWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GrammarLensWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
+		8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		91FC57F4A338B5F930347C70 /* WidgetViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -150,6 +154,7 @@
 				4467F2D9CA5E2861B9F9240F /* BridgeTests.swift */,
 				2D0CF2F8AE7893264EE3D87B /* WidgetSnapshotTests.swift */,
 				FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */,
+				05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -234,6 +239,7 @@
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */,
 				6A08DBFC7C8619521D99E0A7 /* Runner.entitlements */,
+				8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -441,6 +447,7 @@
 				A52C8AEB398CA3FEC96C7ABB /* BridgeTests.swift in Sources */,
 				312FA4EE66A7355F0106DC73 /* WidgetSnapshotTests.swift in Sources */,
 				DB128510D836A099DB50E6C4 /* WidgetTimelineTests.swift in Sources */,
+				D762D66B099B609D8E18457A /* ReminderSchedulerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -470,6 +477,7 @@
 				E6E1BF2EE16F356D0F668872 /* WidgetViews.swift in Sources */,
 				2B1B953D1855B35CC3A1ACD0 /* WidgetStyle.swift in Sources */,
 				6F115BEC3460DDEB600B5934 /* WidgetPayload.swift in Sources */,
+				72233F4D1CB541E4111B6BA0 /* ReminderScheduler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
