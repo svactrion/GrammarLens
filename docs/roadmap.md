@@ -316,9 +316,11 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
 #### UI polish + 4th tab (planned, opened 2026-11-17)
 
 **Status (2026-11-17): the UI polish is built on branch `ui-polish`**
-(batches B0–B11, every in-scope board captured on the iPhone 18 Pro
-simulator); **not merged into `main`, not shipped, not checked on a
-device.** The run's record, decisions to review and gaps:
+(batches B0–B11, fix round 1, and fix round 2 after the owner's first
+device test on his iPhone 14 Plus); **not merged into `main`, not
+shipped.** Fix round 2 was built and checked on the simulator only; what
+needs the phone is in PROGRESS.md's "Owner device checks". The run's
+record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
 The 4th tab is still open.
 
@@ -371,6 +373,18 @@ Owner decisions so far:
 - **First-wave topics in the UI polish run (owner, 2026-11-17):** app and
   proxy code written but switched off; no deploy, no paid measurement; they
   ship only after the question-quality check and the owner's review.
+- **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
+  - **A fourth onboarding goal, School & university** (stored and reported
+    as `school`, a new value of the `learning_goal` user property). It is
+    still stored only and changes no content.
+  - **Free users' rest scene leads to Premium** (V24f → V24s → V13r →
+    PW05r): a dream bubble with the day's weak spot, a Premium card with
+    "Wake <Hero> up". The paywall never opens by itself and has its own
+    source, `rest_scene`. After a trial starts, the user goes straight
+    into that weak spot's practice. Premium users keep the plain rest
+    scene. The "Remind me tomorrow" row belongs to the notifications task.
+  - **Getting ready lasts at least 4 s**: each stop at least 1.2 s, then
+    0.6 s of celebration; the bar still never passes unfinished work.
 - After the UI polish: decide a new feature for a 4th navbar tab.
 
 #### 1.4.1 (planned)

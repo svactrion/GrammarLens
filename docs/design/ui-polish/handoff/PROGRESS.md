@@ -6,9 +6,11 @@ decisions, open items. The final summary goes at the top when B11 ends.
 
 ## Final summary
 
-**Status: B0–B11 done, fix round 1 done** on branch `ui-polish` (pushed).
-Not merged into `main`, not shipped, **not checked on a device** (the
-owner's device pass comes before any merge).
+**Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
+`ui-polish` (pushed). Not merged into `main`, not shipped. The owner tested
+the branch once on his iPhone 14 Plus; fix round 2 fixes what he found and
+was built and checked **on the simulator only** (iPhone 18 Pro Max). What
+only the phone can confirm is in "Owner device checks" below.
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -25,6 +27,7 @@ owner's device pass comes before any merge).
 | B10 System and themes | done | `5dabea0`, `2aa88bd` |
 | B11 Final sweep and docs | done | `a4228b3`, `cd3c33d`, `2c6ddaf` |
 | Fix round 1 (owner, 2026-11-17) | done | see "Fix round 1" below |
+| Fix round 2 (owner device test, 2026-11-17) | done | see "Fix round 2" below |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery
@@ -34,6 +37,14 @@ tests for both states. Fix round 1 built the board's medal shelf, the
 ribbon's "since" line, R02's ring, V09's book flight, the listed motion
 details, keyboard focus on the language options, and found V05-Goal's
 capture "hang" to be the tool's (fixed, recaptured).
+
+Fix round 2 made every companion loop visible (board keyframes as
+minimums), gave the paywall trio its float and hop and the CTA its shine
+and pulse, rebuilt the Free vs Premium table, Profile's ribbon, the edit-name
+sheet (it sat a keyboard too high) and the medals layer's order. It added
+the fourth goal (School & university), made getting ready last at least 4 s,
+put the V06 flag on the summit, kept Home's greeting on one line, and built
+the free users' rest scene → Premium flow (V24f, V24s, V13r, PW05r).
 
 **Not done** (each listed with its batch or in fix round 1): mastery strips
 (D6-1 / D7-1, **deferred by the owner**: a separate feature later); a few
@@ -58,7 +69,49 @@ the first Daily Test on record), D9-2 (the board's shelf is built), D9-4
 **Decisions still open for the owner** (details under each batch and in fix
 round 1): D6-2 ("new" chip = saved once), D6-4 (RV05's navy button), D6-5
 (R03 shows the latest mistake only), D7-3 ("Back to topics"), D7-4, D7-5,
-D8-4, D9-3 (PF03 is the existing detail), and fix round 1's F1-1 to F1-9.
+D8-4, D9-3 (PF03 is the existing detail), fix round 1's F1-1 to F1-9, and
+fix round 2's F2-1 to F2-12.
+
+## Owner device checks
+
+Things the simulator cannot confirm. Please check them on the iPhone 14
+Plus before the merge:
+
+1. **Is Reduce Motion on?** (Settings → Accessibility → Motion.) With it
+   on, every companion loop stops by design (the app's rule since B1). If
+   the companions looked still at the first test, check this first.
+2. **Companion motion.** Each loop should be clearly visible:
+   - Welcome: the sides float, Fox sways;
+   - the Home card: it hops;
+   - the paywall: the sides float, the middle hops, the CTA shines and
+     pulses;
+   - Profile: it breathes and floats; tap it and it waves;
+   - the rest scene: Premium users see the breathing companion with a
+     rising Zzz; free users see the dream bubble floating;
+   - getting ready: it tilts, then hops.
+3. **The V06 flag stands on the summit** of the month's mountain (the owner
+   saw it off the peak).
+4. **Home's greeting is on one line** with your own name, bold, at your
+   text size.
+5. **The free rest scene → Premium flow** (a free account with today's
+   Daily Test done and the free ticket used):
+   - the dream bubble shows today's weak spot;
+   - "Wake Fox up · 7 days free" matches the store's trial;
+   - waking opens the paywall from the bottom;
+   - X shows the reminder once, then returns to the camp;
+   - a sandbox trial leads to PW05r, and "Practise <weak spot>" opens that
+     practice.
+6. **Haptics:** Wake (medium) and the wake hop (light); Save name and the
+   pencil (light); See all (light); the paywall CTA (medium); the goal
+   cards (selection).
+7. **Edit name with the real keyboard:** the sheet sits on the keyboard,
+   with the companion stage visible and dimmed above it.
+8. **Home on first open:** the pawn and its gold next-step ring are above
+   the nav bar.
+9. **Getting ready** feels unhurried (about 4 s) and never stalls.
+10. **All medals** shows your real medals in the right order.
+11. **The Free vs Premium table** reads well at your text size.
+12. **School & university** appears as the third goal in onboarding.
 
 ## Decisions
 
@@ -119,7 +172,7 @@ Format: what · options · choice · why.
 
 ## Fix round 2 (owner device test, 2026-11-17)
 
-Status: **in progress**. Task: `FIX2.md` (SPEC v10). The owner tested the
+Status: **done** (on the simulator; the owner's device checks are open). Task: `FIX2.md` (SPEC v10). The owner tested the
 branch on his iPhone 14 Plus (428 × 926 pt); this round fixes what he found
 and adds the free users' rest scene → Premium flow. Everything is built and
 checked on the simulator; what only the phone can confirm is in "Owner
@@ -137,6 +190,8 @@ it, and never shuts it down. No simulator was created, erased or deleted
 (`simctl delete unavailable` found none).
 
 ### 0. Disk space
+
+Commit `dba8f4c` (this record).
 
 Free space (`df -h ~`): **before 6.5 GiB** (97 % used), **after 11 GiB**
 (95 % used).
@@ -178,6 +233,571 @@ Report only, **not touched** (the owner may run the command himself):
 | Repo: `screenshots/icon-exploration/` (owner, untracked) | 22 MB | owner's material |
 | Repo: `proxy/eval/out/`, `proxy/.wrangler/` (ignored) | 4.4 MB, 2.4 MB | owner's eval output / wrangler cache |
 | Repo: `Claude outputs/` (owner, untracked) | 12 KB | owner's material |
+
+### 1. Companion motion
+
+Commit `00b6981`.
+
+**Diagnosis.**
+- (a) `AppMotion.loopsEnabled` is a plain `static bool loopsEnabled = true`
+  with no build-mode check, so it is `true` in debug, profile and release.
+  Only `test/flutter_test_config.dart` sets it to `false` (for
+  `pumpAndSettle`). A guard test now checks that nothing in `lib/` assigns
+  it.
+- (b) `AppMotion.loopsOn` turns loops off only for
+  `MediaQuery.disableAnimations` (the system's Reduce Motion) or a muted
+  `TickerMode` (a hidden tab or a covered route). Nothing else turns them
+  off: not low-power mode, not VoiceOver. If the phone has Reduce Motion on,
+  every loop stops, by design. That is now an owner device check.
+- (c) Plain images instead of `CompanionView`:
+  - The paywall trio used `AvatarTile`: round still tiles, **no motion at
+    all**. Fixed in item 2.
+  - The mountain pawn (`monthly_mountain.dart`) is an `AvatarTile` by
+    design: the boards draw it as a tile that hops on arrival.
+  - The buddy picker's side heroes are still images by design: only the
+    front one waves.
+  - The lucky wheel's segments are still images by design.
+  - Welcome, Credits, the Home card, Profile, the rest scene and every
+    other screen already used `CompanionView`.
+- (d) `CompanionView` syncs its loop in `didChangeDependencies`, and
+  MediaQuery and TickerMode are both dependencies. So a loop does start when
+  a hidden tab or a covered route comes back, and stops on dispose. The one
+  "plays once and stops" case was **cheer**: two hops on mount, then only a
+  4 % breath, so it looked still after 0.6 s. Welcome's loops wait for the
+  splash to lift, by design.
+- (e) **Amplitudes too small to see.** This was the main cause:
+  - wave turned only ±1°, with a 4 px bob scaled down below 110 pt (1.6 px
+    on V04's 44 pt companion);
+  - idle only breathed (4 %), with no float;
+  - inspect tilted 2°;
+  - sleep breathed 3 % in Y, and its Zzz bobbed 8 px in place;
+  - think was 0 → −6° (borderline).
+  - Every distance also shrank with the companion's size (`size / 110`).
+
+The table below lists every companion in the app (✱ = changed by this
+round).
+
+| Screen | Widget | Mood | Expected (SPEC §3.5 / board) | Before → now |
+|---|---|---|---|---|
+| V02 Welcome trio | `welcome_screen` `_Trio` | wave | sides `gl-float` 8 px; Fox `gl-wave` | all three ±1° and floated → ✱ sides float, Fox sways −9°/+7°/−6°/+3° |
+| V03 Meet (front hero) | `buddy_picker` | wave | the pose + bob | ±1° → ✱ `gl-wave` |
+| V03b wheel result | `lucky_wheel_screen` | cheer | two hops | once → ✱ every 2.4 s |
+| V04 Name (stage, chip) | `onboarding_screen` | idle 92, wave 44 | breathe + float; wave | breathe only; 1.6 px → ✱ float 6 px, `gl-wave` |
+| V05 Goal reaction | `onboarding_screen` | cheer 76 | hop | once → ✱ every 2.4 s |
+| V05b Getting ready | `getting_ready_screen` | inspect → cheer | `gl-tilt`, hop | 2°; once → ✱ ±4°, every 2.4 s |
+| V06 / V12 mountain | `mountain_scene` | per scene | per mood | ✱ (shared widget) |
+| V07 / V08 / V09 Daily Test | `daily_test_screen` | idle / cheer / oops | per mood | ✱ idle float, cheer loop |
+| V10 Results | `daily_test_result_screen` | cheer 118 | `gl-hop` | once → ✱ every 2.4 s |
+| V11 / R05 medal | `medal_celebration` | cheer 132 | hop | once → ✱ every 2.4 s |
+| V14 / V15 Home card | `daily_test_card` | think (loading), idle + hop (todo) | `gl-tilt`; `gl-hop` | hop already ran; ✱ think +3° ↔ −6° |
+| V13 paywall trio | `premium_screen` `_AvatarHero` | — (`AvatarTile`) | sides float, middle hops | **still** → ✱ item 2 |
+| V13b / R10 / R08 dialogs | `companion_dialog` | sad / … | droop | droop already visible (±3°) |
+| PW05 Premium on | `premium_on_screen` | cheer + hop 150 | `gl-hop` | already ran |
+| V16 Review | `review_parts` | cheer + hop 120 | `gl-hop` | already ran |
+| V18 Preparing | `practice_preparing` | think 104 | `gl-tilt` | ✱ +3° ↔ −6° |
+| V20 Reviewing | `practice_reviewing` | inspect 96 | `gl-tilt` ±4° | 2° → ✱ ±4° |
+| V21 Results | `results_screen` | cheer 76, wave 48 | hop; wave | ✱ |
+| R03 weak spot | `weak_spot_detail_screen` | think 64 | tilt | ✱ |
+| V23 Profile stage | `profile_stage` | idle 150 (wave on tap) | `gl-breathe` + float | breathe only → ✱ float 6.8 px |
+| PF04 Edit name | `settings_screen` | think 64 | tilt | ✱ |
+| V24 rest scene | `rest_scene` | sleep | `gl-breathe`; Zzz `gl-zz2` | 3 %, Zzz in place → ✱ 1.05 breath, Zzz rises 30 and fades every 2.4 s |
+| P08 daily limit | `practice_launch` | sleep 104 | as V24 | ✱ |
+| R09 Credits | `credits_screen` | idle, wave, idle | sides float (parent), Fox waves | double float risk → ✱ sides float only via the parent |
+| R11 error | `error_state` | sad 132 | `gl-droop` | already visible |
+| Home pawn | `monthly_mountain` | `AvatarTile` | tile + arrival hop | by design, unchanged |
+
+**Fix (`CompanionView`).** The loops now follow the boards' keyframes.
+SPEC §3.5's values are treated as minimums.
+- Distances follow the size above 110 pt but never fall below the boards'
+  points.
+- idle: breathes 1 ↔ 1.04 and floats 6 px (±3 px), every 3 s.
+- wave: sways like `gl-wave` (0, −9°, +7°, −6°, +3°, 0) and bobs 4 px,
+  every 2.2 s.
+- cheer: hops twice (`gl-hop`, 16 px, 600 ms each) and then breathes, every
+  2.4 s, with the sparkle twice per loop.
+- think: tilts +3° ↔ −6° (2.4 s).
+- inspect: tilts ±4° (`gl-tilt`, 2.4 s).
+- sad: unchanged (it already matched `gl-droop`).
+- sleep: breathes 1.02 × 1.05 (3.6 s) while the Zzz rises 30 px, drifts
+  14 px, grows from .6 to 1.1 and fades in and out (`gl-zz2`, 2.4 s).
+- oops: unchanged.
+- The pivot is the feet (the boards' `transform-origin: 50% 92%`).
+- New `ambient` option (`mood`, `hop`, `float`, `none`): the paywall's side
+  companions float and the middle one hops. Welcome's and Credits' side
+  companions get no loop of their own, because their parent floats them.
+- Under Reduce Motion every loop stops and the one-shots are skipped
+  (unchanged rule).
+
+**Tests.** `test/fix_round2_companion_motion_test.dart`:
+- every mood's frames are above its minimum;
+- the loop really runs inside the widget for idle, wave, cheer (again in its
+  second loop), think, inspect, sleep (the Zzz moves more than 25 px and
+  fades), hop and float;
+- every mood is still under Reduce Motion;
+- the (a) guard.
+
+### 2. Paywall companions (V13)
+
+Commit `4c8b87d`.
+
+**Diagnosis.**
+- The trio was three `AvatarTile`s (66 / 124 / 66, round stage tiles), with
+  no loop at all.
+- The pinned CTA was a plain `FilledButton`, with no shine and no pulse.
+- The "See plans" arrow used fix round 1's nudge (6 px, still for 60 % of
+  every 1.8 s). The board uses `gl-float` 1.8 s, a continuous 8 px.
+
+**Fix.**
+- The board's trio: `CompanionView`s of 70 / 110 / 64 pt with soft blurred
+  shadows. The sides float (`gl-float` 8 px, 3.2 s) and the middle hops
+  (`gl-hop`, 1.2 s).
+- The row keeps its 124 pt height, so nothing below moves.
+- The CTA is wrapped in a new `CtaGlow`: the shine sweep inside the button
+  (3 s) and the pulse ring behind it (1.8 s). Both only run while the button
+  is enabled and loops run.
+- The arrow floats 8 px every 1.8 s.
+
+**Tests.** `premium_screen_test`:
+- The hero tests now read the `CompanionView`s, at the board's sizes and
+  gap (4 pt).
+- Because the board's side companions are 70 and 64 pt, the middle one sits
+  3 pt off centre, and the test allows that.
+- A new "V13 motion" group checks that the sides float more than 7 px, the
+  middle hops more than 14 px, the arrow floats, and the CTA shine and pulse
+  are present but absent under Reduce Motion.
+
+### 3. Free vs Premium table (V13c)
+
+Commit `effdf6b`.
+
+**Diagnosis.** The table was the 1.2.0 design, not the board:
+- four rows ("Daily Test, refreshed every day", "Topic Practice, all N
+  topics", "Practice your weak spots", "Sessions of 3, 5 or 10 questions");
+- uppercase FREE / PREMIUM headers;
+- a Premium strip in the theme's secondary container, painted cell by cell;
+- no heading companion, no green note;
+- a stacked fallback layout.
+
+**Fix.** The board's table:
+- "Free vs Premium" (22/900), with the user's companion (cheer, hopping,
+  60 pt) at its end.
+- A card (radius 26, 2 pt line border, lip) whose Premium column is one
+  piece from the header to the last row: 92 pt wide, a cream → soft-orange
+  gradient, a 2 pt orange border, a 4 pt deep-orange lip, and the navy
+  "Premium" pill on top.
+- Columns: label, Free 76 pt, Premium 92 pt.
+- Six rows, each an icon tile (32 pt, sky) and a label (15/800), all read
+  from the real rules:
+  - Daily Test: 1 a day / 1 a day.
+  - AI practice: `freeDailyPracticeLimit` / `dailySessionLimit` a day.
+  - Weak-spot practice: ✓ / ✓.
+  - All N topics (`practiceTopics()`): — / ✓.
+  - Session length: 3 (a free session is always `PracticeLength.quick`) /
+    3 · 5 · 10.
+  - Monthly Climb: ✓ / ✓.
+- The green "Cancel anytime…" note under the card.
+- VoiceOver reads each row as one sentence ("AI practice. Free: 1 a day.
+  Premium: 5 a day").
+
+The old table, its stacked fallback and their seven strings are removed.
+
+**Tests.** `premium_screen_test`:
+- the old-table tests are replaced by a V13c group: copy and values,
+  check styles, the one-piece column, semantics, no overflow at 320 pt and
+  ×1, 390 pt and ×1.3, 428 pt and ×2.0, both themes;
+- two helpers centre their tap target, because the longer page could
+  scroll a plan under the pinned top bar.
+
+### 4. Profile ribbon (V23)
+
+Commit `2c96960`.
+
+**Diagnosis.** The ribbon was a full-width navy card (radius 18) moved up
+18 pt with a transform. It had no tails, no gradient, no lip of the board's
+colour and no 40 pt overlap, so the board's ribbon was effectively
+missing.
+
+**Fix.** The board's values:
+- Body 286 × 62, radius 16, #1B4FB0 → navy, a 5 pt #082A6B lip.
+- Two 46 × 46 #082A6B tails with V-cut ends (the board's clip-path, notch
+  at 34 %), 26 pt outside each end and 14 pt down; mirrored in RTL.
+- It overlaps the stage by exactly 40 pt (the ribbon now sizes the stack,
+  so a wrapped line grows it downwards, never into the stage).
+- Name 23/900 white on one line (a long name scales down); line 12/700
+  #C9D6FF; a 40 × 40 pencil (radius 12, white at 14 %) with a 44 pt target.
+- It settles from 12 pt below in 300 ms (easeOutBack).
+- On a 320 pt screen it narrows so the tails stay on screen.
+- New tokens: `AppColors.ribbonTop`, `ribbonLip`, `onRibbonMuted`.
+
+**Tests.** `fix_round2_profile_test.dart` (real font): body size, colours
+and lip; name, line and pencil; tail geometry; the 40 pt overlap; settle and
+Reduce Motion; a 20-character name; 320 pt; RTL.
+
+### 5. Edit name (PF04)
+
+Commit `fa50b36`.
+
+**Diagnosis.** The keyboard inset was applied twice: `showAppSheet` pads
+its content by `viewInsets.bottom`, and `_NameSheet` padded by it again. On
+a phone with the keyboard up, the sheet grew by a whole keyboard's height
+and filled the screen ("a full-screen page"). The simulator's software
+keyboard is often hidden, so it did not show there.
+
+**Fix.**
+- The inset is now applied once. The sheet is sized to its content and sits
+  on the keyboard, its top under the companion stage, which stays visible
+  above, dimmed.
+- The board's content: the waving companion (64) with the "What should I
+  call you?" bubble; a 58 pt field (radius 18, 3 pt navy frame, 20/800)
+  with the counter inside it; Cancel (outline) and Save (navy), 50 pt each.
+  No grabber and no note line, as on the board.
+- Save closes the sheet, the ribbon's name cross-fades (150 ms) and the
+  "Name saved" snackbar shows (unchanged).
+- Decision F2-4: the counter counts to the real limit, **n/40**
+  (owner decision O2), not the board's "/20".
+
+**Tests.** `profile_layout_test`:
+- with a 336 pt keyboard at 390 × 844 the sheet's bottom is on the
+  keyboard, its top below the companion, height < 260;
+- Cancel saves nothing;
+- the counter reads "3/40" inside the field.
+
+### 6. All medals (PF02)
+
+Commit `fc8efe3`.
+
+**Diagnosis.**
+- Year and month order were already newest first: `shelf()` sorts by
+  year × 12 + month, and the years keep that order. A Dec 2025 → Feb 2026
+  fixture confirmed it.
+- What did not match the design was the Welcome badge. It was drawn
+  after every year, at the very bottom, instead of at the month it was
+  earned. With the owner's badge earned in his first month, that put his
+  newest-looking item last.
+- There were no tier counters. "N earned" stood in for them.
+- The year rows were a `Wrap` with leftover space, not a 3-column grid.
+
+**Fix.**
+- `allSlots()` is the one ordering, newest first: the running month, then
+  past medals and the earned Welcome badge at its month (the shelf's own
+  rule). The shelf shows its first three.
+- Tier counters on top (n Gold, n Silver, n Bronze, n Welcome) count
+  finalized medals only (decision F2-5: the running month's tier is not
+  final; the board does the same).
+- "All medals" / "Newest first" heading and a 44 pt close button.
+- Under each year header (16/900), newest year first, a 3-column grid read
+  left to right and top to bottom. Each cell shows the medal, the short
+  month and either its tier, "in progress" or "Welcome".
+
+**Tests.** `fix_round2_medals_layer_test.dart`, with a Nov 2025 – Mar 2026
+fixture and a Welcome badge from Dec 2025:
+- the order, and that the shelf shows the first three;
+- the counters (1 Gold, 2 Silver, 1 Bronze, 1 Welcome);
+- 2026 above 2025, each a row read left to right, the columns aligned;
+- the Welcome badge after December;
+- a fourth medal starts a new row at the left;
+- RTL.
+
+### 7. Goal screen (V05)
+
+Commit `7e2d856`.
+
+- `LearningGoal` gains `school` (stored and reported as `school`, a new
+  value of the existing `learning_goal` user property, documented in
+  `docs/analytics-plan.md`). Builds before this round read it as
+  `general`.
+- V05 lists four cards in the board's order: Exam prep, Work, School &
+  university (lilac tile, book icon), Everyday English. Work and Everyday
+  English get the board's new descriptions.
+- The cards use the board's v10 sizes (min 80 pt, 13/14 padding, 50 pt
+  tile) so all four and Continue fit the first view at 390 × 844 and
+  428 × 926.
+- Getting ready names the new goal ("School English, here we come!",
+  "School & university").
+- There is no goal editor in Profile, so V05 and V05b are the only places
+  that list the goal.
+- Strings in all 8 languages.
+
+**Tests.** `onboarding_screen_test`: four goals, their order and copy, the
+lilac tile, the reaction line, and the first-view fit at two sizes. The
+existing per-goal "Continue finishes with the goal" test now covers
+`school`. `first_launch_flow_test` and `analytics_service_test` check the
+`school` value.
+
+### 8. Getting ready (V05b)
+
+Commit `de6e326`.
+
+- Each stop takes at least 1.2 s **from the previous stop** (decision F2-6:
+  a single 3.6 s ramp would let a fast task rush the next third after a
+  slow one).
+- The bar reaches 100 % at 3.6 s at the earliest; with the 0.6 s
+  celebration the screen shows for at least 4.2 s.
+- The bar's easing follows the ramp closely (a third of the gap per 25 ms),
+  so a stop lands right after its 1.2 s.
+- The honesty rule is unchanged: the bar never passes a stop before its
+  task is done.
+- While the bar waits on a slow task, the companion thinks.
+- The 8 s error is unchanged.
+
+**Tests.** `getting_ready_test`:
+- instant work reaches each stop at least 1.2 s after the last and 100 %
+  between 3.6 and 3.9 s;
+- a slow first task still leaves 1.2 s between the later stops, with the
+  waiting state on;
+- the screen itself calls `onDone` between 4.0 and 4.6 s.
+
+### 9. Mountain intro (V06): the flag
+
+Commit `1c8f7cc`.
+
+**Diagnosis.** The flag was placed in image coordinates (`SceneMap.toBox`
+over the cover-scaled art). However, its point was
+`ClimbRoute.at(climbLength)`, the climb's flag point on the trail (N32,
+`climbFlagArc`), not the summit. That point is about 0.05 image widths left
+of and 0.06 below the trail's last point. Cover-scaling on a tall phone
+magnifies it to roughly 35 × 40 pt, which is "not on the summit".
+
+**Fix.**
+- `MountainScene.flagPoint` is now `ClimbRoute.summit`, the trail table's
+  last point (also its highest).
+- The pole's opaque foot (rows 25–997 of 1024 in the pole image) stands on
+  it, and the pop grows from that foot.
+- This covers every `MountainScene` (V06, V12, R04, R04b; the rest scene
+  shows no flag).
+- V06's summit chip now starts further right, so it scales down rather
+  than run off a narrow screen.
+- Decision F2-7: the climb's own last step (N32) still ends at the trail's
+  flag point, so on R04 the last gold dot sits just below the summit flag.
+
+**Evidence.** `fix_round2_summit_flag_test.dart` checks that the pole's foot
+lands within 0.5 pt of the summit pixel of the art at 428 × 926 (the
+owner's iPhone 14 Plus), 375 × 667, 440 × 956 and 1024 × 1366.
+`CAPTURE_FLAG=1` writes the renders to
+`build/ui-polish-captures/V06-flag-*.png`. They were viewed at 428 × 926 and
+375 × 667: the flag is on the snow cap. The simulator capture is under
+"Captures" below.
+
+### 10. Home greeting (V14 / V15)
+
+Commit `10d33ac`.
+
+**Diagnosis.** Home passed `nameStyle` to `HomeGreeting`, which then always
+drew two lines ("Good evening," above the name), the 1.2.0 brief's layout.
+The boards draw one line.
+
+**Fix.**
+- One line, "Good evening, Ada", with the name bold inside it
+  (`emphasizedSpans`).
+- If it does not fit, the whole line scales down, never below 70 %.
+- Decision F2-8: past that minimum (320 pt, Large text, a 40-character
+  name) the end is cut with "…". VoiceOver still reads the whole greeting.
+
+**Tests.**
+- `fix_round2_greeting_test.dart` (real font): all 8 languages at 428 and
+  390 pt with a 20-character name show one line with nothing cut; a short
+  name stays at full size; the 320 pt / Large / 40-character case.
+- `home_screen_test`: the style test now reads the spans; the overflow loop
+  checks one line and the spoken text.
+
+### 11. Free users' rest scene → Premium (V24f, V24s, V13r, PW05r)
+
+Commits `c655cdd` (the flow), `8d3b5ed` (follow-ups from the captures:
+the 300 pt free scene, the lifted camera, the button staying orange, the
+paywall naming the scene's companion).
+
+**V24f.** Shown to free users only (Premium users keep V24). Same camp with
+three changes:
+- No "See you tomorrow" chip and no Zzz. Instead a dream bubble ("FOX IS
+  DREAMING OF…", today's weak spot, "today's weak spot") with three cloud
+  dots appearing 200 ms apart and a 3.2 s float. No weak spot: no bubble.
+- The sheet header: a moon, "All done for today", two done ticks ("Daily
+  Test 4/5", "Free ticket used") and the countdown with "next free test".
+- The Premium card:
+  - navy → plum, a thin gold border and the R12 glint (3.6 s);
+  - a "PREMIUM" chip with "Not sleepy yet?", and the title "Keep
+    practising today";
+  - five mini tickets, one used (dashed, "USED") and four locked (orange,
+    lock), popping in 60 ms apart;
+  - "Free: 1 ticket a day · Premium: 5 a day";
+  - "Practise <weak spot> now, …" with the weak spot in gold, or, with no
+    weak spot, "Pick any of the N topics, …";
+  - the orange "Wake Fox up · 7 days free" button.
+- The card slides up 300 ms after the scene. No haptic on open.
+- No "Remind me tomorrow" row (that belongs to the other branch).
+- Decision F2-9: the "· N days free" part comes from the store (the
+  paywall's own rule: the annual plan's introductory offer, only when
+  RevenueCat says the user is eligible). Otherwise the button reads "Wake
+  Fox up".
+
+**V24s.** On "Wake Fox up" (haptic medium):
+- the card glows gold;
+- the fire grows 1.25× (300 ms);
+- the companion cross-fades sleep → wave (200 ms) and hops once (haptic
+  light);
+- the dream gives way to "I'm awake! One more round?";
+- 600 ms later the paywall rises from the bottom (450 ms spring).
+
+When the paywall closes, the companion falls asleep again (400 ms
+cross-fade) and the dream returns.
+
+**V13r.** The same `PremiumScreen`, with source `rest_scene` (a new value of
+the existing `paywall_viewed` / `paywall_dismissed` source; no new event).
+Only the top changes:
+- the evening camp strip (the month's night art, the awake companion
+  waving, the campfire) and the chip;
+- "<Hero> is wide awake, <name>." and "Keep practising today. Your free
+  ticket is used, Premium adds 4 more.";
+- a "PRACTISE IT NOW" card with the weak spot, "saved today" and "→ right
+  after your trial starts" (without a trial: "→ right after Premium
+  starts");
+- the benefits in V13r's order: 5 sessions (today 4 more), AI feedback on
+  every answer, all N topics.
+
+X shows V13b once per session (unchanged), then returns to the scene.
+
+**PW05r.** "<Hero> is ready. Let's go!", the perks "AI feedback on every
+weak spot", "All N topics…" and "4 more sessions today, 5 every day", and
+the button "Practise <weak spot>". It opens that weak spot's screen with
+practice starting at once (V18's preparing view), not Home. With no weak
+spot the button is "Pick a topic" and opens the topics (R01).
+
+Decision F2-10: the practice opens through the weak spot's own screen (as
+Review does), so back returns there, then to Home.
+
+Strings: 32 new keys in all 8 languages. The Turkish "Wake" line avoids a
+name-dependent suffix ("{hero} uyansın").
+
+**Tests.** `home_screen_test`:
+- free → V24f, Premium → V24 (no card, no dream, "See you tomorrow");
+- the dream, the tickets, the store-trial button, and no paywall without a
+  tap;
+- no weak spot: the fallback line and no bubble;
+- Wake → awake bubble → V13r with `paywall_viewed(source: rest_scene)`;
+- X → V13b → "Continue with free" → back to the scene, asleep;
+- trial → PW05r ("Practise <weak spot>") → the weak spot's practice with
+  `startPractice`; no weak spot → "Pick a topic" → the topics.
+
+### 12. V15: the pawn under the nav bar
+
+Commit `e477f29`.
+
+**Diagnosis.** Measured in the app's font with the floating nav bar, at
+the 6.7" ratio (428 × 926):
+- The mountain window spans 480–830 pt and the bar starts at 802 pt.
+- The pawn's bottom is at about 734–745 pt (days 0–28), 57–68 pt above
+  the bar; the next-step ring is above it too.
+- At 6.9" (440 × 956) the gap is about 98 pt.
+- Fix round 1's capture (6.3", 402 × 874) had the two-line greeting
+  (item 10), which pushed the card down about 30 pt and put the pawn under
+  the bar.
+
+**Fix.** No camera change. At 6.3" on day 0 the camera is clamped at the
+art's bottom, and the pawn's feet reach the bar's top edge (749 vs 750 pt).
+Lifting it further would need about 30 % more zoom or an empty band below
+the art; neither the design nor FIX2's 6.7" target asks for that. Recorded
+as a limit.
+
+**Tests.** `home_screen_test` measures at 428 × 926, 402 × 874 and
+440 × 956, days 0, 3, 15 and 28. It requires 8 pt of clearance (only "never
+under the bar" at 6.3" on day 0).
+
+### Captures (simulator)
+
+Gallery commit `6f6c25a`.
+
+The board gallery (`tool/ui_polish/capture.sh`) ran on the iPhone 18 Pro
+Max (`UI_SIM=306F22C5-…`) into `build/ui-polish-captures/` (not committed).
+It ran five times: run 1 covered every changed board, runs 2–5 the
+follow-ups listed below. Every run finished with 0 failed boards. The gallery gained V24f,
+V24s (a scripted tap on "Wake Fox up"), V13r and PW05r. V24 is now the
+Premium users' rest scene. A `-t2` capture repeats a board 0.55–1.5 s
+later.
+
+**Item 1 evidence** (`-t2` pairs, compared crop by crop):
+- V02 Welcome: the side companions float, Fox sways.
+- V15 Home card: it hops.
+- V13 paywall: Fox is lifted in one frame and grounded in the other; the
+  side companions sit at different heights.
+- V23 Profile: it breathes and floats.
+- V24f rest scene: the dream bubble floats.
+
+**What run 1 found, fixed before run 2:**
+- V24f's scene kept V24's 470 pt height, which pushed "Wake Fox up" below
+  the fold. The free scene is now 300 pt, so the button is on the first
+  view, as on the board.
+- In the shorter scene the centred camera put the sleeping companion behind
+  the dream bubble. The camera now looks 0.13 image widths above the step
+  (the camp stays at the step), which puts the companion under the bubble
+  near the scene's bottom, as on the board. Run 3 recaptured V24f and
+  V24s. The campfire sits lower than the step, so the scene's bottom edge
+  cuts the base of the fire; the flame shows.
+- While waking, the button turned grey (disabled). It now stays orange and
+  ignores a second tap.
+- V13r opened from Home named the stored profile's companion (Panda in the
+  gallery) while the camp showed Fox. Home now passes its hero and name
+  in `PaywallRest`.
+- V13c's fixed scroll cut off the new heading (the page's end is now
+  under that offset); the capture scrolls to 110 pt above the end.
+
+### Verified
+
+After the last code change:
+- `flutter analyze`: **No issues found**.
+- `flutter test`: **2482 passed, 0 failed** (`+2482: All tests passed!`).
+
+The count is lower than fix round 1's 2493 because the old comparison
+table's measurement and stacked-layout tests were replaced by the V13c
+group. Item 6's change also updated `settings_screen_test`'s
+empty-collection test.
+
+The simulator runs above all finished with 0 failed boards. Nothing was
+checked on a physical device: no haptics, no real keyboard, no real
+purchase.
+
+The hard limits were kept:
+- no new package and no new analytics event (one new value each for
+  `learning_goal` and `paywall_viewed`'s source);
+- no deploy, no paid API, no version change, no merge;
+- nothing deleted outside §0.
+
+### Decisions (fix round 2)
+
+Format: what · choice · why.
+
+- **F2-1 Free checks (V13c).** The board draws the free column's checks as
+  soft-green discs. · **Grey outlines**, as FIX2 says. · FIX2 is the
+  owner's latest word on this table.
+- **F2-2 Table fallback (V13c).** · **The stacked fallback is dropped.** ·
+  The board's fixed 76 / 92 pt columns hold from 320 pt at ×1 to 428 pt at
+  ×2: values scale down to fit and labels wrap (tested).
+- **F2-3 Paywall trio (V13).** · **The board's 70 / 110 / 64 pt with a 4 pt
+  gap.** · The middle companion sits 3 pt off centre, as on the board.
+- **F2-4 PF04 counter.** · **n/40.** · Names are limited to 40 characters
+  (O2); a "/20" counter would contradict the field.
+- **F2-5 PF02 counters.** · **Finalized medals only; all four chips always
+  shown; an unearned Welcome badge has no cell** (the old layer showed it
+  faded at the bottom). · The board does not count the running month, and
+  places the badge at the month it was earned.
+- **F2-6 Getting ready timing.** · **1.2 s per stop, counted from the
+  previous stop.** · A single 3.6 s ramp would let a fast task rush the
+  next third after a slow one.
+- **F2-7 Summit flag.** · **Every `MountainScene` flag at the trail's last
+  point; the climb's last step unchanged.** · FIX2 names the summit; the
+  step table (N32) is a separate rule.
+- **F2-8 Greeting minimum.** · **70 %, then "…".** · Any smaller is hard to
+  read; only a very long name on a 320 pt screen at Large text reaches it.
+- **F2-9 V24f trial days.** · **From the store, only when eligible.** ·
+  "Prices and trials come only from the store" (the paywall's rule).
+- **F2-10 PW05r route.** · **The weak spot's own screen, starting the
+  practice at once.** · This keeps V18's preparing view and a sensible way
+  back.
+- **F2-11 "See plans" arrow (V13).** · **The board's `gl-float` 1.8 s
+  (8 pt, continuous)** instead of fix round 1's nudge. · The board, and it
+  moves all the time.
+- **F2-12 Welcome and Credits trios.** · **The parent floats the side
+  companions; they have no loop of their own.** · Otherwise they would
+  float twice.
 
 ## Fix round 1 (owner request, 2026-11-17)
 
@@ -1087,6 +1707,8 @@ What was done:
 
 All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). After fix round 1: **65 match** (some name small motion gaps in their note). Fix round 1 recaptured V05, V07, V09, Q04, V15, R04, R12, R02, V13, V13a, V13c, V23, PF02, PF03 and R07 and closed B11's three gaps (V09, R02, V23).
 
+**Fix round 2 (SPEC v10, iPhone 18 Pro Max simulator, 440 × 956):** 69 in-scope boards with the new V24f, V24s, V13r and PW05r; **69 match**. Recaptured: V02, V05, V05b, V06, V12, V13, V13a, V13b, V13c, V14, V15, V23, V24, PF02, PF04, PW05, R04, R04b, R09, and the four new boards. "-t2" captures are the same board 0.55–1.5 s later (item 1's evidence that the companions move). Rows not listed keep their earlier capture (18 Pro, 402 × 874).
+
 | Board | Capture(s) in `build/ui-polish-captures/` | Match / gap | Note |
 |---|---|---|---|
 | V00-CompanionSystem | V00-CompanionSystem-500.png, V00-CompanionSystem.png | match | System sheet: nine heroes, moods, props (gallery board). |
@@ -1096,13 +1718,13 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). After fix
 | X04-Ticket | X04-Ticket-420.png, X04-Ticket.png | match | Free, tearing, used; compact and full. |
 | X05-DailyCard | X05-DailyCard-560.png, X05-DailyCard.png | match | One 256 pt skeleton for loading / waiting / done. |
 | V01-Splash | V01-Splash-mid.png, V01-Splash.png | match | Logo build-up mid frame and end. |
-| V02-Welcome | V02-Welcome.png | match | Demo card, companions, Get started. |
+| V02-Welcome | V02-Welcome.png, V02-Welcome-t2.png | match | Demo card, companions, Get started; fix round 2: the side companions float, Fox sways (two moments). |
 | V03-Meet | V03-Meet.png | match | B1 turntable, Fox in front. |
 | V03b-LuckyWheel | V03b-LuckyWheel-ready.png, V03b-LuckyWheel.png | match | Ready and landed frames; never the current buddy. |
 | V04-Name | V04-Name.png | match | Typed name, the companion's reaction. |
-| V05-Goal | V05-Goal.png | match | Three goal cards, the selected one navy. The B3 capture: the screen is unchanged since `e6807b1`, and the B11 driver hung twice on this board's tap (tooling, see Blocked). |
-| V05b-GettingReady | V05b-GettingReady-100.png, V05b-GettingReady.png | match | Stops at real work (⅓, ⅔, 1). |
-| V06-MountainIntro | V06-MountainIntro.png | match | Whole mountain, flag, the companion at the start. |
+| V05-Goal | V05-Goal.png | match | Fix round 2: four goal cards (School & university third, lilac), the board's v10 sizes; all four and Continue on the first view. |
+| V05b-GettingReady | V05b-GettingReady-100.png, V05b-GettingReady.png | match | Stops at real work (⅓, ⅔, 1); fix round 2: at least 1.2 s per stop, at least 4 s on screen. |
+| V06-MountainIntro | V06-MountainIntro.png, V06-flag-*.png (test renders) | match | Fix round 2: the flag's foot on the summit (the trail's last point) at every size. |
 | R06-AvatarChange | R06-AvatarChange.png | match | Turntable from Profile, "Save <Hero>". |
 | R06s-B1-Turntable | R06s-B1-Turntable-1-resting.png, R06s-B1-Turntable-2-turning.png, R06s-B1-Turntable-3-panda.png | match | Storyboard frames of the turntable. |
 | R06s-D-Wheel | R06s-D-Wheel-1-ready.png, R06s-D-Wheel-2-spinning.png, R06s-D-Wheel-3-landed.png | match | Storyboard frames of the wheel: ready, spinning, landed. |
@@ -1117,15 +1739,17 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). After fix
 | R10-Leave | R10-Leave.png | match | Companion dialog over the question, Keep going / Leave. |
 | R11-Offline | R11-Offline.png | match | Sad companion, calm line, Try again with dots. |
 | SY02-Snackbar | SY02-Snackbar.png | match | One dark capsule with icon and Undo. |
-| V15-HomeNextDay | V15-HomeNextDay.png, V15-HomeNextDay-360.png | match | Orange card, bubble "Step N is one test away!"; the next step's gold ring pulses (fix round 1, scrolled capture). |
-| V14-Home | V14-Home-520.png, V14-Home.png | match | Navy card, capsule +N, ticket, topic showcase (scrolled capture too). |
+| V15-HomeNextDay | V15-HomeNextDay.png, V15-HomeNextDay-t2.png, V15-HomeNextDay-360.png | match | Fix round 2 (Pro Max): the greeting on one line with the name bold; the pawn and its gold ring above the nav bar in the first frame; the card's companion hops (two moments). |
+| V14-Home | V14-Home-520.png, V14-Home.png | match | Navy card, capsule +N, ticket, topic showcase; the greeting on one line (fix round 2). |
 | H03-HomeLoading | H03-HomeLoading.png | match | Card loading state and the mountain skeleton; the inner skeleton is faint. |
 | H04-HomePremium | H04-HomePremium-520.png, H04-HomePremium.png | match | Practice card with sessions n/5, unlocked tiles. |
-| V12-Climb | V12-Climb.png | match | End frame: step chip, bubble, Continue (camera covers the screen). |
+| V12-Climb | V12-Climb.png | match | End frame: step chip, bubble, Continue; fix round 2: the summit flag on the peak. |
 | V12b-ClimbStoryboard | V12b-ClimbStoryboard-1-wide.png, V12b-ClimbStoryboard-2-close.png, V12b-ClimbStoryboard-3-wide.png | match | Three key frames: wide, close (2.2×), wide. |
-| V24-DayComplete | V24-DayComplete.png | match | Camp, campfire, sleeping companion, countdown; no reminder switch (OUT). |
-| R04-MonthCard | R04-MonthCard.png | match | Recap with medal swap, dots, stats, stepwise bar; gap: lines glow by scale only. |
-| R04b-NewMountain | R04b-NewMountain.png | match | Whole new mountain, flag, companion at the start, thresholds. |
+| V24-DayComplete | V24-DayComplete.png | match | Premium users' rest scene since SPEC v10: camp, campfire, sleeping companion with a rising Zzz, countdown; no reminder switch (OUT). |
+| V24f-RestFree | V24f-RestFree.png, V24f-RestFree-t2.png | match | New (fix round 2): dream bubble with today's weak spot, "All done" header with two ticks and the countdown, Premium card (1 used + 4 locked tickets, the weak spot in gold, "Wake Fox up · 7 days free" from the store's trial); no reminder row (other branch). |
+| V24s-RestToPremium | V24s-RestToPremium-1-rest.png, V24s-RestToPremium-2-awake.png, V24s-RestToPremium-3-paywall.png | match | New (fix round 2): the storyboard's frames: rest, the companion awake (wave, fire grown, card glowing), V13r risen over the scene. |
+| R04-MonthCard | R04-MonthCard.png | match | Recap with medal swap, dots, stats, stepwise bar, lines glow (fix round 1); fix round 2: the summit flag on the peak. |
+| R04b-NewMountain | R04b-NewMountain.png | match | Whole new mountain, the flag on the summit (fix round 2), companion at the start, thresholds. |
 | V16-Review | V16-Review.png | match | Ticket, weak spot card with the mistake inline, Practice with my ticket; no mastery strip (D6-1). |
 | V16b-TicketTear | V16b-TicketTear-2-practice-starts.png, V16b-TicketTear.png | match | Mid-tear: navy body, stub gone, USED stamp; then the AI permission. |
 | V22-ReviewUsed | V22-ReviewUsed.png | match | Used ticket with the 20:41 slot, Premium card; no "practiced today" chip or mastery (D6-1, D6-2). |
@@ -1134,24 +1758,26 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). After fix
 | R03-WeakSpot | R03-WeakSpot.png | match | Rule bubble, the mistake inline, today's ticket; no mastery strip (D6-1). |
 | R12-ReviewPremium | R12-ReviewPremium.png | match | Premium chip, Suggested focus with its glint (fix round 1), cards; mastery strips deferred (D6-1). |
 | R01-Topics | R01-Topics.png | match | Picked for you, coloured topic cards; no mastery strips (D7-1). |
-| R02-Length | R02-Length.png | gap | Orange knob and Start; the ring keeps the existing navy dial, the number does not roll. |
+| R02-Length | R02-Length.png | match | Orange knob and Start; the board's ring, the number rolls (fix round 1). |
 | V17-Consent | V17-Consent.png | match | Same text in icon cards, navy Agree, Not now. |
 | V18-Preparing | V18-Preparing.png | match | Thinking companion, skeletons, Did you know? card; skeleton bars faint. |
 | V19-PracticeQuestion | V19-PracticeQuestion.png | match | Line: AI reviews all your answers when you finish. |
 | V20-Reviewing | V20-Reviewing.png | match | Inspecting companion, lens over the answers, checklist, bar. |
 | V21-PracticeResults | V21-PracticeResults.png | match | N/M correct, feedback cards, Premium card; no mastery step (D7-1). |
 | P08-DailyLimit | P08-DailyLimit.png | match | Sleeping companion, full counter; the existing accurate sentence (D7-2). |
-| V13-Paywall | V13-Paywall.png | match | No price boxes on first view; pinned CTA, price line and links; See plans nudges (fix round 1). |
+| V13-Paywall | V13-Paywall.png, V13-Paywall-t2.png | match | Fix round 2: the board's trio (70 / 110 / 64) floats and hops (two moments), the CTA shines and pulses, See plans floats. |
 | V13a-PaywallPlans | V13a-PaywallPlans.png | match | Plans after See plans, yearly preselected; they rise in 60 ms apart (fix round 1). |
-| V13c-PaywallCompare | V13c-PaywallCompare.png | match | Table (rows fade in 40 ms apart, fix round 1), trial timeline, plan label above the CTA. |
+| V13c-PaywallCompare | V13c-PaywallCompare.png | match | Fix round 2: the board's table (heading with the hopping companion, one-piece Premium column, six rows, grey-outline free checks, green note), trial timeline, plan label above the CTA. |
 | V13b-ExitReminder | V13b-ExitReminder.png | match | Sad companion, no discount, trial / Continue with free. |
+| V13r-PaywallRest | V13r-PaywallRest.png | match | New (fix round 2): evening camp strip with the awake companion and fire, "Fox is wide awake, Ada.", PRACTISE IT NOW with the weak spot, benefits in V13r's order, V13's pinned CTA, price line and links. |
 | PW05-PremiumOn | PW05-PremiumOn.png | match | Rays, cheering companion, three unlocked things, trial end date. |
-| V23-Profile | V23-Profile-420.png, V23-Profile.png | gap | Stage, ribbon, stat tiles; the shelf keeps the existing strip, no "since" line (D9-1, D9-2). |
-| PF02-Medals | PF02-Medals.png | match | Every medal over the blurred profile, newest first by year, "N earned"; shelf medals fly in (fix round 1). |
+| PW05r-PremiumOnRest | PW05r-PremiumOnRest.png | match | New (fix round 2): "Fox is ready. Let's go!", the three perks with "4 more sessions today, 5 every day", the trial's end, "Practise The With Superlatives". |
+| V23-Profile | V23-Profile.png, V23-Profile-t2.png, V23-Profile-420.png | match | Fix round 2: the board's navy ribbon (286 × 62, V-cut tails, 40 pt overlap, pencil); the companion breathes and floats (two moments); shelf and "since" (fix round 1). |
+| PF02-Medals | PF02-Medals.png | match | Fix round 2: tier counters, "All medals / Newest first", year header, 3-column grid, the running month "in progress" first, the Welcome badge at its month. |
 | PF03-MedalDetail | PF03-MedalDetail.png | match | The existing medal detail from the layer (D9-3); the medal flies in, steps and points count up (fix round 1). |
-| PF04-EditName | PF04-EditName.png | match | Sheet with the companion's question, Save. |
+| PF04-EditName | PF04-EditName.png | match | Fix round 2: the board's sheet (waving companion's question, navy-framed field with n/40 inside, Cancel / Save) sized to its content. |
 | R07-Language | R07-Language.png | match | Language cards, the selected one navy with a check. |
 | R08-Data | R08-Data.png | match | Three cards; the reset asks with the companion dialog. |
-| R09-Credits | R09-Credits.png | match | Three companions on top, one card, two links. |
+| R09-Credits | R09-Credits.png | match | Three companions on top (sides float, Fox sways), one card, two links. |
 | SY03-DarkHome | SY03-DarkHome-dark.png | match | Dark Home from the theme tokens (captured with :dark). |
 

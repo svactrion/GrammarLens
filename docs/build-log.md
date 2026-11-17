@@ -14282,3 +14282,38 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Open]** Device pass and merge are the owner's; details and the
   remaining decisions in `docs/design/ui-polish/handoff/PROGRESS.md`
   ("Fix round 1").
+
+## 2026-11-17 (UI polish fix round 2 on branch `ui-polish`; not merged, not shipped)
+
+- **[Product]** After the owner's first device test (iPhone 14 Plus), SPEC
+  v10 and `FIX2.md`:
+  - a fourth goal, School & university (`learning_goal` = `school`);
+  - the free users' rest scene leads to Premium (V24f → V24s → V13r →
+    PW05r). The paywall opens only from "Wake <Hero> up", with source
+    `rest_scene`;
+  - getting ready lasts at least 4 s.
+- **[Engineering]** The companions' loops now follow the boards'
+  keyframes as minimums. The main cause of "they don't move" was amplitude
+  (wave ±1°, no idle float, cheer hopped once and then barely breathed);
+  the paywall trio had no loop at all. Paywall CTA shine and pulse, the
+  V13c table, Profile's ribbon, PF02's order (the Welcome badge sat after
+  every year) and counters are now as the boards.
+- **[Engineering]** PF04: the keyboard inset was added twice, so with a
+  real keyboard the sheet filled the screen. V06: the flag stood on the
+  climb's flag point on the trail, not the summit; now its foot is the
+  trail's last point in image coordinates for every mountain scene. Home's
+  greeting is one line, scaling down to 70 % instead of wrapping. V15's
+  pawn clears the nav bar at first view on 6.7" and 6.9" (measured; no
+  camera change).
+- **[Disk]** Before 6.5 GiB free, after 11 GiB: `flutter clean`, this
+  repo's DerivedData, `simctl delete unavailable` (nothing). A report-only
+  table of the rest is in PROGRESS.md; nothing of the widgets session was
+  touched.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2482 passed, 0 failed. Every changed board and the four
+  new ones (V24f, V24s, V13r, PW05r) captured on the iPhone 18 Pro Max
+  simulator (5 gallery runs, 0 failed boards); B11's table has 69 of 69
+  matching. Item 1 has "-t2" captures as motion evidence. Nothing checked
+  on a device.
+- **[Open]** The owner's device checks (PROGRESS.md "Owner device
+  checks": Reduce Motion first), decisions F2-1 to F2-12, the merge.
