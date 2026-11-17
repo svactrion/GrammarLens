@@ -189,3 +189,55 @@ Verified:
 - Simulator (iPhone 18 Pro, light): V00-CompanionSystem,
   V00-MotionSystem, X01-ExpressionKit, X03-HeroSet captured through the
   board gallery; poses, props and their placement match the boards.
+
+## B2 — Shared components
+
+Status: **done**.
+
+Commits: `9186d21` (strings), `a1e08b9` (StepBar, ScoreRing,
+SkeletonBar), `5cb8578` (DailyTestCard), `6cb7aa2` (Ticket), `1a7fca5`
+(ScoreCapsule, showAppSheet, CompanionDialog, ErrorState, Rays, confetti
+length/count), `53b8006` (SY02 snackbar), `db2e521` (gallery boards).
+
+What was built (all colours from `AppColors`, durations from
+`AppMotion`):
+- `widgets/daily_test_card.dart` — X05 skeleton, loading / todo / done.
+- `widgets/ticket.dart` — X04 free / tearing / used, notches cut out of
+  the path, the tear (≈ 700 ms) with haptics medium + light, the used slot
+  with the time left to local midnight.
+- `widgets/score_capsule.dart` — V14 capsule; tier maths from
+  `MonthlyMedalRules`.
+- `widgets/step_bar.dart`, `widgets/score_ring.dart`,
+  `widgets/skeleton.dart`, `widgets/app_sheet.dart`,
+  `widgets/companion_dialog.dart` (R10 pattern), `widgets/error_state.dart`
+  (R11), `widgets/rays.dart`; `utils/app_messenger.dart` now draws SY02.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: 2450 passed, 6
+  failed — all six in `practice_submit_consent_test.dart`, whose helper
+  cast the snackbar content to `Text`; fixed (reads the first `Text` in
+  the capsule), the file passes.
+- New tests: `daily_test_card_test` (350 × 256 in all three states, also
+  at text scale 2.0 and 3.1 with the Large app text size, no overflow;
+  slot contents per state), `ticket_test` (three states render; tear plays
+  then `onTorn`, haptics medium + light; same size in all states, compact
+  and full), `b2_components_test` (dialog results and haptics, error state
+  retry dots + haptics + copy per kind, StepBar fills one by one, capsule
+  tier maths and badge), messenger tests for SY02.
+- Simulator (iPhone 18 Pro, light): X04-Ticket, X05-DailyCard, R10-Leave,
+  R11-Offline, SY02-Snackbar captured. Match: card rows, colours and the
+  ticket's notches, tear and used slot as on the boards; the dialog's
+  scrim was darker than the board's and was lightened to 45 %.
+
+Decisions:
+- **D2-1 Ticket "20:41 NEXT".** The board's ARIA label reads "Next ticket
+  in 20 hours 41 minutes" and SPEC says the slot "updates every minute":
+  the slot shows the **time left** until local midnight (h:mm), not a
+  clock time.
+- **D2-2 Text scaling inside fixed components.** The Daily Test card's
+  rows have fixed heights, so its text is clamped to 1.0× (the card never
+  grows, X05); the title shrinks from 26 to 22 before it truncates. The
+  ticket's text is clamped to 1.15×.
+- **D2-3 Snackbar.** SY02's capsule replaces the Material bar's look; the
+  slide uses `ScaffoldMessenger`'s own entrance (250 ms, easeOutCubic),
+  which fades and slides rather than moving from exactly 120 %.
