@@ -14252,3 +14252,33 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   `product.yaml` "planned" line for the UI polish still says "not started"
   (TASK §7 allows only the `recent` entry in this run).
 
+
+## 2026-11-17 (UI polish fix round 1 on branch `ui-polish`; not merged, not shipped)
+
+- **[Product]** The owner kept D5-1, D5-2, D5-3, D5-4, D6-3, D7-2, D8-1,
+  D8-2 and D8-3 as built, deferred the mastery strips (D6-1 / D7-1) to a
+  separate feature, and asked for a fix round on the same branch before
+  their device test. Merging waits for that test.
+- **[Engineering]** Profile's medal strip became the board's thick shelf
+  (at most three medals, newest first, the running month a locked slot,
+  "See all" to the medals layer, which now lists newest first); the ribbon
+  reads "Climbing with <Hero> · since <month year>" from the first Daily
+  Test already on record (no new data); R02's ring matches the board and
+  its number rolls; after a wrong answer the book flies to the Review tab's
+  place; the hint knob nudges, a focused blank breathes, the next step on
+  the mountain pulses, the recap's medal lines glow, the paywall's plans and
+  rows enter in turn, the focus card glints, medals fly between the shelf,
+  the layer and the detail, whose numbers count up; the language options
+  take keyboard focus again.
+- **[Engineering]** V05-Goal's capture "hang" (B11) was the capture
+  script's race (Continue tapped before it was enabled, no driver timeout),
+  not the app: the real onboarding flow was walked on the simulator without
+  a hang. Script fixed, every driver step now times out, V05 recaptured.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2493 passed, 0 failed. The 15 changed boards recaptured on
+  the iPhone 18 Pro simulator; B11's comparison now has 65 of 65 boards
+  matching. Nothing checked on a device; no proxy change, no deploy, no new
+  package, no version change, no new data stored.
+- **[Open]** Device pass and merge are the owner's; details and the
+  remaining decisions in `docs/design/ui-polish/handoff/PROGRESS.md`
+  ("Fix round 1").

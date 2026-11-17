@@ -6,8 +6,9 @@ decisions, open items. The final summary goes at the top when B11 ends.
 
 ## Final summary
 
-**Status: B0–B11 done** on branch `ui-polish` (pushed). Not merged into
-`main`, not shipped, **not checked on a device**.
+**Status: B0–B11 done, fix round 1 done** on branch `ui-polish` (pushed).
+Not merged into `main`, not shipped, **not checked on a device** (the
+owner's device pass comes before any merge).
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -22,19 +23,24 @@ decisions, open items. The final summary goes at the top when B11 ends.
 | B8 Paywall | done | `2981ab0`, `f303bad` |
 | B9 Profile | done | `f98eac1`, `5c39c65` |
 | B10 System and themes | done | `5dabea0`, `2aa88bd` |
-| B11 Final sweep and docs | done | `a4228b3`, `cd3c33d` |
+| B11 Final sweep and docs | done | `a4228b3`, `cd3c33d`, `2c6ddaf` |
+| Fix round 1 (owner, 2026-11-17) | done | see "Fix round 1" below |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery
-(`tool/ui_polish/`); the comparison table is in B11. The first-wave topics
-are in the app and the proxy, switched off, with tests for both states.
-`flutter analyze` and `flutter test` pass (B11).
+(`tool/ui_polish/`); the comparison table is in B11 (updated by fix round
+1). The first-wave topics are in the app and the proxy, switched off, with
+tests for both states. Fix round 1 built the board's medal shelf, the
+ribbon's "since" line, R02's ring, V09's book flight, the listed motion
+details, keyboard focus on the language options, and found V05-Goal's
+capture "hang" to be the tool's (fixed, recaptured).
 
-**Not done** (each listed with its batch): mastery strips (D6-1, no stored
-count); "since <month year>" on the profile ribbon (D9-1, no stored date);
-the thick 3-medal shelf image (D9-2); some motion details (B4, B5, B7, B8,
-B9 "Not done / gaps": e.g. V09's book icon flight, the paywall's staggered
-plan entrance, PF02/PF03 Hero flights, R02's rolling number).
+**Not done** (each listed with its batch or in fix round 1): mastery strips
+(D6-1 / D7-1, **deferred by the owner**: a separate feature later); a few
+motion details outside fix round 1's list (V08's measured star path,
+Q04's "—" fill, V14's capsule "+N" pop, V13c's Premium column fill, V19's
+Next slide-in, V22's midnight stub, H03's think pose); PF03 stays the
+existing medal detail rather than the board's bottom sheet (D9-3).
 
 **Not verified.** Nothing on a physical device (haptics, real keyboard,
 performance). Arabic and the largest text size are checked by tests, not
@@ -42,25 +48,17 @@ captures. No real purchase, no real AI generation, no proxy call; the proxy
 is not deployed. Out of scope and untouched: W01, N01–N03, the reminder
 switch on V24.
 
-**Decisions for the owner to review** (details under each batch):
-- D5-1 Home loses its avatar, weak spot list, topic strip and Review
-  call-out (the boards have none); the ticket and the showcase take their
-  jobs.
-- D5-2 The first tab is called "Climb" in all 8 languages (every board).
-- D5-3 The first climb's full-screen camera (V12) replaces Home's in-card
-  first-run zoom (same one-time flag, same `month_zoom_ended` event).
-- D5-4 The month change is two full-screen pages (R04 → R04b) instead of a
-  bottom sheet; it closes with its button or the system back.
-- D6-1 / D7-1 No mastery strips anywhere (no stored count, no §1 rule).
-- D6-3 Review's 1.2.0 free practice card is replaced by the Ticket.
-- D7-2 P08 keeps the existing accurate sentence instead of "right after
-  your Daily Test".
-- D8-1 The paywall's comparison is always on the page (no toggle).
-- D8-2 The exit reminder opens once per app session.
-- D8-3 The trial timeline promises no reminder (no notifications exist).
-- D9-4 Language options lost keyboard-focus traversal (pressable cards).
-- `product.yaml`'s "planned" line for the UI polish still says "not
-  started": TASK §7 allows only the `recent` entry.
+**Decisions approved by the owner (2026-11-17), kept as built:** D5-1,
+D5-2, D5-3, D5-4, D6-3, D7-2, D8-1, D8-2, D8-3.
+
+**Decisions closed by fix round 1:** D9-1 (the "since" line is built from
+the first Daily Test on record), D9-2 (the board's shelf is built), D9-4
+(keyboard focus is back), D6-1 / D7-1 (deferred by the owner).
+
+**Decisions still open for the owner** (details under each batch and in fix
+round 1): D6-2 ("new" chip = saved once), D6-4 (RV05's navy button), D6-5
+(R03 shows the latest mistake only), D7-3 ("Back to topics"), D7-4, D7-5,
+D8-4, D9-3 (PF03 is the existing detail), and fix round 1's F1-1 to F1-9.
 
 ## Decisions
 
@@ -115,8 +113,149 @@ Format: what · options · choice · why.
   `l10n_layout_test`), not by simulator captures.
 - Purchases, AI generation and the proxy: not exercised (fakes and the
   debug fixture offering only); the proxy is not deployed (TASK).
-- B11 recapture: the gallery driver hung twice on V05-Goal's tap (it worked
-  in B3); its B3 capture is used, the screen being unchanged since then.
+- B11 recapture: the gallery driver hung twice on V05-Goal's tap. **Resolved
+  in fix round 1:** a tool race, not the app (see fix round 1); V05 is
+  recaptured.
+
+## Fix round 1 (owner request, 2026-11-17)
+
+Status: **done**.
+
+The owner kept D5-1, D5-2, D5-3, D5-4, D6-3, D7-2, D8-1, D8-2 and D8-3 as
+built and asked for nine fixes on the same branch, under TASK.md's rules (no
+new package, no deploy, no paid API, no version change, no merge, nothing
+destructive in git).
+
+Commits: `b72def2` (strings), `e854cea` (V23 shelf, PF02 newest first, medal
+Hero flights, PF03 count-up), `46c8ece` (D9-1 since), `946d485` (R02),
+`1dfdf76` (V09), `fe8dfa4` (V07), `e51eb99` (Q04), `79fb3c1` (V15),
+`f6b4d91` (R04), `63dec2f` (paywall), `20187e6` (R12), `f561357` (D9-4),
+`b1cda2f` (product.yaml), `ec28e44` and `a62afce` (capture tool, V05,
+V09, V15), `d03452b` (the medal preview test), and the docs commit that
+records them.
+
+### Done
+
+1. **D9-2 medal shelf (V23).** Profile's strip is now the board's thick
+   shelf (`assets/ui/medal_shelf_v2.webp`) inside one card with "Medal
+   collection" and "See all": at most three medals stand on its top
+   surface, newest first (the start of the line). The running month is a
+   locked slot (dashed ring and lock, "N pts to Bronze") until it reaches a
+   tier; then come past medals and the earned Welcome badge by month. Each
+   slot has its month and a line under the shelf's front face (a past
+   month's tier, the running month's way to its next medal). The medals
+   settle 80 ms apart. "See all" opens the existing PF02 layer, which now
+   lists newest first (B9 had it reversed) and carries the "N earned" count.
+2. **D9-1 "since".** The ribbon reads "Climbing with <Hero> · since <Mon
+   YYYY>", the month of the earliest completed Daily Test already stored
+   (`climb_daily_entries.completed_at`, read by the new
+   `StorageService.getFirstDailyTestCompletion`); without one, or if the
+   read fails, "· since …" is left out. Nothing new is stored.
+3. **R02 ring.** The board's 104 pt ring: a thick navy arc on a pale track
+   around a white (card-colour) disc, the count 35 pt / 900. The ring fills
+   in 250 ms; the count rolls like an odometer (up for a longer session,
+   down for a shorter one) while the knob moves.
+4. **V09 book flight.** Once "This goes to your weak spots" has popped in,
+   its book icon flies to the Review tab's place in 500 ms (F1-4).
+5. **Motion details** from the batches' "Not done / gaps":
+   - V07: the resting hint knob nudges every 2.8 s (the board's keyframes).
+   - Q04: the focused box's blank breathes once, 1 → 1.06 → 1 in 200 ms
+     (F1-5).
+   - V15: the step today's test will reach has a gold ring that pulses to
+     1.45× every 1.8 s while the test waits.
+   - R04: a medal line pops to 1.5×, turns gold and glows as the bar
+     passes it.
+   - Paywall: plans rise in 60 ms apart as they scroll in, the comparison
+     rows fade in 40 ms apart, the See plans arrow nudges every 1.8 s.
+   - R12: the focus card glints every 3.6 s.
+   - PF02 / PF03: shelf medals fly into the layer and back (Hero, 350 ms);
+     a medal flies from the shelf or the layer into its detail; the
+     detail's steps and points count up.
+   All loops are ambient (off under Reduce Motion, off screen and in
+   tests); entrances become instant under Reduce Motion; no flight or
+   count-up under Reduce Motion.
+6. **D9-4 keyboard focus.** The language options take focus again in
+   reading order (Tab), Enter or Space picks one; an orange ring shows only
+   with keyboard focus, so the touch look is unchanged (F1-6).
+7. **V05-Goal "hang".** Walked in the real app on the simulator (fresh
+   install → Welcome → buddy → name → goal → Work → Continue → getting
+   ready → mountain intro): no hang, no animation that never ends (the
+   selected card's tilt is the designed ±2°, the star by the buddy is the
+   cheer pose's prop, the confetti ends after 900 ms). The cause was the
+   capture script: it tapped Continue right after typing, unsynchronized,
+   while the button was still disabled, so the goal step never came and
+   flutter_driver waited without a timeout. Fixed in the tool (a wait, and
+   a 15 s timeout on every driver step so a board fails instead of hanging
+   the run); V05 recaptured. No app change, so no app test.
+8. **product.yaml**: only the planned UI polish line changed ("built on
+   branch ui-polish, not merged, not checked on a device"); `updated_at`
+   was already today.
+9. **Mastery strips (D6-1 / D7-1)**: marked "deferred (owner)" under B6
+   and B7; not built.
+
+### Decisions
+
+- **F1-1 The running month's slot.** SPEC and the owner: "a locked slot for
+  the current month". Shown locked while the month has no tier; once it
+  reaches Bronze it shows that medal (a tier reached in a month is never
+  lost), with the way to the next one. The board's own sample has no tier.
+- **F1-2 The Welcome badge on the shelf** stands by the month it was
+  earned, after that month's own medal (a month's medal is finalized at
+  its end); an unearned badge is only in PF02. The board's "Swipe for more
+  · newest first" caption is not shown: the shelf does not swipe, "See all"
+  opens the rest. "N earned" moved from Profile's header to PF02's.
+- **F1-3 "since"** counts every completed Daily Test, an all-skipped one
+  included (it is a completed test in the ledger). The month is short
+  ("Sep 2026"), as on the shelf.
+- **F1-4 V09's target.** The Daily Test is a full-screen route, so the nav
+  bar is not on screen; the book flies to where the Review tab sits (the
+  middle tab, bottom middle of the screen) and fades as it arrives.
+- **F1-5 Q04's breathe** is drawn over the blank (a tint and its underline
+  in the blank's colour): a span of text cannot be scaled in place.
+- **F1-6 Focus** is opt-in on `PressableCard`; only the language options use
+  it in this round. Their extra light haptic (the card's, on top of their
+  own selection haptic) is gone.
+- **F1-7 R02's disc** takes the card colour (white in light mode, the dark
+  card in dark mode) instead of a fixed white; the board's "about 4
+  minutes" line is not added (no measured duration, not asked).
+- **F1-8 Paywall rows** fade only (no rise), so the comparison table's
+  measured geometry never moves; the plans rise 24 pt. Semantics stay while
+  they wait to enter.
+- **F1-9 PF02's order** was oldest first in B9 against SPEC and the board
+  ("newest first"); fixed with the shelf.
+
+### Not done
+
+- PF03 stays the existing medal detail (a centred dialog), not the board's
+  bottom sheet (D9-3, not in this round's list); the medal now flies into
+  it and its numbers count up.
+- Motion details not in this round's list stay as listed under their
+  batches (V08's measured star path, Q04's "—" fill, V14's capsule pop,
+  V13c's Premium column fill, V19's Next slide-in, V22's midnight stub,
+  H03's think pose).
+
+### Verified
+
+- `flutter analyze` after the last code change: **No issues found!**
+- `flutter test` after the last code change: **2493 passed, 0 failed**
+  (2477 before the round; new tests: the shelf's order, Welcome placement,
+  locked slot and its line, geometry on the shelf image, settle stagger,
+  Hero tags and the detail's count-up; the "since" line with and without a
+  first test, and the storage read; R02's roll direction; V09's book with
+  and without Reduce Motion and none for a right answer; V07's nudge (LTR,
+  RTL, Reduce Motion); Q04's breathe; V15's ring and pulse, on Home before
+  the test and not after it; R04's glowing lines; the paywall's entrances
+  with semantics kept; R12's glint; the language options' Tab order, Enter
+  and the keyboard-only ring). One test found after the first full run (the
+  debug medal preview still expected the old strip) was updated and the
+  suite re-run.
+- Simulator (iPhone 18 Pro, iOS 27.2): the real app, fresh install, walked
+  Welcome → buddy → name → goal → Work → Continue → getting ready →
+  mountain intro (no hang). The board gallery recaptured the 15 boards
+  listed in B11's table, every board without a failure; V09 also mid-flight
+  and V15 scrolled to the ring.
+- No proxy change in this round; nothing deployed, no paid API, no new
+  package, no version change, no new data stored.
 
 ## B0 — Plan
 
@@ -143,10 +282,10 @@ The hinted paths from TASK B0 were checked: all exist.
 | V03-Meet | new `widgets/companion_turntable.dart` (replaces `widgets/avatar_carousel.dart`), `screens/onboarding_screen.dart` |
 | V03b-LuckyWheel | new `screens/lucky_wheel_screen.dart` |
 | V04-Name | `screens/onboarding_screen.dart` (name step) |
-| V05-Goal | `screens/onboarding_screen.dart` (goal step) |
+| V05-Goal | V05-Goal.png | match | Three goal cards, the selected one navy. Recaptured in fix round 1 (the B11 "hang" was the capture script, fixed). |
 | V05b-GettingReady | new `screens/getting_ready_screen.dart` + new `services/getting_ready.dart` (stop logic), `screens/first_launch_flow.dart` |
 | V06-MountainIntro | new `screens/mountain_intro_screen.dart`, `screens/first_launch_flow.dart`, `widgets/monthly_climb/*` (flag v2) |
-| V07-Question | `screens/daily_test_screen.dart`, `widgets/question_view.dart` |
+| V07-Question | V07-Question.png | match | Check footer, points chip; the hint knob nudges every 2.8 s (fix round 1). |
 | V08-Correct / V09-Wrong | new `widgets/answer_feedback_sheet.dart`, new `services/daily_test_grading.dart` (on-device per-question grading over `utils/answer_matching.dart`), `screens/daily_test_screen.dart` |
 | Q04-MultiBlank / Q05-ErrorCorrection | `widgets/question_view.dart`, `screens/daily_test_screen.dart`, `utils/answer_diff.dart` (reuse) |
 | R10-Leave | new `widgets/companion_dialog.dart`; `screens/daily_test_screen.dart`, `screens/practice_screen.dart` (exit dialogs) |
@@ -156,12 +295,12 @@ The hinted paths from TASK B0 were checked: all exist.
 | V12-Climb / V12b | `widgets/monthly_climb/climb_zoom.dart`, `climb_camera.dart`, `monthly_mountain.dart`; `screens/home_screen.dart` |
 | V14-Home / V15 / H03 / H04 | `screens/home_screen.dart`, `widgets/daily_test_card.dart`, new `widgets/score_capsule.dart`, `widgets/ticket.dart`, `widgets/monthly_climb/climb_card.dart` |
 | V24-DayComplete | new `widgets/rest_scene.dart`, `screens/home_screen.dart` (§1.8 rule) |
-| R04-MonthCard | `widgets/month_card_sheet.dart` |
+| R04-MonthCard | R04-MonthCard.png | match | Recap with medal swap, dots, stats, stepwise bar; passed medal lines glow (fix round 1). |
 | R04b-NewMountain | `widgets/month_card_sheet.dart` / new `widgets/new_mountain_reveal.dart` |
 | V16 / V16b / V22 / RV05 / RV06 / R12 | `screens/review_screen.dart`, `widgets/review_top_card.dart`, `widgets/weak_spot_card.dart`, `widgets/ticket.dart`, `widgets/app_sheet.dart` (new) |
 | R03-WeakSpot | `screens/weak_spot_detail_screen.dart` |
 | R01-Topics | `screens/topic_practice_screen.dart` |
-| R02-Length | `screens/practice_length_picker.dart` |
+| R02-Length | R02-Length.png | match | The board's ring (white disc, navy arc, big count); the count rolls while dragging (fix round 1). |
 | V17-Consent | `screens/ai_consent_screen.dart` |
 | V18-Preparing | `screens/practice_launch.dart`, new `widgets/preparing_view.dart` |
 | V19-PracticeQuestion | `screens/practice_screen.dart`, `widgets/question_view.dart` |
@@ -169,11 +308,11 @@ The hinted paths from TASK B0 were checked: all exist.
 | V21-PracticeResults | `screens/results_screen.dart` |
 | P08-DailyLimit | `screens/practice_launch.dart` (`_showDailyLimitReachedDialog` → sheet) |
 | V13 / V13a / V13c / V13b / PW05 | `screens/premium_screen.dart`, new `widgets/paywall_exit_dialog.dart`, new `screens/premium_on_screen.dart` |
-| V23-Profile | `screens/settings_screen.dart` |
+| V23-Profile | V23-Profile.png, V23-Profile-420.png | match | Stage, ribbon with "since Sep 2026", stat tiles, the thick shelf with three medals newest first and the running month locked (fix round 1). |
 | PF02-Medals / PF03-MedalDetail | `widgets/monthly_medal_collection.dart` |
 | PF04-EditName | `screens/settings_screen.dart` (name sheet) |
 | R06-AvatarChange (+ R06s storyboards) | `screens/avatar_picker_screen.dart` (turntable + wheel) |
-| R07-Language | `screens/language_picker_screen.dart` |
+| R07-Language | R07-Language.png | match | Language cards, the selected one navy with a check; keyboard focus restored, look unchanged (fix round 1). |
 | R08-Data | `screens/data_screen.dart` |
 | R09-Credits | `screens/credits_screen.dart` |
 | R11-Offline | new `widgets/error_state.dart`; used by Home, practice launch, getting ready |
@@ -597,7 +736,9 @@ Decisions:
   per-weak-spot count of correct practice sessions and SPEC §1 defines no
   mastery rule; adding one would be a new business rule and new stored
   data. Left out; the layouts keep their spacing without them. Easy to add
-  with a stored count later.
+  with a stored count later. **Deferred (owner, fix round 1):** mastery
+  strips are not part of this run; they will be designed later as a
+  separate feature.
 - **D6-2 "new" chip** = a weak spot saved once (`frequency == 1`); the
   boards' "practiced today" chip is left out (no per-weak-spot practice
   record).
@@ -679,7 +820,8 @@ Verified:
 - Simulator (gallery): R01, R02, V17, V18, V19, V20, V21, P08.
 
 Decisions:
-- **D7-1 No mastery strips** on R01 / V21 (D6-1).
+- **D7-1 No mastery strips** on R01 / V21 (D6-1). **Deferred (owner, fix
+  round 1)**, as D6-1.
 - **D7-2 P08 keeps the existing sentence** ("Come back tomorrow for more —
   your progress is saved"): the board's "Fresh sessions open tomorrow,
   right after your Daily Test" would tie sessions to the Daily Test, which
@@ -806,15 +948,17 @@ Verified:
 
 Decisions:
 - **D9-1 No "since <month year>"** on the ribbon: the app stores no date the
-  profile was made. Shown: "Climbing with <Hero>".
+  profile was made. Shown: "Climbing with <Hero>". **Closed in fix round
+  1:** "· since <month year>" from the first Daily Test on record.
 - **D9-2 The medal shelf keeps the existing strip** (horizontal, every
   medal) rather than the thick 3-medal shelf image; "See all" adds the
-  board's layer on top of it.
+  board's layer on top of it. **Closed in fix round 1:** the board's shelf
+  is built.
 - **D9-3 PF03 is the existing medal detail** (a dialog), opened from the
   layer; the Hero flight from shelf to sheet is not built.
 - **D9-4 The language options lost keyboard focus traversal** (they are
   pressable cards, not InkWells); VoiceOver reads them as selected
-  buttons as before.
+  buttons as before. **Closed in fix round 1:** keyboard focus is back.
 
 Not done / gaps:
 - The ribbon's medal-settle and the numbers' count-up in PF03 are not
@@ -879,7 +1023,7 @@ What was done:
 
 ### Board comparison
 
-All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match (some name small motion gaps in their note), 3 are gaps (V09, R02, V23); every gap is also listed under its batch.
+All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). After fix round 1: **65 match** (some name small motion gaps in their note). Fix round 1 recaptured V05, V07, V09, Q04, V15, R04, R12, R02, V13, V13a, V13c, V23, PF02, PF03 and R07 and closed B11's three gaps (V09, R02, V23).
 
 | Board | Capture(s) in `build/ui-polish-captures/` | Match / gap | Note |
 |---|---|---|---|
@@ -902,8 +1046,8 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match 
 | R06s-D-Wheel | R06s-D-Wheel-1-ready.png, R06s-D-Wheel-2-spinning.png, R06s-D-Wheel-3-landed.png | match | Storyboard frames of the wheel: ready, spinning, landed. |
 | V07-Question | V07-Question.png | match | Check footer, points chip; gap: the hint handle's nudge is not added (B4). |
 | V08-Correct | V08-Correct.png | match | Green sheet, +2; gap: the star flies on a fixed path (B4). |
-| V09-Wrong | V09-Wrong.png | gap | Orange sheet, the key, +1; the book icon does not fly to Review (B4). |
-| Q04-MultiBlank | Q04-MultiBlank-typed.png, Q04-MultiBlank.png | match | Per-blank colours after Check; gap: the tapped blank's breathe (B4). |
+| V09-Wrong | V09-Wrong-book.png, V09-Wrong.png | match | Orange sheet, the key, +1; the book flies to the Review tab's place (fix round 1; the first capture is mid-flight). |
+| Q04-MultiBlank | Q04-MultiBlank-typed.png, Q04-MultiBlank.png | match | Per-blank colours after Check; the focused blank breathes (fix round 1); gap: the "—" fill keeps the 1.4.0 look. |
 | Q05-ErrorCorrection | Q05-ErrorCorrection.png | match | Last question reads Finish. |
 | V10-Results | V10-Results.png | match | Stepwise ring, strip, tiles, answer rows. |
 | V11-Badge | V11-Badge.png | match | Navy page, rays, the Welcome badge over the companion. |
@@ -911,7 +1055,7 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match 
 | R10-Leave | R10-Leave.png | match | Companion dialog over the question, Keep going / Leave. |
 | R11-Offline | R11-Offline.png | match | Sad companion, calm line, Try again with dots. |
 | SY02-Snackbar | SY02-Snackbar.png | match | One dark capsule with icon and Undo. |
-| V15-HomeNextDay | V15-HomeNextDay.png | match | Orange card, bubble "Step N is one test away!"; gap: no separate gold ring pulse on the step (B5). |
+| V15-HomeNextDay | V15-HomeNextDay.png, V15-HomeNextDay-360.png | match | Orange card, bubble "Step N is one test away!"; the next step's gold ring pulses (fix round 1, scrolled capture). |
 | V14-Home | V14-Home-520.png, V14-Home.png | match | Navy card, capsule +N, ticket, topic showcase (scrolled capture too). |
 | H03-HomeLoading | H03-HomeLoading.png | match | Card loading state and the mountain skeleton; the inner skeleton is faint. |
 | H04-HomePremium | H04-HomePremium-520.png, H04-HomePremium.png | match | Practice card with sessions n/5, unlocked tiles. |
@@ -926,7 +1070,7 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match 
 | RV05-ReviewEmpty | RV05-ReviewEmpty.png | match | Waiting ticket, cheering companion, navy button. |
 | RV06-ReviewSort | RV06-ReviewSort.png | match | Sheet with two options, the selected one navy. |
 | R03-WeakSpot | R03-WeakSpot.png | match | Rule bubble, the mistake inline, today's ticket; no mastery strip (D6-1). |
-| R12-ReviewPremium | R12-ReviewPremium.png | match | Premium chip, Suggested focus, cards; no mastery strips (D6-1). |
+| R12-ReviewPremium | R12-ReviewPremium.png | match | Premium chip, Suggested focus with its glint (fix round 1), cards; mastery strips deferred (D6-1). |
 | R01-Topics | R01-Topics.png | match | Picked for you, coloured topic cards; no mastery strips (D7-1). |
 | R02-Length | R02-Length.png | gap | Orange knob and Start; the ring keeps the existing navy dial, the number does not roll. |
 | V17-Consent | V17-Consent.png | match | Same text in icon cards, navy Agree, Not now. |
@@ -935,14 +1079,14 @@ All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match 
 | V20-Reviewing | V20-Reviewing.png | match | Inspecting companion, lens over the answers, checklist, bar. |
 | V21-PracticeResults | V21-PracticeResults.png | match | N/M correct, feedback cards, Premium card; no mastery step (D7-1). |
 | P08-DailyLimit | P08-DailyLimit.png | match | Sleeping companion, full counter; the existing accurate sentence (D7-2). |
-| V13-Paywall | V13-Paywall.png | match | No price boxes on first view; pinned CTA, price line and links. |
-| V13a-PaywallPlans | V13a-PaywallPlans.png | match | Plans after See plans, yearly preselected. |
-| V13c-PaywallCompare | V13c-PaywallCompare.png | match | Table, trial timeline, plan label above the CTA. |
+| V13-Paywall | V13-Paywall.png | match | No price boxes on first view; pinned CTA, price line and links; See plans nudges (fix round 1). |
+| V13a-PaywallPlans | V13a-PaywallPlans.png | match | Plans after See plans, yearly preselected; they rise in 60 ms apart (fix round 1). |
+| V13c-PaywallCompare | V13c-PaywallCompare.png | match | Table (rows fade in 40 ms apart, fix round 1), trial timeline, plan label above the CTA. |
 | V13b-ExitReminder | V13b-ExitReminder.png | match | Sad companion, no discount, trial / Continue with free. |
 | PW05-PremiumOn | PW05-PremiumOn.png | match | Rays, cheering companion, three unlocked things, trial end date. |
 | V23-Profile | V23-Profile-420.png, V23-Profile.png | gap | Stage, ribbon, stat tiles; the shelf keeps the existing strip, no "since" line (D9-1, D9-2). |
-| PF02-Medals | PF02-Medals.png | match | Every medal over the blurred profile, by year. |
-| PF03-MedalDetail | PF03-MedalDetail.png | match | The existing medal detail from the layer (D9-3). |
+| PF02-Medals | PF02-Medals.png | match | Every medal over the blurred profile, newest first by year, "N earned"; shelf medals fly in (fix round 1). |
+| PF03-MedalDetail | PF03-MedalDetail.png | match | The existing medal detail from the layer (D9-3); the medal flies in, steps and points count up (fix round 1). |
 | PF04-EditName | PF04-EditName.png | match | Sheet with the companion's question, Save. |
 | R07-Language | R07-Language.png | match | Language cards, the selected one navy with a check. |
 | R08-Data | R08-Data.png | match | Three cards; the reset asks with the companion dialog. |
