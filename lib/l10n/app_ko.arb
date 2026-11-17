@@ -698,5 +698,15 @@
   "widgetTipLabel": "나를 위한 팁 · {topic}",
   "widgetTipLabelGeneral": "오늘의 팁 · {topic}",
   "widgetTipFooter": "약점에서 골랐어요 · 매일 새 팁",
-  "widgetTipFooterGeneral": "매일 새로운 팁"
+  "widgetTipFooterGeneral": "매일 새로운 팁",
+  "reminderDailyTitleAt": "{buddy}가 {place}에서 기다리고 있어요",
+  "reminderDailyTitleOn": "{buddy}가 {mountain}에서 기다리고 있어요",
+  "reminderDailyBody": "오늘의 {count}문제는 약 {minutes}분이면 끝나요. {step}단계까지 테스트 하나 남았어요.",
+  "reminderMedalTitle": "{tier}까지 거의 다 왔어요",
+  "reminderMedalBody": "{points, plural, other{이번 달 {points}점만 더 모으면 돼요.}}",
+  "reminderTicketTitle": "무료 티켓이 돌아왔어요",
+  "reminderTicketBody": "‘{topic}’을 AI 피드백과 함께 연습해요.",
+  "reminderTicketBodyGeneral": "약점을 AI 피드백과 함께 연습해요.",
+  "reminderMountainTitle": "새로운 산: {mountain}",
+  "reminderMountainBody": "{buddy}가 출발점에 있어요. 1단계까지 테스트 하나 남았어요."
 }

@@ -18,6 +18,7 @@ import 'services/claude_service.dart';
 import 'services/device_sync.dart';
 import 'services/medal_finalization.dart';
 import 'services/native_bridge.dart';
+import 'services/reminder_sync.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'services/widget_sync.dart';
@@ -99,6 +100,13 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       locale: _interfaceLocale,
       clock: widget.clock,
     ).run,
+    ReminderSync(
+      storage: _storageService,
+      bridge: _bridge,
+      locale: _interfaceLocale,
+      hasFullAccess: () => _subscriptionService.hasFullAccess,
+      clock: widget.clock,
+    ).run,
   ]);
 
   /// The locale the interface shows now (the widgets and reminders use it).
@@ -154,6 +162,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     unawaited(_linkRouter.start());
     DeviceSync.current = _deviceSync;
     StorageService.onChanged = DeviceSync.requestUpdate;
+    // Premium starting or ending changes "Free ticket is back".
+    _subscriptionService.addAccessListener(_onAccessChanged);
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
     if (ClimbDebugControls.available) {
       ClimbDebugControls.instance.addListener(_onDebugPlay);
@@ -168,12 +178,15 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     WidgetsBinding.instance.removeObserver(this);
     _linkRouter.dispose();
     _dailyTestLinks.dispose();
+    _subscriptionService.removeAccessListener(_onAccessChanged);
     if (identical(DeviceSync.current, _deviceSync)) {
       DeviceSync.current = null;
       StorageService.onChanged = null;
     }
     super.dispose();
   }
+
+  void _onAccessChanged(bool _) => _deviceSync.request();
 
   /// Attaches the link router once the tab shell exists and detaches it
   /// while onboarding runs (DW0-3). Called from [build]; acts after the
@@ -385,6 +398,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _firstRunZoom = false;
       _firstRunZoomPlayed = false;
     });
+    // No profile any more: the reminders are removed.
+    _deviceSync.request();
   }
 
   void _setThemeMode(AppThemeMode mode) {

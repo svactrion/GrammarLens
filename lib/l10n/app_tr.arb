@@ -698,5 +698,15 @@
   "widgetTipLabel": "SANA ÖZEL İPUCU · {topic}",
   "widgetTipLabelGeneral": "GÜNÜN İPUCU · {topic}",
   "widgetTipFooter": "Zayıf noktalarından · her gün yeni ipucu",
-  "widgetTipFooterGeneral": "Her gün yeni bir ipucu"
+  "widgetTipFooterGeneral": "Her gün yeni bir ipucu",
+  "reminderDailyTitleAt": "{buddy}, {place} noktasında seni bekliyor",
+  "reminderDailyTitleOn": "{buddy}, {mountain} yolunda seni bekliyor",
+  "reminderDailyBody": "Bugünkü {count} soru yaklaşık {minutes} dakika sürer. {step}. adıma bir test kaldı.",
+  "reminderMedalTitle": "{tier} madalyaya çok az kaldı",
+  "reminderMedalBody": "{points, plural, other{Bu ay sadece {points} puan kaldı.}}",
+  "reminderTicketTitle": "Ücretsiz biletin geri geldi",
+  "reminderTicketBody": "“{topic}” konusunu yapay zekâ geri bildirimiyle çalış.",
+  "reminderTicketBodyGeneral": "Bir zayıf noktanı yapay zekâ geri bildirimiyle çalış.",
+  "reminderMountainTitle": "Yeni bir dağ: {mountain}",
+  "reminderMountainBody": "{buddy} başlangıçta. 1. adıma bir test kaldı."
 }

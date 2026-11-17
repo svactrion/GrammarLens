@@ -698,5 +698,15 @@
   "widgetTipLabel": "CONSEJO PARA TI · {topic}",
   "widgetTipLabelGeneral": "CONSEJO DEL DÍA · {topic}",
   "widgetTipFooter": "De tus puntos débiles · un consejo nuevo cada día",
-  "widgetTipFooterGeneral": "Un consejo nuevo cada día"
+  "widgetTipFooterGeneral": "Un consejo nuevo cada día",
+  "reminderDailyTitleAt": "{buddy} te espera en {place}",
+  "reminderDailyTitleOn": "{buddy} te espera en {mountain}",
+  "reminderDailyBody": "Las {count} preguntas de hoy llevan unos {minutes} minutos. El paso {step} está a un test.",
+  "reminderMedalTitle": "Muy cerca del {tier}",
+  "reminderMedalBody": "{points, plural, =1{Solo falta 1 punto este mes.} other{Solo faltan {points} puntos este mes.}}",
+  "reminderTicketTitle": "Tu ticket gratis ha vuelto",
+  "reminderTicketBody": "Practica «{topic}» con comentarios de IA.",
+  "reminderTicketBodyGeneral": "Practica un punto débil con comentarios de IA.",
+  "reminderMountainTitle": "Una montaña nueva: {mountain}",
+  "reminderMountainBody": "{buddy} está en la salida. El paso 1 está a un test."
 }

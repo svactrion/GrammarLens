@@ -698,5 +698,15 @@
   "widgetTipLabel": "TIPP FÜR DICH · {topic}",
   "widgetTipLabelGeneral": "TIPP DES TAGES · {topic}",
   "widgetTipFooter": "Aus deinen Schwachstellen · täglich ein neuer Tipp",
-  "widgetTipFooterGeneral": "Jeden Tag ein neuer Tipp"
+  "widgetTipFooterGeneral": "Jeden Tag ein neuer Tipp",
+  "reminderDailyTitleAt": "{buddy} wartet bei {place}",
+  "reminderDailyTitleOn": "{buddy} wartet am {mountain}",
+  "reminderDailyBody": "Die {count} Fragen von heute dauern etwa {minutes} Minuten. Schritt {step} ist nur einen Test entfernt.",
+  "reminderMedalTitle": "So nah an {tier}",
+  "reminderMedalBody": "{points, plural, =1{Nur noch 1 Punkt in diesem Monat.} other{Nur noch {points} Punkte in diesem Monat.}}",
+  "reminderTicketTitle": "Dein Gratis-Ticket ist zurück",
+  "reminderTicketBody": "Übe „{topic}“ mit KI-Feedback.",
+  "reminderTicketBodyGeneral": "Übe eine Schwachstelle mit KI-Feedback.",
+  "reminderMountainTitle": "Ein neuer Berg: {mountain}",
+  "reminderMountainBody": "{buddy} steht am Start. Schritt 1 ist nur einen Test entfernt."
 }

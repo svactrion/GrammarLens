@@ -4442,5 +4442,109 @@
   "widgetTipFooterGeneral": "A new tip every day",
   "@widgetTipFooterGeneral": {
     "description": "Home-screen tip widget (W01): the line at the bottom of a general tip (no weak spot yet)."
+  },
+  "reminderDailyTitleAt": "{buddy} is waiting at {place}",
+  "@reminderDailyTitleAt": {
+    "description": "Daily Test reminder notification (N02): the title. {buddy} is the companion's name, {place} the last save point the user reached on this month's mountain (e.g. First Camp).",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "place": {
+        "type": "String",
+        "example": "First Camp"
+      }
+    }
+  },
+  "reminderDailyTitleOn": "{buddy} is waiting on {mountain}",
+  "@reminderDailyTitleOn": {
+    "description": "Daily Test reminder notification (N02): the title before any save point is reached. {buddy} is the companion's name, {mountain} this month's mountain.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "reminderDailyBody": "Today’s {count} questions take about {minutes} minutes. Step {step} is one test away.",
+  "@reminderDailyBody": {
+    "description": "Daily Test reminder notification (N02): the text. {step} is the step today's test reaches.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      },
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "reminderMedalTitle": "So close to {tier}",
+  "@reminderMedalTitle": {
+    "description": "Close-to-a-medal reminder notification (N02): the title. {tier} is the medal's name (Bronze, Silver, Gold).",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "reminderMedalBody": "{points, plural, =1{Just 1 point to go this month.} other{Just {points} points to go this month.}}",
+  "@reminderMedalBody": {
+    "description": "Close-to-a-medal reminder notification (N02): the text. {points} is 1 to 5.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "reminderTicketTitle": "Your free ticket is back",
+  "@reminderTicketTitle": {
+    "description": "Free-ticket reminder notification (N02): the title."
+  },
+  "reminderTicketBody": "Practise “{topic}” with AI feedback.",
+  "@reminderTicketBody": {
+    "description": "Free-ticket reminder notification (N02): the text. {topic} is the user's most frequent weak spot (English, as Review shows it).",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "The With Superlatives"
+      }
+    }
+  },
+  "reminderTicketBodyGeneral": "Practise a weak spot with AI feedback.",
+  "@reminderTicketBodyGeneral": {
+    "description": "Free-ticket reminder notification (N02): the text when the user has no weak spot yet."
+  },
+  "reminderMountainTitle": "A new mountain: {mountain}",
+  "@reminderMountainTitle": {
+    "description": "New-mountain reminder notification (first day of a month): the title. {mountain} is the new month's mountain.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Glacier Peak"
+      }
+    }
+  },
+  "reminderMountainBody": "{buddy} is at the start. Step 1 is one test away.",
+  "@reminderMountainBody": {
+    "description": "New-mountain reminder notification: the text. {buddy} is the companion's name.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
   }
 }

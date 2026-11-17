@@ -54,4 +54,51 @@ class FakeNativeBridge implements NativeBridge {
 
   @override
   Stream<String> get links => _links.stream;
+
+  NotificationPermission permission = NotificationPermission.unknown;
+
+  /// What the iOS dialog answers.
+  bool grantOnRequest = true;
+  int permissionRequests = 0;
+  List<ReminderRequest> scheduled = [];
+  int cancels = 0;
+  int settingsOpened = 0;
+
+  @override
+  Future<NotificationPermission> notificationPermission() async => permission;
+
+  @override
+  Future<bool> requestNotificationPermission() async {
+    permissionRequests++;
+    if (permission == NotificationPermission.notDetermined ||
+        permission == NotificationPermission.unknown) {
+      permission = grantOnRequest
+          ? NotificationPermission.authorized
+          : NotificationPermission.denied;
+    }
+    return permission.allowsReminders;
+  }
+
+  @override
+  Future<int> scheduleReminders(List<ReminderRequest> reminders) async {
+    scheduled = [...reminders];
+    return reminders.length;
+  }
+
+  @override
+  Future<bool> cancelReminders() async {
+    cancels++;
+    scheduled = [];
+    return true;
+  }
+
+  @override
+  Future<List<String>> pendingReminders() async =>
+      [for (final r in scheduled) r.id];
+
+  @override
+  Future<bool> openNotificationSettings() async {
+    settingsOpened++;
+    return true;
+  }
 }

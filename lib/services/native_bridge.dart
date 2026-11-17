@@ -40,6 +40,26 @@ abstract class NativeBridge {
   /// Links that arrive while the app runs.
   Stream<String> get links;
 
+  /// iOS notification permission (`UNAuthorizationStatus`).
+  Future<NotificationPermission> notificationPermission();
+
+  /// Shows the iOS permission dialog (once per install; afterwards iOS
+  /// answers at once). True when granted.
+  Future<bool> requestNotificationPermission();
+
+  /// Replaces every pending reminder with [reminders]; returns how many
+  /// were scheduled.
+  Future<int> scheduleReminders(List<ReminderRequest> reminders);
+
+  /// Removes every pending and delivered reminder.
+  Future<bool> cancelReminders();
+
+  /// The ids of the pending reminders.
+  Future<List<String>> pendingReminders();
+
+  /// Opens this app's page in iOS Settings (notifications on iOS 16+).
+  Future<bool> openNotificationSettings();
+
   /// The names the native side accepts: lower-case letters, digits, `_`,
   /// `-` and `.`, at most 96 characters, not starting with a dot.
   static bool isValidFileName(String name) =>
@@ -47,6 +67,60 @@ abstract class NativeBridge {
       name.length <= 96 &&
       !name.startsWith('.') &&
       RegExp(r'^[a-z0-9_.\-]+$').hasMatch(name);
+}
+
+enum NotificationPermission {
+  notDetermined,
+  denied,
+  authorized,
+  provisional,
+  ephemeral,
+
+  /// No answer (no native side).
+  unknown;
+
+  bool get allowsReminders =>
+      this == authorized || this == provisional || this == ephemeral;
+
+  static NotificationPermission parse(String? value) =>
+      values.firstWhere((p) => p.name == value,
+          orElse: () => NotificationPermission.unknown);
+}
+
+/// One reminder for iOS: fires once at the local date and time [at].
+class ReminderRequest {
+  const ReminderRequest({
+    required this.id,
+    required this.at,
+    required this.title,
+    required this.body,
+    required this.link,
+    this.image,
+  });
+
+  final String id;
+  final DateTime at;
+  final String title;
+  final String body;
+
+  /// Opened on a tap (`grammarlens://…`).
+  final String link;
+
+  /// An App Group file shown as the notification's picture (the companion).
+  final String? image;
+
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'year': at.year,
+        'month': at.month,
+        'day': at.day,
+        'hour': at.hour,
+        'minute': at.minute,
+        'title': title,
+        'body': body,
+        'link': link,
+        if (image != null) 'image': image,
+      };
 }
 
 class MethodChannelNativeBridge implements NativeBridge {
@@ -119,4 +193,34 @@ class MethodChannelNativeBridge implements NativeBridge {
 
   @override
   Stream<String> get links => _links.stream;
+
+  @override
+  Future<NotificationPermission> notificationPermission() async =>
+      NotificationPermission.parse(
+          await _invoke<String>('notifications.status'));
+
+  @override
+  Future<bool> requestNotificationPermission() async =>
+      await _invoke<bool>('notifications.request') ?? false;
+
+  @override
+  Future<int> scheduleReminders(List<ReminderRequest> reminders) async =>
+      await _invoke<int>('notifications.schedule', {
+        'items': [for (final r in reminders) r.toMap()],
+      }) ??
+      0;
+
+  @override
+  Future<bool> cancelReminders() async =>
+      await _invoke<bool>('notifications.cancelAll') ?? false;
+
+  @override
+  Future<List<String>> pendingReminders() async {
+    final ids = await _invoke<List<Object?>>('notifications.pending');
+    return [...?ids?.whereType<String>()];
+  }
+
+  @override
+  Future<bool> openNotificationSettings() async =>
+      await _invoke<bool>('settings.openNotifications') ?? false;
 }

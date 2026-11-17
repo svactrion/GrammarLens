@@ -698,5 +698,15 @@
   "widgetTipLabel": "あなたへのヒント · {topic}",
   "widgetTipLabelGeneral": "今日のヒント · {topic}",
   "widgetTipFooter": "あなたの苦手から · 毎日新しいヒント",
-  "widgetTipFooterGeneral": "毎日新しいヒント"
+  "widgetTipFooterGeneral": "毎日新しいヒント",
+  "reminderDailyTitleAt": "{buddy}が{place}で待っています",
+  "reminderDailyTitleOn": "{buddy}が{mountain}で待っています",
+  "reminderDailyBody": "今日の{count}問は約{minutes}分。ステップ{step}まであと1テスト。",
+  "reminderMedalTitle": "{tier}まであと少し",
+  "reminderMedalBody": "{points, plural, other{今月はあと{points}ポイント。}}",
+  "reminderTicketTitle": "無料チケットが戻ってきました",
+  "reminderTicketBody": "「{topic}」をAIフィードバック付きで練習しよう。",
+  "reminderTicketBodyGeneral": "苦手をAIフィードバック付きで練習しよう。",
+  "reminderMountainTitle": "新しい山:{mountain}",
+  "reminderMountainBody": "{buddy}はスタート地点に。ステップ1まであと1テスト。"
 }
