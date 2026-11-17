@@ -3370,5 +3370,183 @@
         "example": "30"
       }
     }
+  },
+  "checkCorrectSemantics": "Correct",
+  "@checkCorrectSemantics": {
+    "description": "Daily Test (V08): VoiceOver label of the check mark on a checked answer."
+  },
+  "checkWrongSemantics": "Not quite",
+  "@checkWrongSemantics": {
+    "description": "Daily Test (V09): VoiceOver label of the cross on a checked answer."
+  },
+  "questionProgressSemantics": "Question {current} of {total}",
+  "@questionProgressSemantics": {
+    "description": "Daily Test (V07): VoiceOver label of the progress bar at the top.",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "pointsChipSemantics": "{points} points",
+  "@pointsChipSemantics": {
+    "description": "The points chip with the star (Daily Test V07, sheets V08/V09): VoiceOver label.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "checkLooksGood": "Looks good! Tap Check.",
+  "@checkLooksGood": {
+    "description": "Daily Test (V07): the buddy's line once an answer is typed."
+  },
+  "checkButton": "Check",
+  "@checkButton": {
+    "description": "Daily Test (V07): the button that grades the answer right away."
+  },
+  "checkNice": "Nice!",
+  "@checkNice": {
+    "description": "Daily Test (V08): the sheet's title after a correct answer when the name is unknown."
+  },
+  "checkNiceName": "Nice, {name}!",
+  "@checkNiceName": {
+    "description": "Daily Test (V08): the sheet's title after a correct answer. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "checkAlmost": "Almost!",
+  "@checkAlmost": {
+    "description": "Daily Test (V09): the sheet's title after a wrong answer."
+  },
+  "checkCorrectAnswer": "Correct answer:",
+  "@checkCorrectAnswer": {
+    "description": "Daily Test (V09): before the correct answer in the sheet."
+  },
+  "checkGoesToWeakSpots": "This goes to your weak spots",
+  "@checkGoesToWeakSpots": {
+    "description": "Daily Test (V09): a wrong answer becomes a weak spot when the test is finished."
+  },
+  "checkSeeResults": "See results",
+  "@checkSeeResults": {
+    "description": "Daily Test: the sheet's button on the last question, to the results."
+  },
+  "checkGotIt": "Got it",
+  "@checkGotIt": {
+    "description": "Daily Test (V09): the sheet's button after a wrong answer."
+  },
+  "checkOops": "Oops! So close.",
+  "@checkOops": {
+    "description": "Daily Test (V09): the buddy's line after a wrong answer."
+  },
+  "dailyResultDone": "Today’s test complete!",
+  "@dailyResultDone": {
+    "description": "Daily Test results (V10): the title before the month's day count is known."
+  },
+  "dailyResultDayComplete": "Day {day} complete!",
+  "@dailyResultDayComplete": {
+    "description": "Daily Test results (V10): the title; {day} is this month's step count after today's test.",
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "dailyResultAnswers": "Answers",
+  "@dailyResultAnswers": {
+    "description": "Daily Test results (V10): the label before the answers strip."
+  },
+  "dailyResultPointsLabel": "points",
+  "@dailyResultPointsLabel": {
+    "description": "Daily Test results (V10): under '+9' in the first tile."
+  },
+  "dailyResultStepLabel": "step ready",
+  "@dailyResultStepLabel": {
+    "description": "Daily Test results (V10): under the number of steps earned (0 or 1) in the second tile."
+  },
+  "dailyResultWeakLabel": "{count, plural, =1{weak spot} other{weak spots}}",
+  "@dailyResultWeakLabel": {
+    "description": "Daily Test results (V10): under the number of wrong answers in the third tile.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "dailyResultYourAnswers": "Your answers",
+  "@dailyResultYourAnswers": {
+    "description": "Daily Test results (V10): the answers card's title."
+  },
+  "dailyResultFirstStep": "Climb my first step",
+  "@dailyResultFirstStep": {
+    "description": "Daily Test results (V10), the first day: the button to the first step on the mountain."
+  },
+  "medalEyebrow": "{tier} medal",
+  "@medalEyebrow": {
+    "description": "Monthly medal (R05): the small line above the title (uppercased by the app). {tier} is Bronze / Silver / Gold.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "medalPointsTitle": "{points} points in {month}!",
+  "@medalPointsTitle": {
+    "description": "Monthly medal (R05): the title. {month} is this month's name.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "75"
+      },
+      "month": {
+        "type": "String",
+        "example": "November"
+      }
+    }
+  },
+  "medalNextLine": "{tier} is next at {points}. Keep climbing {mountain}.",
+  "@medalNextLine": {
+    "description": "Monthly medal (R05): what comes next. {tier} is the next tier, {points} its threshold, {mountain} this month's mountain.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      },
+      "points": {
+        "type": "int",
+        "example": "150"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "badgeEarnedEyebrow": "BADGE EARNED",
+  "@badgeEarnedEyebrow": {
+    "description": "Welcome badge (V11): the small line above the title, uppercase."
+  },
+  "badgeWelcomeName": "Welcome to the climb, {name}!",
+  "@badgeWelcomeName": {
+    "description": "Welcome badge (V11): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
   }
 }
