@@ -175,7 +175,7 @@ class AppColors extends ThemeExtension<AppColors> {
     disabledFill: Color(0xFFE6DED1),
     disabledLabel: Color(0xFF857D72),
     disabledLip: Color(0xFFD2C7B6),
-    scrim: Color(0x8C1B1B1F),
+    scrim: Color(0x731B1B1F),
     toast: Color(0xFF26252B),
     onToast: Color(0xFFF2EEE8),
     nightTop: Color(0xFF1B2347),
