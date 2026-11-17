@@ -206,8 +206,7 @@ Future<void> launchPracticeSet({
 /// P08: the practice limit reached, as the close of a good day: the
 /// companion asleep, the session counter full (one segment at a time), the
 /// existing sentence on when it opens again, and one button.
-Future<void> showDailyLimitSheet(BuildContext context,
-    {Avatar? hero}) {
+Future<void> showDailyLimitSheet(BuildContext context, {Avatar? hero}) {
   HapticMap.light();
   return showAppSheet<void>(
     context: context,
