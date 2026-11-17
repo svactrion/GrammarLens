@@ -115,6 +115,34 @@ void main() {
     });
 
     testWidgets(
+        'R04: a medal line grows 1.5× and glows once the bar passes it; Gold, '
+        'not reached, stays faded', (tester) async {
+      await pumpHome(tester, CardStorage());
+      BoxDecoration line(MedalTier tier) => tester
+          .widget<DecoratedBox>(find.descendant(
+              of: find.byKey(MonthCardSheet.thresholdLineKey(tier)),
+              matching: find.byType(DecoratedBox)))
+          .decoration as BoxDecoration;
+      double height(MedalTier tier) => tester
+          .widget<Transform>(find.descendant(
+              of: find.byKey(MonthCardSheet.thresholdLineKey(tier)),
+              matching: find.byType(Transform)))
+          .transform
+          .entry(1, 1);
+      for (final tier in MedalTier.values) {
+        expect(line(tier).boxShadow, isNull, reason: '$tier before the bar');
+      }
+      await _runBar(tester);
+      await tester.pumpAndSettle();
+      for (final tier in [MedalTier.bronze, MedalTier.silver]) {
+        expect(line(tier).boxShadow, isNotEmpty, reason: '$tier passed');
+        expect(height(tier), closeTo(1.5, .001));
+      }
+      expect(line(MedalTier.gold).boxShadow, isNull);
+      expect(height(MedalTier.gold), 1);
+    });
+
+    testWidgets(
         'the bar fills to Bronze, Silver and the score: a light tap at each '
         'stop and success on reaching the month\'s medal', (tester) async {
       await pumpHome(tester, CardStorage());

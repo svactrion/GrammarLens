@@ -65,6 +65,10 @@ class MonthCardSheet extends StatefulWidget {
   static const nearMissKey = ValueKey('month_card_near_miss');
   static const medalKey = ValueKey('month_card_medal');
   static const pointsBarKey = ValueKey('month_card_points_bar');
+
+  /// A medal line on the points bar (it glows once passed).
+  static ValueKey<String> thresholdLineKey(MedalTier tier) =>
+      ValueKey('month_card_line_${tier.name}');
   static const seeNewMountainKey = ValueKey('month_card_see_new_mountain');
   static const newMountainKey = ValueKey('month_card_new_mountain');
   static const startClimbingKey = ValueKey('month_card_start_climbing');
@@ -506,6 +510,47 @@ class _StepDots extends CustomPainter {
   bool shouldRepaint(_StepDots old) => old.lit != lit || old.map.box != map.box;
 }
 
+/// A medal line on R04's bar. Once the fill passes it, it grows to 1.5×
+/// with a pop, turns gold and glows (a gold halo that flares and settles),
+/// in [AppMotion.slow]; under Reduce Motion it just is.
+class _ThresholdLine extends StatelessWidget {
+  final bool passed;
+  const _ThresholdLine({super.key, required this.passed});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: passed ? 1 : 0),
+      duration: AppMotion.orInstant(context, AppMotion.slow),
+      curve: AppMotion.pop,
+      builder: (context, t, _) {
+        final glow = t.clamp(0.0, 1.5);
+        return Transform.scale(
+          scaleY: 1 + .5 * t,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Color.lerp(Colors.white.withValues(alpha: .45), c.gold,
+                  t.clamp(0.0, 1.0)),
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: glow == 0
+                  ? null
+                  : [
+                      BoxShadow(
+                        color:
+                            c.gold.withValues(alpha: (.75 * glow).clamp(0, 1)),
+                        blurRadius: 8 * glow,
+                        spreadRadius: glow,
+                      ),
+                    ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// R04's points bar: the medal lines of [MonthlyMedalRules] with their
 /// labels; the fill at [value]; a line glows (1.5×) once passed; the bar
 /// jiggles (±3 px, ±1.2°) by [jiggle] at a stop.
@@ -582,20 +627,10 @@ class _PointsBar extends StatelessWidget {
                     top: 17,
                     width: 3,
                     height: 22,
-                    child: Transform.scale(
-                      scaleY: value >=
-                              MonthlyMedalRules.threshold(year, month, tier)
-                          ? 1.5
-                          : 1,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: value >=
-                                  MonthlyMedalRules.threshold(year, month, tier)
-                              ? c.gold
-                              : Colors.white.withValues(alpha: .45),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+                    child: _ThresholdLine(
+                      key: MonthCardSheet.thresholdLineKey(tier),
+                      passed: value >=
+                          MonthlyMedalRules.threshold(year, month, tier),
                     ),
                   ),
                   Positioned(
