@@ -97,6 +97,12 @@ class PremiumScreen extends StatefulWidget {
   static const timelineKey = ValueKey('premium_trial_timeline');
   static const compareKey = ValueKey('premium_compare');
 
+  /// V13a / V13c: a plan's and a comparison row's entrance.
+  static ValueKey<String> planRevealKey(int i) =>
+      ValueKey('premium_plan_reveal_$i');
+  static ValueKey<String> rowRevealKey(int i) =>
+      ValueKey('premium_row_reveal_$i');
+
   /// For tests: lets the next close show V13b (once per session) again.
   @visibleForTesting
   static void resetExitReminder() =>
@@ -475,8 +481,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                                   ?.withWeight(FontWeight.w900)
                                   .copyWith(color: colorScheme.secondary)),
                           const SizedBox(width: 6),
-                          Icon(Icons.arrow_downward_rounded,
-                              size: 18, color: colorScheme.secondary),
+                          _NudgingArrow(color: colorScheme.secondary),
                         ]),
                       ),
                     ),
@@ -505,6 +510,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       )
                     else
                       _PlanCards(
+                        reveal: _scroll,
                         annual: _termsFor(annual, 'Annual'),
                         monthly: _termsFor(monthly, 'Monthly'),
                         savingsLabel:
@@ -525,7 +531,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     KeyedSubtree(
                       key: PremiumScreen.compareKey,
                       child: _ComparisonTable(
-                          theme: theme, colorScheme: colorScheme),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          reveal: _scroll),
                     ),
                     if (_trialDays(selectedTerms?.trial) case final days?) ...[
                       const SizedBox(height: 18),
@@ -1636,7 +1644,13 @@ class _ComparisonTable extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
 
-  const _ComparisonTable({required this.theme, required this.colorScheme});
+  /// V13c: the page's scroll; the rows appear 40 ms apart the first time
+  /// they scroll into view (a fade only: the table's measured geometry
+  /// never moves).
+  final ScrollController? reveal;
+
+  const _ComparisonTable(
+      {required this.theme, required this.colorScheme, this.reveal});
 
   /// The Premium column's width — enough for "PREMIUM" at the *current*
   /// text scale, measured directly via [_measureTextWidth] rather than a
@@ -1792,21 +1806,26 @@ class _ComparisonTable extends StatelessWidget {
                 height: headerHeight,
               ),
               for (var i = 0; i < rows.length; i++)
-                _ComparisonRowLine(
-                  // Identifies each row's own rendered rect for the
-                  // geometry regression tests guarding the vertical-
-                  // overflow class of bug this table used to have — see
-                  // this class's own doc comment.
-                  key: ValueKey('comparisonRow_${rows[i].label}'),
-                  row: rows[i],
-                  theme: theme,
-                  colorScheme: colorScheme,
-                  freeColumnWidth: freeColumnWidth,
-                  premiumWidth: premiumWidth,
-                  height: dataRowHeight,
-                  showDivider: i != rows.length - 1,
-                  dividerColor: rowDividerColor,
-                  isLastRow: i == rows.length - 1,
+                RevealOnScroll(
+                  key: PremiumScreen.rowRevealKey(i),
+                  scroll: reveal,
+                  delay: _rowStagger * i,
+                  child: _ComparisonRowLine(
+                    // Identifies each row's own rendered rect for the
+                    // geometry regression tests guarding the vertical-
+                    // overflow class of bug this table used to have — see
+                    // this class's own doc comment.
+                    key: ValueKey('comparisonRow_${rows[i].label}'),
+                    row: rows[i],
+                    theme: theme,
+                    colorScheme: colorScheme,
+                    freeColumnWidth: freeColumnWidth,
+                    premiumWidth: premiumWidth,
+                    height: dataRowHeight,
+                    showDivider: i != rows.length - 1,
+                    dividerColor: rowDividerColor,
+                    isLastRow: i == rows.length - 1,
+                  ),
                 ),
             ],
           ),
@@ -1815,6 +1834,9 @@ class _ComparisonTable extends StatelessWidget {
     );
   }
 }
+
+/// V13c: the table's rows appear this far apart.
+const _rowStagger = Duration(milliseconds: 40);
 
 /// The label cell's own horizontal padding in [_ComparisonRowLine]; the
 /// table's fit check subtracts it from the label column to get the text width.
@@ -2261,7 +2283,12 @@ class _PlanCards extends StatelessWidget {
   final _PlanPeriod selected;
   final ValueChanged<_PlanPeriod> onChanged;
 
+  /// V13a: the page's scroll; each plan enters from below, 60 ms after the
+  /// one above, the first time it scrolls into view.
+  final ScrollController? reveal;
+
   const _PlanCards({
+    this.reveal,
     required this.annual,
     required this.monthly,
     required this.savingsLabel,
@@ -2275,19 +2302,30 @@ class _PlanCards extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PlanCard(
-          terms: annual,
-          savingsLabel: savingsLabel,
-          referencePrice: referencePrice,
-          selected: selected == _PlanPeriod.annual,
-          onTap: () => onChanged(_PlanPeriod.annual),
+        RevealOnScroll(
+          key: PremiumScreen.planRevealKey(0),
+          scroll: reveal,
+          rise: 24,
+          child: _PlanCard(
+            terms: annual,
+            savingsLabel: savingsLabel,
+            referencePrice: referencePrice,
+            selected: selected == _PlanPeriod.annual,
+            onTap: () => onChanged(_PlanPeriod.annual),
+          ),
         ),
         const SizedBox(height: 10),
-        _PlanCard(
-          terms: monthly,
-          savingsLabel: null,
-          selected: selected == _PlanPeriod.monthly,
-          onTap: () => onChanged(_PlanPeriod.monthly),
+        RevealOnScroll(
+          key: PremiumScreen.planRevealKey(1),
+          scroll: reveal,
+          rise: 24,
+          delay: AppMotion.stagger,
+          child: _PlanCard(
+            terms: monthly,
+            savingsLabel: null,
+            selected: selected == _PlanPeriod.monthly,
+            onTap: () => onChanged(_PlanPeriod.monthly),
+          ),
         ),
       ],
     );
@@ -2702,6 +2740,143 @@ class _TrialTimeline extends StatelessWidget {
               line: false),
         ],
       ),
+    );
+  }
+}
+
+/// V13: "See plans"' arrow nudges down every 1.8 s (an ambient loop).
+class _NudgingArrow extends StatefulWidget {
+  final Color color;
+  const _NudgingArrow({required this.color});
+
+  static const period = Duration(milliseconds: 1800);
+
+  @override
+  State<_NudgingArrow> createState() => _NudgingArrowState();
+}
+
+class _NudgingArrowState extends State<_NudgingArrow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _nudge;
+
+  @override
+  void initState() {
+    super.initState();
+    _nudge = AnimationController(vsync: this, duration: _NudgingArrow.period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context)) {
+      if (!_nudge.isAnimating) _nudge.repeat();
+    } else {
+      _nudge
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nudge.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _nudge,
+        builder: (context, child) => Transform.translate(
+            offset: Offset(0, 6 * AppMotion.nudge(_nudge.value)), child: child),
+        child:
+            Icon(Icons.arrow_downward_rounded, size: 18, color: widget.color),
+      );
+}
+
+/// An entrance played the first time [child] scrolls into view in [scroll]
+/// (or at once if it is already in view): a fade over [AppMotion.slow] after
+/// [delay], rising from [rise] points below. Its semantics stay while it is
+/// hidden. Without a [scroll], or under Reduce Motion, it is just shown.
+class RevealOnScroll extends StatefulWidget {
+  final ScrollController? scroll;
+  final Duration delay;
+  final double rise;
+  final Widget child;
+
+  const RevealOnScroll({
+    super.key,
+    required this.scroll,
+    this.delay = Duration.zero,
+    this.rise = 0,
+    required this.child,
+  });
+
+  @override
+  State<RevealOnScroll> createState() => _RevealOnScrollState();
+}
+
+class _RevealOnScrollState extends State<RevealOnScroll>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _enter;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _enter = AnimationController(
+        vsync: this, duration: AppMotion.slow + widget.delay);
+    if (widget.scroll == null) {
+      _enter.value = 1;
+      _started = true;
+    } else {
+      widget.scroll!.addListener(_check);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.scroll?.removeListener(_check);
+    _enter.dispose();
+    super.dispose();
+  }
+
+  /// In view: its top above the bottom fifth of the screen (the pinned
+  /// footer's band).
+  void _check() {
+    if (_started || !mounted) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) return;
+    final top = box.localToGlobal(Offset.zero).dy;
+    if (top > MediaQuery.sizeOf(context).height * .8) return;
+    _started = true;
+    widget.scroll?.removeListener(_check);
+    if (AppMotion.reduced(context)) {
+      _enter.value = 1;
+    } else {
+      _enter.forward();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _enter.duration!.inMilliseconds;
+    final curve = Interval(widget.delay.inMilliseconds / total, 1,
+        curve: AppMotion.enter);
+    return AnimatedBuilder(
+      animation: _enter,
+      builder: (context, child) {
+        final t = curve.transform(_enter.value);
+        return Opacity(
+          opacity: t,
+          alwaysIncludeSemantics: true,
+          child: widget.rise == 0
+              ? child
+              : Transform.translate(
+                  offset: Offset(0, widget.rise * (1 - t)), child: child),
+        );
+      },
+      child: widget.child,
     );
   }
 }

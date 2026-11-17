@@ -1809,6 +1809,48 @@ void main() {
     expect(tester.getTopLeft(plansTitle).dy, lessThan(200));
   });
 
+  testWidgets(
+      'V13a / V13c: below the first view the plans wait; scrolled in, they '
+      'rise in 60 ms apart and the table rows fade in 40 ms apart; their '
+      'semantics stay while they wait', (tester) async {
+    await pumpPremium(
+        tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+    double opacity(Key key) => tester
+        .widget<Opacity>(find
+            .descendant(of: find.byKey(key), matching: find.byType(Opacity))
+            .first)
+        .opacity;
+    final first = PremiumScreen.planRevealKey(0);
+    final second = PremiumScreen.planRevealKey(1);
+    // Under the first view: not played yet, still read by VoiceOver.
+    if (tester.getTopLeft(find.byKey(first)).dy > 844 * .8) {
+      expect(opacity(first), 0);
+      expect(
+          tester
+              .widget<Opacity>(find
+                  .descendant(
+                      of: find.byKey(first), matching: find.byType(Opacity))
+                  .first)
+              .alwaysIncludeSemantics,
+          isTrue);
+    }
+    await tester.tap(find.byKey(PremiumScreen.seePlansKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 420));
+    await tester.pump(const Duration(milliseconds: 80));
+    // The first plan is ahead of the second.
+    expect(opacity(first), greaterThanOrEqualTo(opacity(second)));
+    await tester.pumpAndSettle();
+    expect(opacity(first), 1);
+    expect(opacity(second), 1);
+    expect(opacity(PremiumScreen.rowRevealKey(0)), 1);
+    // Nothing is left offset once played.
+    final plan = tester.widget<Transform>(find
+        .descendant(of: find.byKey(second), matching: find.byType(Transform))
+        .first);
+    expect(plan.transform.getTranslation().y, 0);
+  });
+
   group(
       'the footer keeps its top border in every state: the legal links now sit '
       'above "Maybe later", so the rule separates them from the body', () {

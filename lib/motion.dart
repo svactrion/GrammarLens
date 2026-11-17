@@ -46,6 +46,18 @@ abstract final class AppMotion {
   /// Stagger between items entering one after another.
   static const Duration stagger = Duration(milliseconds: 60);
 
+  /// The boards' "nudge" (gl-nudge) at [t] of its period, 0 to 1: still
+  /// until 60 %, out to 1 at 75 %, back to 1/3 at 88 %, home at 100 %.
+  /// The hint knob (V07) and "See plans" (V13) scale it to their distance.
+  static double nudge(double t) {
+    double ease(double a, double b, double from, double to) =>
+        from + (to - from) * Curves.easeInOut.transform((t - a) / (b - a));
+    if (t < .6) return 0;
+    if (t < .75) return ease(.6, .75, 0, 1);
+    if (t < .88) return ease(.75, .88, 1, 1 / 3);
+    return ease(.88, 1, 1 / 3, 0);
+  }
+
   /// Whether motion is reduced here (the system's Reduce Motion).
   static bool reduced(BuildContext context) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false;

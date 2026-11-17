@@ -137,14 +137,7 @@ class TopicHintSlider extends StatefulWidget {
   /// keyframes: still until 60 %, out to 12 at 75 %, back to 4 at 88 %, home
   /// at 100 %).
   @visibleForTesting
-  static double nudgeAt(double t) {
-    double ease(double a, double b, double from, double to) =>
-        from + (to - from) * Curves.easeInOut.transform((t - a) / (b - a));
-    if (t < .6) return 0;
-    if (t < .75) return ease(.6, .75, 0, 12);
-    if (t < .88) return ease(.75, .88, 12, 4);
-    return ease(.88, 1, 4, 0);
-  }
+  static double nudgeAt(double t) => 12 * AppMotion.nudge(t);
 
   @override
   State<TopicHintSlider> createState() => _TopicHintSliderState();
