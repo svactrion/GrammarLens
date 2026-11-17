@@ -1321,9 +1321,9 @@
   "@homeGoToReview": {
     "description": "Home: the callout's link. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
-  "reviewSubtitle": "Turn your mistakes into progress.",
+  "reviewSubtitle": "Your mistakes, turned into practice.",
   "@reviewSubtitle": {
-    "description": "Review tab: the line under the title."
+    "description": "Review's line under its title (V16)."
   },
   "reviewSortTooltip": "Sort weak spots",
   "@reviewSortTooltip": {
@@ -1343,21 +1343,21 @@
   "@commonRetry": {
     "description": "Button that retries a failed load."
   },
-  "reviewEmptyTitle": "No weak spots yet.",
+  "reviewEmptyTitle": "No weak spots yet!",
   "@reviewEmptyTitle": {
-    "description": "Review tab with no weak spots."
+    "description": "Review with no weak spot (RV05): the title."
   },
-  "reviewEmptyBody": "Mistakes from your Daily Test and practice will show up here.",
+  "reviewEmptyBody": "Mistakes from your Daily Test land here, ready to practice.",
   "@reviewEmptyBody": {
-    "description": "Review tab with no weak spots. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "Review with no weak spot (RV05): under the title. 'Daily Test' is the feature name."
   },
-  "reviewGoToDailyTest": "Go to Daily Test",
+  "reviewGoToDailyTest": "Take today’s Daily Test",
   "@reviewGoToDailyTest": {
-    "description": "Review tab with no weak spots: the button. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "Review with no weak spot (RV05): the button. 'Daily Test' is the feature name."
   },
-  "reviewSavedWeakSpots": "Saved weak spots",
+  "reviewSavedWeakSpots": "Weak spots",
   "@reviewSavedWeakSpots": {
-    "description": "Review tab: the heading of the weak-spot list."
+    "description": "Review: the list's heading (V16)."
   },
   "reviewDailyEyebrow": "YOUR DAILY PRACTICE",
   "@reviewDailyEyebrow": {
@@ -3954,5 +3954,95 @@
   "monthNewStart": "Start climbing",
   "@monthNewStart": {
     "description": "The new mountain (R04b): the button that closes it."
+  },
+  "reviewTicketPick": "Pick a weak spot below. AI feedback included.",
+  "@reviewTicketPick": {
+    "description": "Review's free ticket (V16): its line."
+  },
+  "reviewTicketWaiting": "Waiting for your first weak spot.",
+  "@reviewTicketWaiting": {
+    "description": "Review's ticket with no weak spot yet (RV05)."
+  },
+  "reviewSpotNew": "new",
+  "@reviewSpotNew": {
+    "description": "Review: the chip on a weak spot saved once (V16)."
+  },
+  "reviewSpotMeta": "{times} · {recency}",
+  "@reviewSpotMeta": {
+    "description": "Review: a weak spot's line, e.g. '1 time · today'.",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "1 time"
+      },
+      "recency": {
+        "type": "String",
+        "example": "today"
+      }
+    }
+  },
+  "reviewPracticeWithTicket": "Practice with my ticket",
+  "@reviewPracticeWithTicket": {
+    "description": "Review: the button on the first weak spot while the free ticket is unused (V16)."
+  },
+  "reviewPremiumMore": "Premium: up to {count} sessions a day",
+  "@reviewPremiumMore": {
+    "description": "Review after the free ticket is used (V22): under 'Want more practice today?'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "reviewSortRecentLine": "Newest mistakes first",
+  "@reviewSortRecentLine": {
+    "description": "The sort sheet (RV06): under 'Recent'."
+  },
+  "reviewSortFrequentLine": "The ones you miss most",
+  "@reviewSortFrequentLine": {
+    "description": "The sort sheet (RV06): under 'Most frequent'."
+  },
+  "weakSpotUseTicket": "Use today’s ticket",
+  "@weakSpotUseTicket": {
+    "description": "The weak spot screen (R03): the free ticket's title."
+  },
+  "weakSpotTicketLine": "Free practice with AI feedback",
+  "@weakSpotTicketLine": {
+    "description": "The weak spot screen (R03): the free ticket's line."
+  },
+  "weakSpotYourMistake": "Your mistake",
+  "@weakSpotYourMistake": {
+    "description": "The weak spot screen (R03): the heading over the latest mistake."
+  },
+  "weakSpotRemember": "Remember: {rule}",
+  "@weakSpotRemember": {
+    "description": "The weak spot screen (R03): the companion's one-line rule.",
+    "placeholders": {
+      "rule": {
+        "type": "String",
+        "example": "Superlatives take the"
+      }
+    }
+  },
+  "mistakeWrongSemantics": "you wrote {text}",
+  "@mistakeWrongSemantics": {
+    "description": "VoiceOver: a struck-through wrong word in an inline mistake (V16, R03).",
+    "placeholders": {
+      "text": {
+        "type": "String",
+        "example": "a"
+      }
+    }
+  },
+  "mistakeRightSemantics": "correct: {text}",
+  "@mistakeRightSemantics": {
+    "description": "VoiceOver: a corrected word in an inline mistake (V16, R03).",
+    "placeholders": {
+      "text": {
+        "type": "String",
+        "example": "the"
+      }
+    }
   }
 }
