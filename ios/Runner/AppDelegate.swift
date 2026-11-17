@@ -12,5 +12,9 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // The app's own bridge (widgets, links, reminders): not a package.
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "GrammarLensBridge") {
+      GrammarLensBridge.register(with: registrar)
+    }
   }
 }
