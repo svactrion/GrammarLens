@@ -171,8 +171,33 @@ final Map<String, WidgetBuilder> galleryBoards = {
       weakSpot: true,
       premium: true,
       sessions: 2),
-  'V24-DayComplete': (_) =>
-      _home(steps: 3, correct: 13, wrong: 2, doneToday: true, freeUsed: 1),
+  // V24 is the Premium users' rest scene since SPEC v10; free users get
+  // V24f (fix round 2).
+  'V24-DayComplete': (_) => _home(
+      steps: 3,
+      correct: 13,
+      wrong: 2,
+      doneToday: true,
+      premium: true,
+      sessions: StorageService.dailySessionLimit),
+  'V24f-RestFree': (_) => _home(
+      steps: 3,
+      correct: 13,
+      wrong: 2,
+      doneToday: true,
+      freeUsed: 1,
+      weakSpot: true,
+      spotType: 'the_with_superlatives'),
+  // V24s: the driver taps "Wake Fox up" and captures the wake-up and the
+  // paywall rising (V13r).
+  'V24s-RestToPremium': (_) => _home(
+      steps: 3,
+      correct: 13,
+      wrong: 2,
+      doneToday: true,
+      freeUsed: 1,
+      weakSpot: true,
+      spotType: 'the_with_superlatives'),
   'V12-Climb': (_) => FirstClimbScreen(
       theme: ClimbThemes.emberPeak,
       hero: Avatar.fox,
@@ -329,8 +354,24 @@ final Map<String, WidgetBuilder> galleryBoards = {
   // B8: the paywall (one scrolling page), with the debug fixture offering.
   'V13-Paywall': (_) => _paywall(),
   'V13a-PaywallPlans': (_) => _ScrollAfter(560, child: _paywall()),
-  'V13c-PaywallCompare': (_) => _ScrollAfter(1300, child: _paywall()),
+  // Fix round 2: the board's heading with the companion is in view.
+  'V13c-PaywallCompare': (_) => _ScrollAfter(1040, child: _paywall()),
   'V13b-ExitReminder': (_) => _paywall(),
+  'V13r-PaywallRest': (_) => PremiumScreen(
+        storageService: _GalleryProfileStorage(),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        analyticsSource: AnalyticsService.paywallSourceRestScene,
+        subscriptionService: _GalleryOffer(),
+        rest: const PaywallRest(
+            theme: ClimbThemes.emberPeak, weakSpot: 'The With Superlatives'),
+      ),
+  'PW05r-PremiumOnRest': (_) => PremiumOnScreen(
+        hero: Avatar.fox,
+        topics: practiceTopics().length,
+        sessions: StorageService.dailySessionLimit,
+        trialEnds: DateTime(2026, 11, 24),
+        rest: const PremiumOnRest(weakSpot: 'The With Superlatives'),
+      ),
   'PW05-PremiumOn': (_) => PremiumOnScreen(
         hero: Avatar.fox,
         topics: practiceTopics().length,
@@ -796,6 +837,7 @@ Widget _home({
   int freeUsed = 0,
   int sessions = 0,
   bool loading = false,
+  String spotType = 'missing_article',
 }) =>
     Builder(builder: (context) {
       final l10n = context.l10n;
@@ -817,10 +859,12 @@ Widget _home({
               freeUsed: freeUsed,
               sessions: sessions,
               loading: loading,
+              spotType: spotType,
             ),
             analyticsService: AnalyticsService(sink: const _NoAnalytics()),
             subscriptionService: _GallerySubs(premium),
-            clock: () => DateTime(2026, 11, 17, 9, 41),
+            // Evening: the rest scene's countdown reads like the board's.
+            clock: () => DateTime(2026, 11, 17, 13, 36),
           ),
         ),
         tabs: [
@@ -847,6 +891,13 @@ class _GallerySubs extends SubscriptionService {
   _GallerySubs(this.premium);
   @override
   Future<bool> get hasFullAccess async => premium;
+  // V24f's trial days and V24s's paywall: the debug fixture offering.
+  @override
+  Future<Offering?> getOfferings() async => buildDebugFixtureOffering();
+  @override
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+          List<String> productIds) async =>
+      {for (final id in productIds) id: TrialEligibility.eligible};
   @override
   void addAccessListener(AccessListener listener) {}
   @override
@@ -856,7 +907,9 @@ class _GallerySubs extends SubscriptionService {
 class _GalleryHomeStorage extends StorageService {
   final int steps, correct, wrong, freeUsed, sessions;
   final bool doneToday, weakSpot, loading;
+  final String spotType;
   _GalleryHomeStorage({
+    this.spotType = 'missing_article',
     required this.steps,
     required this.correct,
     required this.wrong,
@@ -909,7 +962,7 @@ class _GalleryHomeStorage extends StorageService {
           ? [
               WeakSpot(
                 topicId: 'articles',
-                errorType: 'missing_article',
+                errorType: spotType,
                 frequency: 3,
                 lastSeen: DateTime(2026, 11, 16),
               ),

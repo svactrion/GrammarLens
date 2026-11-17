@@ -2792,7 +2792,7 @@ void main() {
         'free checks are grey outlines, Premium checks filled green, '
         '"—" grey', (tester) async {
       await pumpTable(tester);
-      final c = AppColors.light;
+      const c = AppColors.light;
       BoxDecoration circle(String label, int index) => tester
           .widget<Container>(find
               .ancestor(
@@ -2822,7 +2822,7 @@ void main() {
       final column = find.byKey(PremiumScreen.premiumColumnKey);
       final box =
           tester.widget<DecoratedBox>(column).decoration as BoxDecoration;
-      final c = AppColors.light;
+      const c = AppColors.light;
       expect(
           (box.border! as Border).top, BorderSide(color: c.orange, width: 2));
       expect((box.gradient! as LinearGradient).colors, [c.cream, c.orangeSoft]);

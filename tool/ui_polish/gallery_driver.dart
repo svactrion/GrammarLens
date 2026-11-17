@@ -24,6 +24,9 @@ const _settleMs = <String, int>{
   'V15-HomeNextDay': 2200,
   'H04-HomePremium': 2200,
   'V24-DayComplete': 2000,
+  'V24f-RestFree': 2000,
+  'V13r-PaywallRest': 1800,
+  'PW05r-PremiumOnRest': 2200,
   'V11-Badge': 2200,
   'R05-Medal': 2200,
   'PW05-PremiumOn': 2200,
@@ -41,6 +44,16 @@ const _scrollShots = <String, List<int>>{
   'X05-DailyCard': [560],
   'V00-CompanionSystem': [500],
   'X03-HeroSet': [400],
+};
+
+/// Fix round 2, item 1: a second capture this long after the first, to
+/// show the companions' loops at another moment (`-t2`).
+const _motionShots = <String, int>{
+  'V02-Welcome': 1100,
+  'V15-HomeNextDay': 550,
+  'V13-Paywall': 600,
+  'V23-Profile': 1500,
+  'V24f-RestFree': 1200,
 };
 
 /// Boards captured through real taps: the steps after the board is shown,
@@ -81,6 +94,19 @@ final _scripts = <String, Script>{
     await d.tapNow('review_sort');
     await _wait(900);
     await shot('');
+  },
+  // V24s: the wake-up (the companion awake, "I'm awake!") and the paywall
+  // risen (V13r over the scene).
+  'V24s-RestToPremium': (d, shot) async {
+    await _wait(1800);
+    await d.runUnsynchronized(() => d.requestData('scroll:420'));
+    await _wait(600);
+    await shot('-1-rest');
+    await d.tapNow('rest_wake');
+    await _wait(250);
+    await shot('-2-awake');
+    await _wait(1600);
+    await shot('-3-paywall');
   },
   'V13b-ExitReminder': (d, shot) async {
     await _wait(1400);
@@ -297,6 +323,10 @@ Future<void> main() async {
       }
       await Future<void>.delayed(Duration(milliseconds: _settleMs[id] ?? 1600));
       await shot('');
+      if (_motionShots[id] case final later?) {
+        await Future<void>.delayed(Duration(milliseconds: later));
+        await shot('-t2');
+      }
       for (final offset in _scrollShots[id] ?? const <int>[]) {
         await driver
             .runUnsynchronized(() => driver.requestData('scroll:$offset'));

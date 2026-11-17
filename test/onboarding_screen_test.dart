@@ -245,7 +245,7 @@ void main() {
               find.descendant(
                   of: school, matching: find.byIcon(Icons.menu_book_rounded)),
               findsOneWidget);
-          final c = AppColors.light;
+          const c = AppColors.light;
           final tile = tester.widget<Container>(find
               .ancestor(
                   of: find.descendant(
