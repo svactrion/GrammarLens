@@ -1533,9 +1533,9 @@
       }
     }
   },
-  "topicPracticeSubtitle": "Choose a topic to work on.",
+  "topicPracticeSubtitle": "Pick a topic. AI reviews every answer.",
   "@topicPracticeSubtitle": {
-    "description": "Topic Practice: the line under the title."
+    "description": "Topic Practice (R01): the line under the title."
   },
   "topicPracticePremiumAccess": "Premium access",
   "@topicPracticePremiumAccess": {
@@ -4042,6 +4042,138 @@
       "text": {
         "type": "String",
         "example": "the"
+      }
+    }
+  },
+  "topicConditionalsTitle": "Conditionals",
+  "@topicConditionalsTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicPassiveTitle": "Passive Voice",
+  "@topicPassiveTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicPrepositionsTitle": "Prepositions",
+  "@topicPrepositionsTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicRelativeTitle": "Relative Clauses",
+  "@topicRelativeTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicComparativesTitle": "Comparatives & Superlatives",
+  "@topicComparativesTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicConditionalsDescription": "If-sentences: real, unreal and past.",
+  "@topicConditionalsDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicPassiveDescription": "When the action matters more than who did it.",
+  "@topicPassiveDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicPrepositionsDescription": "At, on, in — and the verbs that need one.",
+  "@topicPrepositionsDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicRelativeDescription": "Who, which, that, whose — joining ideas.",
+  "@topicRelativeDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicComparativesDescription": "Taller, more useful, the best.",
+  "@topicComparativesDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "practiceDidYouKnow": "Did you know?",
+  "@practiceDidYouKnow": {
+    "description": "Practice being prepared (V18): above the rotating hint card (uppercased by the app)."
+  },
+  "practiceEvaluatedAtEnd": "AI reviews all your answers when you finish",
+  "@practiceEvaluatedAtEnd": {
+    "description": "Practice question (V19): the line under the card saying answers are evaluated together at the end."
+  },
+  "practiceReviewingTitle": "AI is checking your answers",
+  "@practiceReviewingTitle": {
+    "description": "AI evaluation in progress (V20): the title."
+  },
+  "practiceReviewingCount": "{topic} · {count, plural, =1{1 answer} other{{count} answers}}",
+  "@practiceReviewingCount": {
+    "description": "AI evaluation (V20): under the title.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "Articles"
+      },
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "practiceReviewingRead": "Reading your answers",
+  "@practiceReviewingRead": {
+    "description": "AI evaluation (V20): checklist item 1."
+  },
+  "practiceReviewingRules": "Checking the grammar rules",
+  "@practiceReviewingRules": {
+    "description": "AI evaluation (V20): checklist item 2."
+  },
+  "practiceReviewingWrite": "Writing your feedback",
+  "@practiceReviewingWrite": {
+    "description": "AI evaluation (V20): checklist item 3."
+  },
+  "practiceReviewingOnItsWay": "Your feedback is on its way",
+  "@practiceReviewingOnItsWay": {
+    "description": "AI evaluation (V20): above the indeterminate bar (uppercased by the app)."
+  },
+  "practiceResultsCorrect": "{correct}/{total} correct",
+  "@practiceResultsCorrect": {
+    "description": "Practice results (V21): the title.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "practiceResultsRight": "Correct",
+  "@practiceResultsRight": {
+    "description": "Practice results (V21): a right answer's label."
+  },
+  "practiceResultsNeedsWork": "Needs work",
+  "@practiceResultsNeedsWork": {
+    "description": "Practice results (V21): a wrong answer's label."
+  },
+  "practiceResultsMore": "Want another round today?",
+  "@practiceResultsMore": {
+    "description": "Practice results for a free user (V21): above the Premium line."
+  },
+  "practiceResultsMoreLine": "Premium: up to {count} sessions a day, every topic.",
+  "@practiceResultsMoreLine": {
+    "description": "Practice results for a free user (V21).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "dailyLimitCount": "{done} of {total} practice sessions done",
+  "@dailyLimitCount": {
+    "description": "Practice limit reached (P08): under the full counter.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
       }
     }
   }
