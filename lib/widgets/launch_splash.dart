@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme.dart';
+import '../utils/haptics.dart';
 import 'brand_mark.dart';
 import 'brand_wordmark.dart';
 
@@ -27,7 +28,7 @@ class LaunchSplashLayout {
   static const double logoSize = 100 * scale;
 
   /// The logo's scale on the first frame; it settles to 1.0.
-  static const double initialLogoScale = 0.92;
+  static const double initialLogoScale = 0.5;
 
   /// Space between the logo's box and the wordmark.
   static const double wordmarkGap = 16 * scale;
@@ -58,20 +59,18 @@ class LaunchSplashLayout {
 class LaunchTiming {
   LaunchTiming._();
 
-  /// Logo settle, wordmark fade and a short hold on the finished frame.
-  static const Duration intro = Duration(milliseconds: 1000);
+  /// The first launch: the icon assembles from its parts and the wordmark
+  /// rises (V01: at most 1.4 s).
+  static const Duration intro = Duration(milliseconds: 1400);
 
-  /// The logo scales 0.92 → 1.0 over this share of [intro].
-  static const Interval logoScale =
-      Interval(0.0, 0.6, curve: Curves.easeOutCubic);
+  /// Later launches: only the square and the wordmark (at most 600 ms).
+  static const Duration introShort = Duration(milliseconds: 600);
 
-  /// The wordmark fades in over this share of [intro]; the rest is a hold,
-  /// so the finished wordmark is readable before the splash fades.
-  static const Interval wordmarkFade =
-      Interval(0.3, 0.8, curve: Curves.easeOut);
-
-  /// The splash fades out over the app.
+  /// The splash's fade to the app.
   static const Duration exit = Duration(milliseconds: 200);
+
+  /// Reduce Motion: the one fade to the finished icon.
+  static const Duration reducedFade = Duration(milliseconds: 150);
 }
 
 /// The app's root on a cold start: shows the launch splash while
@@ -91,10 +90,16 @@ class LaunchGate extends StatefulWidget {
     super.key,
     required this.initialize,
     required this.app,
+    this.firstLaunch,
   });
 
   final Future<void> Function() initialize;
   final WidgetBuilder app;
+
+  /// Whether this is the first launch (no profile yet): the full icon
+  /// assembly, otherwise the short splash. Null (tests, tools): the full
+  /// one.
+  final Future<bool>? firstLaunch;
 
   @override
   State<LaunchGate> createState() => _LaunchGateState();
@@ -170,7 +175,8 @@ class _LaunchGateState extends State<LaunchGate>
             child: AbsorbPointer(
               child: MediaQuery.fromView(
                 view: View.of(context),
-                child: LaunchSplash(onIntroDone: _onIntroDone),
+                child: LaunchSplash(
+                    onIntroDone: _onIntroDone, firstLaunch: widget.firstLaunch),
               ),
             ),
           ),
@@ -206,42 +212,73 @@ class LaunchSplashScope extends InheritedWidget {
       covering != oldWidget.covering;
 }
 
-/// The splash itself: the logo settles from [LaunchSplashLayout.initialLogoScale]
-/// to full size and the "GrammarLens" wordmark fades in.
+/// The launch splash (V01): the app icon builds itself from its parts —
+/// the navy square pops in (0.5 → 1.08 → 1, 320 ms), the cream lens turns
+/// into place from the bottom right (from 280 ms, 360 ms), its two lines
+/// draw left to right (160 ms, 120 ms apart), a glint crosses the glass
+/// (300 ms); then the wordmark rises 12 px with a fade (250 ms) and a small
+/// lens scans the word. The first launch takes 1.4 s; later launches only
+/// the square and the wordmark (600 ms). Reduce Motion: one fade. A light
+/// haptic when the square lands, once.
 ///
-/// Follows the system appearance, not the in-app theme preference: the
-/// native launch screen before it can only follow the system, and the
-/// in-app preference is not read yet. With Reduce Motion the logo stays at
-/// its first-frame scale (no jump from the static screen) and the wordmark
-/// is shown at once.
+/// Its first frame is the square alone at [LaunchSplashLayout.
+/// initialLogoScale], the same image as the iOS static launch screen
+/// (`scripts/generate_launch_image.sh`).
 class LaunchSplash extends StatefulWidget {
-  const LaunchSplash({super.key, this.onIntroDone});
+  const LaunchSplash({super.key, this.onIntroDone, this.firstLaunch});
 
-  /// Called once, when the intro has finished (at once with Reduce Motion),
-  /// with whether Reduce Motion was on.
   final void Function(bool reduceMotion)? onIntroDone;
+
+  /// See [LaunchGate.firstLaunch].
+  final Future<bool>? firstLaunch;
 
   @override
   State<LaunchSplash> createState() => _LaunchSplashState();
 }
 
 class _LaunchSplashState extends State<LaunchSplash>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _intro;
-  late final Animation<double> _logoScale = Tween<double>(
-    begin: LaunchSplashLayout.initialLogoScale,
-    end: 1,
-  ).animate(CurvedAnimation(parent: _intro, curve: LaunchTiming.logoScale));
-  late final Animation<double> _wordmarkOpacity =
-      CurvedAnimation(parent: _intro, curve: LaunchTiming.wordmarkFade);
 
+  /// Reduce Motion: one fade from the static launch image to the finished
+  /// icon and wordmark.
+  late final AnimationController _fade;
   bool _started = false;
   bool _reduceMotion = false;
+
+  /// A later launch (known before the lens would start): the short splash.
+  bool _short = false;
+  bool _landed = false;
+  bool _done = false;
 
   @override
   void initState() {
     super.initState();
-    _intro = AnimationController(vsync: this, duration: LaunchTiming.intro);
+    _intro = AnimationController(vsync: this, duration: LaunchTiming.intro)
+      ..addListener(_onTick);
+    _fade =
+        AnimationController(vsync: this, duration: LaunchTiming.reducedFade);
+    widget.firstLaunch?.then((first) {
+      // Only a decision made before the lens starts changes the plan.
+      if (!first && mounted && _elapsedMs < 280) {
+        setState(() => _short = true);
+      }
+    }).catchError((Object _) {});
+  }
+
+  double get _elapsedMs => _intro.value * LaunchTiming.intro.inMilliseconds;
+
+  void _onTick() {
+    if (!_landed && _elapsedMs >= 320) {
+      _landed = true;
+      HapticMap.light();
+    }
+    final end = _short ? LaunchTiming.introShort : LaunchTiming.intro;
+    if (!_done && _elapsedMs >= end.inMilliseconds - 1) {
+      _done = true;
+      _intro.stop();
+      widget.onIntroDone?.call(false);
+    }
   }
 
   @override
@@ -251,17 +288,16 @@ class _LaunchSplashState extends State<LaunchSplash>
     _started = true;
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => widget.onIntroDone?.call(true),
-      );
+      _fade.forward().whenComplete(() => widget.onIntroDone?.call(true));
     } else {
-      _intro.forward().whenComplete(() => widget.onIntroDone?.call(false));
+      _intro.forward();
     }
   }
 
   @override
   void dispose() {
     _intro.dispose();
+    _fade.dispose();
     super.dispose();
   }
 
@@ -284,55 +320,90 @@ class _LaunchSplashState extends State<LaunchSplash>
               final logoCenterY = constraints.maxHeight / 2 +
                   LaunchSplashLayout.logoCenterOffsetY;
               const half = LaunchSplashLayout.logoSize / 2;
-              return Stack(
-                textDirection: TextDirection.ltr,
-                children: [
-                  Positioned(
-                    left: constraints.maxWidth / 2 - half,
-                    top: logoCenterY - half,
-                    width: LaunchSplashLayout.logoSize,
-                    height: LaunchSplashLayout.logoSize,
-                    child: ExcludeSemantics(
-                      child: _reduceMotion
-                          ? const LaunchLogo(
-                              scale: LaunchSplashLayout.initialLogoScale)
-                          : ScaleTransition(
-                              scale: _logoScale,
-                              child: const LaunchLogo(),
-                            ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: logoCenterY + half + LaunchSplashLayout.wordmarkGap,
-                    child: FadeTransition(
-                      opacity: _reduceMotion
-                          ? kAlwaysCompleteAnimation
-                          : _wordmarkOpacity,
-                      child: BrandWordmark(
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.ltr,
-                        maxLines: 1,
-                        // A logotype, not body text: fixed like the logo.
-                        textScaler: TextScaler.noScaling,
-                        // Its own style, not a copy of a text theme style:
-                        // the logotype's measured height
-                        // ([LaunchSplashLayout.wordmarkHeight]) is the font's
-                        // natural line height, and the 1.2.0 type scale
-                        // sets explicit line heights on every style.
-                        style: TextStyle(
-                                fontFamily:
-                                    theme.textTheme.headlineLarge?.fontFamily,
-                                fontSize: LaunchSplashLayout.wordmarkFontSize,
-                                letterSpacing:
-                                    LaunchSplashLayout.wordmarkLetterSpacing,
-                                color: colorScheme.onSurface)
-                            .withWeight(LaunchSplashLayout.wordmarkWeight),
+              return AnimatedBuilder(
+                animation: Listenable.merge([_intro, _fade]),
+                builder: (context, _) {
+                  final ms = _reduceMotion ? 100000.0 : _elapsedMs;
+                  final wordStart = _short ? 250.0 : 1000.0;
+                  final word = _reduceMotion
+                      ? _fade.value
+                      : ((ms - wordStart) / 250).clamp(0.0, 1.0);
+                  final scan =
+                      _short ? 0.0 : ((ms - 1100) / 300).clamp(0.0, 1.0);
+                  return Stack(
+                    textDirection: TextDirection.ltr,
+                    children: [
+                      Positioned(
+                        left: constraints.maxWidth / 2 - half,
+                        top: logoCenterY - half,
+                        width: LaunchSplashLayout.logoSize,
+                        height: LaunchSplashLayout.logoSize,
+                        child: ExcludeSemantics(
+                          child: _reduceMotion
+                              ? Stack(
+                                  textDirection: TextDirection.ltr,
+                                  children: [
+                                      const LaunchLogo(
+                                          scale: LaunchSplashLayout
+                                              .initialLogoScale),
+                                      Opacity(
+                                          opacity: _fade.value,
+                                          child: const LaunchLogo()),
+                                    ])
+                              : LaunchLogo(elapsedMs: ms, short: _short),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top:
+                            logoCenterY + half + LaunchSplashLayout.wordmarkGap,
+                        child: Opacity(
+                          opacity: Curves.easeOut.transform(word),
+                          child: Transform.translate(
+                            offset: Offset(
+                                0, 12 * (1 - Curves.easeOut.transform(word))),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                BrandWordmark(
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.ltr,
+                                  maxLines: 1,
+                                  // A logotype, not body text: fixed like the logo.
+                                  textScaler: TextScaler.noScaling,
+                                  style: TextStyle(
+                                          fontFamily: theme.textTheme
+                                              .headlineLarge?.fontFamily,
+                                          fontSize: LaunchSplashLayout
+                                              .wordmarkFontSize,
+                                          letterSpacing: LaunchSplashLayout
+                                              .wordmarkLetterSpacing,
+                                          color: colorScheme.onSurface)
+                                      .withWeight(
+                                          LaunchSplashLayout.wordmarkWeight),
+                                ),
+                                if (scan > 0 && scan < 1)
+                                  Positioned(
+                                    left: constraints.maxWidth / 2 -
+                                        150 +
+                                        260 * Curves.easeInOut.transform(scan),
+                                    top: -6,
+                                    child: Opacity(
+                                      opacity:
+                                          scan < .85 ? 1 : (1 - scan) / .15,
+                                      child: const BrandMark(size: 52),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -342,20 +413,175 @@ class _LaunchSplashState extends State<LaunchSplash>
   }
 }
 
-/// The logo in its [LaunchSplashLayout.logoSize] box, optionally scaled
-/// about its center. Also what `scripts/generate_launch_image.sh` renders
-/// for the static launch image, at [LaunchSplashLayout.initialLogoScale].
+/// The app icon in its [LaunchSplashLayout.logoSize] box, drawn from its
+/// parts (V01; the icon's own shapes: a navy rounded square, a light bar,
+/// a cream lens with an orange glass, two navy lines and a handle). At
+/// [elapsedMs] into the splash; a large value (the default) is the finished
+/// icon. [scale] scales the whole icon (the static launch image is the
+/// first frame: [LaunchSplashLayout.initialLogoScale], square only).
 class LaunchLogo extends StatelessWidget {
-  const LaunchLogo({super.key, this.scale = 1});
+  const LaunchLogo({
+    super.key,
+    this.elapsedMs = 100000,
+    this.short = false,
+    this.scale,
+  });
 
-  final double scale;
+  final double elapsedMs;
+  final bool short;
+
+  /// A fixed scale for the whole icon instead of the timed pop (the static
+  /// launch image).
+  final double? scale;
+
+  /// The square's scale now: the fixed [scale], or the pop's value at
+  /// [elapsedMs] (0.5 → 1.08 → 1 over 320 ms).
+  double get tileScale =>
+      scale ??
+      (LaunchSplashLayout.initialLogoScale +
+          (1 - LaunchSplashLayout.initialLogoScale) *
+              Curves.easeOutBack.transform((elapsedMs / 320).clamp(0.0, 1.0)));
 
   @override
   Widget build(BuildContext context) {
-    const mark = BrandMark(size: LaunchSplashLayout.logoSize);
     return SizedBox.square(
       dimension: LaunchSplashLayout.logoSize,
-      child: scale == 1 ? mark : Transform.scale(scale: scale, child: mark),
+      child: CustomPaint(
+        painter: _AppIconPainter(
+          elapsedMs: scale != null ? 0 : elapsedMs,
+          short: short,
+          fixedScale: scale,
+        ),
+      ),
     );
   }
+}
+
+class _AppIconPainter extends CustomPainter {
+  final double elapsedMs;
+  final bool short;
+  final double? fixedScale;
+
+  _AppIconPainter({
+    required this.elapsedMs,
+    required this.short,
+    required this.fixedScale,
+  });
+
+  // The icon's own colours (V01's SVG; fixed identity colours like the
+  // brand mark's, not theme roles).
+  static const _navy = Color(0xFF0D3B8F);
+  static const _cream = Color(0xFFFFF6EA);
+  static const _orange = Color(0xFFFF7A1A);
+
+  double _t(double start, double length) =>
+      ((elapsedMs - start) / length).clamp(0.0, 1.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final k = size.width / 120;
+    canvas.save();
+    canvas.scale(k);
+    // The square: 0.5 → 1.08 → 1 over 320 ms (an easeOutBack pop).
+    final tileScale = fixedScale ??
+        (LaunchSplashLayout.initialLogoScale +
+            (1 - LaunchSplashLayout.initialLogoScale) *
+                Curves.easeOutBack.transform(_t(0, 320)));
+    canvas.save();
+    canvas.translate(60, 60);
+    canvas.scale(tileScale);
+    canvas.translate(-60, -60);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            const Rect.fromLTWH(0, 0, 120, 120), const Radius.circular(28)),
+        Paint()..color = _navy);
+    if (fixedScale == null) {
+      // The light bar under the lens draws left to right after the pop.
+      final bar = short ? _t(120, 160) : _t(250, 160);
+      if (bar > 0) {
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                Rect.fromLTWH(16, 94, 38 * bar, 7), const Radius.circular(3.5)),
+            Paint()..color = const Color(0x59FFFFFF));
+      }
+    }
+    canvas.restore();
+    if (fixedScale != null) {
+      canvas.restore();
+      return;
+    }
+    // The lens: from the bottom right with a turn and a scale (280 ms in,
+    // 360 ms); on a later launch it fades in with the square.
+    final lens = short ? _t(80, 200) : _t(280, 360);
+    if (lens > 0) {
+      final e = Curves.easeOutBack.transform(lens);
+      canvas.save();
+      if (short) {
+        canvas.translate(60, 60);
+        canvas.scale(tileScale);
+        canvas.translate(-60, -60);
+      } else {
+        canvas.translate(56 + 44 * (1 - e), 50 + 44 * (1 - e));
+        canvas.rotate(.6 * (1 - e));
+        final sc = .4 + .6 * e;
+        canvas.scale(sc);
+        canvas.translate(-56, -50);
+      }
+      final layer = Paint()
+        ..color = Color.fromRGBO(255, 255, 255, short ? lens : 1);
+      canvas.saveLayer(null, layer);
+      canvas.drawLine(
+          const Offset(76, 70),
+          const Offset(98, 92),
+          Paint()
+            ..color = _cream
+            ..strokeWidth = 12
+            ..strokeCap = StrokeCap.round);
+      canvas.drawCircle(const Offset(56, 50), 30, Paint()..color = _orange);
+      canvas.drawCircle(
+          const Offset(56, 50),
+          30,
+          Paint()
+            ..color = _cream
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 9);
+      // The two lines draw left to right (160 ms, 120 ms apart).
+      final l1 = short ? 1.0 : _t(640, 160);
+      final l2 = short ? 1.0 : _t(760, 160);
+      final line = Paint()..color = _navy;
+      if (l1 > 0) {
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                Rect.fromLTWH(38, 38, 36 * l1, 8), const Radius.circular(4)),
+            line);
+      }
+      if (l2 > 0) {
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                Rect.fromLTWH(38, 54, 30 * l2, 8), const Radius.circular(4)),
+            line);
+      }
+      // The glint crossing the glass (300 ms).
+      final glint = short ? 0.0 : _t(900, 300);
+      if (glint > 0 && glint < 1) {
+        canvas.save();
+        canvas.clipPath(Path()
+          ..addOval(Rect.fromCircle(center: const Offset(56, 50), radius: 26)));
+        canvas.translate(56, 50);
+        canvas.rotate(.5);
+        canvas.drawRect(Rect.fromLTWH(-40 + 80 * glint - 6, -40, 12, 80),
+            Paint()..color = const Color(0x8CFFFFFF));
+        canvas.restore();
+      }
+      canvas.restore();
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_AppIconPainter old) =>
+      old.elapsedMs != elapsedMs ||
+      old.short != short ||
+      old.fixedScale != fixedScale;
 }
