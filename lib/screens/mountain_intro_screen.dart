@@ -123,20 +123,32 @@ class _MountainIntroScreenState extends State<MountainIntroScreen>
                         Positioned(
                           left: p.dx + 22,
                           top: p.dy - map.imageSize.width * .12,
-                          child: Opacity(
-                            opacity: flag,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: c.card,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                l10n.mountainIntroSummit(widget.days),
-                                style: text.labelMedium!
-                                    .withWeight(FontWeight.w900)
-                                    .copyWith(color: c.navy),
+                          // With the flag on the summit (fix round 2) the
+                          // chip starts further right: it scales down
+                          // rather than run off a narrow screen.
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                                maxWidth:
+                                    math.max(0, map.box.width - p.dx - 22 - 8)),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Opacity(
+                                opacity: flag,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: c.card,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    l10n.mountainIntroSummit(widget.days),
+                                    style: text.labelMedium!
+                                        .withWeight(FontWeight.w900)
+                                        .copyWith(color: c.navy),
+                                  ),
+                                ),
                               ),
                             ),
                           ),

@@ -108,8 +108,19 @@ class MountainScene extends StatefulWidget {
     this.overlay,
   });
 
-  /// The flag's point on the trail (where the climb ends).
-  static Offset get flagPoint => ClimbRoute.at(ClimbRoute.climbLength);
+  /// The summit flag's foot: the summit, the trail table's last point, in
+  /// image coordinates (fix round 2, item 9). It used to be the climb's
+  /// flag point on the trail ([ClimbRoute.climbLength], N32), about 0.05
+  /// image widths left of and 0.06 below the peak: under cover-scaling on
+  /// a tall phone that put the flag some 35 × 40 pt off the summit.
+  static Offset get flagPoint => ClimbRoute.summit;
+
+  /// The summit flag (tests read where it stands).
+  static const flagKey = ValueKey('mountain_scene_flag');
+
+  /// The pole image's opaque foot, as a share of its height
+  /// (`summit_flag_pole_v2.webp`: rows 25–997 of 1024 are opaque).
+  static const double poleFoot = 997 / 1024;
 
   @override
   State<MountainScene> createState() => _MountainSceneState();
@@ -185,13 +196,17 @@ class _MountainSceneState extends State<MountainScene>
       if (widget.showFlag && widget.flagPop > 0) {
         final pop = AppMotion.pop.transform(widget.flagPop.clamp(0.0, 1.0));
         children.add(Positioned(
+          key: MountainScene.flagKey,
           left: flag.dx - poleW / 2,
-          top: flag.dy - poleH,
+          // The pole's opaque foot on the summit.
+          top: flag.dy - poleH * MountainScene.poleFoot,
           width: poleW + pennantW,
           height: poleH,
           child: Transform.scale(
             scale: pop,
-            alignment: Alignment.bottomLeft,
+            // Grows from the pole's foot.
+            alignment: Alignment(-1 + poleW / (poleW + pennantW),
+                MountainScene.poleFoot * 2 - 1),
             child: Stack(clipBehavior: Clip.none, children: [
               Positioned(
                 left: 0,
