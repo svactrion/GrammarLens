@@ -22,7 +22,7 @@ decisions, open items. The final summary goes at the top when B11 ends.
 | B8 Paywall | done | `2981ab0`, `f303bad` |
 | B9 Profile | done | `f98eac1`, `5c39c65` |
 | B10 System and themes | done | `5dabea0`, `2aa88bd` |
-| B11 Final sweep and docs | done | see B11 |
+| B11 Final sweep and docs | done | `a4228b3`, `cd3c33d` |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery
@@ -864,7 +864,7 @@ Not done / gaps:
 
 Status: **done**.
 
-Commits: COMMITS_B11
+Commits: `a4228b3` (formatting), `cd3c33d` (docs and comparison), and the commit that records these hashes.
 
 What was done:
 - Every in-scope board captured again on the iPhone 18 Pro simulator (iOS
