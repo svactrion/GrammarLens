@@ -1,3 +1,7 @@
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'dart:ui' as ui;
+import 'dart:io';
+import 'dart:math' as math;
 import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
@@ -7,6 +11,7 @@ import 'support/recording_analytics_sink.dart';
 import 'package:grammar_lens/utils/text_format.dart';
 import 'package:grammar_lens/screens/premium_on_screen.dart';
 import 'package:grammar_lens/widgets/rest_scene.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/data/topics.dart';
@@ -1553,42 +1558,50 @@ void main() {
       required double bottom,
       required _FakeStorageService storage,
       _FakeSubscriptionService? subs,
-      ReminderController? reminders}) async {
+      ReminderController? reminders,
+      AppTextSize textSize = AppTextSize.medium,
+      Brightness brightness = Brightness.light}) async {
     final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
     await (FontLoader('NunitoSans')..addFont(bytes)).load();
     tester.view.physicalSize = size * 3.0;
     tester.view.devicePixelRatio = 3.0;
     tester.view.padding = FakeViewPadding(top: top * 3, bottom: bottom * 3);
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(MaterialApp(
-      theme: buildAppTheme(Brightness.light),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: FloatingNavShell(
-        selectedIndex: 0,
-        onTabChange: (_) {},
-        tabs: const [
-          NavShellTab(
-              icon: Icons.landscape,
-              activeIcon: Icons.landscape,
-              label: 'Climb'),
-          NavShellTab(
-              icon: Icons.history, activeIcon: Icons.history, label: 'Review'),
-          NavShellTab(
-              icon: Icons.person, activeIcon: Icons.person, label: 'Profile'),
-        ],
-        body: HomeScreen(
-          active: true,
-          userName: 'Ada',
-          claudeService: ClaudeService(),
-          storageService: storage,
-          analyticsService: AnalyticsService(),
-          subscriptionService: subs ?? _FakeSubscriptionService(),
-          reminders: reminders,
-          clock: () => DateTime(2026, 11, 4, 15, 0),
-        ),
-      ),
-    ));
+    await tester.pumpWidget(RepaintBoundary(
+        key: _shellBoundary,
+        child: MaterialApp(
+          theme: buildAppTheme(brightness, textSize: textSize),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FloatingNavShell(
+            selectedIndex: 0,
+            onTabChange: (_) {},
+            tabs: const [
+              NavShellTab(
+                  icon: Icons.landscape,
+                  activeIcon: Icons.landscape,
+                  label: 'Climb'),
+              NavShellTab(
+                  icon: Icons.history,
+                  activeIcon: Icons.history,
+                  label: 'Review'),
+              NavShellTab(
+                  icon: Icons.person,
+                  activeIcon: Icons.person,
+                  label: 'Profile'),
+            ],
+            body: HomeScreen(
+              active: true,
+              userName: 'Ada',
+              claudeService: ClaudeService(),
+              storageService: storage,
+              analyticsService: AnalyticsService(),
+              subscriptionService: subs ?? _FakeSubscriptionService(),
+              reminders: reminders,
+              clock: () => DateTime(2026, 11, 4, 15, 0),
+            ),
+          ),
+        )));
     await tester.pumpAndSettle();
   }
 
@@ -1680,47 +1693,104 @@ void main() {
             bridge: FakeNativeBridge()
               ..permission = NotificationPermission.notDetermined);
 
-    for (final (size, top, bottom) in phones) {
-      final se = size.height < 700;
-      testWidgets(
-          '${size.width.toInt()} × ${size.height.toInt()}: '
-          '${se ? 'the row scrolls into view' : 'Wake is on the first view'}, '
-          'the row is under the Premium card', (tester) async {
-        final storage = restDay();
-        final reminders = remindersFor(storage);
-        addTearDown(reminders.dispose);
-        await pumpShell(tester,
-            size: size,
-            top: top,
-            bottom: bottom,
-            storage: storage,
-            subs: _FakeSubscriptionService(offering: _restOffering()),
-            reminders: reminders);
-        expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
-        final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
-        final wake = tester.getRect(find.byKey(RestScene.wakeKey));
-        if (!se) {
-          expect(wake.bottom, lessThanOrEqualTo(bar.top),
-              reason: 'wake $wake, bar $bar');
+    // Fix round 3, B1 (SPEC V24f "Layout (v11)"): the scene full-bleed
+    // from the top of the screen, the night sheet attached under it, the
+    // camp fully visible with at least 12 pt above the sheet, the art never
+    // scaled up (cropped from the top). Wake above the bar where the camp
+    // leaves room for it; the row under the Premium card, reachable.
+    for (final premium in [false, true]) {
+      for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+        for (final (size, top, bottom) in phones) {
+          testWidgets(
+              'B1 ${premium ? 'V24' : 'V24f'} ${size.width.toInt()} × '
+              '${size.height.toInt()}, ${textSize.name} text: full-bleed '
+              'scene, attached sheet, the camp in view', (tester) async {
+            final storage = restDay()
+              ..sessions = premium ? StorageService.dailySessionLimit : 0;
+            final reminders = remindersFor(storage);
+            addTearDown(reminders.dispose);
+            await pumpShell(tester,
+                size: size,
+                top: top,
+                bottom: bottom,
+                storage: storage,
+                subs: premium
+                    ? _FakeSubscriptionService(hasAccess: true)
+                    : _FakeSubscriptionService(offering: _restOffering()),
+                reminders: reminders,
+                textSize: textSize);
+            expect(tester.takeException(), isNull);
+            final scene = tester.getRect(find.byKey(RestScene.sceneKey));
+            final sheet = tester.getRect(find.byKey(RestScene.sheetKey));
+            final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+            // Full-bleed from the top of the screen, edge to edge; the
+            // sheet attached (it starts inside the scene's last 28 pt).
+            expect(scene.top, 0);
+            expect(scene.left, 0);
+            expect(scene.width, size.width);
+            expect(sheet.left, 0);
+            expect(sheet.width, size.width);
+            expect(
+                sheet.top, closeTo(scene.bottom - RestScene.sheetRadius, .5));
+            // The camp: tent, companion and fire fully visible, at least
+            // 12 pt above the sheet, under the status bar.
+            final inScene = find.descendant(
+                of: find.byKey(RestScene.sceneKey),
+                matching: find.byType(CompanionView));
+            final companion = tester.getRect(inScene.first);
+            final fire = tester.getRect(find.descendant(
+                of: find.byKey(RestScene.sceneKey),
+                matching: find.byType(Campfire)));
+            final tent = tester.getRect(find.descendant(
+                of: find.byKey(RestScene.sceneKey),
+                matching: find.byWidgetPredicate((w) =>
+                    w is Image &&
+                    w.image is AssetImage &&
+                    (w.image as AssetImage).assetName.contains('tent'))));
+            final campTop =
+                [tent.top, companion.top, fire.top].reduce(math.min);
+            final campBottom =
+                [tent.bottom, companion.bottom, fire.bottom].reduce(math.max);
+            expect(campTop, greaterThanOrEqualTo(top), reason: 'camp top');
+            expect(campBottom, lessThanOrEqualTo(sheet.top - 12 + .5),
+                reason: 'camp $campBottom, sheet ${sheet.top}');
+            expect(fire.left, greaterThanOrEqualTo(0));
+            expect(fire.right, lessThanOrEqualTo(size.width));
+            double? wakeClear;
+            if (!premium) {
+              final wake = tester.getRect(find.byKey(RestScene.wakeKey));
+              wakeClear = bar.top - wake.bottom;
+            }
+            // Wake above the bar wherever the camp leaves room: every size
+            // but the iPhone SE, at both text sizes (F3-3).
+            if (!premium && size.height >= 800) {
+              expect(wakeClear, greaterThanOrEqualTo(RestScene.anchorClearance),
+                  reason: 'wake ${wakeClear}pt above the bar');
+            }
+            await _captureShell(
+                tester,
+                '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
+                '${size.height.toInt()}-${textSize.name}');
+            if (!premium) {
+              final row = find.byType(RestReminderRow);
+              final card = tester.getRect(find.byKey(RestScene.premiumCardKey));
+              expect(tester.getRect(row).top, greaterThan(card.bottom));
+              final outer = tester
+                  .state<ScrollableState>(find.byType(Scrollable).first)
+                  .position;
+              outer.jumpTo(outer.maxScrollExtent);
+              await tester.pumpAndSettle();
+              expect(
+                  tester.getRect(row).bottom,
+                  lessThanOrEqualTo(
+                      tester.getRect(find.byKey(FloatingNavShell.barKey)).top));
+              expect(find.byKey(RestReminderRow.switchKey).hitTestable(),
+                  findsOneWidget);
+            }
+            expect(tester.takeException(), isNull);
+          });
         }
-        final row = find.byType(RestReminderRow);
-        expect(row, findsOneWidget);
-        final card = tester.getRect(find.byKey(RestScene.premiumCardKey));
-        expect(tester.getRect(row).top, greaterThan(card.bottom));
-        // Scrolled, the row clears the bar and its switch can be used.
-        final outer = tester
-            .state<ScrollableState>(find.byType(Scrollable).first)
-            .position;
-        outer.jumpTo(outer.maxScrollExtent);
-        await tester.pumpAndSettle();
-        expect(
-            tester.getRect(row).bottom,
-            lessThanOrEqualTo(
-                tester.getRect(find.byKey(FloatingNavShell.barKey)).top));
-        expect(find.byKey(RestReminderRow.switchKey).hitTestable(),
-            findsOneWidget);
-        expect(tester.takeException(), isNull);
-      });
+      }
     }
 
     testWidgets(
@@ -1788,4 +1858,28 @@ Offering _restOffering() {
   );
   return const Offering('default', '', {}, [monthly, annual],
       monthly: monthly, annual: annual);
+}
+
+final _shellBoundary = GlobalKey();
+
+/// Fix round 3: with `FIX3_CAPTURE=1`, writes what [pumpShell] shows to
+/// `build/fix3-captures/[dark/]<name>.png` (the sizes no simulator has).
+Future<void> _captureShell(WidgetTester tester, String name,
+    {bool dark = false}) async {
+  if (Platform.environment['FIX3_CAPTURE'] != '1') return;
+  await tester.runAsync(() async {
+    for (final element in find.byType(Image).evaluate()) {
+      await precacheImage((element.widget as Image).image, element);
+    }
+  });
+  await tester.pumpAndSettle();
+  await tester.runAsync(() async {
+    final render = _shellBoundary.currentContext!.findRenderObject()!
+        as RenderRepaintBoundary;
+    final image = await render.toImage(pixelRatio: 2);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    final out = File('build/fix3-captures/${dark ? 'dark/' : ''}$name.png');
+    out.parent.createSync(recursive: true);
+    out.writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
 }

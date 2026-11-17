@@ -8,6 +8,7 @@ import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../models/climb_theme.dart';
 import '../motion.dart';
+import '../utils/content_width.dart';
 import '../utils/haptics.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
@@ -16,6 +17,7 @@ import 'floating_nav_shell.dart';
 import 'review_top_card.dart';
 import 'pressable_button.dart';
 import 'monthly_climb/climb_route.dart';
+import 'monthly_climb/climb_trail_table.dart';
 import 'monthly_climb/mountain_scene.dart';
 import 'speech_bubble.dart';
 import 'step_bar.dart';
@@ -73,25 +75,45 @@ class RestScene extends StatefulWidget {
     this.offer,
   });
 
-  static const sceneHeight = 470.0;
+  /// Fix round 3, B1 (SPEC V24f "Layout (v11)"): the scene is full-bleed
+  /// from the top of the screen down to the night sheet, which is attached
+  /// under it with rounded top corners. The art is drawn at the boards'
+  /// scale (600 px of art over a 390 pt board, so 600 / 390 of the screen
+  /// width) and is never scaled up to free room: when the sheet needs room
+  /// the scene is cropped from the top. The camp stays fully visible.
+  static const artWidthShare = 600 / 390;
 
-  /// The camera's zoom on the mountain, V24 and V24f.
-  static const zoom = 2.4;
+  /// The boards' sheet top on their 844 pt screen (V24 466, V24f 376): the
+  /// first frame's guess, before the fit.
+  static const boardSheetTopPremium = 466.0;
+  static const boardSheetTopFree = 376.0;
+  static const boardScreenHeight = 844.0;
 
-  /// V24f's scene is shorter, so the Premium card's button is on the first
-  /// view (the board's scene takes under half the screen).
-  static const freeSceneHeight = 300.0;
+  /// The boards' room between the camp's lowest point (the fire) and the
+  /// sheet, at 390 pt wide (V24 114, V24f 94). It shrinks to [minCampGap]
+  /// before the scene is cropped any further.
+  static const boardCampGapPremium = 114.0;
+  static const boardCampGapFree = 94.0;
+  static const minCampGap = 12.0;
 
-  /// How far above the companion's step V24f's camera centres, in image
-  /// widths (about 130 pt at a phone's scale), in the full free scene.
-  static const freeFocusLift = .13;
+  /// The sheet's top corner radius; the scene runs this far under it.
+  static const sheetRadius = 28.0;
 
-  /// INTEGRATE 3a: on Home's first view "Wake <Hero> up" stays this far
-  /// above the floating nav bar; the free scene gets shorter for it (on
-  /// 6.1" and 6.3" phones), never below [minFreeSceneHeight]. The reminder
-  /// row under the card may need a scroll.
-  static const wakeClearance = 8.0;
-  static const minFreeSceneHeight = 240.0;
+  /// On Home's first view, "Wake <Hero> up" (V24f) or the sheet's last row
+  /// (V24) stays this far above the floating nav bar when the camp leaves
+  /// room for it.
+  static const anchorClearance = 8.0;
+
+  /// Room at the top of the scene for the bubble, the chip and the score
+  /// capsule, under the status bar.
+  static const topBand = 96.0;
+
+  /// The camp's height in the scene's image units (the tent's top 120 above
+  /// the step, the fire's foot 56 below it), times [k] = scale / 900.
+  static const campUnits = 176.0;
+
+  static const sceneKey = ValueKey('rest_scene_layer');
+  static const sheetKey = ValueKey('rest_sheet');
 
   static const dreamKey = ValueKey('rest_dream');
   static const awakeBubbleKey = ValueKey('rest_awake_bubble');
@@ -111,35 +133,49 @@ class _RestSceneState extends State<RestScene>
     with SingleTickerProviderStateMixin {
   Timer? _minute;
 
-  /// INTEGRATE 3a: V24f's scene height, fitted after layout so the Wake
-  /// button clears the floating nav bar ([RestScene.wakeClearance]).
-  double _freeHeight = RestScene.freeSceneHeight;
+  /// B1: where the night sheet starts on the page (the scene's visible
+  /// height), fitted after layout; null until the first fit (a guess from
+  /// the boards' proportions is drawn first).
+  double? _sheetTop;
+  double _minSheetTop = 0;
   double? _navClearance;
   final _cardSlotKey = GlobalKey();
+  final _sheetBoxKey = GlobalKey();
+  final _endKey = GlobalKey();
 
-  void _fitFreeScene() {
-    final clearance = _navClearance;
-    final slot = _cardSlotKey.currentContext;
-    if (!mounted || widget.offer == null || clearance == null || slot == null) {
+  /// Fits [_sheetTop] so the anchor (V24f: the Wake button, from the card's
+  /// laid-out slot, its slide-in excluded; V24: the sheet's last row) ends
+  /// [RestScene.anchorClearance] above the floating nav bar on the first
+  /// view (or the safe area's bottom where there is no bar), but never so
+  /// high that the camp would not fit ([_minSheetTop]).
+  void _fitSheet() {
+    if (!mounted) return;
+    final sheet = _sheetBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    final offer = widget.offer;
+    final anchorContext =
+        (offer != null ? _cardSlotKey : _endKey).currentContext;
+    final anchor = anchorContext?.findRenderObject() as RenderBox?;
+    if (sheet == null ||
+        anchor == null ||
+        !sheet.attached ||
+        !anchor.attached ||
+        !sheet.hasSize ||
+        !anchor.hasSize) {
       return;
     }
-    final box = slot.findRenderObject() as RenderBox?;
-    if (box == null || !box.attached || !box.hasSize) return;
-    final scrolled = Scrollable.maybeOf(slot)?.position.pixels ?? 0;
-    // The card's laid-out bottom (its slide-in only moves it at paint
-    // time) less its bottom padding is the button's bottom, as on the
-    // first view (scrolled to the top).
-    final wakeBottom = box.localToGlobal(Offset(0, box.size.height)).dy +
-        scrolled -
-        _FreePanel.cardPadding.bottom;
-    final barTop =
-        MediaQuery.sizeOf(context).height - (clearance - NavBarClearance.gap);
-    final over = wakeBottom - (barTop - RestScene.wakeClearance);
-    final height = (_freeHeight - over)
-        .clamp(RestScene.minFreeSceneHeight, RestScene.freeSceneHeight)
-        .toDouble();
-    if ((height - _freeHeight).abs() > .5) {
-      setState(() => _freeHeight = height);
+    final anchorBottom = anchor
+            .localToGlobal(Offset(0, anchor.size.height), ancestor: sheet)
+            .dy -
+        (offer != null ? _FreePanel.cardPadding.bottom : 0);
+    final media = MediaQuery.of(context);
+    final clearance = _navClearance;
+    final barTop = clearance == null
+        ? media.size.height - media.padding.bottom - 16
+        : media.size.height - (clearance - NavBarClearance.gap);
+    final want = barTop - RestScene.anchorClearance - anchorBottom;
+    final top = math.max(_minSheetTop, want);
+    if (_sheetTop == null || (top - _sheetTop!).abs() > .5) {
+      setState(() => _sheetTop = top);
     }
   }
 
@@ -192,40 +228,60 @@ class _RestSceneState extends State<RestScene>
     final days = widget.days.clamp(28, 31);
     final step = widget.steps.clamp(0, days);
     final offer = widget.offer;
-    if (offer != null) {
-      _navClearance =
-          context.dependOnInheritedWidgetOfExactType<NavBarClearance>()?.value;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitFreeScene());
-    }
-    final sceneHeight = offer == null ? RestScene.sceneHeight : _freeHeight;
-    // V24f's scene is shorter: the camera looks a little higher up the
-    // mountain so the companion sits near the scene's bottom, under the
-    // dream bubble (as on the board), not behind it; in a fitted (shorter)
-    // scene it keeps the same distance from the bottom.
+    _navClearance =
+        context.dependOnInheritedWidgetOfExactType<NavBarClearance>()?.value;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitSheet());
     final step0 = ClimbRoute(days).stepAt(step);
-    Offset focusFor(double width) {
-      if (offer == null) return step0;
-      final scale =
-          SceneMap(Size(width, sceneHeight), zoom: RestScene.zoom).scale;
-      return Offset(
-          step0.dx,
-          step0.dy -
-              RestScene.freeFocusLift +
-              (RestScene.freeSceneHeight - sceneHeight) / 2 / scale);
-    }
+    final media = MediaQuery.of(context);
+    final safeTop = media.padding.top;
 
     // The panel is the night's own colour in both themes (the board).
     final panel = c.nightTop;
     const onPanel = Colors.white;
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      // The boards' scale, whatever the scene's height.
+      final scale = width * RestScene.artWidthShare;
+      final k = scale / 900;
+      final campHeight = RestScene.campUnits * k;
+      final minTop =
+          safeTop + RestScene.topBand + campHeight + RestScene.minCampGap;
+      _minSheetTop = minTop;
+      final sheetTop = math.max(
+          minTop,
+          _sheetTop ??
+              media.size.height *
+                  (offer == null
+                      ? RestScene.boardSheetTopPremium
+                      : RestScene.boardSheetTopFree) /
+                  RestScene.boardScreenHeight);
+      final boardGap = (offer == null
+              ? RestScene.boardCampGapPremium
+              : RestScene.boardCampGapFree) *
+          width /
+          390;
+      final gap = (sheetTop - safeTop - RestScene.topBand - campHeight)
+          .clamp(RestScene.minCampGap, math.max(RestScene.minCampGap, boardGap))
+          .toDouble();
+      final sceneHeight = sheetTop + RestScene.sheetRadius;
+      // The camera: the camp's centre across the middle, its fire [gap]
+      // above the sheet (cropping from the top as the sheet rises).
+      final cover = math.max(width, sceneHeight * climbImageAspect);
+      final zoom = math.max(1.0001, scale / cover);
+      final campBottom = sheetTop - gap;
+      final originY = campBottom - 56 * k - step0.dy * scale;
+      final focus =
+          Offset(step0.dx + 38 / 900, (sceneHeight / 2 - originY) / scale);
+      final sheetPad = ContentWidth.sidePaddingOf(context);
+      return Stack(
         children: [
-          SizedBox(
+          Positioned(
+            key: RestScene.sceneKey,
+            left: 0,
+            right: 0,
+            top: 0,
             height: sceneHeight,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+            child: ClipRect(
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -233,8 +289,8 @@ class _RestSceneState extends State<RestScene>
                       theme: widget.theme,
                       days: days,
                       showFlag: false,
-                      zoom: RestScene.zoom,
-                      focus: focusFor(width),
+                      zoom: zoom,
+                      focus: focus,
                       overlay: (context, map) {
                         // The camp stands at the companion's step.
                         final p = map.toBox(step0);
@@ -293,10 +349,20 @@ class _RestSceneState extends State<RestScene>
                           ),
                           // The bubble above the sleeping companion, below
                           // the name chip and the capsule.
-                          Positioned(
-                            left: p.dx - 120 * k,
-                            right: 16,
-                            top: math.max(72.0, p.dy - 104 * k - 74),
+                          // V24f: the dream bubble top left, as on the board
+                          // (its foot 120 pt above the companion's head at
+                          // 390 wide); V24: the speech bubble above the
+                          // companion. Never under the status bar.
+                          PositionedDirectional(
+                            start: offer == null
+                                ? math.max(16.0, p.dx - 120 * k)
+                                : 16,
+                            end: 16,
+                            top: math.max(
+                                safeTop + 12,
+                                offer == null
+                                    ? p.dy - 104 * k - 92 * width / 390
+                                    : p.dy - 104 * k - 122 * width / 390),
                             child: Align(
                               alignment: AlignmentDirectional.centerStart,
                               child: ConstrainedBox(
@@ -336,8 +402,8 @@ class _RestSceneState extends State<RestScene>
                   if (offer == null)
                     PositionedDirectional(
                       key: RestScene.seeYouKey,
-                      start: 12,
-                      top: 14,
+                      start: 16,
+                      top: safeTop + 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
@@ -355,127 +421,149 @@ class _RestSceneState extends State<RestScene>
                     ),
                   if (widget.capsule != null)
                     PositionedDirectional(
-                        end: 10, top: 10, child: widget.capsule!),
+                        end: 16, top: safeTop + 8, child: widget.capsule!),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          if (offer != null)
-            _FreePanel(
-              offer: offer,
-              hero: widget.hero,
-              testLine: widget.testLine,
-              countdown: '$hh:$mm',
-              countdownSemantics: l10n.restCountdownSemantics(
-                  left.inHours, left.inMinutes % 60),
-              awake: _awake,
-              onWake: _wake,
-              reminder: widget.reminder,
-              cardSlotKey: _cardSlotKey,
-            )
-          else
-            Container(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [c.nightTop, c.nightBottom],
+          // The night sheet, attached under the scene (no gap, rounded top
+          // corners), down to the bottom of the page.
+          Padding(
+            padding: EdgeInsets.only(top: sheetTop),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                  minHeight: math.max(0.0, media.size.height - sheetTop)),
+              child: DecoratedBox(
+                key: RestScene.sheetKey,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [c.nightTop, c.nightBottom],
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(RestScene.sheetRadius)),
                 ),
-                borderRadius: BorderRadius.circular(26),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.nightlight_round, color: c.gold, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(l10n.restTitle,
-                          style: theme.textTheme.titleLarge!
-                              .withWeight(FontWeight.w900)
-                              .copyWith(color: onPanel)),
-                    ),
-                  ]),
-                  const SizedBox(height: 2),
-                  Text(l10n.restBody,
-                      style: theme.textTheme.bodyMedium!
-                          .copyWith(color: onPanel.withValues(alpha: .75))),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(
-                        child: _DoneTile(
-                            title: l10n.featureDailyTest,
-                            line: widget.testLine)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: _DoneTile(
-                            title: l10n.restPracticeTitle,
-                            line: widget.practiceLine)),
-                  ]),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .08),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(children: [
-                      Expanded(
-                        child: Column(
+                child: Padding(
+                  key: _sheetBoxKey,
+                  padding: EdgeInsets.fromLTRB(sheetPad, 18, sheetPad,
+                      _navClearance ?? media.padding.bottom + 16),
+                  child: offer != null
+                      ? _FreePanel(
+                          offer: offer,
+                          hero: widget.hero,
+                          testLine: widget.testLine,
+                          countdown: '$hh:$mm',
+                          countdownSemantics: l10n.restCountdownSemantics(
+                              left.inHours, left.inMinutes % 60),
+                          awake: _awake,
+                          onWake: _wake,
+                          reminder: widget.reminder,
+                          cardSlotKey: _cardSlotKey,
+                        )
+                      : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              l10n.restNextTest(step + 1).toUpperCase(),
-                              style: theme.textTheme.labelMedium!
-                                  .withWeight(FontWeight.w900)
-                                  .copyWith(
-                                      color: onPanel.withValues(alpha: .7),
-                                      letterSpacing: 1.1),
+                            Row(children: [
+                              Icon(Icons.nightlight_round,
+                                  color: c.gold, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(l10n.restTitle,
+                                    style: theme.textTheme.titleLarge!
+                                        .withWeight(FontWeight.w900)
+                                        .copyWith(color: onPanel)),
+                              ),
+                            ]),
+                            const SizedBox(height: 2),
+                            Text(l10n.restBody,
+                                style: theme.textTheme.bodyMedium!.copyWith(
+                                    color: onPanel.withValues(alpha: .75))),
+                            const SizedBox(height: 12),
+                            Row(children: [
+                              Expanded(
+                                  child: _DoneTile(
+                                      title: l10n.featureDailyTest,
+                                      line: widget.testLine)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                  child: _DoneTile(
+                                      title: l10n.restPracticeTitle,
+                                      line: widget.practiceLine)),
+                            ]),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: .08),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Row(children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n
+                                            .restNextTest(step + 1)
+                                            .toUpperCase(),
+                                        style: theme.textTheme.labelMedium!
+                                            .withWeight(FontWeight.w900)
+                                            .copyWith(
+                                                color: onPanel.withValues(
+                                                    alpha: .7),
+                                                letterSpacing: 1.1),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      StepBar(
+                                        segments: [
+                                          for (var i = 0; i < 10; i++)
+                                            i <
+                                                    (step % 10 == 0 && step > 0
+                                                        ? 10
+                                                        : step % 10)
+                                                ? c.gold
+                                                : null,
+                                        ],
+                                        track:
+                                            Colors.white.withValues(alpha: .18),
+                                        height: 6,
+                                        gap: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Semantics(
+                                  label: l10n.restCountdownSemantics(
+                                      left.inHours, left.inMinutes % 60),
+                                  excludeSemantics: true,
+                                  child: Text(
+                                    '$hh:$mm', // l10n-guard: a time span of numbers
+                                    textScaler: TextScaler.noScaling,
+                                    style: theme.textTheme.headlineMedium!
+                                        .withWeight(FontWeight.w900)
+                                        .copyWith(
+                                            color: onPanel,
+                                            fontFeatures: const [
+                                          FontFeature.tabularFigures()
+                                        ]),
+                                  ),
+                                ),
+                              ]),
                             ),
-                            const SizedBox(height: 8),
-                            StepBar(
-                              segments: [
-                                for (var i = 0; i < 10; i++)
-                                  i <
-                                          (step % 10 == 0 && step > 0
-                                              ? 10
-                                              : step % 10)
-                                      ? c.gold
-                                      : null,
-                              ],
-                              track: Colors.white.withValues(alpha: .18),
-                              height: 6,
-                              gap: 4,
-                            ),
+                            if (widget.reminder != null) ...[
+                              const SizedBox(height: 10),
+                              widget.reminder!,
+                            ],
+                            SizedBox(key: _endKey, height: 0),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Semantics(
-                        label: l10n.restCountdownSemantics(
-                            left.inHours, left.inMinutes % 60),
-                        excludeSemantics: true,
-                        child: Text(
-                          '$hh:$mm', // l10n-guard: a time span of numbers
-                          textScaler: TextScaler.noScaling,
-                          style: theme.textTheme.headlineMedium!
-                              .withWeight(FontWeight.w900)
-                              .copyWith(color: onPanel, fontFeatures: const [
-                            FontFeature.tabularFigures()
-                          ]),
-                        ),
-                      ),
-                    ]),
-                  ),
-                  if (widget.reminder != null) ...[
-                    const SizedBox(height: 10),
-                    widget.reminder!,
-                  ],
-                ],
+                ),
               ),
             ),
+          ),
         ],
       );
     });
@@ -996,87 +1084,77 @@ class _FreePanel extends StatelessWidget {
         ),
       ]),
     );
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [c.nightTop, c.nightBottom],
-        ),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Icon(Icons.nightlight_round, color: c.gold, size: 20),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.restTitle,
-                      style: theme.textTheme.titleLarge!
-                          .withWeight(FontWeight.w900)
-                          .copyWith(color: onPanel)),
-                  const SizedBox(height: 4),
-                  Wrap(spacing: 12, runSpacing: 4, children: [
-                    tick(testLine),
-                    tick(l10n.restFreeTicketUsed),
-                  ]),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Semantics(
-              label: countdownSemantics,
-              excludeSemantics: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    countdown,
-                    textScaler: TextScaler.noScaling,
-                    style: theme.textTheme.headlineSmall!
-                        .withWeight(FontWeight.w900)
-                        .copyWith(
-                            color: onPanel,
-                            fontFeatures: const [FontFeature.tabularFigures()]),
-                  ),
-                  Text(l10n.restNextFreeTest,
-                      style: theme.textTheme.labelSmall!
-                          .withWeight(FontWeight.w700)
-                          .copyWith(color: muted)),
-                ],
-              ),
-            ),
-          ]),
-          const SizedBox(height: 14),
-          // The card slides up 300 ms after the scene.
-          TweenAnimationBuilder<double>(
-            key: cardSlotKey,
-            tween: Tween(begin: reduced ? 1 : 0, end: 1),
-            duration: reduced
-                ? Duration.zero
-                : const Duration(milliseconds: 300) + AppMotion.slow,
-            curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
-            builder: (context, t, child) => Opacity(
-              opacity: t,
-              child: Transform.translate(
-                  offset: Offset(0, 24 * (1 - t)), child: child),
-            ),
-            child: card,
+    // The sheet itself (its colour, corners and padding) is the scene's.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(Icons.nightlight_round, color: c.gold, size: 20),
           ),
-          if (reminder != null) ...[
-            const SizedBox(height: 12),
-            reminder!,
-          ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.restTitle,
+                    style: theme.textTheme.titleLarge!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: onPanel)),
+                const SizedBox(height: 4),
+                Wrap(spacing: 12, runSpacing: 4, children: [
+                  tick(testLine),
+                  tick(l10n.restFreeTicketUsed),
+                ]),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Semantics(
+            label: countdownSemantics,
+            excludeSemantics: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  countdown,
+                  textScaler: TextScaler.noScaling,
+                  style: theme.textTheme.headlineSmall!
+                      .withWeight(FontWeight.w900)
+                      .copyWith(
+                          color: onPanel,
+                          fontFeatures: const [FontFeature.tabularFigures()]),
+                ),
+                Text(l10n.restNextFreeTest,
+                    style: theme.textTheme.labelSmall!
+                        .withWeight(FontWeight.w700)
+                        .copyWith(color: muted)),
+              ],
+            ),
+          ),
+        ]),
+        const SizedBox(height: 14),
+        // The card slides up 300 ms after the scene.
+        TweenAnimationBuilder<double>(
+          key: cardSlotKey,
+          tween: Tween(begin: reduced ? 1 : 0, end: 1),
+          duration: reduced
+              ? Duration.zero
+              : const Duration(milliseconds: 300) + AppMotion.slow,
+          curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
+          builder: (context, t, child) => Opacity(
+            opacity: t,
+            child: Transform.translate(
+                offset: Offset(0, 24 * (1 - t)), child: child),
+          ),
+          child: card,
+        ),
+        if (reminder != null) ...[
+          const SizedBox(height: 12),
+          reminder!,
         ],
-      ),
+      ],
     );
   }
 }

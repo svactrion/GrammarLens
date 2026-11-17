@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
 import '../app_colors.dart';
@@ -1390,48 +1391,50 @@ class _HomeScreenState extends State<HomeScreen>
         if (_reminders.mayAsk) _softAskQueued = true;
       }
       if (_softAskQueued) _scheduleSoftAskCheck();
-      return BrandScaffold(
-        isTabRoot: true,
-        appBar: AppBar(
-          toolbarHeight: 0,
-          automaticallyImplyLeading: false,
-          scrolledUnderElevation: 0,
-        ),
-        children: [
-          RestScene(
-            key: HomeScreen.restSceneKey,
-            theme: _climbTheme,
-            days: days,
-            steps: _climbSteps!,
-            hero: hero,
-            name: widget.userName,
-            clock: widget.clock,
-            capsule: capsule,
-            reminder: RestReminderRow(controller: _reminders, hero: hero),
-            testLine: _hasFullAccess
-                ? l10n.restTestLine(completion.correct,
-                    completion.results.length, todayPoints ?? 0)
-                // V24f's done tick: "Daily Test 4/5".
-                : l10n.restDailyTestDone(
-                    completion.correct, completion.results.length),
-            practiceLine: _hasFullAccess
-                ? l10n.restSessionsLine(
-                    _sessionsToday, StorageService.dailySessionLimit)
-                : l10n.restTicketUsed,
-            // V24f (SPEC §1.15): free users' rest scene leads to Premium;
-            // Premium users keep V24.
-            offer: _hasFullAccess
-                ? null
-                : RestOffer(
-                    weakSpot: _restWeakSpot == null
-                        ? null
-                        : humanizeSlug(_restWeakSpot!.errorType),
-                    trialDays: _restTrialDays,
-                    topics: practiceTopics().length,
-                    onWake: () => _openRestPaywall(context),
-                  ),
+      // Fix round 3, B1: the scene is full-bleed from the top of the screen
+      // (behind the status bar), the night sheet attached under it; no
+      // page padding. Light status bar text on the night sky.
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: c.nightTop,
+          body: SingleChildScrollView(
+            primary: true,
+            child: RestScene(
+              key: HomeScreen.restSceneKey,
+              theme: _climbTheme,
+              days: days,
+              steps: _climbSteps!,
+              hero: hero,
+              name: widget.userName,
+              clock: widget.clock,
+              capsule: capsule,
+              reminder: RestReminderRow(controller: _reminders, hero: hero),
+              testLine: _hasFullAccess
+                  ? l10n.restTestLine(completion.correct,
+                      completion.results.length, todayPoints ?? 0)
+                  // V24f's done tick: "Daily Test 4/5".
+                  : l10n.restDailyTestDone(
+                      completion.correct, completion.results.length),
+              practiceLine: _hasFullAccess
+                  ? l10n.restSessionsLine(
+                      _sessionsToday, StorageService.dailySessionLimit)
+                  : l10n.restTicketUsed,
+              // V24f (SPEC §1.15): free users' rest scene leads to Premium;
+              // Premium users keep V24.
+              offer: _hasFullAccess
+                  ? null
+                  : RestOffer(
+                      weakSpot: _restWeakSpot == null
+                          ? null
+                          : humanizeSlug(_restWeakSpot!.errorType),
+                      trialDays: _restTrialDays,
+                      topics: practiceTopics().length,
+                      onWake: () => _openRestPaywall(context),
+                    ),
+            ),
           ),
-        ],
+        ),
       );
     }
 
