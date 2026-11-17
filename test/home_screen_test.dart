@@ -814,11 +814,11 @@ void main() {
   });
 
   testWidgets('shows the picked avatar next to the greeting', (tester) async {
-    final penguin =
-        Avatar.values.firstWhere((a) => a.semanticLabel == 'Penguin');
-    await pumpHome(tester, avatar: penguin);
+    // UI polish: Penguin is retired; Crab is one of the nine heroes.
+    const crab = Avatar.crab;
+    await pumpHome(tester, avatar: crab);
     final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(circle.avatar, penguin);
+    expect(circle.avatar, crab);
   });
 
   testWidgets(

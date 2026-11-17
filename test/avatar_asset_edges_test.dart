@@ -22,6 +22,8 @@ void main() {
     return frame.image;
   }
 
+  // UI polish (owner, 2026-11-17): the seven retired heroes' files are
+  // gone; the nine heroes' base images stay.
   test('the bundle holds exactly Avatar.count avatar files, no more, no less',
       () async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
@@ -30,7 +32,7 @@ void main() {
         .where((path) => path.startsWith('assets/avatars/'))
         .toSet();
     expect(bundled, Avatar.values.map((a) => a.assetPath).toSet());
-    expect(bundled.length, 16);
+    expect(bundled.length, 9);
   });
 
   test('every avatar asset decodes to 508×508 with a real alpha channel',

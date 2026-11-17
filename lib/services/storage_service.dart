@@ -9,6 +9,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../l10n/l10n.dart';
 import '../models/ai_consent.dart';
+import '../models/avatar.dart';
 import '../models/climb_theme.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
@@ -1544,7 +1545,14 @@ class StorageService {
     final db = await _database;
     final rows = await db.query('user_profile', limit: 1);
     if (rows.isEmpty) return null;
-    return UserProfile.fromMap(rows.first);
+    final profile = UserProfile.fromMap(rows.first);
+    // UI polish (owner, 2026-11-17): the seven retired heroes move to Fox
+    // on the first read of this build, silently. `fromMap` already reads
+    // them as Fox; the row is rewritten once so the stored id is Fox too.
+    if (Avatar.isRetiredId(rows.first['avatar'] as String?)) {
+      await saveUserProfile(profile);
+    }
+    return profile;
   }
 
   /// Used both to complete onboarding and to save edits from Settings.

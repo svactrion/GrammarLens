@@ -120,7 +120,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   // Where the initial avatar's raw page sits: a whole number of laps in,
   // so `_loopOffset % Avatar.count == 0` and the first avatar lands on
   // raw page `_loopOffset` itself.
-  static const int _loopOffset = Avatar.count * 1000;
+  static final int _loopOffset = Avatar.count * 1000;
 
   late final PageController _pageController;
   // The RAW page index of the settled page, not an avatar index. Each
@@ -135,7 +135,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   @override
   void initState() {
     super.initState();
-    _settledIndex = _loopOffset + widget.initialAvatar.index - 1;
+    _settledIndex = _loopOffset + widget.initialAvatar.order;
     _pageController = PageController(
       viewportFraction: widget.viewportFraction,
       initialPage: _settledIndex,

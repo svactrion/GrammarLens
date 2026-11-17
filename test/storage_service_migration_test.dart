@@ -251,7 +251,8 @@ void main() {
       expect(profile, isNotNull);
       expect(profile!.name, 'Ada');
       expect(profile.learningGoal, LearningGoal.work);
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
 
       final topicStats = await storageService.getTopicStats();
       expect(topicStats['articleUsage']?.practiced, 42);
@@ -392,7 +393,8 @@ void main() {
       expect(profile, isNotNull);
       expect(profile!.name, 'Ada');
       expect(profile.learningGoal, LearningGoal.work);
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
 
       expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
       // Nothing of the old values remains anywhere in the row.
@@ -452,7 +454,8 @@ void main() {
 
       final profile = await StorageService(dbName: dbName).getUserProfile();
       expect(profile!.name, 'Ada');
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
       expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
     });
 

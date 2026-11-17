@@ -1,69 +1,82 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 
+/// UI polish (owner, 2026-11-17; SPEC §1.1, §1.2): nine heroes in a fixed
+/// order; the seven retired ids read as Fox. The stored format stays
+/// `avatar_NN`. (Replaces the 16-avatar, append-only tests of Batch 8.)
 void main() {
   group('Avatar.values', () {
-    test('the set has sixteen avatars (Batch 8 added avatar_13–16)', () {
-      expect(Avatar.count, 16);
+    test('the picker lists exactly the nine heroes, in order', () {
+      expect(Avatar.values.map((a) => a.semanticLabel).toList(), [
+        'Fox',
+        'Panda',
+        'Koala',
+        'Frog',
+        'Bird',
+        'Giraffe',
+        'Cat',
+        'Sloth',
+        'Crab',
+      ]);
+      expect(Avatar.count, 9);
     });
 
-    test(
-        'the original twelve keep their index and label — the set is '
-        'append-only, since an index is a stored id', () {
-      expect(
-        Avatar.values.take(12).map((a) => a.semanticLabel).toList(),
-        [
-          'Koala',
-          'Snail',
-          'Elephant',
-          'Bee',
-          'Frog',
-          'Chick',
-          'Crab',
-          'Cat',
-          'Turtle',
-          'Penguin',
-          'Giraffe',
-          'Hedgehog',
-        ],
-      );
-      expect(
-        Avatar.values.skip(12).map((a) => a.semanticLabel).toList(),
-        ['Bird', 'Fox', 'Panda', 'Sloth'],
-      );
-    });
-
-    test('holds exactly Avatar.count entries, in asset order', () {
-      expect(Avatar.values.length, Avatar.count);
-      for (var i = 0; i < Avatar.values.length; i++) {
-        expect(Avatar.values[i].index, i + 1);
-      }
-    });
-
-    test('every avatar has a unique, non-empty semantic label', () {
-      final labels = Avatar.values.map((a) => a.semanticLabel).toSet();
-      expect(labels.length, Avatar.count);
+    test('each hero keeps its stored id and base image', () {
+      expect(Avatar.values.map((a) => a.toJson()).toList(), [
+        'avatar_14',
+        'avatar_15',
+        'avatar_01',
+        'avatar_05',
+        'avatar_13',
+        'avatar_11',
+        'avatar_08',
+        'avatar_16',
+        'avatar_07',
+      ]);
       for (final avatar in Avatar.values) {
-        expect(avatar.semanticLabel, isNotEmpty);
+        expect(avatar.assetPath, 'assets/avatars/${avatar.toJson()}.webp');
       }
     });
 
-    test('asset paths are distinct and follow the avatar_NN.webp pattern', () {
-      final paths = Avatar.values.map((a) => a.assetPath).toSet();
-      expect(paths.length, Avatar.count);
-      expect(Avatar.values.first.assetPath, 'assets/avatars/avatar_01.webp');
-      expect(Avatar.values.last.assetPath, 'assets/avatars/avatar_16.webp');
+    test('order is the position in the list', () {
+      for (var i = 0; i < Avatar.values.length; i++) {
+        expect(Avatar.values[i].order, i);
+      }
+    });
+
+    test('every hero has its six pose images and its base image on disk', () {
+      for (final avatar in Avatar.values) {
+        expect(File(avatar.assetPath).existsSync(), isTrue,
+            reason: avatar.assetPath);
+        for (final pose in [
+          'wave',
+          'cheer',
+          'think',
+          'inspect',
+          'sad',
+          'sleep'
+        ]) {
+          expect(File(avatar.posePath(pose)).existsSync(), isTrue,
+              reason: avatar.posePath(pose));
+        }
+      }
+    });
+
+    test('no retired hero is in the list', () {
+      for (final avatar in Avatar.values) {
+        expect(Avatar.retiredIndexes, isNot(contains(avatar.index)));
+      }
     });
   });
 
   group('Avatar.random', () {
-    test('always returns one of the defined values', () {
-      for (var seed = 0; seed < 20; seed++) {
-        final picked = Avatar.random(Random(seed));
-        expect(Avatar.values, contains(picked));
+    test('always returns one of the heroes', () {
+      for (var seed = 0; seed < 40; seed++) {
+        expect(Avatar.values, contains(Avatar.random(Random(seed))));
       }
     });
 
@@ -73,21 +86,33 @@ void main() {
   });
 
   group('Avatar.toJson / fromJson', () {
-    test('round-trips every avatar through its own id', () {
+    test('round-trips every hero through its own id', () {
       for (final avatar in Avatar.values) {
         expect(Avatar.fromJson(avatar.toJson()), same(avatar));
       }
     });
 
-    test('the Batch 8 ids avatar_13–16 resolve to the new avatars', () {
-      for (var n = 13; n <= 16; n++) {
-        expect(Avatar.fromJson('avatar_$n'), same(Avatar.values[n - 1]));
+    test('the seven retired ids read as Fox', () {
+      for (final id in [
+        'avatar_02',
+        'avatar_03',
+        'avatar_04',
+        'avatar_06',
+        'avatar_09',
+        'avatar_10',
+        'avatar_12',
+      ]) {
+        expect(Avatar.isRetiredId(id), isTrue, reason: id);
+        expect(Avatar.fromJson(id), same(Avatar.fox), reason: id);
       }
     });
 
-    test('ids are zero-padded and match the asset filename', () {
-      expect(Avatar.values.first.toJson(), 'avatar_01');
-      expect(Avatar.values.last.toJson(), 'avatar_16');
+    test('a hero id is not retired', () {
+      for (final avatar in Avatar.values) {
+        expect(Avatar.isRetiredId(avatar.toJson()), isFalse);
+      }
+      expect(Avatar.isRetiredId(null), isFalse);
+      expect(Avatar.isRetiredId('fox'), isFalse);
     });
 
     test(
@@ -101,20 +126,8 @@ void main() {
       expect(Avatar.fromJson('not-an-avatar'), isNull);
     });
 
-    test(
-        'returns null for ids from the previous, now-replaced emoji-based '
-        'avatar set — the actual migration case this app can hit in the '
-        'wild', () {
-      for (final legacyId in [
-        'fox',
-        'cat',
-        'owl',
-        'panda',
-        'koala',
-        'penguin',
-        'lion',
-        'turtle'
-      ]) {
+    test('returns null for ids from the emoji-based set before 1.0', () {
+      for (final legacyId in ['fox', 'cat', 'owl', 'panda', 'lion']) {
         expect(Avatar.fromJson(legacyId), isNull);
       }
     });

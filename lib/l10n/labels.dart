@@ -80,26 +80,36 @@ String weakSpotTitle(String errorType, Topic topic, AppLocalizations l10n) =>
 
 extension AvatarLabels on Avatar {
   /// The animal the illustration shows, in the interface language (shown
-  /// under the carousel and read by VoiceOver). [Avatar.semanticLabel] is
-  /// the English identity.
+  /// on the picker and read by VoiceOver). [Avatar.semanticLabel] is the
+  /// English identity.
   String name(AppLocalizations l10n) => switch (index) {
         1 => l10n.avatarKoala,
-        2 => l10n.avatarSnail,
-        3 => l10n.avatarElephant,
-        4 => l10n.avatarBee,
         5 => l10n.avatarFrog,
-        6 => l10n.avatarChick,
         7 => l10n.avatarCrab,
         8 => l10n.avatarCat,
-        9 => l10n.avatarTurtle,
-        10 => l10n.avatarPenguin,
         11 => l10n.avatarGiraffe,
-        12 => l10n.avatarHedgehog,
         13 => l10n.avatarBird,
         14 => l10n.avatarFox,
         15 => l10n.avatarPanda,
         16 => l10n.avatarSloth,
         _ => semanticLabel,
+      };
+
+  /// The three personality chips (SPEC §3.5).
+  List<String> traits(AppLocalizations l10n) => switch (index) {
+        14 => [
+            l10n.traitCurious,
+            l10n.traitQuickLearner,
+            l10n.traitLovesChallenge
+          ],
+        15 => [l10n.traitCalm, l10n.traitSteady, l10n.traitNeverGivesUp],
+        1 => [l10n.traitRelaxed, l10n.traitThoughtful, l10n.traitKind],
+        5 => [l10n.traitCheerful, l10n.traitBouncy, l10n.traitAlwaysReady],
+        13 => [l10n.traitFreeSpirit, l10n.traitEarlyRiser, l10n.traitChatty],
+        11 => [l10n.traitGentle, l10n.traitPatient, l10n.traitThinksBig],
+        8 => [l10n.traitClever, l10n.traitIndependent, l10n.traitCurious],
+        16 => [l10n.traitSlowAndSteady, l10n.traitCalm, l10n.traitFocused],
+        _ => [l10n.traitBrave, l10n.traitTough, l10n.traitThinksSideways],
       };
 }
 

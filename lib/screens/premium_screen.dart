@@ -720,8 +720,7 @@ class _TopBar extends StatelessWidget {
 List<Avatar> _otherAvatarsFor(Avatar center) {
   const offsets = [4, 6];
   return offsets
-      .map(
-          (offset) => Avatar.values[(center.index - 1 + offset) % Avatar.count])
+      .map((offset) => Avatar.values[(center.order + offset) % Avatar.count])
       .toList();
 }
 

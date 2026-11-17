@@ -2857,24 +2857,8 @@
   "@avatarKoala": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
-  "avatarSnail": "Snail",
-  "@avatarSnail": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarElephant": "Elephant",
-  "@avatarElephant": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarBee": "Bee",
-  "@avatarBee": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
   "avatarFrog": "Frog",
   "@avatarFrog": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarChick": "Chick",
-  "@avatarChick": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
   "avatarCrab": "Crab",
@@ -2885,20 +2869,8 @@
   "@avatarCat": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
-  "avatarTurtle": "Turtle",
-  "@avatarTurtle": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarPenguin": "Penguin",
-  "@avatarPenguin": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
   "avatarGiraffe": "Giraffe",
   "@avatarGiraffe": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarHedgehog": "Hedgehog",
-  "@avatarHedgehog": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
   "avatarBird": "Bird",
@@ -2932,6 +2904,116 @@
       "name": {
         "type": "String",
         "example": "Ada"
+      }
+    }
+  },
+  "traitCurious": "Curious",
+  "@traitCurious": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitQuickLearner": "Quick learner",
+  "@traitQuickLearner": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitLovesChallenge": "Loves a challenge",
+  "@traitLovesChallenge": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitCalm": "Calm",
+  "@traitCalm": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitSteady": "Steady",
+  "@traitSteady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitNeverGivesUp": "Never gives up",
+  "@traitNeverGivesUp": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitRelaxed": "Relaxed",
+  "@traitRelaxed": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThoughtful": "Thoughtful",
+  "@traitThoughtful": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitKind": "Kind",
+  "@traitKind": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitCheerful": "Cheerful",
+  "@traitCheerful": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitBouncy": "Bouncy",
+  "@traitBouncy": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitAlwaysReady": "Always ready",
+  "@traitAlwaysReady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitFreeSpirit": "Free spirit",
+  "@traitFreeSpirit": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitEarlyRiser": "Early riser",
+  "@traitEarlyRiser": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitChatty": "Chatty",
+  "@traitChatty": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitGentle": "Gentle",
+  "@traitGentle": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitPatient": "Patient",
+  "@traitPatient": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThinksBig": "Thinks big",
+  "@traitThinksBig": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitClever": "Clever",
+  "@traitClever": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitIndependent": "Independent",
+  "@traitIndependent": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitSlowAndSteady": "Slow and steady",
+  "@traitSlowAndSteady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitFocused": "Focused",
+  "@traitFocused": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitBrave": "Brave",
+  "@traitBrave": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitTough": "Tough",
+  "@traitTough": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThinksSideways": "Thinks sideways",
+  "@traitThinksSideways": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "companionSemantics": "{hero}, your companion",
+  "@companionSemantics": {
+    "description": "VoiceOver label of a companion illustration. {hero} is the animal's name (Fox, Panda, …).",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
       }
     }
   }
