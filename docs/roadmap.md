@@ -12,7 +12,7 @@
 | 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). **The first public release (owner, 2026-10-16): build 6 is in App Store review; 1.0.0 will never be released.** *(Superseded, kept as written: "TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07).")* Proxy rule for the multi-blank boxes deployed (recorded 2026-10-16). **Released 2026-11-02 (owner): approved by App Review on 2026-11-02, Release pressed in App Store Connect the same day at 22:35 local (19:35 UTC; manual release). Build 6 (`1.3.0+6`), served by proxy Worker version `18d87c6b-5f7b-4290-a08b-f07a32565511` (deployed 2026-11-02 18:10 UTC: D3, D11, P14).** Smoke test on TestFlight build 6 passed before the release (build log 2026-11-02). Checklist: "1.3.0 release checklist" below |
 | 1.4.0 | Seven interface languages (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback; AI translation, no native review); questions and AI feedback stay English; language-neutral proxy prompts with a practice model measurement; the audit fixes and the hint card fix; partial answers on multi-blank questions with per-blank results (B8, replaces Q3), AI feedback formatted for reading (B9) and the word-level difference between "You wrote" and "Corrected" with the quote chip (B10; all three added 2026-10-31). P14 is deployed server side right after 1.3.0 is live. The home-screen widget moved to 1.5.0 (owner, 2026-11-02). Plan: [`docs/1.4.0-plan.md`](1.4.0-plan.md) | **Released 2026-11-07 (owner, recorded 2026-11-10): build 7 (`1.4.0+7`) approved by App Review and released on 2026-11-07; live.** *(Superseded, kept as written:)* **Submitted for App Store review 2026-11-05, 20:3x local (owner): build 7 (`1.4.0+7`), release manual; not approved yet, not live.** Eight localizations and 112 screenshots uploaded by Codex through the App Store Connect API, with read-back (`screenshots/1.4.0/asc/read-back.md`, `header-v5-read-back.md`); age rating re-answered to 4+; Coarse Location added to App Privacy (Analytics, not linked, no tracking); Mac and Apple Vision availability kept; Notes for Review updated (build log 2026-11-05). *(Kept as written:)* In progress (scope decided by the owner, 2026-10-23; B1, B8, B9 and B10 built 2026-10-23/31; B9, B10, B10.1 and B10.2 checked on the owner's device 2026-10-31, B8's rows on a fresh multi-blank Practice and B1's device check still open; the rest planned, not started) |
 | 1.4.1 | Small fixes on `main`: the paywall's derived-price lira symbol and the storage reset gate fix (section "1.4.1 (planned)") | **Planned (owner, 2026-11-05): done on `main`, not shipped;** no version bump yet, not built |
-| 1.5.0 | The home-screen widget (WidgetKit): the avatar, this month's Monthly Climb step and whether today's Daily Test is done, no streak, its text in the seven languages (1.4.0 plan D5 and B7, carried over unchanged) | **Built on branch `widgets-notifications` (2026-11-17), with the daily reminders; not merged, not shipped, not checked on a device** (task `docs/design/ui-polish/handoff/TASK-widgets.md`, log `PROGRESS-widgets.md`). *(Kept as written:)* Planned (owner, 2026-11-02): moved out of 1.4.0; not started |
+| 1.5.0 | The home-screen widget (WidgetKit): the avatar, this month's Monthly Climb step and whether today's Daily Test is done, no streak, its text in the seven languages (1.4.0 plan D5 and B7, carried over unchanged) | **Built on branch `widgets-notifications` (2026-11-17), with the daily reminders, and integrated with the UI polish on branch `ui-polish-widgets` (2026-11-17); not on `main`, not shipped, not checked on a device** (task `docs/design/ui-polish/handoff/TASK-widgets.md`, log `PROGRESS-widgets.md`; integration `INTEGRATE.md`, record in `PROGRESS.md` "Integration", the owner's checklist `DEVICE-CHECKS.md`). *(Kept as written:)* Planned (owner, 2026-11-02): moved out of 1.4.0; not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -317,9 +317,13 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
 
 **Status (2026-11-17): the UI polish is built on branch `ui-polish`**
 (batches B0–B11, fix round 1, and fix round 2 after the owner's first
-device test on his iPhone 14 Plus); **not merged into `main`, not
-shipped.** Fix round 2 was built and checked on the simulator only; what
-needs the phone is in PROGRESS.md's "Owner device checks". The run's
+device test on his iPhone 14 Plus), **and integrated with the widgets and
+reminders on branch `ui-polish-widgets`** (`INTEGRATE.md`: the merge, V24f's
+reminder row, the pawn above the nav bar on 6.1"–6.3" phones, Nunito Sans
+in the widgets, a release build check); **not on `main`, not shipped, not
+checked on a device.** The integration was built and checked on the
+simulator only; the owner's phone checks, in order, are in
+[`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
 record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
 The 4th tab is still open.
@@ -373,7 +377,9 @@ Owner decisions so far:
   **Built (2026-11-17) on branch `widgets-notifications`** (from
   `ui-polish`): "Climb" (small + medium) and "Tip" (medium) widgets, the
   daily reminder (N01, N02, N03, V24's switch), without a new package (the
-  app's own bridge); not merged, not checked on a device. Task and log:
+  app's own bridge); **integrated with the UI polish on branch
+  `ui-polish-widgets`** (2026-11-17: V24f got the reminder row, the widgets
+  use Nunito Sans); not on `main`, not checked on a device. Task and log:
   [`TASK-widgets.md`](design/ui-polish/handoff/TASK-widgets.md),
   [`PROGRESS-widgets.md`](design/ui-polish/handoff/PROGRESS-widgets.md).
 - **First-wave topics in the UI polish run (owner, 2026-11-17):** app and

@@ -1,16 +1,395 @@
-# UI polish — progress log (branch `ui-polish`)
+# UI polish — progress log (branches `ui-polish` and `ui-polish-widgets`)
 
-Running log of the unattended implementation run of `TASK.md` / `SPEC.md`.
-One section per batch: status, commits, what was verified and how,
-decisions, open items. The final summary goes at the top when B11 ends.
+Running log of the unattended implementation run of `TASK.md` / `SPEC.md`,
+its fix rounds, and the integration with the widgets and reminders
+(`INTEGRATE.md`). One section per batch: status, commits, what was verified
+and how, decisions, open items. The final summary is below the Integration
+section.
+
+## Integration (branch `ui-polish-widgets`, 2026-11-17)
+
+`INTEGRATE.md`: `ui-polish` (fix round 2, `7f38e21`) and
+`widgets-notifications` (W1–W6, `37a94bd`) together on a new branch, the
+parts each could not see connected, three gaps closed, one build and one
+checklist for the owner's phone. **Status: steps 0–6 done** on
+`ui-polish-widgets` (pushed). Not on `main`, not shipped, **not checked on a
+device**: everything below ran on this Mac and the iPhone 18 Pro simulator
+(iOS 27.2, 402 × 874). `ui-polish`, `widgets-notifications` and `main` were
+not touched.
+
+| Step | Status | Commits |
+|---|---|---|
+| 0 Disk | done | none (files outside git) |
+| 1 Branch | done | `abd2bde` |
+| 2 Merge | done | `c3d9cba` (merge), `dea05a4`, `90dd2a2` |
+| 3a V24f's reminder row | done | `dea05a4`, `12e09b7`, `aa4557e` |
+| 3b The pawn on 6.1"–6.3" | done | `12e09b7` |
+| 3c Nunito Sans in the widgets | done | `7dc49b5` |
+| 3d `TASK-widgets.md` in English | done, no change needed | none |
+| 3e Release build check | done: builds | none |
+| 4 Checks, captures, smoke walk | done | `ca642b2` (a fix it found) |
+| 5 Docs | done | see the docs commit |
+| 6 `DEVICE-CHECKS.md` | done | see the docs commit |
+
+### 0. Disk
+
+Free space on the data volume: **7.1 GiB before, 14 GiB after the
+cleanup**, 11 GiB at the end of the run (after the simulator, release
+and gallery builds; `flutter clean` frees it again).
+
+Deleted, only what `INTEGRATE.md` §0 allows:
+
+| What | Size | How |
+|---|---|---|
+| `~/GrammarLens`: `flutter clean` (`build/`, `.dart_tool/`, ephemeral files) | 2.2 GB `build/` + 88 MB | `flutter clean` |
+| `~/GrammarLens-widgets`: `flutter clean` (its `build/` held old logs, `widget-snapshots/`, captures) | 2.4 GB `build/` + 476 MB | `flutter clean` |
+| DerivedData `Runner-fdbimsrc…` (WorkspacePath `~/GrammarLens-widgets/ios/Runner.xcworkspace`) | 1.6 GB after the clean | `rm -rf`, path checked first |
+| DerivedData `Runner-gqpsqce…` (`~/GrammarLens/ios/Runner.xcworkspace`) | 72 KB after the clean | same |
+| DerivedData `Runner-ghmgufz…` (`~/GrammarLens/macos/Runner.xcworkspace`) | 72 KB | same |
+
+Also stopped: a Crashlytics `upload-symbols` process left over from fix
+round 2's gallery build, hanging for 4 hours on files in `build/`.
+
+Not deleted, report only (the owner's call): DerivedData of other projects
+(`Seher-…` 4.0 GB, `BirdApp-…` 1.2 GB, `Runner-adlzgt…` for ScanStash 1.1
+GB), Xcode's shared caches (`ModuleCache.noindex` 1.9 GB,
+`SDKExplicitPrecompiledModules` 850 MB), four small `Runner-*` folders whose
+`info.plist` is missing (under 8 MB together), and the prunable worktree
+`/private/tmp/grammarlens-140-build7` (worktree deletion is not allowed in
+this run).
+
+### 1. Branch
+
+`ui-polish` was at `7f38e21` and up to date with origin; `git fetch`, then
+`git switch -c ui-polish-widgets`; `INTEGRATE.md` committed as
+"docs: integration task" (`abd2bde`) and pushed with `-u`.
+
+### 2. Merge
+
+`git merge --no-ff origin/widgets-notifications` (`37a94bd`; merge base
+`ca3a847`, the SPEC v10 docs commit). Merge commit `c3d9cba`. Conflicts and
+how each was resolved (both sides kept every time):
+
+- **ARB files (8):** merged by key against the merge base. The widgets
+  branch added 48 keys (96 lines with metadata in English), fix round 2
+  added its own; **no key was added or changed on both sides**, so nothing
+  needed SPEC v10's tie-break. The seven paywall keys fix round 2 removed
+  (`paywallRow*`, `paywallFreePerDayShort`, `paywallHeader*`) stay removed;
+  the widgets branch had not touched them. l10n tests pass.
+- **`lib/widgets/rest_scene.dart`:** `RestScene` takes both `reminder`
+  (widgets) and `offer` (V24f); V24 keeps the row under its countdown.
+- **`lib/screens/home_screen.dart`:** Home passes `RestReminderRow` and keeps
+  fix round 2's free/Premium test line.
+- **`docs/build-log.md`:** both 2026-11-17 entries, the widgets one first
+  (it was written earlier that day).
+- Auto-merged without conflict: `docs/roadmap.md`, `product.yaml` (the
+  widgets branch's `recent` entry on top, `recent` still five items),
+  `settings_screen.dart`, `home_screen_test.dart`, `app.dart` and storage
+  (the widgets branch's `DeviceSync`, reminder and link wiring sit next to
+  fix round 2's changes; neither side edited the other's lines).
+
+**A semantic conflict the merge could not show:** the widgets branch's N01
+test expects the reminder row on the first rest scene of a *free* user,
+which after fix round 2 is V24f, and V24f had no place for the row. The
+first `flutter test` on the merge: 2595 passed, **1 failed** ("the first
+rest scene opens N01 once; Not now is final"). Fixed before anything else
+changed (`dea05a4`: the row under V24f's Premium card, as on the board).
+
+**Database:** 1.4.0, the live App Store build (build 7, source `c37757a`),
+stores schema **v26**; `ui-polish` did not change the schema; the widgets
+branch moved it to **v27** (`reminder_settings`). An install over 1.4.0
+therefore migrates in one step (`oldVersion < 27` creates the table; no
+other step runs). New test `test/upgrade_from_140_test.dart` (`90dd2a2`):
+1.4.0's `onCreate` frozen verbatim from `c37757a` as
+`test/fixtures/storage_v26_140.sql` (19 tables), a row in every table,
+opened by today's `StorageService`: v27 in one step, every row of every
+table unchanged, the profile's name and goal kept, the retired Tiger
+(`avatar_03`) read and stored as Fox (`avatar_14`), this month's and last
+month's completions and the first test on record, weak spots by
+frequency, October's silver and the Welcome badge, language, text size,
+theme, review order, the AI permission, the device id and the month
+themes; `reminder_settings` empty and read as the defaults (all off,
+20:00, not asked). A current hero and the new School goal round-trip.
+
+**Checks on the merge, before anything else changed:** `flutter analyze`
+no issues; `flutter test` **2597 passed** (after `dea05a4`, `90dd2a2`);
+Runner + `GrammarLensWidgets` simulator build **BUILD SUCCEEDED** (on
+`c3d9cba`); Swift `xcodebuild test` **TEST SUCCEEDED, 21 passed, 0
+failed**, 50 snapshot PNGs (on `90dd2a2`; only Dart changed after
+`c3d9cba`). That first `xcodebuild test` ran with parallel testing on, so
+Xcode made a temporary "Clone 1 of iPhone 18 Pro" for the run and removed it
+itself; every later run used `-parallel-testing-enabled NO` (no simulator
+created).
+
+### 3a. V24f gets the reminder row
+
+- The row (`RestReminderRow`, unchanged) sits under V24f's Premium card,
+  12 pt below it, as on the board (`dea05a4`).
+- N01's first-appearance trigger was already on Home's rest-scene branch,
+  which serves both V24 and V24f; tests now cover both ("N01 opens over
+  whichever rest scene comes first": V24 Premium, V24f free).
+- **The Wake button was not on the first view** at 6.1"–6.3": measured in
+  the app's font with each phone's real safe area, its bottom was 26 pt
+  under the nav bar's top at 390 × 844, 30 pt at 393 × 852, 11 pt at
+  402 × 874 (with or without the row: the two done ticks in the header wrap
+  to two lines at these widths). V24f's scene now gets shorter after layout
+  until the button's bottom is 8 pt above the bar (I-7): 265 / 261 / 280 pt
+  instead of 300; 6.7" and 6.9" keep 300; never below 240 (the iPhone SE
+  gets 240 and needs a scroll, which INTEGRATE allows below 390 × 844). The
+  camera keeps the companion at the same distance from the scene's bottom.
+  The row scrolls into view where it does not fit (`12e09b7`).
+- Tests (`test/home_screen_test.dart`, "INTEGRATE 3a"): at 390 × 844,
+  393 × 852, 402 × 874, 428 × 926 and 440 × 956 the button is fully above the
+  bar on first view; on all six sizes (with 375 × 667) the row is under the
+  card and, scrolled, above the bar with its switch tappable.
+- The gallery's V24 / V24f boards now show the row switched on at 20:00 as
+  on their boards, and a new `N01-OverRest` board shows the question over
+  V24f (`aa4557e`).
+
+### 3b. The pawn on 6.1"–6.3" screens
+
+**Measured first** (the app's font, real safe areas, Home in the real
+floating nav shell, November = 30 days): with the full 350 pt window the
+pawn's feet were **31 pt under** the bar's top at 390 × 844 on day 0,
+**34 pt** at 393 × 852, **14 pt** at 402 × 874, **149 pt** at 375 × 667; on
+a mid-month day still 9–13 pt under at 390 / 393 wide. (Fix round 2's
+measurement used a 47 pt top inset for every size, which hid most of this
+at 402 × 874.)
+
+**Choice: a shorter mountain window, fitted on first view (I-5).** On day 0
+the camera is held by the art's bottom edge (the trail starts about 75 pt
+above it), so no camera framing can lift the pawn, and Home's spacing above
+the card is 48 pt in all, against a 47–50 pt shortfall on 6.1". Home now
+measures where the window starts on first view and picks the tallest
+window, at most 350 and at least 160 pt, in which the pawn's feet and the
+next step's ring stay **16 pt above the bar on every day of the month**
+(`MonthlyMountain.fitWindowHeight`; one height for the whole month, so the
+card does not change size from day to day). Results: **303 pt** at
+390 × 844, **299** at 393 × 852, **319** at 402 × 874, **160** (the minimum)
+at 375 × 667; 428 × 926 and 440 × 956 keep **350**. `ClimbCamera`, the K-c
+zoom overview, the card's bubble and the loading skeleton take the height.
+On the SE's 160 pt window the speech bubble would cover the pawn, so it is
+left out below 240 pt (I-6; the Daily Test card above says the same thing).
+A screen shown without the nav bar keeps the full window (`12e09b7`).
+
+Measured after the change (the test's numbers): day 0 clearance 16.2 pt at
+390 × 844, 16.8 at 393 × 852, 16.7 at 402 × 874, **12.6 pt at 375 × 667**
+(not covered, as asked; 16 pt is not reached there at the 160 pt minimum,
+I-6). Tests ("INTEGRATE 3b"): six sizes × day 0, mid-month (15), the last
+step waiting (29) and the summit (30): pawn and ring 16 pt above the bar
+(SE: not covered), the bubble never over the pawn, the window full on 6.7"
+and 6.9". Fix round 2's V15 test asks for 16 pt everywhere now (it allowed
+0 at 6.3" on day 0).
+
+### 3c. Nunito Sans in the widgets
+
+The extension now bundles the app's own `assets/fonts/NunitoSans-Variable.ttf`
+and `OFL-NunitoSans.txt` as resources (referenced from `assets/fonts/`, not
+copied; added by `tool/ios/configure_xcode_project.rb`, which stays
+idempotent and writes no signing setting; RunnerTests carries the font for
+the snapshots). `WidgetFont` registers the file on first use
+(`CTFontManagerRegisterFontsForURL`, process scope; I-9) and draws every
+widget text in it at the boards' weights on its `wght` axis: 900 for titles
+and labels, 700 for lines (W01: 900 / 800 / 700). Characters Nunito has no
+glyph for fall back through a cascade list to the system's rounded font,
+then the system font (Japanese, Korean, Arabic); without the file, the
+system rounded font throughout (`7dc49b5`).
+
+Verified: the release `GrammarLensWidgets.appex` contains both files; a new
+Swift test checks the family, the 900 and 700 weights on the axis, Latin /
+German / Turkish / Portuguese text in Nunito and Japanese / Korean / Arabic
+in a system font; the 50 snapshot PNGs were regenerated and looked at. No
+text is cut off: German small / medium / tip ("Stufe 15 von 30",
+"Nächster Test in 10 Std.", "Heute erledigt" scaled in its box), Arabic
+with two-digit steps ("15/30", RTL), Turkish, English waiting and done. The
+small widget's subtitle reaches the fox's ear, as on the W01 board (its
+92 pt fox starts under the subtitle too; I-10). Sheet:
+`build/integration-captures/widgets-snapshot-sheet-nunito.png`.
+
+### 3d. `TASK-widgets.md` in English
+
+Already English: the widgets run saved the owner's Turkish message as an
+English rendering in W0 (DW0-1), with the user-facing copy kept. Checked
+for Turkish letters and common Turkish words: none. No change.
+
+### 3e. Release build check
+
+`flutter build ios --release --no-codesign` → **✓ Built
+`build/ios/iphoneos/Runner.app` (50.0 MB)**, Xcode build 82 s, exit 0 (on
+`7dc49b5`; again on the final `ca642b2`, 93 s, the same result).
+`Runner.app/PlugIns/GrammarLensWidgets.appex` is inside, both binaries are
+`arm64`, the extension's version is 1.4.0 (7) like the app, and it carries
+the font and its licence. The known Flutter 3.44.6 / Xcode 27.2 problem
+(`lipo -verify_arch` with two architectures) hits only `flutter build ios
+--simulator` (a generic two-architecture simulator build, DW1-1); device
+release builds are not affected. Nothing was upgraded. The build used the
+default (no `config/prod.json`); the owner's device command in
+`DEVICE-CHECKS.md` adds it.
+
+### 4. Checks
+
+**After the last code change** (HEAD `ca642b2`; only docs changed after
+it), run together in this session (`build/final-integration.log`):
+- `flutter analyze`: **No issues found.**
+- `flutter test`: **2630 passed, 0 failed** ("All tests passed!").
+- `xcodebuild build`, Runner + `GrammarLensWidgets`, Debug, iPhone 18 Pro
+  simulator: **BUILD SUCCEEDED**.
+- `xcodebuild test` (RunnerTests: bridge, payload, timeline, reminder
+  requests, the widget snapshots and the new font test;
+  `-parallel-testing-enabled NO`): **TEST SUCCEEDED, 22 passed, 0
+  failed**, 50 snapshot PNGs in `build/widget-snapshots/`.
+- `flutter build ios --release --no-codesign` (3e) again on `ca642b2`:
+  **✓ Built `Runner.app` (50.0 MB)**, the extension `arm64` with the font
+  and licence.
+
+**Captures** (`build/integration-captures/`, not committed):
+- `V24f-first-view-402x874.png` (the real app: the Wake button above the
+  bar), `V24f-reminder-row-scrolled.png` (the row under the card),
+  `N01-over-rest-scene.png` (N01 opened by itself over the first rest
+  scene, V24f), from the smoke walk;
+- from the board gallery (`tool/ui_polish/capture.sh`, iPhone 18 Pro, 0
+  failed boards): `V15-HomeNextDay.png` and `V14-Home.png` (first view: the
+  fitted window, the pawn and its ring above the bar), `V24-DayComplete.png`
+  and `-400.png` (Premium; its row under the countdown needs a scroll on
+  6.3"), `V24f-RestFree.png` and `-400.png` (free: Wake on the first view,
+  the row switched on at 20:00 when scrolled), `N01-OverRest.png`; side by
+  side in `sheet-home-rest.png`;
+- `widgets-snapshot-sheet-nunito.png` (twelve widget snapshots: English,
+  German, Arabic with two-digit steps, Turkish dark).
+
+**Smoke walk** on a fresh install (the app deleted from the simulator
+first), the real app through `tool/widgets/seeded_app.dart` with
+`SEED_SKIP=true` (no seeding; Firebase and RevenueCat not started,
+analytics dropped, the debug fixture offering), Debug, iPhone 18 Pro:
+- Welcome (V02): the side companions float, Fox sways → "Get started".
+- The turntable (V03) → "Try my luck" → the wheel (V03b) → it landed on
+  Cat (not the current Fox) → "Climb with Cat".
+- Name (V04): the field, "Ada", Continue lights up.
+- Goal (V05): four goals, School & university third → picked it.
+- Getting ready (V05b): "School English, here we come!", the three stops
+  ticking, the "Your climb" chips with "School & university". **Found:**
+  the goal chip drew the briefcase for every goal; fixed (`ca642b2`, the
+  goal cards' icons shared).
+- The mountain intro (V06): **the flag stands on the summit**, "Summit ·
+  step 30".
+- Day 0 test: question 1 right ("eating": Q04, +2, the cheering Cat),
+  question 2 wrong on purpose ("Almost!", the correct sentence, "This goes
+  to your weak spots", +1), three skipped.
+- The Welcome badge (V11), then the results (V10: 1/5, +3 points, 1 step,
+  1 weak spot) — the badge comes before the results in this flow.
+- The first climb (V12): Cat walks to step 1, "First step done! 29 to the
+  summit." → the paywall (V13: the trio floating, the CTA shining, the
+  fixture's "7 days free, then $49.99 per year") → "Maybe later" → Home
+  (step 1 of 30, "Step 2 opens tomorrow", the free ticket on Articles).
+  N01 did not open after this first test (correct).
+- Relaunched with today's free ticket used (`SEED_TICKET_USED=true`): **N01
+  opened by itself over V24f** (the first rest scene) → "Not now" → V24f:
+  "Cat is dreaming of… Articles", "All done for today", Daily Test 1/5, the
+  ticket used, the countdown, the Premium card with one USED and four
+  locked tickets, "Wake Cat up · 7 days free" **above the nav bar on first
+  view**; scrolled: "Remind me tomorrow · 20:00" with its switch off → Wake
+  → the companion wakes → **V13r** ("Cat is wide awake, Ada.", the waving
+  Cat at the camp, "Practise it now: Articles, saved today → right after
+  your trial starts", "Start my 7-day free trial") → "Maybe later" → back
+  at the camp, Cat asleep. No purchase.
+
+### 5. Docs
+
+This section and the summary above; `docs/build-log.md` (one dated entry);
+`docs/roadmap.md` (the 1.5.0 row and the UI polish status: both built and
+integrated on `ui-polish-widgets`, not on `main`, not shipped, not checked
+on a device); `product.yaml`: the two `planned` lines, a `recent` entry
+(I-12) with the oldest dropped (still five), `updated_at` 2026-11-17;
+`status`, `versions` and `legal` unchanged (no new third party, no new data
+collected: the font is the app's own, nothing leaves the device).
+`PROGRESS-widgets.md` stays the widgets record.
+
+### 6. `DEVICE-CHECKS.md`
+
+New, in this folder: one ordered checklist for the iPhone 14 Plus, merged
+from fix round 2's "Owner device checks" (below) and `PROGRESS-widgets.md`'s
+"Owner steps": (1) before the first device build, the Xcode steps for the
+`GrammarLensWidgets` target (team, App Group for both App IDs) click by
+click, the portal fallback and the exact release command with
+`config/prod.json`; (2) install over 1.4.0 without deleting: data,
+Reduce Motion, Home, motion, Daily Test, ticket, Review, practice, Profile,
+the edit-name sheet, medals, the paywall, the free rest scene → Premium
+with a sandbox trial, the widgets, the reminders, haptics; (3) delete and
+reinstall for the first run; (4) performance in release. Each item has its
+expected result and board ID.
+
+### Decisions (integration)
+
+- **I-1 ARB conflicts: a key-level three-way merge.** · Hand-edit the
+  conflict hunks vs. merge by key. · **By key against the merge base**, so
+  each side's additions, removals and changes are kept exactly; a key
+  changed on both sides would have kept SPEC v10 (none existed). · Eight
+  files, 96 new English lines: by hand would risk dropping one.
+- **I-2 The merge's semantic fix went in before any other change**
+  (`dea05a4`): the merge's checks must pass before the integration work
+  starts, and the failing test was the integration point itself (the row on
+  V24f).
+- **I-3 The 1.4.0 schema comes from `c37757a`, not `main`.** `main` has
+  `8d4183b` (a `StorageService` fix that is not in build 7); both are v26,
+  but the test should open exactly what phones have.
+- **I-4 Retired heroes migrate on the first profile read**, as built in B1;
+  the upgrade test checks the stored id after that read.
+- **I-5 3b: a fitted window, not camera framing or spacing** (why above).
+  Options: change `ClimbCamera.pawnAt` (cannot lift day 0), tighten Home's
+  spacing (48 pt in all, not enough), a per-device height table (breaks
+  with text sizes and safe areas), or measure. · **Measure on first view and
+  fit the window to the month's worst day, 160–350 pt, only under the
+  floating nav bar.** · Exact at every size and text size, stable through
+  the month, no change on 6.7" / 6.9", easy to undo (one parameter).
+- **I-6 The iPhone SE reaches "not covered", not 16 pt**, at the 160 pt
+  minimum window; the bubble is left out below 240 pt there. A smaller
+  window would hardly show the mountain.
+- **I-7 3a: V24f's scene shrinks after layout so "Wake" is 8 pt above the
+  bar**, 240–300 pt, rather than a fixed height: the header's height changes
+  with the language and the text size. The row may need a scroll (the
+  button wins, as `INTEGRATE.md` says).
+- **I-8 The reminder row's place on V24f** is 12 pt under the Premium card
+  inside the night panel, as on the board.
+- **I-9 3c: the font is registered at run time**, not through
+  `UIAppFonts`: the same code works in the extension and in RunnerTests'
+  snapshot run, and a missing file falls back to the system font instead of
+  failing.
+- **I-10 3c: weights 900 / 700** for the two styles the views use (heavy,
+  bold), matching W01's 900 titles and labels and 700 lines; W01's 800
+  chips draw at 900. The small widget's subtitle over the fox's ear is the
+  board's own layout.
+- **I-11 Smoke walk through the seeded runner**, not `main.dart`: the real
+  app's screens and storage, with analytics dropped and no Firebase or
+  RevenueCat, so a simulator run sends nothing; the paywall shows the debug
+  fixture offering.
+- **I-12 `product.yaml` `recent` gets an entry too.** `INTEGRATE.md` §5 names
+  the `planned` lines and `updated_at`; `CLAUDE.md` says a completed fix goes
+  on top of `recent`. Both done; the oldest entry (1.4.0 screenshots,
+  2026-11-05) dropped to keep five.
+- **I-13 The getting-ready goal chip fix** (`ca642b2`) is outside
+  `INTEGRATE.md`'s list; it was found by the smoke walk it asks for, is one
+  shared function, and the smallest fix that is easy to change.
+
+### Not verified
+
+Anything on a device: signing the extension, the App Group on a real
+phone, the widgets and reminders on the home and lock screens, Nunito in a
+real widget (the simulator's snapshots and the appex contents only), the
+1.4.0 → v27 upgrade with the owner's real data (tested with a 1.4.0-shaped
+database), haptics, the real keyboard, performance. A real purchase. A
+delivered reminder's tap on the simulator (the widgets run found it does
+not open the app there). All of it is in `DEVICE-CHECKS.md`.
 
 ## Final summary
 
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
-`ui-polish` (pushed). Not merged into `main`, not shipped. The owner tested
-the branch once on his iPhone 14 Plus; fix round 2 fixes what he found and
-was built and checked **on the simulator only** (iPhone 18 Pro Max). What
-only the phone can confirm is in "Owner device checks" below.
+`ui-polish` (pushed), **and integrated with the widgets and reminders on
+branch `ui-polish-widgets`** (pushed; "Integration" above). Not merged into
+`main`, not shipped. The owner tested `ui-polish` once on his iPhone 14
+Plus; fix round 2 and the integration were built and checked **on the
+simulator only**. What only the phone can confirm is in
+[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md), in order (it includes the list
+"Owner device checks" below).
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -69,13 +448,16 @@ the first Daily Test on record), D9-2 (the board's shelf is built), D9-4
 **Decisions still open for the owner** (details under each batch and in fix
 round 1): D6-2 ("new" chip = saved once), D6-4 (RV05's navy button), D6-5
 (R03 shows the latest mistake only), D7-3 ("Back to topics"), D7-4, D7-5,
-D8-4, D9-3 (PF03 is the existing detail), fix round 1's F1-1 to F1-9, and
-fix round 2's F2-1 to F2-12.
+D8-4, D9-3 (PF03 is the existing detail), fix round 1's F1-1 to F1-9,
+fix round 2's F2-1 to F2-12, and the integration's I-1 to I-13 (above;
+I-5 to I-7 change what 6.1"–6.3" phones and the iPhone SE see).
 
 ## Owner device checks
 
-Things the simulator cannot confirm. Please check them on the iPhone 14
-Plus before the merge:
+Things the simulator cannot confirm (fix round 2). Since the integration,
+the full ordered list, with the widgets and reminders and the Xcode steps,
+is [`DEVICE-CHECKS.md`](DEVICE-CHECKS.md); this list is part of it. Please
+check them on the iPhone 14 Plus before the merge:
 
 1. **Is Reduce Motion on?** (Settings → Accessibility → Motion.) With it
    on, every companion loop stops by design (the app's rule since B1). If

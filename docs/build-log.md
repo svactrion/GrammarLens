@@ -14366,3 +14366,41 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   on a device.
 - **[Open]** The owner's device checks (PROGRESS.md "Owner device
   checks": Reduce Motion first), decisions F2-1 to F2-12, the merge.
+
+## 2026-11-17 (UI polish + widgets integrated on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** `INTEGRATE.md`: `widgets-notifications` merged into a
+  new branch from `ui-polish` (`--no-ff`, merge `c3d9cba`). Conflicts in the
+  eight ARB files (merged by key; no key on both sides), the rest scene,
+  Home and this log, each resolved keeping both sides. One semantic
+  conflict: the widgets branch's N01 test expected the reminder row on a
+  free user's rest scene, which fix round 2 had made V24f; the row now sits
+  under V24f's Premium card. The schema goes from 1.4.0's v26 to v27 in one
+  step; a new test opens a database built from 1.4.0's own `onCreate`
+  (frozen from `c37757a`) and checks every row survives (the retired hero
+  becomes Fox, reminders read as never asked).
+- **[Engineering]** The pawn: on 6.1"–6.3" phones the full mountain window
+  put the pawn under the floating nav bar on first view (day 0: 31 pt under
+  at 390 × 844, 14 pt at 402 × 874, 149 pt on the iPhone SE). Home now fits
+  the window on first view so the pawn and the next step's ring stay 16 pt
+  above the bar on every day of the month (303 / 299 / 319 pt there, 160
+  on the SE, which is not covered but has 12.6 pt; 6.7" and 6.9" keep
+  350). V24f's "Wake <Hero> up" was under the bar on the same phones; the
+  free scene now shrinks just enough to keep it on the first view, and the
+  reminder row scrolls in below it.
+- **[Engineering]** The widgets now use the app's Nunito Sans (the font
+  file and its OFL licence in the extension, the system font as the
+  fallback for Japanese, Korean and Arabic). `TASK-widgets.md` was already
+  English. Found in the smoke walk and fixed: getting ready's goal chip
+  showed the work icon for every goal.
+- **[Verified]** `flutter build ios --release --no-codesign`: built
+  (50.0 MB, the widget extension inside, arm64); the Flutter 3.44.6 / Xcode
+  27.2 `lipo` problem only hits the generic simulator build. After the last
+  code change: `flutter analyze` no issues; `flutter test` 2630 passed; Runner + widget extension simulator build succeeded; Swift RunnerTests 22 passed, 0 failed (with the widget snapshots and a font test). A fresh-install walk on the simulator from
+  Welcome to Home, then the free rest scene → N01 → "Wake Cat up" → V13r (no
+  purchase); captures in `build/integration-captures/`.
+- **[Not verified]** Anything on a device. The owner's ordered checklist,
+  with the Xcode steps for the extension's team and App Group and the
+  release command, is `docs/design/ui-polish/handoff/DEVICE-CHECKS.md`.
+- **[Disk]** 7.1 GiB free before, 14 GiB after the allowed cleanup
+  (`flutter clean` in both folders, their three DerivedData folders).

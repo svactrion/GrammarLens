@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-17
+    notes: "UI polish and the widgets and reminders integrated on branch ui-polish-widgets: the free rest scene got 'Remind me tomorrow', the pawn and the Wake button clear the nav bar on 6.1-6.3 inch phones, the widgets use Nunito Sans, an install over 1.4.0 keeps its data (tested), the release build checked. Not on main, not shipped, not checked on a device."
+  - version:
+    date: 2026-11-17
     notes: "Home-screen widgets (Climb small and medium, Tip medium) and daily reminder notifications (one a day, chosen time, settings under Profile) built on branch widgets-notifications with the app's own iOS bridge; no new package, nothing leaves the device. Not merged, not shipped, not checked on a device."
   - version:
     date: 2026-11-17
@@ -29,15 +32,12 @@ recent:
   - version:
     date: 2026-11-05
     notes: "Paywall fix: derived prices show the lira as ₺ again. On main, not shipped yet."
-  - version: 1.4.0
-    date: 2026-11-05
-    notes: "App Store screenshots and metadata for eight localizations (112 screenshots) uploaded to App Store Connect."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
-  - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications, not merged, not checked on a device; owner: extension signing, App Group registration, device check"
+  - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
-  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish; fix round 2 after the owner's first device test built and checked on the simulator, not merged), then a new feature as a 4th navbar tab"
+  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets; not on main, not shipped, not checked on a device), then a new feature as a 4th navbar tab"
   - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): code on the UI polish branch, hidden until the question-quality check and owner review"
 
 monetization:
