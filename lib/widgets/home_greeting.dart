@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
+import '../l10n/labels.dart';
 
 /// Home's "Good morning, <name>", read by VoiceOver as that one sentence.
 ///
@@ -15,9 +19,12 @@ import 'package:flutter/material.dart';
 ///   it is longer than a whole line, so it is never lost entirely.
 /// - An empty name shows the greeting word alone.
 ///
-/// With [nameStyle] (Home since 1.2.0, the brief's greeting): always two
-/// lines, "Good evening," in [style] above the name in [nameStyle]. The
-/// name wraps rather than being shortened, so a long name is never cut off.
+/// With [nameStyle] (Home, V14 / V15; fix round 2, item 10): one line,
+/// "Good evening, Ada" in [style] with the name in [nameStyle] (bold), as
+/// the boards draw it. If it does not fit, the whole line scales down,
+/// never below [minScale] of its size, instead of wrapping (it used to put
+/// the name on a second line); only past that minimum is the end cut with
+/// "…".
 class HomeGreeting extends StatelessWidget {
   final String word;
   final String name;
@@ -45,6 +52,12 @@ class HomeGreeting extends StatelessWidget {
       this.lead,
       this.addressedName});
 
+  /// The smallest the one-line greeting scales to (V14 / V15).
+  static const double minScale = .7;
+
+  /// The one-line greeting (tests read its size).
+  static const lineKey = ValueKey('home_greeting_line');
+
   String get _nameLine => addressedName ?? name;
 
   String get _lead => lead ?? '$word,';
@@ -58,7 +71,9 @@ class HomeGreeting extends StatelessWidget {
       label: text,
       excludeSemantics: true,
       child: nameStyle != null
-          ? _stacked()
+          ? LayoutBuilder(
+              builder: (context, constraints) =>
+                  _oneLine(context, constraints.maxWidth))
           : LayoutBuilder(builder: (context, constraints) {
               if (name.isEmpty || _fitsOneLine(context, constraints.maxWidth)) {
                 return Text(text,
@@ -83,16 +98,37 @@ class HomeGreeting extends StatelessWidget {
     );
   }
 
-  Widget _stacked() {
-    if (name.isEmpty) return Text(word, style: style);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(_lead, style: style),
-        Text(_nameLine, style: nameStyle),
-      ],
-    );
+  /// V14's one line: the name bold, scaled down to fit (not below
+  /// [minScale]).
+  Widget _oneLine(BuildContext context, double maxWidth) {
+    if (name.isEmpty) {
+      return Text(word,
+          key: lineKey,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style);
+    }
+    final base = DefaultTextStyle.of(context).style.merge(style);
+    final bold = base.merge(nameStyle);
+    TextSpan line(double k) => TextSpan(
+          style: base.copyWith(fontSize: (base.fontSize ?? 14) * k),
+          children: emphasizedSpans(text,
+              emphasized: [_nameLine],
+              style: bold.copyWith(fontSize: (bold.fontSize ?? 14) * k)),
+        );
+    final painter = TextPainter(
+      text: line(1),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final full = painter.width;
+    painter.dispose();
+    final k = full <= maxWidth || full == 0
+        ? 1.0
+        : math.max(minScale, maxWidth / full * .995);
+    return Text.rich(line(k),
+        key: lineKey, maxLines: 1, overflow: TextOverflow.ellipsis);
   }
 
   /// Lays the one-line text out the way [Text] would (the same merged

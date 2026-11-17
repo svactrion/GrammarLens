@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
@@ -1072,35 +1071,26 @@ void main() {
   testWidgets(
       'the greeting is larger than a section title and smaller than the '
       'brand; the name is the same size, bolder (V15)', (tester) async {
-    await pumpHome(tester);
+    // Wide enough that the test font's square glyphs fit at full size.
+    await pumpHome(tester, size: const Size(700, 844));
+    // Fix round 2 (V14 / V15): one line, the name bold inside it.
+    final line = tester.widget<Text>(find.byKey(HomeGreeting.lineKey));
+    final root = line.textSpan! as TextSpan;
+    final greeting = root.style!;
+    final name = root.children!
+        .whereType<TextSpan>()
+        .firstWhere((t) => t.text == 'Ada')
+        .style!;
     TextStyle style(Finder f) => tester.widget<Text>(f).style!;
-    final greeting = style(find.text('Good morning,'));
-    final name = style(find.text('Ada'));
     final brand = style(find.text('GrammarLens'));
     final section = style(find.text('Topic practice'));
+    expect(root.toPlainText(), 'Good morning, Ada');
     expect(greeting.fontSize,
         closeTo(section.fontSize! * HomeScreen.greetingScale, .01));
     expect(greeting.fontSize, greaterThan(section.fontSize!));
     expect(name.fontSize, greeting.fontSize);
     expect(name.fontWeight!.value, greaterThan(greeting.fontWeight!.value));
     expect(greeting.fontSize, lessThan(brand.fontSize!));
-  });
-
-  testWidgets('320 pt, Large text: a long name wraps inside the page',
-      (tester) async {
-    await pumpHome(tester,
-        size: const Size(320, 844),
-        textSize: AppTextSize.large,
-        userName: 'Maximiliana Alexandra Konstantinopoulou');
-    expect(tester.takeException(), isNull);
-    final name = find.text('Maximiliana Alexandra Konstantinopoulou');
-    final paragraph = tester.renderObject<RenderParagraph>(name);
-    expect(paragraph.didExceedMaxLines, isFalse);
-    // More than one line: it wraps instead of running under the hero.
-    final lineHeight = tester.widget<Text>(name).style!.fontSize! *
-        tester.widget<Text>(name).style!.height!;
-    expect(tester.getSize(name).height, greaterThan(lineHeight * 1.5));
-    expect(tester.getRect(name).right, lessThanOrEqualTo(320));
   });
 
   // 1.2.0 Batch 3: no overflow anywhere on Home at the three widths, the
@@ -1125,10 +1115,17 @@ void main() {
         expect(greeting.right, lessThanOrEqualTo(width));
         expect(tester.getRect(find.byKey(HomeScreen.capsuleKey)).right,
             lessThanOrEqualTo(width));
-        expect(find.text('Maximiliana Alexandra'), findsOneWidget);
-        final name = tester
-            .renderObject<RenderParagraph>(find.text('Maximiliana Alexandra'));
-        expect(name.didExceedMaxLines, isFalse);
+        // Fix round 2: one line (scaled down, never wrapped); the whole
+        // name is read out (the fit itself, in the real font:
+        // fix_round2_greeting_test).
+        final line = find.byKey(HomeGreeting.lineKey);
+        expect(tester.getRect(line).right, lessThanOrEqualTo(width));
+        final size =
+            (tester.widget<Text>(line).textSpan! as TextSpan).style!.fontSize!;
+        expect(tester.getSize(line).height, lessThan(size * 1.6));
+        // What VoiceOver reads (HomeGreeting's one label): the whole name.
+        expect(tester.widget<HomeGreeting>(find.byType(HomeGreeting)).text,
+            'Good morning, Maximiliana Alexandra');
 
         final page = tester
             .state<ScrollableState>(find.byType(Scrollable).first)
