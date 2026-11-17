@@ -75,6 +75,7 @@ payload_ref = ensure_file(shared_group, 'WidgetPayload.swift', changes)
 store_ref = shared_group.files.find { |f| f.path == 'AppGroupStore.swift' }
 
 ext = project.targets.find { |t| t.name == EXT_NAME }
+ext_created = ext.nil?
 unless ext
   changes << "target #{EXT_NAME} (app extension)"
   ext = project.new_target(:app_extension, EXT_NAME, :ios, '15.0', project.products_group, :swift)
@@ -102,8 +103,11 @@ end
   'SWIFT_EMIT_LOC_STRINGS' => 'NO',
 }.each { |key, value| ensure_setting(ext, key, value, changes) }
 # Signing stays the owner's (TASK-widgets fixed decision 2): drop whatever
-# the gem's template put there, so the target inherits the project's.
+# the gem's template put there, so the target inherits the project's. Only
+# for a target this run created: once it exists, its team is the owner's
+# (set in Xcode during the device test, fix round 3 E1) and is never touched.
 ext.build_configurations.each do |config|
+  next unless ext_created
   %w[CODE_SIGN_STYLE DEVELOPMENT_TEAM PROVISIONING_PROFILE_SPECIFIER CODE_SIGN_IDENTITY].each do |key|
     next unless config.build_settings.key?(key)
     changes << "#{EXT_NAME} #{config.name}: remove #{key}"
