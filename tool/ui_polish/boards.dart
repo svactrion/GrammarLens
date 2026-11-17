@@ -346,6 +346,9 @@ final Map<String, WidgetBuilder> galleryBoards = {
       LanguagePickerScreen(current: AppLanguage.en, onSelected: (_) {}),
   'R08-Data': (_) => DataScreen(storageService: _GalleryProfileStorage()),
   'R09-Credits': (_) => const CreditsScreen(),
+  // B10: the dark theme direction (captured with ":dark").
+  'SY03-DarkHome': (_) =>
+      _home(steps: 2, correct: 8, wrong: 2, doneToday: true, weakSpot: true),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
