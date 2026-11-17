@@ -1,6 +1,10 @@
-# GrammarLens UI polish — design specification (final, v10, 2026-11-17)
+# GrammarLens UI polish — design specification (final, v11, 2026-11-18)
 
 v10 (after the owner's first device test): §1.14–§1.16, V05, V05b, V24, the new V24f, V24s, V13r and PW05r.
+
+v11 (after the device test of the integrated build, 2026-11-18): §1.17–§1.21, §3.2 (shine), §3.3 (pose changes),
+§3.5 (props everywhere), §3.6 (switch), §4, V01, V04 (+ the new V04s), V05, V05b, V06, V10/V11, V12, V13 / V13c / V13a
+(new order), V18, V23, V24f, §5.10 (N01, N03), SY03 (dark mode rules).
 
 The design was made on a claude.ai design canvas ("GrammarLens — Tüm Ekranlar
 ve Senaryolar", page "Yeni tasarım — gruplar"). This folder is a complete,
@@ -97,6 +101,21 @@ Reading the boards:
 16. **Getting ready lasts at least 4 s** (V05b): each stop takes at least
     1.2 s, then 0.6 s of celebration; the bar still never passes a stop before
     its work has finished.
+17. **Paywall order: first view → comparison → plans** (V13 → V13c → V13a).
+    Value before price. The hint on the first view says "Compare plans". The
+    full price line under the pinned button ("7 days free, then <price> per
+    year, auto-renews unless cancelled.") stays on the first view and
+    everywhere on the page, and no price on the first view is bigger than it
+    (Guideline 3.1.2(c); 1.0.0 was rejected over price prominence).
+18. **The name screen comes alive** (V04, V04s): the companion asks, listens
+    while the user types, and greets them by name when they pause. Two new
+    strings, translated into all 8 interface languages.
+19. **Dark mode is fixed in this round** (SY03 rules): contrast, navy text on
+    dark, the right/wrong chips. A theme-level pass, not per-screen paint.
+20. **The expression kit is used everywhere** (§3.5): every companion shows
+    its mood's prop; wrong answers use `oops`.
+21. **Splash slower on first launch** (V01): about 2.2 s; later launches stay
+    short.
 
 ## 2. Scope
 
@@ -147,7 +166,11 @@ tokens, so dark mode comes from the theme, not from per-screen work.
 - Primary button: height 56 (52 inside cards), radius 18, 5 px bottom lip in
   the deep tone; on press it moves down 4 px and the lip shrinks
   (PressableButton). Optional shine sweep (3 s loop) on the main CTA of a
-  screen only.
+  screen only. The shine is a diagonal band the full height of the button,
+  38 % of its width, skewed −20°, white 0 → 50 % → 0, clipped to the
+  button's shape; it travels from −140 % to +320 % of its own width in the
+  first 55 % of the loop. Never a small square (v11: the device build drew
+  one on V05 and V06). One shared implementation for every shining button.
 
 ### 3.3 Motion tokens
 
@@ -158,6 +181,10 @@ tokens, so dark mode comes from the theme, not from per-screen work.
   a 150 ms fade, confetti and rays do not run. Loops also stop when off
   screen.
 - Implement as `AppMotion` constants; no ad-hoc durations in widgets.
+- Pose changes (any mood to another: wave on tap, waking up, the V04 greeting,
+  V05b inspect → cheer) cross-fade the two images in 200 ms with a 0.96 → 1
+  scale on the new one; never a hard swap (v11: the Profile wave felt
+  abrupt). Reduce Motion: a 150 ms fade.
 
 ### 3.4 Haptics
 
@@ -187,6 +214,12 @@ system setting.
   oops = head shake ±8°, twice, 360 ms + sweat drop falling.
 - Props sit at the top right of the head: sparkle (cheer), thought bubble
   (think), cloud (sad), Zzz (sleep), sweat (oops).
+- v11: **every companion on every screen shows its board's mood and that
+  mood's prop.** A prop is left out only where the board leaves it out (V24f:
+  the dream bubble replaces the Zzz) or where it would cover text; each such
+  case is listed in PROGRESS.md with its reason. Wrong answers (V09, Q04 /
+  Q05 wrong, practice wrong) use `oops`: the head shake and the falling sweat
+  drop. Dialogs with a sad companion (V13b, R10, R08 reset) show the cloud.
 - Picker order and stage colours: ASSETS.md. Personality chips (user-facing,
   translated): Fox — Curious, Quick learner, Loves a challenge; Panda — Calm,
   Steady, Never gives up; Koala — Relaxed, Thoughtful, Kind; Frog — Cheerful,
@@ -208,6 +241,7 @@ system setting.
 | Snackbar | SY02 | one component for all short messages |
 | ErrorState | R11 | one pattern for every network/quota/server error |
 | Confetti, Rays | many | `widgets/confetti_burst.dart` exists; reuse/extend |
+| Switch | N03, V24f, R08 | thumb white in both states (v11: the device build drew it black); track navy when on (green on V24f's reminder row, as on the board), #E3DACB when off; dark mode: thumb stays white |
 
 ### 3.7 Localization
 
@@ -229,7 +263,9 @@ V01 Splash → V02 Welcome → V03 Choose your buddy (→ V03b wheel, optional) 
 V04 Name → V05 Goal → V05b Getting ready → V06 This month's mountain →
 Day-0 Daily Test (V07 question, V08 correct / V09 wrong, Q04 / Q05 question
 types, R10 leave) → V10 Results → V11 Welcome badge → V12 First step on the
-mountain → V13 Paywall (13a, 13c, 13b on close) → Home (V14).
+mountain → V13 Paywall (13c, 13a, 13b on close) → Home (V14).
+The results come before the badge (v11: the integrated build showed the badge
+first).
 
 Later days: V15 (Home, test waiting) → Daily Test → Home (V14, done) → Review
 (V16 …) → practice (R01 …) → rest scene when every daily right is used
@@ -303,8 +339,10 @@ bottom right, its two lines draw left to right, a glint crosses the glass;
 then the wordmark rises and a small lens scans the word.
 Motion: square 0.5 → 1.08 → 1, 320 ms easeOutBack; lens from bottom right with
 rotation + scale, 280 ms delay, 360 ms; lines scaleX 0 → 1, 160 ms, 120 ms
-apart; glint 300 ms; wordmark 12 px up + fade, 250 ms. First launch ≤ 1.4 s;
-later launches only square + wordmark (≤ 600 ms). Reduce Motion: one fade.
+apart; glint 300 ms; wordmark 12 px up + fade, 250 ms; the small lens scans
+the word in 900 ms. First launch about 2.2 s (v11: 1.4 s felt rushed on the
+device); later launches only square + wordmark (≤ 800 ms), because daily users
+open the app every day. Reduce Motion: one fade.
 If the icon cannot be reproduced faithfully from shapes, use the icon image
 with the same timing and record it in PROGRESS.md.
 Haptics: when the square lands: light (once).
@@ -349,13 +387,29 @@ background 300 ms.
 Haptics: Spin: medium; each slice passing: selection (thinning out as it
 slows); landing: success.
 
-**V04-Name — the buddy asks.** A conversation instead of a form: the question
-sits in the companion's bubble; after Continue the companion says "Nice to
-meet you, <name>!" (next screen).
-Motion: bubble pops (250 ms); while typing the companion nods slightly (at
-most 4 Hz); Continue goes from disabled to active in 200 ms once a name is
-entered.
-Haptics: Continue: light.
+**V04-Name — the buddy gets to know you (v11).** The companion stands large in
+the centre (142 pt) inside a warm glow, with a speech bubble above it (tail
+pointing down at it); the name field, the hint "A nickname is fine. It stays
+on this device." and an n/40 counter below; Continue above the keyboard.
+Three states (storyboard V04s):
+1. Asks — empty field: wave pose, bubble "Hi! What should I call you?",
+   Continue disabled.
+2. Listens — while typing: inspect pose (looking at the field through its
+   lens), the bubble shows three animated dots.
+3. Greets — 700 ms after the last key, if the name is valid: cheer pose, one
+   hop, three sparkles, bubble "Nice to meet you, <name>!" (name in orange,
+   at most 16 characters shown, then …), a green tick at the right of the
+   field.
+Typing again returns to Listens; clearing the field returns to Asks.
+New strings: "Hi! What should I call you?" and "Nice to meet you, {name}!",
+in all 8 interface languages. Same validation as today (max 40).
+Motion: opening: companion 12 px up + fade (300 ms), bubble pops (350 ms
+easeOutBack); every pose change is the §3.3 cross-fade; the bubble pops on
+each change; the glow breathes (3.2 s); Continue goes from disabled to active
+in 200 ms. Reduce Motion: no hop, no glow loop.
+Haptics: the greeting: light (once per name); Continue: light.
+
+**V04s-NameStoryboard** — the three V04 states side by side.
 
 **V05-Goal — big cards, the buddy reacts.** Four goals as large cards:
 Exam prep ("IELTS, TOEFL or another English exam"), Work ("Emails, reports
@@ -369,7 +423,9 @@ and lifts, the companion pops out of its corner in the cheer pose with a
 now" text button.
 Behaviour: §1.12 — stored only.
 Motion: cards enter from below 60 ms apart; selection: card scale 1.03 + slight
-tilt (±2°), companion hops out in 300 ms, confetti; reaction line 150 ms
+tilt that alternates by position: card 1 right (+2°), card 2 left (−2°),
+card 3 right, card 4 left (v11: cards 2 and 3 tilted the same way on the
+device); companion hops out in 300 ms, confetti; reaction line 150 ms
 later; changing the selection slides the previous companion down and out.
 Haptics: selection: selection, plus light with the confetti; Continue: medium.
 
@@ -392,9 +448,15 @@ Motion: stop reached: check pops (easeOutBack), its row goes from faded to
 full colour; companion inspect → cheer cross-fade 200 ms + hop; chips enter
 120 ms apart; 6 confetti pieces from the flag at 100.
 Haptics: each stop: light; 100: success.
+v11: on the device the bar did not look like this board. Match it exactly:
+the striped orange fill, the three stop circles that turn into green ticks
+when passed, the flag at the end of the track, the big percentage above.
 
 **V06-MountainIntro — this month's mountain.** The month's mountain with the
 summit flag (v2 assets) on the summit tip; the avatar at the start.
+v11: the pole stands on the mountain's highest point, not where the trail
+ends (the device build put it at the trail's end). Each month's art gets its
+own apex point, measured from the image, in light and dark.
 Motion: mountain 0.9 → 1 scale, 600 ms easeOutCubic; pole pops, pennant
 waves from its left edge (1.6 s, ±6°); the avatar hops twice at the start;
 bottom panel slides up 24 px (300 ms).
@@ -437,7 +499,13 @@ at any moment; the wide shot fits the screen height and crops the sides.
 Motion: one camera transform: wide → 2.2× close (1 s easeInOut) → walk 2 s →
 wide (1 s); the walk follows the trail path (PathMetric) in 0.45 s hop steps;
 the trail paints 0 → 100 % in sync; "Step 1 of 30" pops on arrival; the
-bubble and Continue appear when the camera has opened back up. Later days on
+bubble and Continue appear when the camera has opened back up.
+v11: the bubble ("First step done! 29 to the summit.") opens right above the
+companion, its tail pointing at it, not at the top of the screen. Its place
+follows the companion's position on screen: 12 pt above the companion's head,
+at least 16 pt from the screen edges, the tail under the companion's centre;
+if there is no room above, it opens below with the tail pointing up. "Step 1
+of 30" stays at the top. Later days on
 the Home card: no zoom, only the walk + paint (1.2 s).
 Haptics: arrival: light; "Step 1 of 30": success.
 
@@ -474,6 +542,14 @@ Behaviour: free users only; the card is part of the page, never a modal; the
 paywall opens only from the button, with paywall source `rest_scene` on the
 existing `paywall_viewed` event. The board's "Remind me tomorrow" row belongs
 to the separate notifications task: leave it out on this branch.
+Layout (v11, the device build differed): the scene is full-bleed from the top
+of the screen (behind the status bar) down to the sheet; the navy sheet is
+attached to it with rounded top corners, not a separate card with a gap; the
+camp (tent, fire, companion) sits at the board's scale and is always fully
+visible above the sheet with at least 12 pt to spare. When the sheet needs
+room (so that "Wake …" stays above the nav bar), the scene is cropped from
+the TOP; the image is never scaled up. Dream bubble top left, score capsule
+top right, as on the board.
 Motion: dream dots appear one by one (200 ms apart), the bubble floats
 (3.2 s); the Premium card slides up 300 ms after the scene; locked tickets pop
 60 ms apart; glint every 3.6 s.
@@ -575,6 +651,7 @@ Haptics: each correct step: light; wrong step: none; last step: success.
 
 **V11-Badge — the Welcome badge.** The companion in cheer holds its arms up as
 if lifting the badge above its head; rays turn; confetti.
+Shown after V10 and before V12 (§4).
 Motion: badge pops (900 ms) + glint (2.6 s); companion hops twice, then
 breathes; confetti 2.5 s.
 Haptics: badge lands: success.
@@ -663,7 +740,9 @@ Motion: sections appear 40 ms apart; Allow moves down 4 px on press.
 Haptics: Allow: medium; Not now: none.
 
 **V18-Preparing — questions being prepared.** Companion thinks; question card
-skeletons shimmer; topic hint cards rotate.
+skeletons shimmer; topic hint cards rotate. The skeleton cards and the hint
+card have the same width (v11: the skeletons were narrower on the device).
+Topic practice and weak-spot practice share this screen.
 Motion: shimmer 1.4 s; companion tilt (2.4 s); hint cards slide every 3 s;
 questions arrive: skeleton → card in 250 ms.
 Haptics: questions ready: light.
@@ -710,27 +789,31 @@ deploy the proxy and do not run any generation or measurement script.
 **V13-Paywall — first view.** No price boxes. Three companions (Panda, Fox,
 Frog) on top, the headline built on the user's own mistake ("Turn today's
 mistake into progress, <name>."), the weak spot card, three benefit rows,
-"See plans" with an arrow. Pinned bottom: orange "Start my 7-day free trial"
+"Compare plans" with an arrow (v11; was "See plans"). Pinned bottom: orange "Start my 7-day free trial"
 (shine + pulse) and the full price/renewal line ("7 days free, then <price>
 per year, auto-renews unless cancelled."), Restore · Terms · Privacy. The
 price line and the links stay visible on first view (App Review).
 Behaviour: copy that counts topics must use the real number of available
 topics.
-Motion: companions float, the middle one hops; "See plans" arrow nudges every
-1.8 s; CTA shine + pulse.
+Motion: companions float, the middle one hops; "Compare plans" arrow nudges
+every 1.8 s; CTA shine + pulse.
 Haptics: CTA: medium; X: light (→ 13b once per session).
 
-**V13a-PaywallPlans — plans on scroll.** A vertical list of rectangular plans
+**V13a-PaywallPlans — plans at the end of the page (v11).** After the
+comparison (13c): "Choose your plan", a vertical list of rectangular plans
 (yearly preselected), then the trial timeline. The pinned CTA's text follows
-the selected plan.
+the selected plan. In each plan row the billed amount is the largest price;
+the monthly equivalent stays small.
 Motion: plans enter from below 60 ms apart as they scroll in; selection: frame
 turns navy in 150 ms, radio pops.
 Haptics: plan selection: selection.
 
-**V13c-PaywallCompare — Free vs Premium further down.** Part of the same page
-(13 → 13a → 13c): the comparison table and the trial timeline. When the plans
-have scrolled away, a small label with the selected plan's name sits above
-the pinned CTA.
+**V13c-PaywallCompare — Free vs Premium right after the first view (v11).**
+Part of the same page (13 → 13c → 13a): "Free vs Premium" with the cheering
+companion, the comparison table, the "Cancel anytime…" note, then a "Choose
+your plan" hint with an arrow. The trial timeline moves to 13a with the
+plans. The selected plan (yearly by default) drives the pinned CTA before the
+plans are on screen.
 Motion: table rows appear 40 ms apart when visible; the Premium column fills
 top to bottom.
 Haptics: none (CTA: medium).
@@ -778,9 +861,14 @@ weak spots); "Medal collection" on the thick shelf (medal_shelf_v2) with 3
 medals standing on its top surface (newest first; a locked slot for the
 current month) and "See all" (→ PF02); the month progress card with the
 thresholds; then the existing settings rows.
+Ribbon size (v11: it looked thick on the device): its width follows the
+screen: tails included, screen width − 60 pt (330 at 390, 368 at 428). The
+name and "Climbing with <Hero> · since <month year>" each stay on one line;
+if a line does not fit, its text first shrinks (to 85 % at most), then ends
+with …. Height 62 pt at the default text size.
 Motion: ribbon settles from 12 px below (300 ms easeOutBack) when the stage
-opens; companion breathes and waves when tapped; medals settle on the shelf
-80 ms apart.
+opens; companion breathes and waves when tapped (the wave is the §3.3 pose
+cross-fade); medals settle on the shelf 80 ms apart.
 Haptics: pencil: light (→ PF04); See all: light (→ PF02).
 
 **PF02-Medals — all medals over a blurred profile.** A layer over the profile,
@@ -844,7 +932,12 @@ spinning → landed. Motion and haptics: V03b.
 
 ### 5.10 Widgets and notifications — OUT (§1.10)
 
-W01-Widgets, N01-SoftAsk, N02-LockScreen: reference only.
+W01-Widgets, N01-SoftAsk, N02-LockScreen: reference only for the main run;
+built by the widgets task (`TASK-widgets.md`). v11 fixes on these screens:
+- N01 opens as soon as the first rest scene (V24 / V24f) is on screen, also
+  when the user comes back to Home from Review after using the free ticket
+  (the device build opened it only after switching tabs again).
+- N03: the switch thumbs are white (§3.6).
 
 ### 5.11 System states and theme
 
@@ -863,8 +956,27 @@ down; swiping down dismisses it at once.
 Haptics: success: light; error: warning.
 
 **SY03-DarkHome — dark theme direction.** The same components in dark: page
-#15141A, cards #211F27, the mountain's dark background; orange and navy
-unchanged. Every screen's dark version comes from theme tokens; nothing is
-drawn per screen.
+#15141A, cards #211F27, the mountain's dark background; orange unchanged.
+Every screen's dark version comes from theme tokens; nothing is drawn per
+screen.
+v11 rules (the owner found dark mode hard to read on the device):
+- Text contrast at least 4.5:1 against its own background; large text
+  (≥ 18 pt, or ≥ 14 pt bold) and icons at least 3:1.
+- Navy is a light-mode colour. On dark surfaces navy text, links, icons and
+  outlines use a light blue counterpart (a token, e.g. `onSurfaceAccent`,
+  around #9DB8FF; check the ratio); navy stays as a fill only where white
+  text sits on it (buttons, chips, the ribbon, the Premium card).
+- Right / wrong (V08, V09, Q04, Q05, R03, results rows): dark tints, not light
+  pastel fills: success fill around #173A2A with text/icon around #7FD6A6;
+  error fill around #42201F with text/icon around #FF9C92; amber / orange
+  the same way. Check every pair against the ratio.
+- Soft fills (sky, cream, goldSoft, greenSoft, redSoft) get dark tints of the
+  same hue; no light fill keeps dark text on a dark page.
+- Card lips and borders: a lighter line (#2E2C36 or so) instead of the light
+  shadow colour.
+- Companion art and mountain art are unchanged (the mountain already has its
+  dark background).
+- Done when every in-scope board has a dark capture that passes the ratios
+  (PROGRESS.md lists the pairs that were changed).
 Motion: theme change 300 ms colour cross-fade; otherwise as in light.
 Haptics: as in light.
