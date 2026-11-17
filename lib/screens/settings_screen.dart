@@ -110,6 +110,9 @@ class SettingsScreen extends StatefulWidget {
   static const seeAllMedalsKey = ValueKey('settings_medals_see_all');
   static const nameFieldKey = ValueKey('settings_name_field');
   static const saveNameKey = ValueKey('settings_save_name');
+  static const cancelNameKey = ValueKey('settings_cancel_name');
+  static const nameCounterKey = ValueKey('settings_name_counter');
+  static const nameSheetKey = ValueKey('settings_name_sheet');
 
   SettingsScreen({
     super.key,
@@ -472,7 +475,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _nameController.text = widget.profile.name;
     final name = await showAppSheet<String>(
       context: context,
+      showGrabber: false,
       builder: (sheetContext) => _NameSheet(
+        key: SettingsScreen.nameSheetKey,
         hero: widget.profile.avatar ?? _fallbackAvatar,
         controller: _nameController,
       ),
@@ -1078,7 +1083,7 @@ class _SettingLabel extends StatelessWidget {
 class _NameSheet extends StatefulWidget {
   final Avatar hero;
   final TextEditingController controller;
-  const _NameSheet({required this.hero, required this.controller});
+  const _NameSheet({super.key, required this.hero, required this.controller});
 
   @override
   State<_NameSheet> createState() => _NameSheetState();
@@ -1089,21 +1094,32 @@ class _NameSheetState extends State<_NameSheet> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final l10n = context.l10n;
-    final canSave = widget.controller.text.trim().isNotEmpty;
+    final theme = Theme.of(context);
+    final text = widget.controller.text;
+    final canSave = text.trim().isNotEmpty;
+    void save() => Navigator.of(context).pop(text.trim());
+    final frame = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide(color: c.navy, width: 3),
+    );
+    // PF04 (fix round 2, item 5): a sheet above the keyboard, sized to its
+    // content, so its top sits just under the companion stage, which stays
+    // visible (dimmed) above. The keyboard inset is applied once, by
+    // [showAppSheet]; this padding used to add it a second time, which
+    // grew the sheet to the full screen on a phone with its keyboard up.
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-          20, 4, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Row(children: [
             CompanionView(
                 hero: widget.hero,
-                mood: CompanionMood.think,
+                mood: CompanionMood.wave,
                 size: 64,
                 decorative: true),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: SpeechBubble(
                 text: l10n.onboardingNameQuestion,
@@ -1112,42 +1128,72 @@ class _NameSheetState extends State<_NameSheet> {
               ),
             ),
           ]),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           TextField(
             key: SettingsScreen.nameFieldKey,
             controller: widget.controller,
             autofocus: true,
             maxLength: UserProfile.maxNameLength,
+            // The counter sits inside the field (the board's "3/20").
             buildCounter: (_,
                     {required currentLength, required isFocused, maxLength}) =>
                 null,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(hintText: l10n.settingsNameLabel),
+            style: theme.textTheme.titleLarge!
+                .withWeight(FontWeight.w800)
+                .copyWith(fontSize: 20, color: c.text),
+            decoration: InputDecoration(
+              hintText: l10n.settingsNameLabel,
+              filled: true,
+              fillColor: c.card,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              border: frame,
+              enabledBorder: frame,
+              focusedBorder: frame,
+              suffixIcon: Padding(
+                padding: const EdgeInsetsDirectional.only(end: 16),
+                child: Text(
+                  key: SettingsScreen.nameCounterKey,
+                  '${text.characters.length}/${UserProfile.maxNameLength}',
+                  style: theme.textTheme.labelMedium!
+                      .withWeight(FontWeight.w700)
+                      .copyWith(fontSize: 12, color: c.muted),
+                ),
+              ),
+              suffixIconConstraints:
+                  const BoxConstraints(minWidth: 0, minHeight: 0),
+            ),
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) {
-              if (canSave) {
-                Navigator.of(context).pop(widget.controller.text.trim());
-              }
+              if (canSave) save();
             },
           ),
-          const SizedBox(height: 8),
-          PressableButton(
-            key: SettingsScreen.saveNameKey,
-            label: l10n.commonSave,
-            tone: ButtonTone.navy,
-            haptic: ButtonHaptic.light,
-            onPressed: canSave
-                ? () => Navigator.of(context).pop(widget.controller.text.trim())
-                : null,
-          ),
-          const SizedBox(height: 4),
-          Text(l10n.onboardingNameNote,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall!
-                  .copyWith(color: c.muted)),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: PressableButton(
+                key: SettingsScreen.cancelNameKey,
+                label: l10n.commonCancel,
+                tone: ButtonTone.outline,
+                height: 50,
+                haptic: ButtonHaptic.none,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: PressableButton(
+                key: SettingsScreen.saveNameKey,
+                label: l10n.commonSave,
+                tone: ButtonTone.navy,
+                height: 50,
+                haptic: ButtonHaptic.light,
+                onPressed: canSave ? save : null,
+              ),
+            ),
+          ]),
         ],
       ),
     );

@@ -269,15 +269,53 @@ void main() {
       });
     }
 
-    testWidgets('at most 40 characters (O2, as in onboarding), no counter',
-        (tester) async {
+    testWidgets(
+        'fix round 2: with the keyboard up the sheet sits on it, sized to its '
+        'content, its top under the companion stage (not a full page); '
+        'Cancel closes without saving', (tester) async {
+      final storage = await pump(tester);
+      await openSheet(tester);
+      // The keyboard comes up (336 pt, an iPhone 14 Plus's).
+      tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
+      await tester.pumpAndSettle();
+      final sheet = tester.getRect(find.byKey(SettingsScreen.nameSheetKey));
+      expect(sheet.bottom, closeTo(844 - 336, 1));
+      final stage = tester.getRect(find
+          .descendant(
+              of: find.byKey(SettingsScreen.identityCardKey),
+              matching: find.byType(CompanionView))
+          .first);
+      expect(sheet.top, greaterThan(stage.top),
+          reason: 'the companion stays visible above the sheet');
+      expect(sheet.height, lessThan(260));
+      expect(find.text('What should I call you?'), findsOneWidget);
+      expect(find.byKey(SettingsScreen.cancelNameKey), findsOneWidget);
+      await tester.tap(find.byKey(SettingsScreen.cancelNameKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(SettingsScreen.nameSheetKey), findsNothing);
+      expect(storage.saved, isEmpty);
+    });
+
+    testWidgets(
+        'at most 40 characters (O2, as in onboarding); fix round 2: the '
+        'counter inside the field counts to the real limit (the board\'s '
+        '"/20" would contradict O2)', (tester) async {
       await pump(tester);
       await openSheet(tester);
       final field =
           tester.widget<TextField>(find.byKey(SettingsScreen.nameFieldKey));
       expect(field.maxLength, UserProfile.maxNameLength);
       expect(UserProfile.maxNameLength, 40);
-      expect(find.textContaining('/40'), findsNothing);
+      await tester.enterText(find.byKey(SettingsScreen.nameFieldKey), 'Ada');
+      await tester.pump();
+      expect(
+          tester.widget<Text>(find.byKey(SettingsScreen.nameCounterKey)).data,
+          '3/40');
+      expect(
+          find.descendant(
+              of: find.byKey(SettingsScreen.nameFieldKey),
+              matching: find.byKey(SettingsScreen.nameCounterKey)),
+          findsOneWidget);
     });
   });
 
