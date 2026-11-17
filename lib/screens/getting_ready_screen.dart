@@ -54,7 +54,7 @@ class GettingReadyScreen extends StatefulWidget {
     required this.onDone,
   });
 
-  /// The pause at 100 % before the next screen.
+  /// The celebration at 100 % before the next screen (SPEC §1.16: 0.6 s).
   static const Duration doneHold = Duration(milliseconds: 600);
 
   @override
@@ -186,9 +186,13 @@ class _GettingReadyScreenState extends State<GettingReadyScreen>
                         Rays(color: c.card, size: compact ? 260 : 320),
                         CompanionView(
                           hero: widget.hero,
+                          // A slow task: the bar waits at its stop with
+                          // the companion thinking (SPEC §1.16).
                           mood: atTop
                               ? CompanionMood.cheer
-                              : CompanionMood.inspect,
+                              : _model.waiting
+                                  ? CompanionMood.think
+                                  : CompanionMood.inspect,
                           size: compact ? 140 : 180,
                         ),
                         PositionedDirectional(
