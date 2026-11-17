@@ -397,6 +397,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     child: GoalCard(
                       key: OnboardingScreen.goalKey(goal),
                       goal: goal,
+                      position: i,
                       hero: _selectedAvatar,
                       selected: goal == _selectedGoal,
                       onTap: () {
@@ -582,6 +583,9 @@ class _Entrance extends StatelessWidget {
 /// Screen readers hear it as one of a group, selected or not.
 class GoalCard extends StatelessWidget {
   final LearningGoal goal;
+
+  /// The card's place in the list, from 0: its tilt alternates by it.
+  final int position;
   final Avatar hero;
   final bool selected;
   final VoidCallback onTap;
@@ -589,10 +593,16 @@ class GoalCard extends StatelessWidget {
   const GoalCard({
     super.key,
     required this.goal,
+    this.position = 0,
     required this.hero,
     required this.selected,
     required this.onTap,
   });
+
+  /// SPEC V05 (v11): a selected card tilts by its position, alternating:
+  /// the first right (+2°), the second left (−2°), the third right, the
+  /// fourth left. Degrees; positive is clockwise.
+  static double tiltFor(int position) => position.isEven ? 2.0 : -2.0;
 
   @override
   Widget build(BuildContext context) {
@@ -601,12 +611,7 @@ class GoalCard extends StatelessWidget {
     final l10n = context.l10n;
     final reduced = AppMotion.reduced(context);
     final duration = AppMotion.orInstant(context, AppMotion.base);
-    final tilt = switch (goal) {
-      LearningGoal.examPrep => -2.0,
-      LearningGoal.work => 2.0,
-      LearningGoal.school => 1.5,
-      LearningGoal.general => -1.5,
-    };
+    final tilt = tiltFor(position);
     final (tile, tileFg) = switch (goal) {
       LearningGoal.examPrep => (c.cream, c.orangeDeep),
       LearningGoal.work => (c.sky, c.navy),
