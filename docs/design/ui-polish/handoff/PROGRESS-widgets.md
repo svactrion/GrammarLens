@@ -15,7 +15,7 @@ marked done.
 | Step | Status | Commits |
 |---|---|---|
 | W0 Plan | done | see W0 |
-| W1 Bridge, URL scheme, routing | not started | |
+| W1 Bridge, URL scheme, routing | done | see W1 |
 | W2 Widget extension + SwiftUI views | not started | |
 | W3 App-side payload | not started | |
 | W4 Reminder engine | not started | |
@@ -50,9 +50,37 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
   an entry at each top of the hour until midnight. · Fixed decision 3 allows
   "text the app prepared"; it keeps the board's copy.
 
+- **DW1-1 How the iOS app is built here.** `flutter build ios --simulator`
+  fails on this machine before any of our code: Flutter 3.44.6 runs
+  `lipo <framework> -verify_arch arm64 x86_64`, which Xcode 27.2's `lipo`
+  rejects ("-verify_arch requires exactly one input file"), so a generic
+  two-architecture simulator build always stops at "Failed to copy Flutter
+  framework". · Patch the Flutter SDK vs. build for one simulator. · **Build
+  for the booted simulator** (`xcodebuild … -destination 'platform=iOS
+  Simulator,id=…'` with the default DerivedData, or `flutter run -d <id>`),
+  which builds only the active architecture. · Touches nothing outside the
+  repo; the SDK problem is the owner's to know about (listed in Owner steps).
+- **DW1-2 Links arrive through a Flutter scene delegate.** The app uses
+  the scene lifecycle (`FlutterSceneDelegate`, implicit engine). ·
+  Override `SceneDelegate` methods (the superclass does not declare them in
+  its header, so overriding would bypass Flutter's own forwarding) vs.
+  Flutter's plugin hook. · **`GrammarLensBridge` registers itself with
+  `registrar.addSceneDelegate`** and gets `willConnectTo` (cold start) and
+  `openURLContexts` (warm). A link that arrives before Dart asks is kept
+  (latest wins) and handed over by `links.initial`.
+- **DW1-3 The seeded app for simulator checks.** `tool/widgets/seeded_app.dart`
+  runs the real app with the App Store screenshot learner (`Sam`, from
+  `tool/screenshots/seed.dart`), no Firebase or RevenueCat, analytics
+  dropped; nothing in `lib/` imports it (the existing import guard test).
+
 ## Blocked / not verified
 
-- (nothing yet)
+- **Disk full (2026-11-17, W1).** The Mac's data volume reached 308 MB
+  free during the first simulator build; a `flutter run` failed with "No
+  space left on device" and the simulator shut down. Freed by deleting only
+  this run's own build folder (`build/xc-dd`, a custom DerivedData path);
+  about 8 GB free afterwards. Builds in this run stay on the default
+  DerivedData folder and `build/`. The owner may want to free space.
 
 ## W0 — Plan
 
@@ -331,3 +359,53 @@ Verified in W0 (docs only, no code changed): `flutter analyze` → no issues;
 
 `product.yaml`: the widget/reminder line in `planned` now points at this
 task and plan (CLAUDE.md: a plan was added); nothing else changed there.
+
+## W1 — Bridge, URL scheme, routing
+
+Status: **done**.
+
+What was built:
+- `ios/Runner/GrammarLensBridge.swift`: the one channel
+  (`com.ahmettayfur.grammarlens/bridge`): `appGroup.write / read / delete /
+  list / available`, `widgets.reload`, `links.initial`; iOS → Dart
+  `links.open`. Registered from `AppDelegate.didInitializeImplicitFlutterEngine`
+  and as a scene delegate (DW1-2).
+- `ios/Shared/AppGroupStore.swift`: `<group>/widget/<name>`, names limited
+  to `[a-z0-9_.-]`, atomic writes; shared with the extension in W2.
+- `ios/Runner/Runner.entitlements` (App Group
+  `group.com.ahmettayfur.grammarlens`), `CODE_SIGN_ENTITLEMENTS` on Runner's
+  three configurations; `Info.plist` `CFBundleURLTypes` with `grammarlens`.
+- `tool/ios/configure_xcode_project.rb`: idempotent project edits with the
+  `xcodeproj` gem, a backup of `project.pbxproj` in `build/pbxproj-backup/`
+  before each save, and the Flutter package reference comment restored
+  after the gem's save (Flutter's migrations match it). No team, signing
+  style or provisioning setting is written.
+- Dart: `lib/services/native_bridge.dart` (`NativeBridge`, best effort:
+  without the native side every call is a no-op), `lib/services/app_link.dart`
+  (`AppLink` daily-test / home / review, `AppLinkRouter`: cold-start link
+  waits for the shell, warm links go straight through, dropped during
+  onboarding); `app.dart` attaches the router once the tab shell exists and
+  drops a link while anything is pushed on the root navigator (DW0-3);
+  Home opens the Daily Test for a `daily-test` link after reading today's
+  set again (stays on Home when it is done).
+
+Verified:
+- `flutter analyze`: no issues; full `flutter test`: 2516 passed.
+- New Dart tests: `app_link_test` (parsing, router, the channel's calls and
+  file-name guard, errors swallowed), `app_link_routing_test` (cold review /
+  daily-test, warm tab switches, dropped while the Daily Test is open,
+  dropped during onboarding), three Home tests in `home_screen_test`
+  ("Daily Test link").
+- Swift: `RunnerTests/BridgeTests.swift` (`AppGroupStoreTests`, 5 cases:
+  write/read/list/delete, the folder, unsafe names, the bridge's cold-start
+  link kept until Dart asks, the channel's write/read shape): `xcodebuild
+  test` on the iPhone 18 Pro simulator, TEST SUCCEEDED.
+- Simulator (seeded app, Debug): the built app's simulated entitlements
+  carry the App Group; `xcrun simctl openurl booted grammarlens://review`
+  with the app running switched to Review (after iOS's own "Open in
+  GrammarLens?" confirmation, which `simctl openurl` triggers); with the
+  app terminated, `grammarlens://daily-test` cold-started it straight into
+  the Daily Test's first question. Captures: `build/widgets-captures/
+  w1-warm-review.png`, `w1-cold-daily-test.png` (not committed).
+
+Not verified: on a device (signing with the App Group is the owner's step).
