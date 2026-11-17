@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/mountain_intro_screen.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:grammar_lens/app.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -157,14 +160,19 @@ void main() {
   Future<void> completeOnboarding(WidgetTester tester) async {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
-    // Two steps (1.2.0): the name, then the goal.
+    // UI polish: buddy (V03), name (V04), goal (V05); getting ready (V05b)
+    // runs by itself; this month's mountain (V06) starts the test.
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
+    await tester.tap(find.byKey(OnboardingScreen.startKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(MountainIntroScreen.startKey));
     await tester.pumpAndSettle();
   }
 

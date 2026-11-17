@@ -11,7 +11,7 @@ import '../theme.dart';
 /// `Avatar.fromJson`). Used wherever an avatar is just displayed, not
 /// picked from: Home's personalized greeting and Settings' own preview
 /// row (`avatar_picker_screen.dart` owns the actual picking UI), and every
-/// page of `AvatarCarousel`'s `PageView`. A rounded square rather than a
+/// page of the former avatar carousel. A rounded square rather than a
 /// circle — `radius` is kept as the sizing parameter (half the tile's side
 /// length) so call sites didn't need to change when this moved off
 /// `CircleAvatar`, long before illustrations replaced the old
@@ -24,7 +24,7 @@ import '../theme.dart';
 /// avatar grid (a `Wrap`) recomputed its line breaks and visibly reflowed
 /// everything below it the moment the last tile in a row was tapped. The
 /// fix wasn't a smaller border — it's that a *display* widget has no
-/// business owning selection chrome at all. `AvatarCarousel` used to draw
+/// business owning selection chrome at all. The former carousel used to draw
 /// selection as a colored ring behind its `PageView`, which has since been
 /// removed entirely (docs/design-audit.md's avatar section) in favor of
 /// the center page's own scale/opacity — this widget was never involved in

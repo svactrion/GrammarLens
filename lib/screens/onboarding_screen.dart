@@ -1,15 +1,23 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
 import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
+import '../motion.dart';
 import '../theme.dart';
 import '../utils/content_width.dart';
-import '../widgets/avatar_carousel.dart';
-import '../widgets/avatar_tile.dart';
+import '../utils/haptics.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/brand_wordmark.dart';
+import '../widgets/buddy_picker.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/confetti_burst.dart';
+import '../widgets/pressable_button.dart';
+import '../widgets/speech_bubble.dart';
+import 'lucky_wheel_screen.dart';
 
 /// The short privacy line under the goal options. Public so a test can pin
 /// the wording to what the app actually does: the name never leaves the
@@ -32,20 +40,20 @@ List<(String, String)> onboardingDataFacts(AppLocalizations l10n) => [
       ),
     ];
 
-/// Onboarding in two short steps (the 1.2.0 additional screens package),
-/// after Welcome and before the first Daily Test:
+/// Onboarding in three short steps (UI polish V03–V05), after Welcome and
+/// before "Getting ready" (V05b, in [FirstLaunchFlow]):
 ///
-/// 1. **Companion and name.** The avatar carousel (every avatar, the
-///    existing IDs and loop) and the name, which is required (owner
-///    decision, 2026-10-05): Continue stays disabled while the name is
-///    empty or only spaces. At most [UserProfile.maxNameLength] characters.
-/// 2. **Goal.** Asked to understand who uses the app, not to personalize
-///    anything. No option is preselected; "Skip goal & start" finishes with
-///    no goal (stored as `skipped`, never counted as general fluency).
+/// 1. **Choose your buddy** (V03): the turntable ([BuddyPicker]); "Try my
+///    luck" opens the wheel (V03b). Starts with Fox in front.
+/// 2. **Name** (V04): the buddy asks in its bubble; the name is required
+///    (Continue stays disabled while it is empty or only spaces), at most
+///    [UserProfile.maxNameLength] characters.
+/// 3. **Goal** (V05): three big cards; the buddy pops out of the chosen one
+///    and reacts. Stored only (SPEC §1.12): it changes no content. "Skip
+///    for now" finishes with no goal (stored as `skipped`).
 ///
-/// Back on step 2 returns to step 1 with the name, the avatar and the goal
-/// as they were. Nothing is saved until step 2 finishes ([onComplete]);
-/// leaving earlier leaves onboarding not done.
+/// Back returns to the previous step with everything as it was. Nothing is
+/// saved until the last step finishes ([onComplete]).
 class OnboardingScreen extends StatefulWidget {
   final ValueChanged<UserProfile> onComplete;
 
@@ -61,27 +69,45 @@ class OnboardingScreen extends StatefulWidget {
   static ValueKey<String> goalKey(LearningGoal goal) =>
       ValueKey('onboarding_goal_${goal.name}');
 
-  /// The step change: a short fade, none with reduce motion.
-  static const Duration stepDuration = Duration(milliseconds: 200);
+  /// The cross-fade between steps.
+  static const Duration stepDuration = AppMotion.base;
+
+  /// The number of dots in the onboarding's step indicator: buddy, name,
+  /// goal, this month's mountain.
+  static const int stepCount = 4;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+enum _Step { buddy, name, goal }
+
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
   final _nameController = TextEditingController();
   final _dataLinkFocus = FocusNode(debugLabel: 'data link');
   LearningGoal? _selectedGoal;
-  bool _onGoalStep = false;
+  _Step _step = _Step.buddy;
 
-  // Random on mount, never null (PRD v2 §13.5's "no empty state" rule): a
-  // user who never touches the carousel still ends up with a real avatar.
-  late Avatar _selectedAvatar = Avatar.random();
+  // Never null (PRD v2 §13.5's "no empty state" rule): the turntable
+  // starts with Fox in front (V03, "1 / 9").
+  Avatar _selectedAvatar = Avatar.fox;
+
+  /// The buddy's nod while the name is typed (V04: at most 4 Hz).
+  late final AnimationController _nod;
+
+  @override
+  void initState() {
+    super.initState();
+    _nod = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _dataLinkFocus.dispose();
+    _nod.dispose();
     super.dispose();
   }
 
@@ -89,13 +115,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   bool get _canContinue => _name.isNotEmpty;
 
+  void _chooseBuddy(Avatar hero) {
+    setState(() {
+      _selectedAvatar = hero;
+      _step = _Step.name;
+    });
+  }
+
+  Future<Avatar?> _tryLuck(Avatar front) async {
+    final result = await openLuckyWheel(
+      context,
+      current: front,
+      primaryLabel: (hero) =>
+          context.l10n.buddyClimbWith(hero.name(context.l10n)),
+    );
+    if (!mounted || result == null) return null;
+    if (result.confirmed) {
+      _chooseBuddy(result.hero);
+      return null;
+    }
+    return result.hero;
+  }
+
   void _continue() {
     if (!_canContinue) return;
     FocusScope.of(context).unfocus();
-    setState(() => _onGoalStep = true);
+    setState(() => _step = _Step.goal);
   }
 
-  void _back() => setState(() => _onGoalStep = false);
+  void _back() => setState(() {
+        _step = _step == _Step.goal ? _Step.name : _Step.buddy;
+      });
+
+  void _onNameChanged() {
+    setState(() {});
+    if (!_nod.isAnimating && !AppMotion.reduced(context)) {
+      _nod.forward(from: 0);
+    }
+  }
 
   void _finish({required bool skipGoal}) {
     if (!_canContinue) return;
@@ -119,24 +176,51 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    return PopScope(
-      // A back gesture on the goal step goes to the first step, not out.
-      canPop: !_onGoalStep,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _onGoalStep) _back();
-      },
-      child: BrandScaffold(
-        // The status bar only: the step's own header is in the page.
-        appBar: AppBar(
-          toolbarHeight: 0,
-          automaticallyImplyLeading: false,
-          scrolledUnderElevation: 0,
+    final Widget page = switch (_step) {
+      _Step.buddy => BuddyPicker(
+          key: const ValueKey('onboarding_step_buddy'),
+          initial: _selectedAvatar,
+          title: context.l10n.buddyTitle,
+          subtitle: context.l10n.buddySubtitle(Avatar.count),
+          primaryLabel: (hero) =>
+              context.l10n.buddyClimbWith(hero.name(context.l10n)),
+          onConfirm: _chooseBuddy,
+          onTryLuck: _tryLuck,
+          step: 1,
+          stepCount: OnboardingScreen.stepCount,
         ),
-        body: AnimatedSwitcher(
+      _Step.name => BrandScaffold(
+          key: const ValueKey('onboarding_step_1'),
+          appBar: AppBar(
+            toolbarHeight: 0,
+            automaticallyImplyLeading: false,
+            scrolledUnderElevation: 0,
+          ),
+          body: _nameStep(context),
+        ),
+      _Step.goal => BrandScaffold(
+          key: const ValueKey('onboarding_step_2'),
+          appBar: AppBar(
+            toolbarHeight: 0,
+            automaticallyImplyLeading: false,
+            scrolledUnderElevation: 0,
+          ),
+          body: _goalStep(context),
+        ),
+    };
+    return PopScope(
+      // A back gesture on a later step goes to the step before, not out.
+      canPop: _step == _Step.buddy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _step != _Step.buddy) _back();
+      },
+      child: Material(
+        color: AppColors.of(context).page,
+        child: AnimatedSwitcher(
           duration:
               reduceMotion ? Duration.zero : OnboardingScreen.stepDuration,
           switchInCurve: Curves.easeOut,
-          child: _onGoalStep ? _goalStep(context) : _nameStep(context),
+          child: page,
         ),
       ),
     );
@@ -144,97 +228,116 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   double _sidePadding(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return ContentWidth.sidePaddingOf(context, base: width < 360 ? 17 : 22);
+    return ContentWidth.sidePaddingOf(context, base: width < 360 ? 16 : 20);
   }
 
   Widget _nameStep(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    final width = MediaQuery.sizeOf(context).width;
+    final c = AppColors.of(context);
     final hPad = _sidePadding(context);
-    final narrow = width < 360;
     // A tap anywhere outside the name field closes the keyboard and keeps
-    // the name, so the companions can be looked at again in full (owner,
-    // after Batch 11). Buttons and the carousel's drag still win their own
-    // gestures; a tap never changes the companion.
+    // the name.
     return GestureDetector(
-      key: const ValueKey('onboarding_step_1'),
       behavior: HitTestBehavior.opaque,
       onTap: () => FocusScope.of(context).unfocus(),
       child: Column(
         children: [
-          const _StepHeader(step: 1, onBack: null),
+          _StepTop(step: 2, onBack: _back),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Heading(
-                    eyebrow: context.l10n.onboardingCompanionEyebrow,
-                    title: context.l10n.onboardingCompanionTitle,
-                    // "Five": DailyTestSet.questionCount spelled out, pinned
-                    // by test/onboarding_l10n_test.dart.
-                    subtitle: context.l10n.onboardingCompanionSubtitle,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      AnimatedBuilder(
+                        animation: _nod,
+                        builder: (context, child) {
+                          final t = _nod.value;
+                          final a = math.sin(t * math.pi) * -7 * math.pi / 180;
+                          return Transform.rotate(
+                            angle: a,
+                            alignment: const Alignment(0, .84),
+                            child: Transform.translate(
+                                offset: Offset(0, 2 * math.sin(t * math.pi)),
+                                child: child),
+                          );
+                        },
+                        child: CompanionView(
+                          hero: _selectedAvatar,
+                          mood: CompanionMood.idle,
+                          size: 92,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: SpeechBubble(
+                          text: context.l10n.onboardingNameQuestion,
+                          pointer: BubblePointer.start,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  // The warm glow behind the selected companion.
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0, -.1),
-                        radius: .55,
-                        colors: [
-                          palette.warm,
-                          palette.warm.withValues(alpha: 0)
-                        ],
+                  const SizedBox(height: 24),
+                  Text(
+                    context.l10n.onboardingNameHint,
+                    style: theme.textTheme.labelLarge!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(color: c.muted),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    key: OnboardingScreen.nameFieldKey,
+                    controller: _nameController,
+                    maxLength: UserProfile.maxNameLength,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.nickname],
+                    onChanged: (_) => _onNameChanged(),
+                    onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                    style: theme.textTheme.headlineSmall!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(color: c.text),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: context.l10n.onboardingNameHint,
+                      fillColor: c.card,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(color: c.line, width: 2),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(color: c.navy, width: 3),
                       ),
                     ),
-                    child: AvatarCarousel(
-                      initialAvatar: _selectedAvatar,
-                      onSettled: (avatar) =>
-                          setState(() => _selectedAvatar = avatar),
-                      centerRadius: 75,
-                      // 150 pt tiles 18 apart, as wide as the screen allows.
-                      viewportFraction: (168 / width).clamp(0.3, 1.0),
-                      neighborScale: .72,
-                      neighborOpacity: .48,
-                      showNavigation: true,
-                    ),
                   ),
+                  const SizedBox(height: 8),
                   Text(
-                    context.l10n.onboardingCarouselHint,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall
-                        ?.withWeight(FontWeight.w400)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: hPad),
-                    child: _NameCard(
-                      controller: _nameController,
-                      padding: narrow ? 15 : 19,
-                      onChanged: () => setState(() {}),
-                      // The keyboard's Done only closes the keyboard; the next
-                      // step is reached with Continue alone.
-                      onSubmitted: () => FocusScope.of(context).unfocus(),
-                    ),
+                    context.l10n.onboardingNameNote,
+                    style: theme.textTheme.bodySmall!.copyWith(color: c.muted),
                   ),
                 ],
               ),
             ),
           ),
-          _BottomActions(
-            horizontalPadding: hPad,
-            children: [
-              _PrimaryCta(
-                buttonKey: OnboardingScreen.continueKey,
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 12),
+            child: AnimatedOpacity(
+              opacity: 1,
+              duration: AppMotion.orInstant(
+                  context, const Duration(milliseconds: 200)),
+              child: PressableButton(
+                key: OnboardingScreen.continueKey,
                 label: context.l10n.commonContinue,
+                tone: ButtonTone.orange,
+                haptic: ButtonHaptic.light,
+                trailingIcon: _arrow(context),
                 onPressed: _canContinue ? _continue : null,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -243,440 +346,230 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _goalStep(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final c = AppColors.of(context);
     final hPad = _sidePadding(context);
-    final muted = theme.textTheme.labelSmall
-        ?.withWeight(FontWeight.w400)
-        .copyWith(color: colorScheme.onSurfaceVariant, height: 1.6);
+    final muted = theme.textTheme.labelSmall!
+        .withWeight(FontWeight.w400)
+        .copyWith(color: c.muted, height: 1.6);
     return Column(
-      key: const ValueKey('onboarding_step_2'),
       children: [
-        _StepHeader(step: 2, onBack: _back),
+        _StepTop(step: 3, onBack: _back, bar: true),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.fromLTRB(hPad, 10, hPad, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // The companion picked on step 1, with the name.
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPad),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AvatarTile(avatar: _selectedAvatar, radius: 24),
-                      const SizedBox(width: 9),
-                      Flexible(
-                        child: Text(
-                          context.l10n.onboardingGoalGreeting(
-                              context.l10n.greetingName(_name)),
-                          style: theme.textTheme.labelMedium
-                              ?.withWeight(FontWeight.w700)
-                              .copyWith(color: colorScheme.onSurfaceVariant),
-                        ),
+                Row(
+                  children: [
+                    CompanionView(
+                        hero: _selectedAvatar,
+                        mood: CompanionMood.wave,
+                        size: 44),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: SpeechBubble(
+                        text: context.l10n.onboardingNiceToMeet(_name),
+                        pointer: BubblePointer.start,
+                        compact: true,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  context.l10n.onboardingGoalQuestion(_name),
+                  style: theme.textTheme.headlineMedium!
+                      .withWeight(FontWeight.w900)
+                      .copyWith(color: c.text, letterSpacing: -.8),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.l10n.onboardingGoalPickOne,
+                  style: theme.textTheme.bodyMedium!.copyWith(color: c.muted),
+                ),
+                const SizedBox(height: 18),
+                for (final (i, goal) in LearningGoal.values.indexed) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _Entrance(
+                    delay: AppMotion.stagger * i,
+                    child: GoalCard(
+                      key: OnboardingScreen.goalKey(goal),
+                      goal: goal,
+                      hero: _selectedAvatar,
+                      selected: goal == _selectedGoal,
+                      onTap: () {
+                        if (_selectedGoal == goal) return;
+                        HapticMap.selection();
+                        setState(() => _selectedGoal = goal);
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 21),
-                _Heading(
-                  eyebrow: context.l10n.onboardingGoalEyebrow,
-                  title: context.l10n.onboardingGoalTitle,
-                  subtitle: context.l10n.onboardingGoalSubtitle,
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPad),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final goal in LearningGoal.values) ...[
-                        if (goal != LearningGoal.values.first)
-                          const SizedBox(height: 12),
-                        _GoalOption(
-                          key: OnboardingScreen.goalKey(goal),
-                          goal: goal,
-                          selected: goal == _selectedGoal,
-                          onTap: () => setState(() => _selectedGoal = goal),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPad + 1),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Icon(Icons.lock_outline_rounded,
-                            size: 15, color: colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(onboardingPrivacyNote(context.l10n),
-                                style: muted),
-                            TextButton(
-                              key: OnboardingScreen.dataLinkKey,
-                              focusNode: _dataLinkFocus,
-                              onPressed: _showDataSheet,
-                              style: TextButton.styleFrom(
-                                minimumSize: const Size(44, 44),
-                                padding: EdgeInsets.zero,
-                                alignment: AlignmentDirectional.centerStart,
-                                foregroundColor: colorScheme.secondary,
-                                textStyle: theme.textTheme.labelSmall
-                                    ?.withWeight(FontWeight.w700),
-                              ),
-                              child: Text(context.l10n.onboardingDataLink),
+                ],
+                const SizedBox(height: 18),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(Icons.lock_outline_rounded,
+                          size: 15, color: c.muted),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(onboardingPrivacyNote(context.l10n),
+                              style: muted),
+                          TextButton(
+                            key: OnboardingScreen.dataLinkKey,
+                            focusNode: _dataLinkFocus,
+                            onPressed: _showDataSheet,
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(44, 44),
+                              padding: EdgeInsets.zero,
+                              alignment: AlignmentDirectional.centerStart,
+                              foregroundColor: c.navy,
+                              textStyle: theme.textTheme.labelSmall!
+                                  .withWeight(FontWeight.w700),
                             ),
-                          ],
-                        ),
+                            child: Text(context.l10n.onboardingDataLink),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-        _BottomActions(
-          horizontalPadding: hPad,
-          children: [
-            _PrimaryCta(
-              buttonKey: OnboardingScreen.startKey,
-              label: context.l10n.onboardingStart,
-              onPressed:
-                  _selectedGoal == null ? null : () => _finish(skipGoal: false),
-            ),
-            TextButton(
-              key: OnboardingScreen.skipGoalKey,
-              onPressed: () => _finish(skipGoal: true),
-              style: TextButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                foregroundColor: colorScheme.secondary,
-                textStyle:
-                    theme.textTheme.labelMedium?.withWeight(FontWeight.w700),
+        Padding(
+          padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 6),
+          child: Column(
+            children: [
+              PressableButton(
+                key: OnboardingScreen.startKey,
+                label: context.l10n.commonContinue,
+                tone: ButtonTone.orange,
+                shine: _selectedGoal != null,
+                trailingIcon: _arrow(context),
+                onPressed: _selectedGoal == null
+                    ? null
+                    : () => _finish(skipGoal: false),
               ),
-              child: Text(context.l10n.onboardingSkipGoal),
-            ),
-          ],
+              PressableButton(
+                key: OnboardingScreen.skipGoalKey,
+                label: context.l10n.onboardingSkipForNow,
+                tone: ButtonTone.text,
+                height: 44,
+                haptic: ButtonHaptic.light,
+                onPressed: () => _finish(skipGoal: true),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
+
+  static IconData _arrow(BuildContext context) =>
+      Directionality.of(context) == TextDirection.rtl
+          ? Icons.arrow_back_rounded
+          : Icons.arrow_forward_rounded;
 }
 
-/// The step's top line: the wordmark (step 1) or Back (step 2), "Step N of
-/// 2", and the two-part progress bar.
-class _StepHeader extends StatelessWidget {
+/// The step's top line: Back (from step 2 on) and the step dots, or the
+/// goal step's progress bar with "N of M".
+class _StepTop extends StatelessWidget {
   final int step;
-  final VoidCallback? onBack;
+  final VoidCallback onBack;
+  final bool bar;
 
-  const _StepHeader({required this.step, required this.onBack});
+  const _StepTop({required this.step, required this.onBack, this.bar = false});
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final hPad = ContentWidth.sidePaddingOf(context, base: 19);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 0),
-      child: Column(
-        children: [
-          // A Wrap, not a Row: "Step N of 2" stays at the end of the line
-          // while it fits beside the wordmark and moves under it when it
-          // does not (a narrow screen at a large text size), instead of
-          // overflowing.
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: SizedBox(
-                width: double.infinity,
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    if (onBack != null)
-                      IconButton(
-                        key: OnboardingScreen.backKey,
-                        tooltip: context.l10n.commonBack,
-                        onPressed: onBack,
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(44, 44),
-                          foregroundColor: colorScheme.onSurface,
-                        ),
-                        icon: const Icon(Icons.arrow_back_rounded, size: 21),
-                      )
-                    else
-                      BrandWordmark(
-                        style: theme.textTheme.titleLarge
-                            ?.withWeight(FontWeight.w900)
-                            .copyWith(
-                                color: colorScheme.onSurface,
-                                letterSpacing: -.6),
-                      ),
-                    Text(
-                      context.l10n.onboardingStep(step, 2),
-                      style: theme.textTheme.labelSmall
-                          ?.withWeight(FontWeight.w700)
-                          .copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 26),
-            child: Semantics(
-              label: context.l10n.onboardingStep(step, 2),
-              excludeSemantics: true,
-              child: Row(
-                children: [
-                  for (var i = 1; i <= 2; i++) ...[
-                    if (i > 1) const SizedBox(width: 7),
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: i <= step
-                              ? colorScheme.primary
-                              : colorScheme.outlineVariant,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The eyebrow (11 / 800, upper case, link colour), the title (29 / 900 at
-/// Medium) and the supporting line, centred and wrapping.
-class _Heading extends StatelessWidget {
-  final String eyebrow;
-  final String title;
-  final String subtitle;
-
-  const _Heading({
-    required this.eyebrow,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    // The theme's 26 / 900 question title scaled to the mockup's 29, so it
-    // follows the text size setting like every other style.
-    final base = theme.textTheme.headlineMedium!;
-    final titleStyle = base.copyWith(
-      fontSize: base.fontSize! * 29 / 26,
-      height: 1.15,
-      letterSpacing: -.7,
-      color: colorScheme.onSurface,
-    );
-    return Padding(
-      padding: EdgeInsets.symmetric(
-          horizontal: ContentWidth.sidePaddingOf(context, base: 23)),
-      child: Column(
-        children: [
-          Text(
-            eyebrow.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall
-                ?.withWeight(FontWeight.w800)
-                .copyWith(color: colorScheme.secondary, letterSpacing: 1.1),
-          ),
-          const SizedBox(height: 9),
-          Semantics(
-            header: true,
-            child: Text(title, textAlign: TextAlign.center, style: titleStyle),
-          ),
-          const SizedBox(height: 11),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// "What should we call you?": card surface, radius 22, the field at least
-/// 52 tall with radius 13, and the line under it.
-class _NameCard extends StatelessWidget {
-  final TextEditingController controller;
-  final double padding;
-  final VoidCallback onChanged;
-  final VoidCallback onSubmitted;
-
-  const _NameCard({
-    required this.controller,
-    required this.padding,
-    required this.onChanged,
-    required this.onSubmitted,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: color, width: width),
-        );
-    return Container(
-      padding: EdgeInsets.all(padding),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        border: Border.all(color: colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: palette.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            context.l10n.onboardingNameQuestion,
-            style: theme.textTheme.titleSmall
-                ?.withWeight(FontWeight.w800)
-                .copyWith(color: colorScheme.onSurface),
-          ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 52),
-            child: TextField(
-              key: OnboardingScreen.nameFieldKey,
-              controller: controller,
-              maxLength: UserProfile.maxNameLength,
-              // No visible counter (owner decision O2).
-              buildCounter: (_,
-                      {required currentLength,
-                      required isFocused,
-                      required maxLength}) =>
-                  null,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.done,
-              // Room above for the question and below for the card's line,
-              // when the keyboard opens and the field scrolls into view.
-              scrollPadding: const EdgeInsets.fromLTRB(20, 56, 20, 60),
-              style: theme.textTheme.bodyLarge
-                  ?.copyWith(color: colorScheme.onSurface),
-              decoration: InputDecoration(
-                hintText: context.l10n.onboardingNameHint,
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-                enabledBorder: border(palette.inputBorder, 1),
-                border: border(palette.inputBorder, 1),
-                focusedBorder: border(colorScheme.secondary, 2),
-              ),
-              onChanged: (_) => onChanged(),
-              onSubmitted: (_) => onSubmitted(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            context.l10n.onboardingNameNote,
-            style: theme.textTheme.labelSmall
-                ?.withWeight(FontWeight.w400)
-                .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The fixed area under the scrolling content: above the keyboard while it
-/// is open, inside the bottom safe area otherwise.
-class _BottomActions extends StatelessWidget {
-  final double horizontalPadding;
-  final List<Widget> children;
-
-  const _BottomActions({
-    required this.horizontalPadding,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      minimum: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding:
-            EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: children,
-        ),
-      ),
-    );
-  }
-}
-
-/// The step's main action: brandOrange with the onOrange text, at least
-/// 54 tall, radius 17, 900, an arrow after the label; the app's opaque
-/// disabled pairing while it cannot be used. No navy edge in dark mode.
-class _PrimaryCta extends StatelessWidget {
-  final Key buttonKey;
-  final String label;
-  final VoidCallback? onPressed;
-
-  const _PrimaryCta({
-    required this.buttonKey,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = AppPalette.of(context);
-    return FilledButton(
-      key: buttonKey,
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        disabledBackgroundColor: palette.disabledFill,
-        disabledForegroundColor: palette.disabledLabel,
-        minimumSize: const Size.fromHeight(54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
-        textStyle: theme.textTheme.bodyLarge?.withWeight(FontWeight.w900),
-      ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none)),
+    const total = OnboardingScreen.stepCount;
+    return SizedBox(
+      height: 52,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(child: Text(label, textAlign: TextAlign.center)),
-          const SizedBox(width: 9),
-          const Icon(Icons.arrow_forward_rounded, size: 18),
+          IconButton(
+            key: OnboardingScreen.backKey,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: onBack,
+            icon: Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_right_rounded
+                    : Icons.chevron_left_rounded,
+                color: c.text),
+          ),
+          Expanded(
+            child: bar
+                ? Row(children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(
+                              begin: (step - 1) / total, end: step / total),
+                          duration:
+                              AppMotion.orInstant(context, AppMotion.slow),
+                          curve: AppMotion.enter,
+                          builder: (context, v, _) => LinearProgressIndicator(
+                            value: v,
+                            minHeight: 10,
+                            color: c.orange,
+                            backgroundColor: c.track,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      context.l10n.onboardingStepShort(step, total),
+                      style: theme.textTheme.labelMedium!
+                          .withWeight(FontWeight.w800)
+                          .copyWith(color: c.muted),
+                    ),
+                  ])
+                : Center(child: OnboardingStepDots(step: step, count: total)),
+          ),
+          const SizedBox(width: 48),
         ],
       ),
+    );
+  }
+}
+
+/// Rises 16 px and fades in after [delay] (V05: cards from below, 60 ms
+/// apart).
+class _Entrance extends StatelessWidget {
+  final Duration delay;
+  final Widget child;
+  const _Entrance({required this.delay, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = AppMotion.reduced(context);
+    final total = AppMotion.slow + delay;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: reduced ? AppMotion.fast : total,
+      curve: reduced
+          ? Curves.linear
+          : Interval(delay.inMilliseconds / total.inMilliseconds, 1,
+              curve: AppMotion.enter),
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+            offset: Offset(0, reduced ? 0 : 16 * (1 - t)), child: child),
+      ),
+      child: child,
     );
   }
 }
@@ -684,26 +577,29 @@ class _PrimaryCta extends StatelessWidget {
 IconData _iconFor(LearningGoal goal) {
   switch (goal) {
     case LearningGoal.examPrep:
-      return Icons.school_rounded;
+      return Icons.school_outlined;
     case LearningGoal.work:
-      return Icons.work_rounded;
+      return Icons.work_outline_rounded;
     case LearningGoal.general:
-      return Icons.chat_bubble_rounded;
+      return Icons.chat_bubble_outline_rounded;
   }
 }
 
-/// One goal as a radio card: radius 21, at least 91 tall, the icon in a
-/// 40 pt tile, title and description, and a radio mark. Selected: a 2 pt
-/// link-coloured edge on the info surface, and the mark filled; screen
-/// readers hear it as one of a group, selected or not.
-class _GoalOption extends StatelessWidget {
+/// One goal as a big card (V05): an icon tile, title and description. The
+/// selected card gets a navy frame on the sky surface and lifts (1.03, a
+/// slight tilt); the buddy pops out of its corner in the cheer pose with a
+/// 4-piece confetti burst, and a reaction line appears 150 ms later.
+/// Screen readers hear it as one of a group, selected or not.
+class GoalCard extends StatelessWidget {
   final LearningGoal goal;
+  final Avatar hero;
   final bool selected;
   final VoidCallback onTap;
 
-  const _GoalOption({
+  const GoalCard({
     super.key,
     required this.goal,
+    required this.hero,
     required this.selected,
     required this.onTap,
   });
@@ -711,90 +607,200 @@ class _GoalOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 360;
-    final radius = BorderRadius.circular(21);
-    final edge = selected ? 2.0 : 1.0;
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final reduced = AppMotion.reduced(context);
+    final duration = AppMotion.orInstant(context, AppMotion.base);
+    final tilt = switch (goal) {
+      LearningGoal.examPrep => -2.0,
+      LearningGoal.work => 2.0,
+      LearningGoal.general => -1.5,
+    };
+    final (tile, tileFg) = switch (goal) {
+      LearningGoal.examPrep => (c.cream, c.orangeDeep),
+      LearningGoal.work => (c.sky, c.navy),
+      LearningGoal.general => (c.greenSoft, c.greenDeep),
+    };
     return Semantics(
       inMutuallyExclusiveGroup: true,
       checked: selected,
       button: true,
-      child: Material(
-        color: selected
-            ? colorScheme.secondaryContainer
-            : colorScheme.surfaceContainerHigh,
-        borderRadius: radius,
-        child: InkWell(
-          borderRadius: radius,
-          onTap: onTap,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 91),
-            padding: EdgeInsets.symmetric(
-                vertical: 17 - edge + 1,
-                horizontal: (narrow ? 11 : 14) - edge + 1),
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(
-                color: selected
-                    ? colorScheme.secondary
-                    : colorScheme.outlineVariant,
-                width: edge,
-              ),
-              boxShadow: selected ? null : palette.cardShadow,
-            ),
-            child: Row(
+      label: '${goal.label(l10n)}. ${goal.description(l10n)}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedScale(
+          scale: selected && !reduced ? 1.03 : 1,
+          duration: duration,
+          curve: AppMotion.pop,
+          child: AnimatedRotation(
+            turns: selected && !reduced ? tilt / 360 : 0,
+            duration: duration,
+            curve: AppMotion.pop,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Container(
-                  width: narrow ? 36 : 40,
-                  height: narrow ? 36 : 40,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? colorScheme.surfaceContainerHigh
-                        : colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(13),
+                AnimatedContainer(
+                  duration: AppMotion.orInstant(context, AppMotion.fast),
+                  constraints: const BoxConstraints(minHeight: 88),
+                  padding: EdgeInsetsDirectional.fromSTEB(
+                      16, 16, selected ? 86 : 16, 16),
+                  decoration: lipCard(
+                    c,
+                    color: selected ? c.sky : c.card,
+                    border: selected ? c.navy : c.line,
+                    lip: selected ? c.navy : c.lip,
+                    borderWidth: selected ? 3 : 2,
+                    radius: 24,
                   ),
-                  child: Icon(_iconFor(goal),
-                      size: 21, color: colorScheme.secondary),
-                ),
-                SizedBox(width: narrow ? 8 : 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        goal.label(context.l10n),
-                        style: theme.textTheme.titleSmall
-                            ?.withWeight(FontWeight.w800)
-                            .copyWith(color: colorScheme.onSurface),
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: selected ? c.card : tile,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(_iconFor(goal), color: tileFg, size: 26),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        goal.description(context.l10n),
-                        style: theme.textTheme.labelMedium
-                            ?.withWeight(FontWeight.w400)
-                            .copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                height: 1.45),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              goal.label(l10n),
+                              style: theme.textTheme.titleLarge!
+                                  .withWeight(FontWeight.w900)
+                                  .copyWith(color: c.text),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              goal.description(l10n),
+                              style: theme.textTheme.bodySmall!
+                                  .copyWith(color: c.muted),
+                            ),
+                            AnimatedSize(
+                              // Never zero: a zero-length AnimatedSize
+                              // re-dirties its own layout.
+                              duration: reduced
+                                  ? const Duration(milliseconds: 1)
+                                  : duration,
+                              child: selected
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: _Delayed(
+                                        delay:
+                                            const Duration(milliseconds: 150),
+                                        child: Text(
+                                          goal.reaction(l10n),
+                                          style: theme.textTheme.labelLarge!
+                                              .withWeight(FontWeight.w900)
+                                              .copyWith(
+                                                  color: c.navy,
+                                                  fontStyle: FontStyle.italic),
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: narrow ? 8 : 11),
-                Icon(
-                  selected
-                      ? Icons.radio_button_checked_rounded
-                      : Icons.radio_button_unchecked_rounded,
-                  size: 20,
-                  color: selected
-                      ? colorScheme.secondary
-                      : colorScheme.onSurfaceVariant,
+                PositionedDirectional(
+                  end: 4,
+                  bottom: 6,
+                  child: AnimatedSwitcher(
+                    duration: duration,
+                    transitionBuilder: (child, animation) => SlideTransition(
+                      position:
+                          Tween(begin: const Offset(0, .6), end: Offset.zero)
+                              .animate(CurvedAnimation(
+                                  parent: animation, curve: AppMotion.pop)),
+                      child: FadeTransition(opacity: animation, child: child),
+                    ),
+                    child: selected
+                        ? _PopOut(
+                            key: ValueKey(goal),
+                            hero: hero,
+                          )
+                        : const SizedBox(key: ValueKey('none'), width: 76),
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The buddy that pops out of the chosen card in the cheer pose, with four
+/// confetti pieces and a light haptic.
+class _PopOut extends StatefulWidget {
+  final Avatar hero;
+  const _PopOut({super.key, required this.hero});
+
+  @override
+  State<_PopOut> createState() => _PopOutState();
+}
+
+class _PopOutState extends State<_PopOut> {
+  @override
+  void initState() {
+    super.initState();
+    HapticMap.light();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 76,
+      height: 76,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CompanionView(hero: widget.hero, mood: CompanionMood.cheer, size: 76),
+          if (!AppMotion.reduced(context))
+            ConfettiBurst(
+              origin: const Offset(38, 10),
+              colors: [
+                AppColors.of(context).orange,
+                AppColors.of(context).navy,
+                AppColors.of(context).gold,
+                AppColors.of(context).green,
+              ],
+              count: 4,
+              length: const Duration(milliseconds: 900),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shows [child] after [delay] with a short fade.
+class _Delayed extends StatelessWidget {
+  final Duration delay;
+  final Widget child;
+  const _Delayed({required this.delay, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppMotion.reduced(context)) return child;
+    final total = delay + AppMotion.fast;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: total,
+      curve: Interval(delay.inMilliseconds / total.inMilliseconds, 1),
+      builder: (context, t, child) => Opacity(opacity: t, child: child),
+      child: child,
     );
   }
 }

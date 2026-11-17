@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:grammar_lens/data/topics.dart';
@@ -959,7 +960,6 @@ void main() {
                 final picker = AvatarPickerScreen(
                   currentAvatar: Avatar.values[3],
                   onAvatarChanged: onAvatarChanged,
-                  heroTag: homeAvatarHeroTag,
                 );
                 Navigator.of(context).push(
                   reduceMotion
@@ -992,12 +992,13 @@ void main() {
           reason: 'a real push covers Home, unlike the old tab switch');
     });
 
-    testWidgets('Done on the picker pops back to Home', (tester) async {
+    // UI polish R06: the picker closes with "Save <Hero>" (no Done).
+    testWidgets('Save on the picker pops back to Home', (tester) async {
       await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
       await tester.tap(find.byType(AvatarTile).first);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+      await tester.tap(find.byKey(BuddyPicker.confirmKey));
       await tester.pumpAndSettle();
 
       expect(find.byType(AvatarPickerScreen), findsNothing);

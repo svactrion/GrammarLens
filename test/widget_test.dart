@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 import 'package:grammar_lens/app.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 
@@ -46,25 +48,27 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    FilledButton button(String label) =>
-        tester.widget(find.widgetWithText(FilledButton, label));
+    PressableButton button(Key key) => tester.widget(find.byKey(key));
 
-    expect(button('Continue').onPressed, isNull);
+    // UI polish: the buddy first (V03), then the name (V04).
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
+    expect(button(OnboardingScreen.continueKey).onPressed, isNull);
 
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    expect(button('Continue').onPressed, isNotNull);
+    expect(button(OnboardingScreen.continueKey).onPressed, isNotNull);
 
-    // 1.2.0: the goal is its own step after the name.
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    // The goal is its own step after the name (V05).
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
-    expect(button('Start my first test').onPressed, isNull,
+    expect(button(OnboardingScreen.startKey).onPressed, isNull,
         reason: 'a goal still hasn\'t been picked');
-    expect(find.text('Skip goal & start'), findsOneWidget);
+    expect(find.text('Skip for now'), findsOneWidget);
 
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    expect(button('Start my first test').onPressed, isNotNull);
+    expect(button(OnboardingScreen.startKey).onPressed, isNotNull);
   });
 
   testWidgets(
@@ -75,10 +79,12 @@ void main() {
 
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
-    // On the goal step since 1.2.0.
+    // On the goal step (V05), after the buddy and the name.
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text(onboardingPrivacyNote(en)));
 

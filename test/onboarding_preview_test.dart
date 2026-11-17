@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -74,6 +75,8 @@ void main() {
     await tester.tap(find.text(en.welcomeGetStarted));
     await tester.pumpAndSettle();
     expect(find.byType(OnboardingScreen), findsOneWidget);
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), 'Ada');
     await tester.pump();
     await tester.tap(find.byKey(OnboardingScreen.continueKey));

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../models/avatar.dart';
+import '../models/climb_theme.dart';
 import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
 import '../models/pending_climb.dart';
@@ -11,15 +13,16 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
-import '../utils/app_messenger.dart';
-import '../utils/loading_view.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
+import 'getting_ready_screen.dart';
+import 'mountain_intro_screen.dart';
 import 'onboarding_screen.dart';
 import 'welcome_screen.dart';
 
-/// Welcome → Onboarding → Daily Test → Result, shown once on first launch
-/// (PRD v2 §4, §12.3's Day-0 sequence). Every step but the
+/// Welcome → Onboarding → Getting ready (V05b) → This month's mountain
+/// (V06) → Daily Test → Result, shown once on first launch (PRD v2 §4,
+/// §12.3's Day-0 sequence; UI polish §4). Every step but the
 /// last swaps a local `_step` between plain widgets rather than pushing
 /// routes — no nested Navigator, no route to leave behind once the flow
 /// completes and [onComplete] hands control back to the app shell, which
@@ -49,24 +52,37 @@ class FirstLaunchFlow extends StatefulWidget {
     bool dayZeroCompleted,
   }) onComplete;
 
+  /// The clock for this month's mountain; tests pin it.
+  final DateTime Function() clock;
+
   const FirstLaunchFlow({
     super.key,
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
     required this.onComplete,
+    this.clock = DateTime.now,
   });
 
   @override
   State<FirstLaunchFlow> createState() => _FirstLaunchFlowState();
 }
 
-enum _Step { welcome, onboarding, dailyTest, dailyTestResult }
+enum _Step {
+  welcome,
+  onboarding,
+  gettingReady,
+  mountainIntro,
+  dailyTest,
+  dailyTestResult
+}
 
 class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   _Step _step = _Step.welcome;
-  bool _saving = false;
   UserProfile? _profile;
+
+  /// This month's mountain, opened by the third getting-ready task.
+  ClimbTheme? _theme;
   DailyTestSet? _dailyTestSet;
   Map<String, String> _dailyTestAnswers = const {};
 
@@ -80,32 +96,45 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     storageService: widget.storageService,
   );
 
-  Future<void> _completeOnboarding(UserProfile profile) async {
-    setState(() => _saving = true);
+  /// The name, buddy and goal are chosen: on to "Getting ready" (V05b),
+  /// which does the saving.
+  void _completeOnboarding(UserProfile profile) {
+    setState(() {
+      _profile = profile;
+      _step = _Step.gettingReady;
+    });
+  }
+
+  /// Getting ready's first task (⅓): the profile, with the goal reported
+  /// as before. A failure shows the R11 pattern with "Try again".
+  Future<void> _saveProfile() async {
+    final profile = _profile!;
+    await widget.storageService.saveUserProfile(profile);
+    // The goal before the event, so `onboarding_completed` carries it.
+    unawaited(
+        widget.analyticsService.setLearningGoalProperty(profile.learningGoal));
+    unawaited(widget.analyticsService.onboardingCompleted());
+  }
+
+  /// The second task (⅔): today's Daily Test — on the first day the fixed
+  /// set that ships with the app. Not fatal: with no set stored, the Daily
+  /// Test screen fetches today's shared set as it always did.
+  Future<void> _prepareDailyTest() async {
     try {
-      // The first Daily Test is the fixed set that ships with the app, written
-      // before the profile so that anything that can happen once the profile
-      // exists (the user closes the app mid-test and opens the test from Home)
-      // finds it already on disk. A failure here is not fatal: with no set
-      // stored, the Daily Test screen generates one as it always did.
-      try {
-        await _dailyTestService.seedDayZeroSet();
-      } catch (_) {}
-      await widget.storageService.saveUserProfile(profile);
-      // The goal before the event, so `onboarding_completed` carries it.
-      unawaited(widget.analyticsService
-          .setLearningGoalProperty(profile.learningGoal));
-      unawaited(widget.analyticsService.onboardingCompleted());
-      if (!mounted) return;
-      setState(() {
-        _profile = profile;
-        _saving = false;
-        _step = _Step.dailyTest;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      AppMessenger.show(context.l10n.firstLaunchSaveFailed('$e'));
+      await _dailyTestService.seedDayZeroSet();
+    } catch (_) {}
+  }
+
+  /// The third task (1): this month's mountain, resolved and stored the
+  /// way Home resolves it; the scheduled theme if storage cannot answer.
+  Future<void> _openMountain() async {
+    final now = widget.clock();
+    try {
+      final id = await widget.storageService
+          .resolveClimbMonthTheme(now.year, now.month);
+      _theme = ClimbThemes.byId(id);
+    } catch (_) {
+      _theme = ClimbThemeRotation.shownFor(now.year, now.month);
     }
   }
 
@@ -149,9 +178,8 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
 
   @override
   Widget build(BuildContext context) {
-    if (_saving) {
-      return LoadingView(message: context.l10n.firstLaunchSaving);
-    }
+    final now = widget.clock();
+    final days = DateTime(now.year, now.month + 1, 0).day;
     switch (_step) {
       case _Step.welcome:
         return WelcomeScreen(
@@ -159,6 +187,28 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
         );
       case _Step.onboarding:
         return OnboardingScreen(onComplete: _completeOnboarding);
+      case _Step.gettingReady:
+        final profile = _profile!;
+        final scheduled = ClimbThemeRotation.shownFor(now.year, now.month);
+        return GettingReadyScreen(
+          name: profile.name,
+          hero: profile.avatar ?? Avatar.fox,
+          goal: profile.learningGoal,
+          monthName: monthName(now.month, context.l10n),
+          mountainName: (_theme ?? scheduled).title(context.l10n),
+          steps: days,
+          questionsPerDay: DailyTestSet.questionCount,
+          tasks: [_saveProfile, _prepareDailyTest, _openMountain],
+          onDone: () => setState(() => _step = _Step.mountainIntro),
+        );
+      case _Step.mountainIntro:
+        return MountainIntroScreen(
+          theme: _theme ?? ClimbThemeRotation.shownFor(now.year, now.month),
+          hero: _profile!.avatar ?? Avatar.fox,
+          days: days,
+          monthName: monthName(now.month, context.l10n),
+          onStart: () => setState(() => _step = _Step.dailyTest),
+        );
       case _Step.dailyTest:
         return DailyTestScreen(
           dailyTestService: _dailyTestService,

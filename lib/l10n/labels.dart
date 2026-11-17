@@ -29,6 +29,21 @@ extension LearningGoalLabels on LearningGoal {
         LearningGoal.work => l10n.goalWorkDetail,
         LearningGoal.general => l10n.goalGeneralDetail,
       };
+
+  /// The buddy's reaction inside the chosen card (V05).
+  String reaction(AppLocalizations l10n) => switch (this) {
+        LearningGoal.examPrep => l10n.goalReactionExam,
+        LearningGoal.work => l10n.goalReactionWork,
+        LearningGoal.general => l10n.goalReactionGeneral,
+      };
+
+  /// The buddy's line while the climb gets ready (V05b), and the goal's
+  /// chip on the "Your climb" card.
+  String readyLine(AppLocalizations l10n) => switch (this) {
+        LearningGoal.examPrep => l10n.readyBubbleExam,
+        LearningGoal.work => l10n.readyBubbleWork,
+        LearningGoal.general => l10n.readyBubbleGeneral,
+      };
 }
 
 extension PracticeLengthLabels on PracticeLength {

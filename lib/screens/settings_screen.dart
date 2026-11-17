@@ -376,7 +376,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (_) => AvatarPickerScreen(
           currentAvatar: widget.profile.avatar ?? _fallbackAvatar,
           onAvatarChanged: _changeAvatar,
-          heroTag: avatarHeroTag,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -472,15 +473,15 @@ void main() {
     await tester.tap(find.byType(AvatarTile));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    // UI polish R06: turn the ring one step and save with "Save <Hero>"
+    // (the carousel's autosave is gone).
+    await tester.tap(find.byKey(BuddyPicker.nextKey));
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(milliseconds: 600)); // past the debounce
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
 
     expect(saved, isNotNull);
-    expect(saved!.avatar, isNotNull);
-
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    expect(saved!.avatar, isNot(Avatar.values[3]));
 
     // The name was never touched — this is the point of the decoupling:
     // the name row is still closed, showing the saved name.

@@ -359,7 +359,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// cannot animate through at all: it has no push/pop transition for a
   /// flight to run during. `MediaQuery.disableAnimationsOf` is checked
   /// explicitly, the same manual-gating pattern this app already uses
-  /// everywhere else motion appears (e.g. `AvatarCarousel`'s own pop
+  /// everywhere else motion appears (e.g. `BuddyPicker`'s ring
   /// animation) — Flutter's route transitions don't automatically shorten
   /// themselves for reduced-motion settings.
   void _openAvatarPickerFromHome(BuildContext context) {
@@ -367,7 +367,6 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     final picker = AvatarPickerScreen(
       currentAvatar: _profile!.avatar ?? _fallbackAvatarForPicker,
       onAvatarChanged: _changeAvatar,
-      heroTag: homeAvatarHeroTag,
     );
     Navigator.of(context).push(
       reduceMotion

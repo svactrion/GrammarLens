@@ -14,6 +14,8 @@ import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/first_launch_flow.dart';
+import 'package:grammar_lens/screens/mountain_intro_screen.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
@@ -234,14 +236,20 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    // Two steps (1.2.0): the name, then the goal.
+    // UI polish: the buddy (V03, Fox in front), the name (V04), the goal
+    // (V05), then "Getting ready" (V05b) runs by itself and this month's
+    // mountain (V06) starts the Day-0 Daily Test.
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
+    await tester.tap(find.byKey(OnboardingScreen.startKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(MountainIntroScreen.startKey));
     await tester.pumpAndSettle();
   }
 
@@ -498,13 +506,14 @@ void main() {
     });
 
     testWidgets(
-        'the set is written before the profile, so a user who exists always '
-        'has today\'s set on disk', (tester) async {
+        'getting ready runs its tasks in the order of its rows: the profile '
+        '(⅓), then today\'s set (⅔) — UI polish §1.6 changes the order',
+        (tester) async {
       await pumpFlow(tester,
           onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
-      expect(storageService.events, ['seed', 'profile']);
+      expect(storageService.events, ['profile', 'seed']);
     });
 
     testWidgets(
@@ -595,9 +604,11 @@ void main() {
     Future<void> toGoalStep(WidgetTester tester, {String name = 'Ada'}) async {
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(BuddyPicker.confirmKey));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), name);
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.tap(find.byKey(OnboardingScreen.continueKey));
       await tester.pumpAndSettle();
     }
 
@@ -617,17 +628,17 @@ void main() {
             onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
         await toGoalStep(tester, name: 'Zeynep Ünlü');
         if (goal == null) {
-          await tester.tap(find.text('Skip goal & start'));
+          await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
         } else {
           // The test font is wider than Nunito Sans: at the default size
           // the last goal sits under the fixed footer here (not with the
           // real font), so it is scrolled into view first.
-          await tester.ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
+          await tester
+              .ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
           await tester.pump();
-          await tester
-              .tap(find.widgetWithText(FilledButton, 'Start my first test'));
+          await tester.tap(find.byKey(OnboardingScreen.startKey));
         }
         await tester.pumpAndSettle();
 
@@ -659,7 +670,7 @@ void main() {
       await toGoalStep(tester);
       await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
       await tester.pump();
-      await tester.tap(find.text('Skip goal & start'));
+      await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
       await tester.pumpAndSettle();
       expect(storageService.savedProfile!.learningGoal, isNull);
       expect(storageService.savedProfile!.toMap()['learning_goal'], 'skipped');

@@ -1,14 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../models/avatar.dart';
-import '../utils/page_title.dart';
-import '../widgets/avatar_carousel.dart';
-import '../widgets/brand_scaffold.dart';
-import '../utils/content_width.dart';
-import '../theme.dart';
+import '../widgets/buddy_picker.dart';
+import 'lucky_wheel_screen.dart';
 
 /// Shared between this screen's centered avatar and Settings' own small
 /// preview row (`settings_screen.dart`), for the Settings → picker → back
@@ -27,184 +22,56 @@ const String avatarHeroTag = 'profile-avatar';
 /// impossible by construction.
 const String homeAvatarHeroTag = 'home-avatar';
 
-/// Shared avatar-picking screen — pushed from either Settings' preview row
-/// or Home's own greeting avatar (`heroTag` tells it which, so the `Hero`
-/// flight back always lands on the right place — see [avatarHeroTag]/
-/// [homeAvatarHeroTag]'s own doc comments for why they're kept distinct).
-/// Wraps [AvatarCarousel] with autosave and the `Hero` flight back to
-/// whichever entry point pushed it. No "Save" button of its own: every
-/// settle silently persists via [onAvatarChanged], debounced so a fast
-/// multi-swipe writes once after the user actually stops, not on every
-/// settle along the way.
-class AvatarPickerScreen extends StatefulWidget {
+/// Change your buddy (R06): the onboarding turntable ([BuddyPicker]) opened
+/// from Profile or Home, titled "Change your buddy" / "Your progress stays
+/// the same". "Save <Hero>" saves and closes; "Try my luck" opens the wheel
+/// (V03b) whose primary button also reads "Save <Hero>". Progress never
+/// changes. Leaving without saving keeps the buddy as it was.
+class AvatarPickerScreen extends StatelessWidget {
   final Avatar currentAvatar;
   final ValueChanged<Avatar> onAvatarChanged;
-  final String heroTag;
 
   const AvatarPickerScreen({
     super.key,
     required this.currentAvatar,
     required this.onAvatarChanged,
-    required this.heroTag,
   });
 
-  @override
-  State<AvatarPickerScreen> createState() => _AvatarPickerScreenState();
-}
+  static const backKey = ValueKey('avatar_picker_back');
 
-class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
-  static const _debounceDelay = Duration(milliseconds: 500);
-
-  Timer? _debounce;
-  Avatar? _pendingAvatar;
-
-  void _onSettled(Avatar avatar) {
-    _pendingAvatar = avatar;
-    _debounce?.cancel();
-    _debounce = Timer(_debounceDelay, () {
-      _pendingAvatar = null;
-      widget.onAvatarChanged(avatar);
-    });
-  }
-
-  // Shared by dispose() (a safety net for any teardown that doesn't go
-  // through _popNow — e.g. the whole route stack being torn down by an
-  // ancestor rebuild) and _popNow (the actual exit paths: Done, the back
-  // chevron, a system back gesture). Flushing here rather than only in
-  // dispose() matters specifically for the Hero flight this screen now
-  // participates in: dispose() doesn't run until *after* a pop's
-  // transition animation finishes, which is too late — the destination's
-  // own Hero (Home's or Settings' avatar) needs to already show the new
-  // avatar *before* the flight starts, or the flight visibly arrives at
-  // the wrong image and only then flickers to the right one.
-  void _flushPending() {
-    final pending = _pendingAvatar;
-    if (pending == null) return;
-    _pendingAvatar = null;
-    _debounce?.cancel();
-    widget.onAvatarChanged(pending);
-  }
-
-  void _popNow(BuildContext context) {
-    _flushPending();
+  void _save(BuildContext context, Avatar hero) {
+    if (hero != currentAvatar) onAvatarChanged(hero);
     Navigator.of(context).pop();
   }
 
   @override
-  void dispose() {
-    _flushPending();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  // Enlarged again, now that the colored selection ring is gone
-  // (docs/design-audit.md's avatar section) — the ring used to be a
-  // second, tighter constraint alongside neighbor-peek visibility ("ring
-  // strictly narrower than its own page"), and that's what actually
-  // capped the previous radius (64) well below what peek visibility alone
-  // allowed, though the reasoning written down at the time didn't
-  // separate the two clearly.
-  //
-  // Measured directly against the real widget tree (not hand-derived),
-  // sweeping radius from 56 to 88 at viewportFraction 0.4/0.45/0.5/0.55,
-  // at both 320pt and 375pt: the neighbor's own visible fraction turns
-  // out to depend on `viewportFraction` alone, not on `radius` at all —
-  // exactly 50% at vf 0.5, regardless of radius, at either width. So
-  // `viewportFraction` stays exactly 0.5, unchanged: it's still the
-  // largest value satisfying "at least half visible" (above 0.5 the
-  // fraction drops below half; below 0.5 it's comfortably more than
-  // half). The actual remaining limit on `_centerRadius` is the settled
-  // tile's own diameter fitting inside its own page slot
-  // (`viewportFraction * screenWidth`) at the narrowest supported width
-  // (320pt, iPhone SE) — `2 * radius <= 0.5 * 320` gives radius <= 80.
-  // 80 is exactly that boundary: the tile fills its own page slot at
-  // 320pt with no overflow, and has slack to spare at 375pt.
-  static const double _centerRadius = 80;
-  static const double _viewportFraction = 0.5;
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // BrandScaffold's own responsive horizontal padding formula
-    // (`body:` bypasses it — see that widget's doc comment — so this
-    // screen owns its own padding, matching that default rather than
-    // inventing a different one).
-    // P1: held to the centred content column on an iPad (`ContentWidth`).
-    final hPad = ContentWidth.sidePaddingOf(context);
-
-    return PopScope(
-      // Intercept every exit path (Done, the AppBar back chevron, a
-      // system back gesture) through the same _popNow — canPop: false
-      // means nothing pops until this callback explicitly does it,
-      // giving _flushPending a chance to run and take effect *before*
-      // the pop's Hero flight starts (see _flushPending's own comment).
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _popNow(context);
-      },
-      child: BrandScaffold(
-        title: PageTitle(context.l10n.avatarPickerTitle),
-        body: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // No card/box around this — it's a single line of text
-                    // with nothing to group visually or tap as a unit, so
-                    // giving it a container would be exactly the "readability
-                    // only" wrap docs/design-audit.md already argues against
-                    // (Settings' Profile/Data section, 2026-09-10). Solved
-                    // with typography alone: a title-weight role straight off
-                    // the theme, not a new style or a new color value.
-                    Text(
-                      context.l10n.avatarPickerHeading,
-                      style: theme.textTheme.titleMedium
-                          ?.withWeight(FontWeight.w800),
-                    ),
-                    const SizedBox(height: 32),
-                    // P1: the carousel is as wide as the content column on
-                    // an iPad (no inset on an iPhone).
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: ContentWidth.insetOf(context)),
-                      child: AvatarCarousel(
-                        initialAvatar: widget.currentAvatar,
-                        onSettled: _onSettled,
-                        centerRadius: _centerRadius,
-                        viewportFraction: _viewportFraction,
-                        centerTileBuilder: (avatar, tile) =>
-                            Hero(tag: widget.heroTag, child: tile),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // The only way to leave used to be the app bar's back chevron —
-            // no completion affordance at all. Deliberately just a pop, not
-            // a second write: _popNow already flushes any pending debounced
-            // change before popping, and the PopScope above routes the back
-            // chevron/a system back gesture through that exact same method
-            // — so Done isn't a second way to save, it's a second obvious
-            // way to trigger the one exit path every other trigger already
-            // uses.
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => _popNow(context),
-                    child: Text(context.l10n.commonDone),
-                  ),
-                ),
-              ),
-            ),
-          ],
+    final l10n = context.l10n;
+    String label(Avatar hero) => l10n.buddySave(hero.name(l10n));
+    return Scaffold(
+      body: BuddyPicker(
+        initial: currentAvatar,
+        title: l10n.buddyChangeTitle,
+        subtitle: l10n.buddyChangeSubtitle,
+        primaryLabel: label,
+        onConfirm: (hero) => _save(context, hero),
+        onTryLuck: (front) async {
+          final result = await openLuckyWheel(context,
+              current: front, primaryLabel: label);
+          if (result == null || !context.mounted) return null;
+          if (result.confirmed) {
+            _save(context, result.hero);
+            return null;
+          }
+          return result.hero;
+        },
+        leading: IconButton(
+          key: backKey,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () => Navigator.of(context).maybePop(),
+          icon: Icon(Directionality.of(context) == TextDirection.rtl
+              ? Icons.chevron_right_rounded
+              : Icons.chevron_left_rounded),
         ),
       ),
     );

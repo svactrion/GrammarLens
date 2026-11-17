@@ -25,7 +25,7 @@ class UserProfile {
     String? name,
     LearningGoal? learningGoal,
     // No clearAvatar flag: nothing in the app ever clears an avatar back to
-    // null — the carousel picker (avatar_carousel.dart) always has some
+    // null — the buddy picker (buddy_picker.dart) always has some
     // avatar centered, never an empty state, so there's no "remove" gesture
     // to plumb through here. A stored profile can still have a null avatar
     // (a legacy install from before onboarding started assigning one, or an

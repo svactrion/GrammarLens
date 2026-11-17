@@ -657,9 +657,9 @@ void main() {
 
               case 'avatar_picker':
                 await tester.pumpWidget(app(AvatarPickerScreen(
-                    currentAvatar: Avatar.values.first,
-                    onAvatarChanged: (_) {},
-                    heroTag: 'avatar')));
+                  currentAvatar: Avatar.values.first,
+                  onAvatarChanged: (_) {},
+                )));
                 await precache([for (final a in Avatar.values) a.assetPath]);
                 await tester.pumpAndSettle();
                 final tiles = find.byType(AvatarTile);
