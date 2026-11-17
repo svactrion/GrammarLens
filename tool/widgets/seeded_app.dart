@@ -18,9 +18,13 @@
 //   SEED_RESET_ASK=true       reminder settings back to "never asked"
 //                             (N01 opens on its own again);
 //   SEED_REMINDER_IN=<n>      reminders on (accepted, all four) at the
-//                             time n minutes from now, for a real reminder.
+//                             time n minutes from now, for a real reminder;
+//   SEED_LANGUAGE=<code>      the interface language (e.g. ar, tr);
+//   SEED_TEXT_SIZE=<size>     small, medium or large (the app's setting).
 import 'package:flutter/material.dart';
 import 'package:grammar_lens/app.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/reminder_settings.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -44,6 +48,8 @@ const _done = bool.fromEnvironment('SEED_DONE');
 const _ticketUsed = bool.fromEnvironment('SEED_TICKET_USED');
 const _resetAsk = bool.fromEnvironment('SEED_RESET_ASK');
 const _reminderIn = int.fromEnvironment('SEED_REMINDER_IN', defaultValue: -1);
+const _language = String.fromEnvironment('SEED_LANGUAGE');
+const _textSize = String.fromEnvironment('SEED_TEXT_SIZE');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +71,14 @@ Future<void> main() async {
     await storage.recordFreePracticeStarted();
   }
   if (_resetAsk) await storage.setReminderSettings(const ReminderSettings());
+  if (_language.isNotEmpty) {
+    await storage.setLanguage(
+        AppLanguage.values.firstWhere((l) => l.name == _language));
+  }
+  if (_textSize.isNotEmpty) {
+    await storage.setTextSize(
+        AppTextSize.values.firstWhere((s) => s.name == _textSize));
+  }
   if (_reminderIn >= 0) {
     final at = DateTime.now().add(const Duration(minutes: _reminderIn));
     await storage.setReminderSettings(const ReminderSettings()
