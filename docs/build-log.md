@@ -14198,3 +14198,57 @@ Docs only. Nothing is rewritten or deleted by this entry.
 - **[Fix]** `lib/utils/monthly_equivalent.dart`: a small map of symbols `intl` has wrong at the version this app can use (TRY → "₺"); those currencies format through `NumberFormat.currency` with that symbol, every other currency stays on `NumberFormat.simpleCurrency`. Placement stays the locale's (`₺166,67` in `tr_TR`, `166,67 ₺` in `de_DE`). `intl` itself cannot move: `flutter_localizations` pins it.
 - **[Tests]** `test/monthly_equivalent_test.dart`: TRY in `tr_TR` and `de_DE` for both derived lines, no "TL" in five locales, USD and EUR unchanged. Without the map the test fails on `TL166,67`. `flutter analyze` clean; **2411 tests passed**. Not checked on a device.
 - **[Docs]** Roadmap: a 1.4.1 row and section, with this fix and the storage reset gate fix (`8d4183b`), both done on `main`, not shipped. No version bump yet.
+
+## 2026-11-17 (UI polish built on branch `ui-polish`; not merged, not shipped)
+
+The design handoff in `docs/design/ui-polish/handoff/` (`SPEC.md` v9,
+`TASK.md`) implemented in one run on branch `ui-polish`, batches B0–B11.
+The full record, every decision and every gap: `PROGRESS.md` there.
+
+- **[Built]** Foundations (colour tokens, motion tokens, haptics map, the
+  9 heroes × 6 poses, retired heroes moved to Fox); shared components
+  (pressable buttons and cards, step bar, score ring, skeletons, the Daily
+  Test card, the ticket, the score capsule, sheets, the companion dialog,
+  the error state, the one snackbar); launch and onboarding (splash,
+  welcome, the turntable and the wheel, name, goal, getting ready, this
+  month's mountain); the Daily Test with per-question Check graded on the
+  device against the set's key, new results, Welcome badge and medal;
+  Home (capsule, Daily Test card, mountain with bubble, free ticket, topic
+  showcase or Premium practice card, rest scene once every daily right is
+  used), the first climb's camera, the month recap and new mountain;
+  Review with the ticket, inline mistakes and the sort sheet, the weak spot
+  screen; practice (topics, length, consent, preparing, question, AI wait,
+  results, limit sheet); the paywall as one page with the exit reminder
+  and the Premium on screen; Profile (stage, name sheet, medals layer,
+  language, data, credits); a dark / Arabic / largest-text / Reduce Motion
+  sweep.
+- **[First-wave topics]** Conditionals, Passive Voice, Prepositions,
+  Relative Clauses, Comparatives & Superlatives are in the app's topic
+  data (titles, descriptions in 8 languages, hint cards) and the proxy's
+  topic table, behind flags that are off (`kFirstWaveTopicsEnabled`,
+  `FIRST_WAVE_TOPICS_ENABLED`). Tests cover both states. The proxy was not
+  deployed; no generation or measurement script was run.
+- **[Rules kept]** Points, steps, medals, the free ticket's count, the
+  session cap, the AI permission and the paywall's purchase / restore /
+  legal lines work as before; the Daily Test's points shown during Check
+  equal what the completion stores. No new analytics events, no new data
+  collected, no new package, no version change.
+- **[Decisions to review]** Listed in `PROGRESS.md` (D0-x … D10); the main
+  ones: no mastery strips (no stored count, D6-1); the first tab is called
+  "Climb" (D5-2); the first climb's camera takes the place of Home's
+  in-card first-run zoom (D5-3); the month change is full screen (D5-4);
+  the paywall's comparison is always on the page (D8-1); the exit reminder
+  once per session (D8-2).
+- **[Verified]** `flutter analyze`: no issues; `flutter test`: all passed
+  (counts in `PROGRESS.md`); proxy `tsc --noEmit` and the topic-related
+  vitest files passed locally. Every in-scope board captured on the iPhone
+  18 Pro simulator (iOS 27.2) through a debug-only board gallery
+  (`tool/ui_polish/`), compared with its board; the comparison table is in
+  `PROGRESS.md`.
+- **[Not verified]** Nothing is checked on a physical device. Arabic and
+  the largest text size are checked by tests, not by captures. Real
+  purchases, real AI generation and the proxy were not exercised.
+- **[Open]** Merge into `main` and a device pass are the owner's; the
+  `product.yaml` "planned" line for the UI polish still says "not started"
+  (TASK §7 allows only the `recent` entry in this run).
+

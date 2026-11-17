@@ -315,7 +315,14 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
 
 #### UI polish + 4th tab (planned, opened 2026-11-17)
 
-Opened by the owner on 2026-11-17. **Design only so far; no code.** Design
+**Status (2026-11-17): the UI polish is built on branch `ui-polish`**
+(batches B0–B11, every in-scope board captured on the iPhone 18 Pro
+simulator); **not merged into `main`, not shipped, not checked on a
+device.** The run's record, decisions to review and gaps:
+[`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
+The 4th tab is still open.
+
+Opened by the owner on 2026-11-17. Design
 canvas: claude.ai artifact "GrammarLens — Tüm Ekranlar ve Senaryolar", page
 "Yeni tasarım — gruplar" (v9 on 2026-11-17; every screen grouped by area, each with a
 motion + haptics note for Claude Code). Asset briefs:
@@ -323,8 +330,7 @@ motion + haptics note for Claude Code). Asset briefs:
 `asset-requests-round2.md`. **Design final (v9, 2026-11-17); handed to Claude
 Code** as an offline package in `docs/design/ui-polish/handoff/` (`SPEC.md`,
 `TASK.md`, `ASSETS.md`, app-ready assets, every board as HTML and a static
-render). Implementation runs on branch `ui-polish`; not started at the time
-of writing.
+render). Implementation ran on branch `ui-polish` (status above).
 
 Owner decisions so far:
 - **Heroes: 9, each with 6 pose images** (Fox, Panda, Koala, Frog, Bird,

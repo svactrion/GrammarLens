@@ -6,7 +6,61 @@ decisions, open items. The final summary goes at the top when B11 ends.
 
 ## Final summary
 
-*(Written at the end of B11.)*
+**Status: B0–B11 done** on branch `ui-polish` (pushed). Not merged into
+`main`, not shipped, **not checked on a device**.
+
+| Batch | Status | Commits |
+|---|---|---|
+| B0 Plan | done | `24baf18`, `12cdd9c` |
+| B1 Foundations | done | `49302e1`, `a91ea97`, `85e7160`, `be7e333`, `0346fc4` |
+| B2 Shared components | done | `9186d21`, `a1e08b9`, `5cb8578`, `6cb7aa2`, `1a7fca5`, `53b8006`, `db2e521` |
+| B3 Launch and onboarding | done | `7435559`, `af5cbff`, `e6807b1`, `fde5fe8`, `51d38d6`, `531a525`, `3b70896`, `de8bc02` |
+| B4 Daily Test and rewards | done | `a879129`, `95d1520`, `ea04792`, `ead1918`, `03dc9e6` |
+| B5 Home and mountain | done | `592ef64`, `e6bf38b`, `00130c7` |
+| B6 Review | done | `20afb23`, `4f4e250`, `1bf37c4` |
+| B7 Practice + first-wave topics | done | `9ea926e`, `9a8024d`, `1fc2a1c`, `d872413` |
+| B8 Paywall | done | `2981ab0`, `f303bad` |
+| B9 Profile | done | `f98eac1`, `5c39c65` |
+| B10 System and themes | done | `5dabea0`, `2aa88bd` |
+| B11 Final sweep and docs | done | see B11 |
+
+**Done.** Every in-scope board of SPEC §5 is built and captured on the
+iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery
+(`tool/ui_polish/`); the comparison table is in B11. The first-wave topics
+are in the app and the proxy, switched off, with tests for both states.
+`flutter analyze` and `flutter test` pass (B11).
+
+**Not done** (each listed with its batch): mastery strips (D6-1, no stored
+count); "since <month year>" on the profile ribbon (D9-1, no stored date);
+the thick 3-medal shelf image (D9-2); some motion details (B4, B5, B7, B8,
+B9 "Not done / gaps": e.g. V09's book icon flight, the paywall's staggered
+plan entrance, PF02/PF03 Hero flights, R02's rolling number).
+
+**Not verified.** Nothing on a physical device (haptics, real keyboard,
+performance). Arabic and the largest text size are checked by tests, not
+captures. No real purchase, no real AI generation, no proxy call; the proxy
+is not deployed. Out of scope and untouched: W01, N01–N03, the reminder
+switch on V24.
+
+**Decisions for the owner to review** (details under each batch):
+- D5-1 Home loses its avatar, weak spot list, topic strip and Review
+  call-out (the boards have none); the ticket and the showcase take their
+  jobs.
+- D5-2 The first tab is called "Climb" in all 8 languages (every board).
+- D5-3 The first climb's full-screen camera (V12) replaces Home's in-card
+  first-run zoom (same one-time flag, same `month_zoom_ended` event).
+- D5-4 The month change is two full-screen pages (R04 → R04b) instead of a
+  bottom sheet; it closes with its button or the system back.
+- D6-1 / D7-1 No mastery strips anywhere (no stored count, no §1 rule).
+- D6-3 Review's 1.2.0 free practice card is replaced by the Ticket.
+- D7-2 P08 keeps the existing accurate sentence instead of "right after
+  your Daily Test".
+- D8-1 The paywall's comparison is always on the page (no toggle).
+- D8-2 The exit reminder opens once per app session.
+- D8-3 The trial timeline promises no reminder (no notifications exist).
+- D9-4 Language options lost keyboard-focus traversal (pressable cards).
+- `product.yaml`'s "planned" line for the UI polish still says "not
+  started": TASK §7 allows only the `recent` entry.
 
 ## Decisions
 
@@ -57,10 +111,18 @@ Format: what · options · choice · why.
 ## Blocked / not verified
 
 - Nothing is checked on a physical device in this run (TASK §6).
+- Arabic (RTL) and the largest text size: by tests (`b10_system_pass_test`,
+  `l10n_layout_test`), not by simulator captures.
+- Purchases, AI generation and the proxy: not exercised (fakes and the
+  debug fixture offering only); the proxy is not deployed (TASK).
+- B11 recapture: the gallery driver hung twice on V05-Goal's tap (it worked
+  in B3); its B3 capture is used, the screen being unchanged since then.
 
 ## B0 — Plan
 
-Status: **done** (commits below).
+Status: **done**.
+
+Commits: `24baf18` (the handoff package), `12cdd9c` (this plan).
 
 ### Board → code
 
@@ -797,3 +859,93 @@ Verified:
 Not done / gaps:
 - Arabic and the largest text are checked by tests, not by simulator
   captures (the gallery runs in English at the default size).
+
+## B11 — Final sweep and docs
+
+Status: **done**.
+
+Commits: COMMITS_B11
+
+What was done:
+- Every in-scope board captured again on the iPhone 18 Pro simulator (iOS
+  27.2, light, English; SY03 in dark) with `tool/ui_polish/capture.sh`,
+  into `build/ui-polish-captures/` (not committed), and compared with
+  `handoff/screens/<ID>.webp` and the board HTML. The table below is the
+  result; "gap" rows name what differs and why.
+- Docs: `docs/build-log.md` (dated entry), `docs/roadmap.md` (status of
+  "UI polish + 4th tab"), `product.yaml` (one `recent` entry, trimmed to
+  five, `updated_at`), this file's final summary.
+- Final checks after the last code change: `flutter analyze` — no issues found; `flutter test` — 2477 passed, 0 failed (run after the last code change, the formatting of `practice_launch.dart`).
+
+### Board comparison
+
+All 65 in-scope boards (SPEC §2: every board but W01, N01, N02, N03). 62 match (some name small motion gaps in their note), 3 are gaps (V09, R02, V23); every gap is also listed under its batch.
+
+| Board | Capture(s) in `build/ui-polish-captures/` | Match / gap | Note |
+|---|---|---|---|
+| V00-CompanionSystem | V00-CompanionSystem-500.png, V00-CompanionSystem.png | match | System sheet: nine heroes, moods, props (gallery board). |
+| V00-MotionSystem | V00-MotionSystem.png | match | Motion tokens, buttons, colours. |
+| X01-ExpressionKit | X01-ExpressionKit.png | match | Four heroes × five moods; sad/sleep filters per SPEC X01 (D1-2). |
+| X03-HeroSet | X03-HeroSet-400.png, X03-HeroSet.png | match | 9 heroes × 6 poses. |
+| X04-Ticket | X04-Ticket-420.png, X04-Ticket.png | match | Free, tearing, used; compact and full. |
+| X05-DailyCard | X05-DailyCard-560.png, X05-DailyCard.png | match | One 256 pt skeleton for loading / waiting / done. |
+| V01-Splash | V01-Splash-mid.png, V01-Splash.png | match | Logo build-up mid frame and end. |
+| V02-Welcome | V02-Welcome.png | match | Demo card, companions, Get started. |
+| V03-Meet | V03-Meet.png | match | B1 turntable, Fox in front. |
+| V03b-LuckyWheel | V03b-LuckyWheel-ready.png, V03b-LuckyWheel.png | match | Ready and landed frames; never the current buddy. |
+| V04-Name | V04-Name.png | match | Typed name, the companion's reaction. |
+| V05-Goal | V05-Goal.png | match | Three goal cards, the selected one navy. The B3 capture: the screen is unchanged since `e6807b1`, and the B11 driver hung twice on this board's tap (tooling, see Blocked). |
+| V05b-GettingReady | V05b-GettingReady-100.png, V05b-GettingReady.png | match | Stops at real work (⅓, ⅔, 1). |
+| V06-MountainIntro | V06-MountainIntro.png | match | Whole mountain, flag, the companion at the start. |
+| R06-AvatarChange | R06-AvatarChange.png | match | Turntable from Profile, "Save <Hero>". |
+| R06s-B1-Turntable | R06s-B1-Turntable-1-resting.png, R06s-B1-Turntable-2-turning.png, R06s-B1-Turntable-3-panda.png | match | Storyboard frames of the turntable. |
+| R06s-D-Wheel | R06s-D-Wheel-1-ready.png, R06s-D-Wheel-2-spinning.png, R06s-D-Wheel-3-landed.png | match | Storyboard frames of the wheel: ready, spinning, landed. |
+| V07-Question | V07-Question.png | match | Check footer, points chip; gap: the hint handle's nudge is not added (B4). |
+| V08-Correct | V08-Correct.png | match | Green sheet, +2; gap: the star flies on a fixed path (B4). |
+| V09-Wrong | V09-Wrong.png | gap | Orange sheet, the key, +1; the book icon does not fly to Review (B4). |
+| Q04-MultiBlank | Q04-MultiBlank-typed.png, Q04-MultiBlank.png | match | Per-blank colours after Check; gap: the tapped blank's breathe (B4). |
+| Q05-ErrorCorrection | Q05-ErrorCorrection.png | match | Last question reads Finish. |
+| V10-Results | V10-Results.png | match | Stepwise ring, strip, tiles, answer rows. |
+| V11-Badge | V11-Badge.png | match | Navy page, rays, the Welcome badge over the companion. |
+| R05-Medal | R05-Medal.png | match | Tier medal, next threshold from MonthlyMedalRules. |
+| R10-Leave | R10-Leave.png | match | Companion dialog over the question, Keep going / Leave. |
+| R11-Offline | R11-Offline.png | match | Sad companion, calm line, Try again with dots. |
+| SY02-Snackbar | SY02-Snackbar.png | match | One dark capsule with icon and Undo. |
+| V15-HomeNextDay | V15-HomeNextDay.png | match | Orange card, bubble "Step N is one test away!"; gap: no separate gold ring pulse on the step (B5). |
+| V14-Home | V14-Home-520.png, V14-Home.png | match | Navy card, capsule +N, ticket, topic showcase (scrolled capture too). |
+| H03-HomeLoading | H03-HomeLoading.png | match | Card loading state and the mountain skeleton; the inner skeleton is faint. |
+| H04-HomePremium | H04-HomePremium-520.png, H04-HomePremium.png | match | Practice card with sessions n/5, unlocked tiles. |
+| V12-Climb | V12-Climb.png | match | End frame: step chip, bubble, Continue (camera covers the screen). |
+| V12b-ClimbStoryboard | V12b-ClimbStoryboard-1-wide.png, V12b-ClimbStoryboard-2-close.png, V12b-ClimbStoryboard-3-wide.png | match | Three key frames: wide, close (2.2×), wide. |
+| V24-DayComplete | V24-DayComplete.png | match | Camp, campfire, sleeping companion, countdown; no reminder switch (OUT). |
+| R04-MonthCard | R04-MonthCard.png | match | Recap with medal swap, dots, stats, stepwise bar; gap: lines glow by scale only. |
+| R04b-NewMountain | R04b-NewMountain.png | match | Whole new mountain, flag, companion at the start, thresholds. |
+| V16-Review | V16-Review.png | match | Ticket, weak spot card with the mistake inline, Practice with my ticket; no mastery strip (D6-1). |
+| V16b-TicketTear | V16b-TicketTear-2-practice-starts.png, V16b-TicketTear.png | match | Mid-tear: navy body, stub gone, USED stamp; then the AI permission. |
+| V22-ReviewUsed | V22-ReviewUsed.png | match | Used ticket with the 20:41 slot, Premium card; no "practiced today" chip or mastery (D6-1, D6-2). |
+| RV05-ReviewEmpty | RV05-ReviewEmpty.png | match | Waiting ticket, cheering companion, navy button. |
+| RV06-ReviewSort | RV06-ReviewSort.png | match | Sheet with two options, the selected one navy. |
+| R03-WeakSpot | R03-WeakSpot.png | match | Rule bubble, the mistake inline, today's ticket; no mastery strip (D6-1). |
+| R12-ReviewPremium | R12-ReviewPremium.png | match | Premium chip, Suggested focus, cards; no mastery strips (D6-1). |
+| R01-Topics | R01-Topics.png | match | Picked for you, coloured topic cards; no mastery strips (D7-1). |
+| R02-Length | R02-Length.png | gap | Orange knob and Start; the ring keeps the existing navy dial, the number does not roll. |
+| V17-Consent | V17-Consent.png | match | Same text in icon cards, navy Agree, Not now. |
+| V18-Preparing | V18-Preparing.png | match | Thinking companion, skeletons, Did you know? card; skeleton bars faint. |
+| V19-PracticeQuestion | V19-PracticeQuestion.png | match | Line: AI reviews all your answers when you finish. |
+| V20-Reviewing | V20-Reviewing.png | match | Inspecting companion, lens over the answers, checklist, bar. |
+| V21-PracticeResults | V21-PracticeResults.png | match | N/M correct, feedback cards, Premium card; no mastery step (D7-1). |
+| P08-DailyLimit | P08-DailyLimit.png | match | Sleeping companion, full counter; the existing accurate sentence (D7-2). |
+| V13-Paywall | V13-Paywall.png | match | No price boxes on first view; pinned CTA, price line and links. |
+| V13a-PaywallPlans | V13a-PaywallPlans.png | match | Plans after See plans, yearly preselected. |
+| V13c-PaywallCompare | V13c-PaywallCompare.png | match | Table, trial timeline, plan label above the CTA. |
+| V13b-ExitReminder | V13b-ExitReminder.png | match | Sad companion, no discount, trial / Continue with free. |
+| PW05-PremiumOn | PW05-PremiumOn.png | match | Rays, cheering companion, three unlocked things, trial end date. |
+| V23-Profile | V23-Profile-420.png, V23-Profile.png | gap | Stage, ribbon, stat tiles; the shelf keeps the existing strip, no "since" line (D9-1, D9-2). |
+| PF02-Medals | PF02-Medals.png | match | Every medal over the blurred profile, by year. |
+| PF03-MedalDetail | PF03-MedalDetail.png | match | The existing medal detail from the layer (D9-3). |
+| PF04-EditName | PF04-EditName.png | match | Sheet with the companion's question, Save. |
+| R07-Language | R07-Language.png | match | Language cards, the selected one navy with a check. |
+| R08-Data | R08-Data.png | match | Three cards; the reset asks with the companion dialog. |
+| R09-Credits | R09-Credits.png | match | Three companions on top, one card, two links. |
+| SY03-DarkHome | SY03-DarkHome-dark.png | match | Dark Home from the theme tokens (captured with :dark). |
+
