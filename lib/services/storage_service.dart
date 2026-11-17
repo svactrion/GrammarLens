@@ -20,6 +20,7 @@ import '../models/error_entry.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/practice_length.dart';
+import '../models/reminder_settings.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
 import '../models/user_profile.dart';
@@ -40,7 +41,7 @@ class StorageService {
   void _changed() => onChanged?.call();
 
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 26;
+  static const _dbVersion = 27;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -131,6 +132,21 @@ class StorageService {
     CREATE TABLE IF NOT EXISTS language_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       language TEXT NOT NULL
+    )
+  ''';
+
+  /// The reminder settings (TASK-widgets N01, N03): one row, the four kinds,
+  /// the time of day and whether our own question was asked. No row means
+  /// reminders were never turned on and the question never asked.
+  static const _createReminderSettingsTable = '''
+    CREATE TABLE IF NOT EXISTS reminder_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      daily_test INTEGER NOT NULL,
+      free_ticket INTEGER NOT NULL,
+      close_to_medal INTEGER NOT NULL,
+      new_mountain INTEGER NOT NULL,
+      minutes INTEGER NOT NULL,
+      ask TEXT NOT NULL
     )
   ''';
 
@@ -420,6 +436,7 @@ class StorageService {
         await db.execute(_createAiConsentTable);
         await db.execute(_createOneTimeFlagsTable);
         await db.execute(_createClimbMonthThemesTable);
+        await db.execute(_createReminderSettingsTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -633,6 +650,12 @@ class StorageService {
         if (oldVersion < 26) {
           await db.execute(_createLanguageSettingsTable);
         }
+
+        // v26 -> v27: reminder_settings (TASK-widgets W4); no row is
+        // "never turned on, never asked", so nothing to fill in.
+        if (oldVersion < 27) {
+          await db.execute(_createReminderSettingsTable);
+        }
       },
     );
   }
@@ -837,6 +860,26 @@ class StorageService {
 
   /// The latest AI-provider permission decision, or null if the user has never
   /// been asked.
+  /// The reminder settings; the defaults (all off, 20:00, not asked) when
+  /// none are stored.
+  Future<ReminderSettings> getReminderSettings() async {
+    final db = await _database;
+    final rows = await db.query('reminder_settings', where: 'id = 0');
+    return rows.isEmpty
+        ? const ReminderSettings()
+        : ReminderSettings.fromMap(rows.single);
+  }
+
+  Future<void> setReminderSettings(ReminderSettings settings) async {
+    final db = await _database;
+    await db.insert(
+      'reminder_settings',
+      settings.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    _changed();
+  }
+
   Future<AiConsent?> getAiConsent() async {
     final db = await _database;
     final rows = await db.query('ai_consent', limit: 1);
