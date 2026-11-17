@@ -25,7 +25,6 @@ const _settleMs = <String, int>{
   'V11-Badge': 2200,
   'R05-Medal': 2200,
   'PW05-PremiumOn': 2200,
-  'V16b-TicketTear': 420,
 };
 
 /// Long system boards: extra captures scrolled down by these offsets.
@@ -62,6 +61,20 @@ final _scripts = <String, Script>{
     await shot('-2-close');
     await _wait(2700);
     await shot('-3-wide');
+  },
+  'V16b-TicketTear': (d, shot) async {
+    await _wait(1400);
+    await d.tapNow('review_practice_ticket');
+    await _wait(250);
+    await shot('');
+    await _wait(900);
+    await shot('-2-practice-starts');
+  },
+  'RV06-ReviewSort': (d, shot) async {
+    await _wait(1200);
+    await d.tapNow('review_sort');
+    await _wait(900);
+    await shot('');
   },
   'H03-HomeLoading': (d, shot) async {
     await _wait(900);

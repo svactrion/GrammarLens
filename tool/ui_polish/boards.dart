@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
+import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/screens/review_screen.dart';
+import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'dart:async';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
@@ -185,6 +188,30 @@ final Map<String, WidgetBuilder> galleryBoards = {
         avatar: Avatar.fox,
         onClose: () {},
       ),
+  // B6: Review (the real screen in the tab shell at 03:19, fixed data).
+  'V16-Review': (_) => _review(spots: [_gallerySpot()]),
+  'V16b-TicketTear': (_) => _review(spots: [_gallerySpot()]),
+  'V22-ReviewUsed': (_) => _review(spots: [_gallerySpot()], freeUsed: 1),
+  'RV05-ReviewEmpty': (_) => _review(spots: const []),
+  'RV06-ReviewSort': (_) => _review(spots: [_gallerySpot()], freeUsed: 1),
+  'R03-WeakSpot': (_) => WeakSpotDetailScreen(
+        topic: kTopics.firstWhere((t) => t.id.name == 'articles'),
+        spot: _gallerySpot(),
+        hero: Avatar.fox,
+        claudeService: ClaudeService(),
+        storageService: _GalleryReviewStorage(spots: [_gallerySpot()]),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        subscriptionService: _GallerySubs(false),
+      ),
+  'R12-ReviewPremium': (_) => _review(premium: true, spots: [
+        _gallerySpot(frequency: 3),
+        _gallerySpot(
+            topic: 'modalVerbs', errorType: 'must_vs_have_to', frequency: 2),
+        _gallerySpot(
+            topic: 'tenseSelection',
+            errorType: 'past_simple_vs_present_perfect',
+            frequency: 1),
+      ]),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
@@ -760,4 +787,112 @@ class _GalleryHomeStorage extends StorageService {
 
   @override
   Future<int> getSessionCountForToday() async => sessions;
+}
+
+WeakSpot _gallerySpot(
+        {String topic = 'articles',
+        String errorType = 'the_with_superlatives',
+        int frequency = 1}) =>
+    WeakSpot(
+      topicId: topic,
+      errorType: errorType,
+      frequency: frequency,
+      lastSeen: DateTime(2026, 11, 17, 2),
+    );
+
+/// Review for a free (or [premium]) user with [spots]; [freeUsed] free
+/// practices used today.
+Widget _review(
+        {required List<WeakSpot> spots,
+        int freeUsed = 0,
+        bool premium = false}) =>
+    Builder(builder: (context) {
+      final l10n = context.l10n;
+      return FloatingNavShell(
+        body: PrimaryScrollController(
+          controller: galleryScroll,
+          child: ReviewScreen(
+            claudeService: ClaudeService(),
+            storageService:
+                _GalleryReviewStorage(spots: spots, freeUsed: freeUsed),
+            analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+            subscriptionService: _GallerySubs(premium),
+            active: true,
+            onGoToPractice: () {},
+            userName: 'Ada',
+            hero: Avatar.fox,
+            clock: () => DateTime(2026, 11, 17, 3, 19),
+          ),
+        ),
+        tabs: [
+          NavShellTab(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: l10n.navHome),
+          NavShellTab(
+              icon: Icons.history_outlined,
+              activeIcon: Icons.history,
+              label: l10n.featureReview),
+          NavShellTab(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: l10n.navProfile),
+        ],
+        selectedIndex: 1,
+        onTabChange: (_) {},
+      );
+    });
+
+class _GalleryReviewStorage extends StorageService {
+  final List<WeakSpot> spots;
+  final int freeUsed;
+  _GalleryReviewStorage({required this.spots, this.freeUsed = 0});
+
+  @override
+  Future<List<WeakSpot>> getWeakSpots(
+          {int limit = 10,
+          ReviewSortOrder sortOrder = ReviewSortOrder.recent}) async =>
+      spots.take(limit).toList();
+
+  @override
+  Future<int> getFreePracticeCountForToday() async => freeUsed;
+
+  @override
+  Future<int> getSessionCountForToday() async => 0;
+
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => {
+        for (final s in spots)
+          s.topicId: const TopicStats(practiced: 1, weakSpotCount: 1),
+      };
+
+  @override
+  Future<ReviewSortOrder> getReviewSortOrder() async => ReviewSortOrder.recent;
+
+  @override
+  Future<void> setReviewSortOrder(ReviewSortOrder order) async {}
+
+  @override
+  Future<List<ErrorEntry>> getRecentMistakes(String topicId, String errorType,
+          {int limit = 3}) async =>
+      [
+        ErrorEntry(
+          topicId: topicId,
+          errorType: errorType,
+          timestamp: DateTime(2026, 11, 17, 2),
+          source: ErrorSource.dailyTest,
+          userAnswer: switch (errorType) {
+            'must_vs_have_to' => 'You must to wear a helmet.',
+            'past_simple_vs_present_perfect' => 'I have seen him yesterday.',
+            _ => 'She is a tallest girl in her class.',
+          },
+          correctedAnswer: switch (errorType) {
+            'must_vs_have_to' => 'You must wear a helmet.',
+            'past_simple_vs_present_perfect' => 'I saw him yesterday.',
+            _ => 'She is the tallest girl in her class.',
+          },
+          explanation: 'Superlatives take “the”: there is only one.',
+          rule: 'one of a kind takes the',
+        ),
+      ];
 }
