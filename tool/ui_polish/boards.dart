@@ -5,6 +5,20 @@ import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
 
+import 'package:grammar_lens/data/day_zero_daily_test.dart';
+import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
+import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
+import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
+import 'package:grammar_lens/services/claude_service.dart';
+import 'package:grammar_lens/services/daily_test_service.dart';
+import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/widgets/medal_celebration.dart';
+
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
@@ -17,7 +31,6 @@ import 'package:grammar_lens/screens/welcome_screen.dart';
 import 'package:grammar_lens/widgets/launch_splash.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
-import 'package:grammar_lens/widgets/companion_dialog.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:grammar_lens/widgets/daily_test_card.dart';
 import 'package:grammar_lens/widgets/error_state.dart';
@@ -77,7 +90,36 @@ final Map<String, WidgetBuilder> galleryBoards = {
       current: Avatar.fox,
       random: Random(3),
       primaryLabel: (h) => 'Climb with ${h.semanticLabel}'),
-  'R10-Leave': (_) => const _OnMount(_openLeave, child: _QuestionBackdrop()),
+  'V07-Question': (_) => _dailyTest(),
+  'V08-Correct': (_) => _dailyTest(),
+  'V09-Wrong': (_) => _dailyTest(),
+  'Q04-MultiBlank': (_) => _dailyTest(multiBlankFirst: true),
+  'Q05-ErrorCorrection': (_) => _dailyTest(errorLast: true),
+  'V10-Results': (_) => DailyTestResultScreen(
+        dailyTestSet: _galleryDaySet(),
+        answers: {
+          for (final (i, q) in kDayZeroQuestions.indexed)
+            q.item.id: i == 1 ? 'a' : q.correctAnswer,
+        },
+        dailyTestService: _GalleryDailyService(_galleryDaySet()),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        hero: Avatar.fox,
+        userName: 'Ada',
+      ),
+  'V11-Badge': (context) => MedalCelebration.welcome(
+      onClose: () {}, l10n: context.l10n, hero: Avatar.fox, name: 'Ada'),
+  'R05-Medal': (context) => MedalCelebration.tier(
+      tier: MedalTier.bronze,
+      theme: ClimbThemes.emberPeak,
+      month: 11,
+      onClose: () {},
+      l10n: context.l10n,
+      hero: Avatar.fox,
+      points: 75,
+      nextTier: MedalTier.silver,
+      nextAt: 150),
+  // R10 over the real question screen: the driver taps the close button.
+  'R10-Leave': (_) => _dailyTest(),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
@@ -120,15 +162,6 @@ class _OnMountState extends State<_OnMount> {
   @override
   Widget build(BuildContext context) => widget.child;
 }
-
-void _openLeave(BuildContext context) => showCompanionDialog(
-      context: context,
-      hero: Avatar.fox,
-      title: context.l10n.dailyTestLeaveTitle,
-      body: context.l10n.leaveProgressBody(1, 5),
-      primaryLabel: context.l10n.leaveKeepGoing,
-      secondaryLabel: context.l10n.commonLeave,
-    );
 
 /// A plain page behind dialogs and messages.
 class _QuestionBackdrop extends StatelessWidget {
@@ -451,3 +484,70 @@ class _HeroSet extends StatelessWidget {
     ]);
   }
 }
+
+/// Drops every event (the gallery sends nothing).
+class _NoAnalytics implements AnalyticsSink {
+  const _NoAnalytics();
+  @override
+  Future<void> logEvent(String name, Map<String, Object>? parameters) async {}
+  @override
+  Future<void> setUserProperty(String name, String? value) async {}
+}
+
+DailyTestSet _galleryDaySet(
+        {bool multiBlankFirst = false, bool errorLast = false}) =>
+    DailyTestSet(
+      day: '2026-11-17',
+      questions: errorLast
+          ? [
+              for (final i in [0, 2, 3, 4, 1]) kDayZeroQuestions[i],
+            ]
+          : [
+              if (multiBlankFirst)
+                DailyTestQuestion(
+                  item: const PracticeItem(
+                    id: 'gallery_multi',
+                    type: PracticeItemType.fillInBlank,
+                    context:
+                        'We had ____ lunch at ____ small café near ____ station.',
+                    instruction: 'Fill in each blank with an article, or none.',
+                  ),
+                  topicId: 'articles',
+                  correctAnswer:
+                      'We had lunch at a small café near the station.',
+                  commonWrongAnswers: const [],
+                ),
+              ...kDayZeroQuestions.take(multiBlankFirst ? 4 : 5),
+            ],
+    );
+
+/// A Daily Test service that hands the gallery a fixed set and saves
+/// nothing.
+class _GalleryDailyService extends DailyTestService {
+  final DailyTestSet set;
+  _GalleryDailyService(this.set)
+      : super(
+            claudeService: ClaudeService(), storageService: _GalleryStorage());
+
+  @override
+  Future<DailyTestSet> getTodaysSet() async => set;
+
+  @override
+  Future<bool> completeDailyTest(
+          Map<String, String> answers, List<ErrorEntry> errorEntries,
+          {String? day, DateTime? completedAt}) async =>
+      false;
+}
+
+class _GalleryStorage extends StorageService {}
+
+Widget _dailyTest({bool multiBlankFirst = false, bool errorLast = false}) =>
+    DailyTestScreen(
+      dailyTestService: _GalleryDailyService(_galleryDaySet(
+          multiBlankFirst: multiBlankFirst, errorLast: errorLast)),
+      analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+      hero: Avatar.fox,
+      userName: 'Ada',
+      onFinished: (_, __) {},
+      onExit: () {},
+    );

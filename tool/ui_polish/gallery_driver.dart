@@ -89,6 +89,69 @@ final _scripts = <String, Script>{
     await _wait(5500);
     await shot('-100');
   },
+  'V07-Question': (d, shot) async {
+    await _wait(900);
+    await d.tapNow('question_answer_field');
+    await d.typeNow('eating');
+    await _wait(900);
+    await shot('');
+  },
+  'V08-Correct': (d, shot) async {
+    await _wait(900);
+    await d.tapNow('question_answer_field');
+    await d.typeNow('eating');
+    await _wait(400);
+    await d.tapNow('daily_test_check');
+    await _wait(1300);
+    await shot('');
+  },
+  'V09-Wrong': (d, shot) async {
+    await _wait(900);
+    await d.tapNow('question_answer_field');
+    await d.typeNow('eating');
+    await _wait(400);
+    await d.tapNow('daily_test_check');
+    await _wait(900);
+    await d.tapNow('daily_test_continue');
+    await _wait(700);
+    await d.tapNow('question_answer_field');
+    await d.typeNow('She don\'t like it.');
+    await _wait(400);
+    await d.tapNow('daily_test_check');
+    await _wait(1300);
+    await shot('');
+  },
+  'Q04-MultiBlank': (d, shot) async {
+    await _wait(900);
+    await d.tapNow('question_no_article_0');
+    await d.tapNow('question_blank_box_1');
+    await d.typeNow('the');
+    await d.tapNow('question_blank_box_2');
+    await d.typeNow('the');
+    await _wait(600);
+    await shot('-typed');
+    await _wait(300);
+    await d.tapNow('daily_test_check');
+    await _wait(1400);
+    await shot('');
+  },
+  'Q05-ErrorCorrection': (d, shot) async {
+    await _wait(900);
+    for (var i = 0; i < 4; i++) {
+      await d.tapNow('daily_test_skip');
+      await _wait(500);
+    }
+    await d.tapNow('question_answer_field');
+    await d.typeNow('She has lived here since 2019.');
+    await _wait(900);
+    await shot('');
+  },
+  'R10-Leave': (d, shot) async {
+    await _wait(900);
+    await d.tapNow('daily_test_close');
+    await _wait(900);
+    await shot('');
+  },
   'R06s-B1-Turntable': (d, shot) async {
     await _wait(900);
     await shot('-1-resting');
