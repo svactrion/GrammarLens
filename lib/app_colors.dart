@@ -244,6 +244,13 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// The wheel's slice colours, in hero order (SPEC §3.1). The same in both
   /// themes.
+  /// V23's ribbon (the same in both themes, like the navy accent): the
+  /// fill's top (the gradient runs to [navy]), its lip and tails, and its
+  /// second line.
+  static const ribbonTop = Color(0xFF1B4FB0);
+  static const ribbonLip = Color(0xFF082A6B);
+  static const onRibbonMuted = Color(0xFFC9D6FF);
+
   static const List<Color> wheelSlices = [
     Color(0xFFFF7A1A),
     Color(0xFF0D3B8F),
