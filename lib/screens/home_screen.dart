@@ -1385,6 +1385,10 @@ class _HomeScreenState extends State<HomeScreen>
                   zoom: _zoom.active ? _zoom.progress : null,
                   zoomCrossFade: _zoom.crossFade,
                   debugHop: _debugHop,
+                  // V15: the next step pulses while today's test waits.
+                  nextStepPulse: !_loadingToday &&
+                      _todaysCompletion == null &&
+                      !_zoom.active,
                   labelAvoid: (width) => ClimbCard.chipRects(context,
                       width: width,
                       month: _climbMonth,

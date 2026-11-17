@@ -846,6 +846,8 @@ void main() {
           findsOneWidget);
       expect(find.text('Review answers'), findsNothing);
       expect(find.text('Step 1 is one test away!'), findsOneWidget);
+      // V15: the step the test will reach pulses in gold.
+      expect(find.byKey(MonthlyMountain.nextStepKey), findsOneWidget);
 
       await tester.tap(find.text('Start today’s test'));
       await tester.pumpAndSettle();
@@ -869,6 +871,7 @@ void main() {
           findsOneWidget);
       expect(find.text('Start today’s test'), findsNothing);
       expect(find.text('Step 2 opens tomorrow'), findsOneWidget);
+      expect(find.byKey(MonthlyMountain.nextStepKey), findsNothing);
 
       await tester.tap(find.text('Review answers'));
       await tester.pumpAndSettle();

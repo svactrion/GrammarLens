@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/practice_set.dart';
 import 'package:grammar_lens/models/topic.dart';
@@ -12,6 +13,7 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
@@ -146,6 +148,51 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(breathe, findsNothing);
+    });
+  });
+
+  group('V15: the next step\'s gold ring', () {
+    Widget mountain({int done = 3, bool pulse = true}) => SizedBox(
+          width: 360,
+          child: MonthlyMountain(
+            days: 30,
+            completedDays: done,
+            avatar: Avatar.fox,
+            nextStepPulse: pulse,
+          ),
+        );
+    final ring = find.byKey(MonthlyMountain.nextStepKey);
+    final grow = find.descendant(of: ring, matching: find.byType(Transform));
+
+    testWidgets('only when asked, and not at the summit', (tester) async {
+      await pumpIn(tester, mountain(pulse: false));
+      expect(ring, findsNothing);
+      await pumpIn(tester, mountain());
+      expect(ring, findsOneWidget);
+      await pumpIn(tester, mountain(done: 30));
+      expect(ring, findsNothing);
+    });
+
+    testWidgets('pulses to 1.45× every 1.8 s while loops run', (tester) async {
+      AppMotion.loopsEnabled = true;
+      addTearDown(() => AppMotion.loopsEnabled = false);
+      await pumpIn(tester, mountain());
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(tester.widget<Transform>(grow).transform.getMaxScaleOnAxis(),
+          closeTo(1.225, .01));
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(tester.widget<Transform>(grow).transform.getMaxScaleOnAxis(),
+          lessThan(1.02));
+    });
+
+    testWidgets('still under Reduce Motion: the ring, no pulse',
+        (tester) async {
+      AppMotion.loopsEnabled = true;
+      addTearDown(() => AppMotion.loopsEnabled = false);
+      await pumpIn(tester, mountain(), reduceMotion: true);
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(ring, findsOneWidget);
+      expect(grow, findsNothing);
     });
   });
 }

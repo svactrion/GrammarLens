@@ -15,6 +15,8 @@ import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
 import 'climb_zoom.dart';
+import '../../app_colors.dart';
+import '../../motion.dart';
 import '../../theme.dart';
 import '../../l10n/l10n.dart';
 
@@ -101,6 +103,12 @@ class MonthlyMountain extends StatefulWidget {
   /// `CLIMB_DEBUG_MILESTONE` does at launch. Display only.
   final ({ClimbSavePoint point, int id})? debugHop;
 
+  /// V15: today's test is waiting, so the step it will reach gets a gold
+  /// ring that pulses every [NextStepPulse.period] (an ambient loop; under
+  /// Reduce Motion the ring stays, still). Not while the pawn moves, not
+  /// at the summit.
+  final bool nextStepPulse;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -112,10 +120,14 @@ class MonthlyMountain extends StatefulWidget {
       this.zoom,
       this.zoomCrossFade = false,
       this.labelAvoid,
-      this.debugHop});
+      this.debugHop,
+      this.nextStepPulse = false});
 
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
+
+  /// V15's ring on the next step.
+  static const nextStepKey = ValueKey('climb_next_step_pulse');
 
   /// The K-c blurred backdrop (M22), present only during a zoom.
   static const kcBackdropKey = ValueKey('climb_kc_backdrop');
@@ -542,6 +554,25 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                               ]),
                             ),
                           ),
+                          // Outside the scene's repaint boundary: the
+                          // pulse never repaints the scene.
+                          if (widget.nextStepPulse &&
+                              widget.completedDays < widget.days &&
+                              !_motion.isAnimating)
+                            Builder(builder: (context) {
+                              final next =
+                                  _route.stepAt(widget.completedDays + 1) *
+                                      camera.scale;
+                              const d = NextStepPulse.size;
+                              return Positioned(
+                                left: next.dx - offset.dx - d / 2,
+                                top: next.dy - offset.dy - d / 2,
+                                child: const IgnorePointer(
+                                  child: NextStepPulse(
+                                      key: MonthlyMountain.nextStepKey),
+                                ),
+                              );
+                            }),
                         ]);
                     final zoom = widget.zoom;
                     final labelled = _labelled;
@@ -774,4 +805,75 @@ class ClimbTrailDots extends CustomPainter {
   @override
   bool shouldRepaint(ClimbTrailDots oldDelegate) =>
       oldDelegate.color != color || !listEquals(oldDelegate.points, points);
+}
+
+/// V15: a gold ring on the step today's test will reach, and a second ring
+/// that grows from it to 1.45× and fades, every [period] (the board's
+/// gl-pulse). An ambient loop: still under Reduce Motion, off screen and in
+/// tests.
+class NextStepPulse extends StatefulWidget {
+  const NextStepPulse({super.key});
+
+  static const size = 26.0;
+  static const period = Duration(milliseconds: 1800);
+
+  @override
+  State<NextStepPulse> createState() => _NextStepPulseState();
+}
+
+class _NextStepPulseState extends State<NextStepPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: NextStepPulse.period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context)) {
+      if (!_pulse.isAnimating) _pulse.repeat();
+    } else {
+      _pulse
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = AppColors.of(context).gold;
+    Widget ring(double width, Color color) => DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: width),
+          ),
+        );
+    return SizedBox.square(
+      dimension: NextStepPulse.size,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, _) {
+          final t = _pulse.value;
+          return Stack(fit: StackFit.expand, children: [
+            if (_pulse.isAnimating)
+              Transform.scale(
+                scale: 1 + .45 * t,
+                child: ring(3, gold.withValues(alpha: .5 * (1 - t))),
+              ),
+            ring(3, gold),
+          ]);
+        },
+      ),
+    );
+  }
 }
