@@ -28,8 +28,8 @@ not touched.
 | 3d `TASK-widgets.md` in English | done, no change needed | none |
 | 3e Release build check | done: builds | none |
 | 4 Checks, captures, smoke walk | done | `ca642b2` (a fix it found) |
-| 5 Docs | done | see the docs commit |
-| 6 `DEVICE-CHECKS.md` | done | see the docs commit |
+| 5 Docs | done | `4561ebc` |
+| 6 `DEVICE-CHECKS.md` | done | `4561ebc` |
 
 ### 0. Disk
 
