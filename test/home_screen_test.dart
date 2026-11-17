@@ -13,16 +13,20 @@ import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/reminder_settings.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
 import 'package:grammar_lens/screens/daily_test_result_screen.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:grammar_lens/screens/reminder_soft_ask.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
+import 'package:grammar_lens/services/native_bridge.dart';
+import 'package:grammar_lens/services/reminder_controller.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
@@ -34,7 +38,9 @@ import 'package:grammar_lens/widgets/score_capsule.dart';
 import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
 import 'package:grammar_lens/widgets/home_practice.dart';
+import 'package:grammar_lens/widgets/rest_reminder_row.dart';
 
+import 'support/fake_native_bridge.dart';
 import 'support/l10n_support.dart';
 import 'support/celebration_support.dart';
 
@@ -104,6 +110,24 @@ class _FakeSubscriptionService extends SubscriptionService {
 /// which this fake supplies.
 class _FakeStorageService extends StorageService {
   DailyTestSet? todaysDailyTest;
+
+  /// The reminder settings (TASK-widgets W5); null reads as a storage
+  /// failure, so Home never asks (every older test).
+  ReminderSettings? reminderSettings;
+
+  /// The first Daily Test on record (N01 after the second one).
+  DateTime? firstCompletion;
+
+  @override
+  Future<ReminderSettings> getReminderSettings() async =>
+      reminderSettings ?? (throw StateError('no reminder settings'));
+
+  @override
+  Future<void> setReminderSettings(ReminderSettings settings) async =>
+      reminderSettings = settings;
+
+  @override
+  Future<DateTime?> getFirstDailyTestCompletion() async => firstCompletion;
   List<WeakSpot> weakSpots = const [];
 
   /// What `getTopicStats` answers (Home's weak spot total); empty by
@@ -249,6 +273,7 @@ void main() {
     bool active = true,
     AppTextSize textSize = AppTextSize.medium,
     ValueListenable<int>? dailyTestLinks,
+    ReminderController? reminders,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = size * 3.0;
@@ -283,6 +308,7 @@ void main() {
           onOpenProfile: onOpenProfile,
           onGoToReview: onGoToReview,
           dailyTestLinks: dailyTestLinks,
+          reminders: reminders,
           // Fixed at a mid-morning instant by default so the greeting text
           // this file asserts on doesn't depend on when the suite happens
           // to run — timeOfDayGreeting's own boundary tests live in
@@ -873,6 +899,88 @@ void main() {
       links.value++;
       await tester.pumpAndSettle();
       expect(find.byType(DailyTestScreen), findsOneWidget);
+    });
+  });
+
+  // TASK-widgets W5: N01 opens on its own once, at the first rest scene or
+  // after the second Daily Test; V24 carries the reminder row.
+  group('Reminder question (N01) and V24\'s row', () {
+    ReminderController controllerFor(_FakeStorageService storage) =>
+        ReminderController(
+            storage: storage,
+            bridge: FakeNativeBridge()
+              ..permission = NotificationPermission.notDetermined);
+
+    testWidgets('the first rest scene opens N01 once; Not now is final',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..freeUsed = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      expect(find.byKey(RestReminderRow.switchKey), findsOneWidget);
+      await tester.tap(find.byKey(ReminderSoftAsk.notNowKey));
+      await tester.pumpAndSettle();
+      expect(storage.reminderSettings!.ask, ReminderAsk.declined);
+      // Home rebuilds (a resume): it is not asked again.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+    });
+
+    testWidgets('already answered: the rest scene does not ask',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..freeUsed = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings(ask: ReminderAsk.declined);
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+    });
+
+    testWidgets('back from a Daily Test that is not the first: N01 opens',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 2
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..firstCompletion = DateTime(2025, 12, 31, 20)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+      await tester.tap(find.text('Review answers'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DailyTestResultScreen), findsOneWidget);
+      Navigator.of(tester.element(find.byType(DailyTestResultScreen))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+    });
+
+    testWidgets('the very first Daily Test does not ask', (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..firstCompletion = DateTime(2026, 1, 1, 8)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      await tester.tap(find.text('Review answers'));
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.byType(DailyTestResultScreen))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsNothing);
     });
   });
 
