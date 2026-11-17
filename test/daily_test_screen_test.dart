@@ -355,7 +355,7 @@ void main() {
         await pumpScreen(tester, service, theme: buildAppTheme(brightness));
         await tester.tap(find.byIcon(Icons.close_rounded));
         await tester.pumpAndSettle();
-        expect(find.text('Leave Daily Test?'), findsOneWidget);
+        expect(find.text('Leave today’s test?'), findsOneWidget);
         expect(find.text('Your progress will be lost.'), findsOneWidget);
       }
 
@@ -383,7 +383,7 @@ void main() {
         await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Leave Daily Test?'), findsNothing);
+        expect(find.text('Leave today’s test?'), findsNothing);
         expect(find.byType(DailyTestScreen), findsOneWidget);
       });
     });

@@ -771,9 +771,9 @@
   "@hintSliderSemanticsHint": {
     "description": "VoiceOver hint of the hint slider."
   },
-  "dailyTestLeaveTitle": "Leave Daily Test?",
+  "dailyTestLeaveTitle": "Leave today’s test?",
   "@dailyTestLeaveTitle": {
-    "description": "Title of the dialog that asks whether to leave the Daily Test. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "The leave dialog's title on the Daily Test (R10)."
   },
   "dailyTestLeaveTooltip": "Leave Daily Test",
   "@dailyTestLeaveTooltip": {
@@ -3014,6 +3014,144 @@
       "hero": {
         "type": "String",
         "example": "Fox"
+      }
+    }
+  },
+  "dailyCardDone": "Done",
+  "@dailyCardDone": {
+    "description": "Daily Test card (X05): the chip once today's test is finished."
+  },
+  "dailyCardLoading": "Getting today’s test",
+  "@dailyCardLoading": {
+    "description": "Daily Test card (X05): in the button slot while today's test is being downloaded."
+  },
+  "dailyCardScoreSemantics": "{correct} of {total} correct",
+  "@dailyCardScoreSemantics": {
+    "description": "VoiceOver label of the Daily Test card's score ring: {correct} right answers out of {total} questions.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "4"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "ticketEyebrow": "TODAY’S TICKET",
+  "@ticketEyebrow": {
+    "description": "The free practice ticket (X04): the small label at the top, uppercase."
+  },
+  "ticketUsedTitle": "Used today",
+  "@ticketUsedTitle": {
+    "description": "The free practice ticket once today's free practice is used (X04 used state)."
+  },
+  "ticketTearingTitle": "Ticket used!",
+  "@ticketTearingTitle": {
+    "description": "The free practice ticket while it tears (V16b), just before practice starts."
+  },
+  "ticketTearingBody": "Starting your practice…",
+  "@ticketTearingBody": {
+    "description": "The free practice ticket while it tears (V16b): the line under the title."
+  },
+  "ticketStamp": "USED",
+  "@ticketStamp": {
+    "description": "The stamp on a used ticket (X04), uppercase, one short word."
+  },
+  "ticketNext": "NEXT",
+  "@ticketNext": {
+    "description": "Under the time left until the next free ticket, in the used ticket's empty slot (X04), uppercase."
+  },
+  "ticketNextSemantics": "Next ticket in {hours} h {minutes} min",
+  "@ticketNextSemantics": {
+    "description": "VoiceOver: the time left until the next free practice ticket (local midnight).",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "20"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "41"
+      }
+    }
+  },
+  "capsulePoints": "Points this month: {points}",
+  "@capsulePoints": {
+    "description": "VoiceOver label of Home's score capsule (V14): this month's points.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "capsuleToTier": "{points} to {tier}",
+  "@capsuleToTier": {
+    "description": "Home's score capsule (V14): points still needed for the next medal tier, e.g. '66 to Bronze'. {tier} is Bronze / Silver / Gold.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "66"
+      },
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "capsuleTopTier": "Gold reached",
+  "@capsuleTopTier": {
+    "description": "Home's score capsule (V14) once this month's Gold tier is reached."
+  },
+  "errorOfflineTitle": "Can’t reach the mountain right now",
+  "@errorOfflineTitle": {
+    "description": "Error state (R11), no connection: the title."
+  },
+  "errorOfflineBody": "Check your connection. Today’s test will be waiting when you’re back.",
+  "@errorOfflineBody": {
+    "description": "Error state (R11), no connection: the calm explanation."
+  },
+  "errorServerTitle": "Something went wrong on our side",
+  "@errorServerTitle": {
+    "description": "Error state (R11), a server error: the title."
+  },
+  "errorServerBody": "It’s not you. Give it a moment and try again.",
+  "@errorServerBody": {
+    "description": "Error state (R11), a server error: the calm explanation."
+  },
+  "errorQuotaTitle": "That’s all for today",
+  "@errorQuotaTitle": {
+    "description": "Error state (R11), a daily limit reached: the title."
+  },
+  "errorQuotaBody": "Today’s limit is reached. It opens again tomorrow.",
+  "@errorQuotaBody": {
+    "description": "Error state (R11), a daily limit reached: the calm explanation."
+  },
+  "errorTryAgain": "Try again",
+  "@errorTryAgain": {
+    "description": "Error state (R11): the retry button."
+  },
+  "errorProgressSafe": "Your progress is safe on this device.",
+  "@errorProgressSafe": {
+    "description": "Error state (R11): the reassurance under the retry button."
+  },
+  "leaveKeepGoing": "Keep going",
+  "@leaveKeepGoing": {
+    "description": "The leave dialog (R10): the dominant button that stays in the test or practice."
+  },
+  "leaveProgressBody": "You’re {done} of {total} in. Your answers so far won’t be saved.",
+  "@leaveProgressBody": {
+    "description": "The leave dialog (R10): how far the user is, and that leaving loses the answers. {done} questions answered of {total}.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
       }
     }
   }
