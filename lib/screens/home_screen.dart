@@ -1075,6 +1075,7 @@ class _HomeScreenState extends State<HomeScreen>
             builder: (_) => WeakSpotDetailScreen(
               topic: topic,
               spot: spot,
+              hero: widget.avatar,
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,

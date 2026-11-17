@@ -137,7 +137,7 @@ void main() {
 
     testWidgets(
         '${brightness.name}: Review\'s empty state goes to the Daily '
-        'Test in orange', (tester) async {
+        'Test in navy (RV05)', (tester) async {
       await tester.pumpWidget(MaterialApp(
         theme: theme,
         home: ReviewScreen(
@@ -150,12 +150,15 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expectOrange(tester, 'Go to Daily Test');
+      // UI polish RV05: the board's navy button.
+      final cta = tester.widget<PressableButton>(find.ancestor(
+          of: find.text('Take today’s Daily Test'),
+          matching: find.byType(PressableButton)));
+      expect(cta.tone, ButtonTone.navy);
     });
 
     for (final (access, used, label) in [
       (true, 0, 'Practice this'),
-      (false, 0, 'Start free practice'),
       (false, StorageService.freeDailyPracticeLimit, 'Practice with Premium'),
     ]) {
       testWidgets('${brightness.name}: the weak spot\'s "$label" is orange',
@@ -179,7 +182,14 @@ void main() {
           ),
         ));
         await tester.pumpAndSettle();
-        expectOrange(tester, label);
+        if (access) {
+          // R03: Premium's "Practice this" is the orange PressableButton.
+          final button = tester.widget<PressableButton>(find.ancestor(
+              of: find.text(label), matching: find.byType(PressableButton)));
+          expect(button.tone, ButtonTone.orange);
+        } else {
+          expectOrange(tester, label);
+        }
       });
     }
 

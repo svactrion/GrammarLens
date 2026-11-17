@@ -1,8 +1,22 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
+import '../app_colors.dart';
+import '../models/avatar.dart';
+import '../models/topic.dart';
+import '../motion.dart';
+import '../utils/loading_view.dart';
+import '../utils/text_format.dart';
+import '../widgets/error_state.dart';
+import '../widgets/home_practice.dart' show PremiumChip;
+import '../widgets/pressable_button.dart';
+import '../widgets/rest_scene.dart' show timeToMidnight;
+import '../widgets/review_parts.dart';
+import '../widgets/ticket.dart';
+import 'practice_launch.dart';
 import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
@@ -13,12 +27,9 @@ import '../services/subscription_service.dart';
 import '../theme.dart';
 import '../utils/content_width.dart';
 import '../utils/suggested_focus.dart';
-import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/empty_state.dart';
 import '../widgets/review_top_card.dart';
 import '../widgets/section_title.dart';
-import '../widgets/weak_spot_card.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 import 'weak_spot_detail_screen.dart';
@@ -40,6 +51,14 @@ class ReviewScreen extends StatefulWidget {
   final bool active;
   final VoidCallback onGoToPractice;
 
+  /// The user's name (the used ticket's "Nice work, <name>.") and buddy
+  /// (the empty state).
+  final String userName;
+  final Avatar? hero;
+
+  /// The clock for the used ticket's countdown; tests pin it.
+  final DateTime Function() clock;
+
   const ReviewScreen({
     super.key,
     required this.claudeService,
@@ -48,7 +67,15 @@ class ReviewScreen extends StatefulWidget {
     required this.subscriptionService,
     required this.active,
     required this.onGoToPractice,
+    this.userName = '',
+    this.hero,
+    this.clock = DateTime.now,
   });
+
+  static const ticketKey = ValueKey('review_ticket');
+  static const sortKey = ValueKey('review_sort');
+  static const practiceWithTicketKey = ValueKey('review_practice_ticket');
+  static const moreKey = ValueKey('review_more_premium');
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -85,19 +112,63 @@ class _ReviewScreenState extends State<ReviewScreen> {
   /// second tap does not push it twice.
   bool _opening = false;
 
+  /// Each weak spot's latest mistake (V16's inline line), by
+  /// `topic|errorType`; filled after the list loads.
+  final Map<String, ErrorEntry?> _latest = {};
+
+  /// The ticket is tearing (V16b) for this weak spot; practice starts when
+  /// the tear has played.
+  WeakSpot? _tearingFor;
+  bool _generating = false;
+
+  /// The used ticket's countdown, updated every minute while shown.
+  Timer? _minute;
+
   @override
   void initState() {
     super.initState();
-    _weakSpots = widget.storageService.getWeakSpots(sortOrder: _sortOrder);
+    _weakSpots = _readSpots(_sortOrder);
     _loadSortOrder();
     _loadStatus();
     widget.subscriptionService.addAccessListener(_onAccessChanged);
+    _minute = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted && _statusLoaded && !_hasFullAccess && _ticketUsed) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
+    _minute?.cancel();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     super.dispose();
+  }
+
+  bool get _ticketUsed =>
+      _freePracticeUsedToday >= StorageService.freeDailyPracticeLimit;
+
+  static String _spotKey(WeakSpot s) => '${s.topicId}|${s.errorType}';
+
+  /// The list, then each weak spot's latest mistake (best effort: a failed
+  /// read shows the card without its inline line).
+  Future<List<WeakSpot>> _readSpots(ReviewSortOrder order) {
+    final spots = widget.storageService.getWeakSpots(sortOrder: order);
+    spots.then((list) async {
+      for (final spot in list) {
+        final key = _spotKey(spot);
+        if (_latest.containsKey(key)) continue;
+        ErrorEntry? latest;
+        try {
+          final recent = await widget.storageService
+              .getRecentMistakes(spot.topicId, spot.errorType, limit: 1);
+          latest = recent.isEmpty ? null : recent.first;
+        } catch (_) {}
+        if (!mounted) return;
+        setState(() => _latest[key] = latest);
+      }
+    }, onError: (_) {});
+    return spots;
   }
 
   void _onAccessChanged(bool hasAccess) {
@@ -169,7 +240,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (!mounted || stored == _sortOrder) return;
     setState(() {
       _sortOrder = stored;
-      _weakSpots = widget.storageService.getWeakSpots(sortOrder: stored);
+      _weakSpots = _readSpots(stored);
     });
   }
 
@@ -189,7 +260,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
     // returned a Future." A block body with the assignment as a statement
     // has no return value, so the assert never sees the Future.
     setState(() {
-      _weakSpots = widget.storageService.getWeakSpots(sortOrder: _sortOrder);
+      _latest.clear();
+      _weakSpots = _readSpots(_sortOrder);
     });
   }
 
@@ -197,9 +269,55 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (order == _sortOrder) return;
     setState(() {
       _sortOrder = order;
-      _weakSpots = widget.storageService.getWeakSpots(sortOrder: order);
+      _weakSpots = _readSpots(order);
     });
     await widget.storageService.setReviewSortOrder(order);
+  }
+
+  /// RV06: the sort sheet.
+  Future<void> _openSort() async {
+    final order = await showReviewSortSheet(context, _sortOrder);
+    if (order != null) await _changeSortOrder(order);
+  }
+
+  Topic _topicOf(WeakSpot spot) => kTopics.firstWhere(
+        (t) => t.id.name == spot.topicId,
+        orElse: () => kTopics.first,
+      );
+
+  /// "Practice with my ticket" (V16 → V16b): the ticket tears, then the
+  /// weak spot's practice starts through `launchPracticeSet` (the AI
+  /// permission, the quota and the generation as they are; the free count
+  /// changes only when a set is generated).
+  void _useTicket(WeakSpot spot) {
+    if (_tearingFor != null || _opening) return;
+    setState(() => _tearingFor = spot);
+  }
+
+  Future<void> _onTorn() async {
+    final spot = _tearingFor;
+    if (spot == null || !mounted) return;
+    _opening = true;
+    try {
+      await launchPracticeSet(
+        context: context,
+        topic: _topicOf(spot),
+        claudeService: widget.claudeService,
+        storageService: widget.storageService,
+        analyticsService: widget.analyticsService,
+        subscriptionService: widget.subscriptionService,
+        setGenerating: (value) {
+          if (mounted) setState(() => _generating = value);
+        },
+        errorPrefix: context.l10n.weakSpotGenerateFailed,
+      );
+    } finally {
+      _opening = false;
+    }
+    if (!mounted) return;
+    setState(() => _tearingFor = null);
+    _reloadWeakSpots();
+    _loadStatus();
   }
 
   /// The weak spot's own screen (also Suggested Focus's "Practice this
@@ -219,6 +337,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           builder: (_) => WeakSpotDetailScreen(
             topic: topic,
             spot: spot,
+            hero: widget.hero,
             claudeService: widget.claudeService,
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,
@@ -275,26 +394,33 @@ class _ReviewScreenState extends State<ReviewScreen> {
     _loadStatus();
   }
 
-  /// The page header (1.2.0 brief, "Review"): the title and its line, in
-  /// the page rather than the app bar, so they scroll with the list.
+  /// The page header (V16, R12): the title (with the Premium chip for a
+  /// Premium user) and its line, in the page so they scroll with the list.
   Widget _header(ThemeData theme) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Semantics(
-          container: true,
-          header: true,
-          child: Text(
-            context.l10n.featureReview,
-            style: theme.textTheme.displaySmall
-                ?.copyWith(color: theme.colorScheme.onSurface),
+        Row(children: [
+          Flexible(
+            child: Semantics(
+              container: true,
+              header: true,
+              child: Text(
+                context.l10n.featureReview,
+                style: theme.textTheme.displaySmall?.copyWith(color: c.text),
+              ),
+            ),
           ),
-        ),
+          if (_statusLoaded && _hasFullAccess) ...[
+            const SizedBox(width: 10),
+            const PremiumChip(check: true),
+          ],
+        ]),
         const SizedBox(height: 7),
         Text(
           context.l10n.reviewSubtitle,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(color: c.muted),
         ),
       ],
     );
@@ -307,7 +433,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         scrolledUnderElevation: 0,
       );
 
-  /// A single centred state (loading, error, empty) under the header.
+  /// A single centred state (loading, error) under the header.
   Widget _centred(BuildContext context, Widget child) {
     final theme = Theme.of(context);
     final hPad = ContentWidth.sidePaddingOf(context);
@@ -326,39 +452,54 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 
+  /// The free user's ticket (V16, V16b, V22, RV05): free and "Pick a weak
+  /// spot below", tearing, used with the next ticket's countdown, or
+  /// waiting for the first weak spot.
+  Widget _ticket(List<WeakSpot> spots) {
+    final l10n = context.l10n;
+    if (_tearingFor != null) {
+      return Ticket(
+        key: ReviewScreen.ticketKey,
+        state: TicketState.tearing,
+        title: l10n.ticketTearingTitle,
+        subtitle: l10n.ticketTearingBody,
+        onTorn: _onTorn,
+      );
+    }
+    if (_ticketUsed) {
+      return Ticket(
+        key: ReviewScreen.ticketKey,
+        state: TicketState.used,
+        title: l10n.ticketUsedTitle,
+        subtitle: l10n.ticketUsedLine(widget.userName),
+        nextIn: timeToMidnight(widget.clock()),
+      );
+    }
+    return Ticket(
+      key: ReviewScreen.ticketKey,
+      state: TicketState.free,
+      title: l10n.ticketFreeTitle,
+      subtitle:
+          spots.isEmpty ? l10n.reviewTicketWaiting : l10n.reviewTicketPick,
+      onTap: spots.isEmpty ? null : () => _useTicket(spots.first),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final sortAction = PopupMenuButton<ReviewSortOrder>(
-      initialValue: _sortOrder,
-      onSelected: _changeSortOrder,
-      tooltip: context.l10n.reviewSortTooltip,
-      itemBuilder: (context) => ReviewSortOrder.values
-          .map(
-            (order) => PopupMenuItem(
-              value: order,
-              child: Text(order.label(context.l10n)),
-            ),
-          )
-          .toList(),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.sort_rounded, size: 16, color: colorScheme.secondary),
-            const SizedBox(width: 4),
-            Text(
-              _sortOrder.label(context.l10n),
-              style: theme.textTheme.labelMedium
-                  ?.withWeight(FontWeight.w800)
-                  .copyWith(color: colorScheme.secondary),
-            ),
-          ],
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    if (_generating) {
+      return PageLoading(
+        header: Text(
+          weakSpotTitle(
+              _tearingFor?.errorType ?? '', _topicOf(_tearingFor!), l10n),
+          style: theme.textTheme.headlineMedium?.copyWith(color: c.text),
         ),
-      ),
-    );
+        message: l10n.weakSpotPreparing,
+      );
+    }
 
     return FutureBuilder<List<WeakSpot>>(
       future: _weakSpots,
@@ -377,89 +518,38 @@ class _ReviewScreenState extends State<ReviewScreen> {
             context,
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline_rounded,
-                    size: 40,
-                    color: colorScheme.error,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    context.l10n.reviewLoadFailed('${snapshot.error}'),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: _reloadWeakSpots,
-                    child: Text(context.l10n.commonRetry),
-                  ),
-                ],
+              child: ErrorState(
+                hero: widget.hero ?? Avatar.fox,
+                kind: ErrorKind.server,
+                message: l10n.reviewLoadFailed('${snapshot.error}'),
+                onRetry: () async {
+                  _reloadWeakSpots();
+                  return true;
+                },
               ),
             ),
           );
         }
         final spots = snapshot.data ?? const <WeakSpot>[];
-        if (spots.isEmpty && !_statusLoaded) {
-          // Free and Premium have different empty states: neither is shown
-          // until the entitlement has answered.
+        if (!_statusLoaded) {
+          // Free and Premium differ from the top: nothing until the
+          // entitlement has answered.
           return _centred(context, const CircularProgressIndicator());
         }
-        // Premium with no saved weak spot (final screens, brief §2): no
-        // suggestion, a way to Topic Practice instead.
-        if (spots.isEmpty && _hasFullAccess) {
-          return BrandScaffold(
-            appBar: _statusBarOnly,
-            isTabRoot: true,
-            children: [
-              _header(theme),
-              const SizedBox(height: 20),
-              PremiumReviewEmpty(onExplore: _openTopicPractice),
-            ],
-          );
-        }
-        // No weak spot, no allowance card: there is nothing to spend a free
-        // practice on (brief, "Veri, uç durumlar").
-        if (spots.isEmpty) {
-          return _centred(
-            context,
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: EmptyState(
-                icon: Icons.fact_check_outlined,
-                title: context.l10n.reviewEmptyTitle,
-                description: context.l10n.reviewEmptyBody,
-                ctaLabel: context.l10n.reviewGoToDailyTest,
-                onCta: widget.onGoToPractice,
-                ctaStyle: forwardButtonStyle(context),
-              ),
-            ),
-          );
-        }
+        final free = !_hasFullAccess;
         final total = _weakSpotTotal == null
             ? spots.length
             : math.max(_weakSpotTotal!, spots.length);
-        final remaining =
-            StorageService.freeDailyPracticeLimit - _freePracticeUsedToday;
+        final canUseTicket = free && !_ticketUsed && _tearingFor == null;
         return BrandScaffold(
           appBar: _statusBarOnly,
           isTabRoot: true,
           children: [
             _header(theme),
-            // Q13: free users only; premium has no allowance to describe.
-            // Neither card until the entitlement has answered, so the wrong
-            // one never shows for a moment.
-            if (_statusLoaded && !_hasFullAccess) ...[
-              const SizedBox(height: 20),
-              DailyPracticeCard(
-                remaining: remaining,
-                onSeePremium: _openPremium,
-              ),
-            ],
-            // Premium: the Suggested Focus, in the same place and size.
-            if (_statusLoaded && _hasFullAccess && _allSpots != null) ...[
-              const SizedBox(height: 20),
+            const SizedBox(height: 18),
+            if (free) _ticket(spots),
+            // Premium: the Suggested Focus (R12).
+            if (!free && spots.isNotEmpty && _allSpots != null)
               FutureBuilder<List<WeakSpot>>(
                 future: _allSpots,
                 builder: (context, all) {
@@ -478,190 +568,139 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   );
                 },
               ),
-            ],
-            const SizedBox(height: 23),
-            Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.end,
-                    spacing: 6,
-                    children: [
-                      SectionTitle(context.l10n.reviewSavedWeakSpots),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: Text(
-                          '$total',
-                          style: theme.textTheme.bodySmall
-                              ?.withWeight(FontWeight.w600)
-                              .copyWith(color: colorScheme.onSurfaceVariant),
+            if (spots.isEmpty) ...[
+              const SizedBox(height: 26),
+              if (free)
+                ReviewEmpty(
+                  hero: widget.hero ?? Avatar.fox,
+                  onGoToDailyTest: widget.onGoToPractice,
+                )
+              else
+                PremiumReviewEmpty(onExplore: _openTopicPractice),
+            ] else ...[
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        SectionTitle(l10n.reviewSavedWeakSpots),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: c.track,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '$total', // l10n-guard: a count
+                            style: theme.textTheme.labelMedium
+                                ?.withWeight(FontWeight.w900)
+                                .copyWith(color: c.muted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Semantics(
+                    button: true,
+                    label: l10n.reviewSortTooltip,
+                    excludeSemantics: true,
+                    child: PressableCard(
+                      key: ReviewScreen.sortKey,
+                      haptic: ButtonHaptic.selection,
+                      onTap: _openSort,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.sort_rounded, size: 18, color: c.navy),
+                          const SizedBox(width: 4),
+                          Text(
+                            _sortOrder.label(l10n),
+                            style: theme.textTheme.labelLarge
+                                ?.withWeight(FontWeight.w900)
+                                .copyWith(color: c.navy),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              AnimatedSwitcher(
+                duration: AppMotion.orInstant(context, AppMotion.base),
+                child: Column(
+                  key: ValueKey(_sortOrder),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (i, spot) in spots.indexed) ...[
+                      ReviewSpotCard(
+                        topic: _topicOf(spot),
+                        spot: spot,
+                        mistake: _latest[_spotKey(spot)],
+                        now: widget.clock(),
+                        onTap: () => _openWeakSpot(spot),
+                        actionKey:
+                            i == 0 ? ReviewScreen.practiceWithTicketKey : null,
+                        actionLabel: canUseTicket && i == 0
+                            ? l10n.reviewPracticeWithTicket
+                            : null,
+                        onAction: () => _useTicket(spot),
+                      ),
+                      if (i < spots.length - 1) const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+              ),
+              // V22: the ticket is used; Premium's sessions, to the paywall.
+              if (free && _ticketUsed) ...[
+                const SizedBox(height: 16),
+                PressableCard(
+                  key: ReviewScreen.moreKey,
+                  haptic: ButtonHaptic.light,
+                  onTap: _openPremium,
+                  semanticLabel: '${l10n.reviewWantMore} '
+                      '${l10n.reviewPremiumMore(StorageService.dailySessionLimit)}',
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: lipCard(c,
+                        color: c.goldSoft, border: c.gold, lip: c.goldDeep),
+                    child: Row(children: [
+                      Icon(Icons.auto_awesome_rounded, color: c.goldDeep),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l10n.reviewWantMore,
+                                style: theme.textTheme.titleSmall
+                                    ?.withWeight(FontWeight.w900)
+                                    .copyWith(color: c.text)),
+                            Text(
+                                l10n.reviewPremiumMore(
+                                    StorageService.dailySessionLimit),
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: c.muted)),
+                          ],
                         ),
                       ),
-                    ],
+                      Icon(
+                          Directionality.of(context) == TextDirection.rtl
+                              ? Icons.arrow_back_rounded
+                              : Icons.arrow_forward_rounded,
+                          color: c.text),
+                    ]),
                   ),
                 ),
-                const SizedBox(width: 8),
-                sortAction,
               ],
-            ),
-            const SizedBox(height: 12),
-            for (final spot in spots) ...[
-              WeakSpotCard(
-                topic: kTopics.firstWhere(
-                  (t) => t.id.name == spot.topicId,
-                  orElse: () => kTopics.first,
-                ),
-                spot: spot,
-                onTap: () => _openWeakSpot(spot),
-              ),
-              if (spot != spots.last) const SizedBox(height: 12),
             ],
           ],
         );
       },
-    );
-  }
-}
-
-/// Review's daily free practice card (1.2.0 brief, "Review"; free users
-/// only). Two states that differ in text and icon as well as color:
-/// - available: brandOrange with onOrange text in both themes, saying any
-///   saved weak spot below can take it;
-/// - used today (owner, Batch 5): the button navy (`AppPalette.button`)
-///   with white text, and in dark mode the button's #5C7CFA edge (the navy
-///   is 1.77:1 on the dark page). No free-practice call to action: it says
-///   when the next one comes, then offers Premium with an orange button
-///   ([onSeePremium], the existing Premium screen).
-///
-/// Drawn in the shared [ReviewTopCard] shell (final screens), which
-/// Premium's [SuggestedFocusCard] uses too.
-class DailyPracticeCard extends StatelessWidget {
-  /// Free practices left today (`freeDailyPracticeLimit` minus today's
-  /// count); 0 or less is "used today".
-  final int remaining;
-
-  /// Opens the Premium screen; shown only in the used state.
-  final VoidCallback? onSeePremium;
-
-  const DailyPracticeCard(
-      {super.key, required this.remaining, this.onSeePremium});
-
-  static const availableKey = ValueKey('review_daily_practice_available');
-  static const usedKey = ValueKey('review_daily_practice_used');
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final palette = AppPalette.of(context);
-    final available = remaining > 0;
-    return ReviewTopCard(
-      cardKey: available ? availableKey : usedKey,
-      color: available ? colorScheme.primary : palette.button,
-      edge: available ? null : palette.buttonEdge,
-      child: DailyPracticeContent(
-          remaining: remaining, onSeePremium: onSeePremium),
-    );
-  }
-}
-
-/// The inside of [DailyPracticeCard]. Also Premium's height reference: the
-/// Suggested Focus card is at least as tall as this content in its
-/// "available" state at the same width and text size.
-class DailyPracticeContent extends StatelessWidget {
-  final int remaining;
-  final VoidCallback? onSeePremium;
-
-  const DailyPracticeContent(
-      {super.key, required this.remaining, this.onSeePremium});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    final available = remaining > 0;
-    final ink = available ? colorScheme.onPrimary : palette.onButton;
-    final muted = available ? colorScheme.onPrimary : palette.onButtonMuted;
-
-    final l10n = context.l10n;
-    final title =
-        available ? l10n.reviewDailyAvailableTitle : l10n.reviewDailyUsedTitle;
-    final description =
-        available ? l10n.reviewDailyAvailableBody : l10n.reviewDailyUsedBody;
-    final status = available
-        ? l10n.reviewDailyRemaining(remaining)
-        : l10n.reviewDailyNextTomorrow;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.reviewDailyEyebrow,
-                style: theme.textTheme.labelSmall
-                    ?.withWeight(FontWeight.w800)
-                    .copyWith(color: ink, letterSpacing: 1),
-              ),
-            ),
-            Icon(Icons.auto_awesome_rounded, size: 19, color: ink),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          title,
-          style: (available
-                  ? theme.textTheme.headlineSmall
-                  : theme.textTheme.titleLarge?.withWeight(FontWeight.w900))
-              ?.copyWith(color: ink),
-        ),
-        const SizedBox(height: 8),
-        Text(description,
-            style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        const SizedBox(height: 13),
-        Row(
-          children: [
-            Icon(
-              available ? Icons.check_circle_rounded : Icons.schedule_rounded,
-              size: 15,
-              color: ink,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                status,
-                style: theme.textTheme.labelMedium
-                    ?.withWeight(FontWeight.w800)
-                    .copyWith(color: ink),
-              ),
-            ),
-          ],
-        ),
-        if (!available) ...[
-          const SizedBox(height: 16),
-          Text(
-            l10n.reviewWantMore,
-            style: theme.textTheme.bodySmall
-                ?.withWeight(FontWeight.w700)
-                .copyWith(color: ink),
-          ),
-          const SizedBox(height: 10),
-          // brandOrange with onOrange text: 6.93:1 (light), 7.71:1
-          // (dark); its edge against the navy card 3.95 / 4.39:1.
-          FilledButton(
-            onPressed: onSeePremium,
-            style: forwardButtonStyle(context),
-            child: Row(
-              children: [
-                Expanded(child: Text(l10n.reviewSeePremium)),
-                const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_rounded, size: 17),
-              ],
-            ),
-          ),
-        ],
-      ],
     );
   }
 }
@@ -821,11 +860,7 @@ class SuggestedFocusCard extends StatelessWidget {
       cardKey: cardKey,
       color: palette.button,
       edge: palette.buttonEdge,
-      child: MatchHeight(
-        reference: const DailyPracticeContent(
-            remaining: StorageService.freeDailyPracticeLimit),
-        child: content,
-      ),
+      child: content,
     );
   }
 }

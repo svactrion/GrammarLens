@@ -364,13 +364,13 @@ void main() {
           reason: 'Review comes in from the right');
       await tester.pumpAndSettle();
 
-      // Review's empty state (no weak spot): "Go to Daily Test", a fade. A
+      // Review's empty state (no weak spot): its Daily Test button, a fade. A
       // fresh app, so nothing loaded above carries over.
       await tester.pumpWidget(const SizedBox());
       await pumpApp(tester);
       await tester.tap(find.text('Review').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Go to Daily Test'));
+      await tester.tap(find.text('Take today’s Daily Test'));
       await tester.pump();
       expect((index(tester), transition(tester)), (0, TabTransition.fade));
       await tester.pumpAndSettle();

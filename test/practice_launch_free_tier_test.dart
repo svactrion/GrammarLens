@@ -176,8 +176,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 1.2.0 (N3): the free user's button is "Start free practice".
-      await tester.tap(find.text('Start free practice'));
+      // UI polish R03: the free user practises through today's ticket.
+      await tester.tap(find.text('Use today’s ticket'));
       await tester.pumpAndSettle();
 
       expect(find.text('How many questions?'), findsNothing);

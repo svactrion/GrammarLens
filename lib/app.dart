@@ -435,6 +435,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               // visible" and reload then.
               active: _tabIndex == 1,
               onGoToPractice: () => _switchTab(0),
+              userName: _profile!.name,
+              hero: _profile!.avatar,
+              clock: widget.clock ?? DateTime.now,
             ),
             SettingsScreen(
               active: _tabIndex == 2,
