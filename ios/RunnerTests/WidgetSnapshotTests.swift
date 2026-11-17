@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 import UIKit
 import XCTest
@@ -92,6 +93,31 @@ final class WidgetSnapshotTests: XCTestCase {
     try render(
       TipMediumView(tip: now.tip, avatar: now.climb.images.avatar), size: Self.medium,
       scheme: .light, name: "tip-medium-general-sample-light")
+  }
+
+  /// INTEGRATE 3c: the widgets' text is the app's Nunito Sans at the
+  /// boards' weights; scripts it does not cover fall back to a system font.
+  func testNunitoSansIsTheWidgetsFont() throws {
+    XCTAssertTrue(WidgetFont.isAvailable, "NunitoSans-Variable.ttf is not in the bundle")
+    for (weight, fallback) in [(CGFloat(900), UIFont.Weight.heavy), (700, .bold)] {
+      let font = WidgetFont.uiFont(12, weight: weight, fallback: fallback)
+      XCTAssertEqual(font.familyName, WidgetFont.family)
+      let axes = CTFontCopyVariation(font as CTFont) as? [NSNumber: NSNumber]
+      XCTAssertEqual(
+        axes?[NSNumber(value: WidgetFont.weightAxis)]?.doubleValue ?? 0, Double(weight),
+        accuracy: 0.5)
+    }
+    let font = WidgetFont.uiFont(12, weight: 900, fallback: .heavy) as CTFont
+    func family(_ text: String) -> String {
+      let used = CTFontCreateForString(font, text as CFString, CFRange(location: 0, length: (text as NSString).length))
+      return CTFontCopyFamilyName(used) as String
+    }
+    for text in ["Step 15 of 30", "Heute erledigt", "Sıradaki test 10 sa sonra", "Próximo teste"] {
+      XCTAssertEqual(family(text), WidgetFont.family, text)
+    }
+    for text in ["今日のテスト", "오늘의 테스트", "اختبار اليوم"] {
+      XCTAssertNotEqual(family(text), WidgetFont.family, text)
+    }
   }
 
   func testEmpty() throws {

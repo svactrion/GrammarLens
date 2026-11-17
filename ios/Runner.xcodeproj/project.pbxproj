@@ -11,10 +11,12 @@
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		2B1B953D1855B35CC3A1ACD0 /* WidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */; };
 		3025ABE4AB76F93AF05799D5 /* WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */; };
+		3045FBA66D8F705292194397 /* OFL-NunitoSans.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */; };
 		312FA4EE66A7355F0106DC73 /* WidgetSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0CF2F8AE7893264EE3D87B /* WidgetSnapshotTests.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		43F23EA9A30A4F50A31C8BFF /* GrammarLensBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */; };
+		54BEFA8AC309DBE3E2777823 /* NunitoSans-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */; };
 		68FFA86BFEF821815A06ACF8 /* GrammarLensWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A0D762525FBF8D7FFFC7A /* GrammarLensWidgets.swift */; };
 		6F115BEC3460DDEB600B5934 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
 		72233F4D1CB541E4111B6BA0 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */; };
@@ -27,6 +29,7 @@
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		A397A44D24FEB7FCCC0A93DD /* WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */; };
 		A52C8AEB398CA3FEC96C7ABB /* BridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4467F2D9CA5E2861B9F9240F /* BridgeTests.swift */; };
+		AD985B5764E133DECA831F83 /* NunitoSans-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */; };
 		BC376E2932CB7AEA9DF1B278 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91FC57F4A338B5F930347C70 /* WidgetViews.swift */; };
 		C011AFADDB876A00B261E1C7 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
 		C2BD31059CC91B8ED785A215 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6E9CD9AD85443489C6D611 /* Foundation.framework */; };
@@ -111,7 +114,9 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB6E9CD9AD85443489C6D611 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */ = {isa = PBXFileReference; includeInIndex = 1; name = "NunitoSans-Variable.ttf"; path = "../assets/fonts/NunitoSans-Variable.ttf"; sourceTree = SOURCE_ROOT; };
 		BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GrammarLensBridge.swift; sourceTree = "<group>"; };
+		DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */ = {isa = PBXFileReference; includeInIndex = 1; name = "OFL-NunitoSans.txt"; path = "../assets/fonts/OFL-NunitoSans.txt"; sourceTree = SOURCE_ROOT; };
 		E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = GrammarLensWidgets.entitlements; sourceTree = "<group>"; };
 		EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimeline.swift; sourceTree = "<group>"; };
 		FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimelineTests.swift; sourceTree = "<group>"; };
@@ -184,6 +189,7 @@
 				5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */,
 				0F7B5FDA95CE22BB3C9390E4 /* Info.plist */,
 				E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */,
+				E9414A94EAD2D8B66E3BFF06 /* Fonts */,
 			);
 			name = GrammarLensWidgets;
 			path = GrammarLensWidgets;
@@ -242,6 +248,15 @@
 				8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		E9414A94EAD2D8B66E3BFF06 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */,
+				DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */,
+			);
+			name = Fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -362,6 +377,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD985B5764E133DECA831F83 /* NunitoSans-Variable.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -381,6 +397,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				54BEFA8AC309DBE3E2777823 /* NunitoSans-Variable.ttf in Resources */,
+				3045FBA66D8F705292194397 /* OFL-NunitoSans.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

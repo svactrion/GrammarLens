@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 import UIKit
 
@@ -38,13 +39,53 @@ extension Color {
   }
 }
 
-/// The type: the system's rounded design at heavy weights (DW2-1: the app's
-/// Nunito Sans is an app asset and is not copied into the extension).
+/// The type (INTEGRATE 3c): the app's Nunito Sans, its variable font file
+/// bundled in the extension with its OFL licence (`NunitoSans-Variable.ttf`,
+/// `OFL-NunitoSans.txt`, from `assets/fonts/`), registered on first use and
+/// drawn at the boards' weights on its `wght` axis (900 titles and labels,
+/// 700 lines), as the app draws it. Characters Nunito has no glyph for
+/// (Japanese, Korean, Arabic) fall back to the system's rounded font, then
+/// the system font; without the file, the system's rounded font throughout.
 enum WidgetFont {
-  static func heavy(_ size: CGFloat) -> Font { .system(size: size, weight: .heavy, design: .rounded) }
-  static func bold(_ size: CGFloat) -> Font { .system(size: size, weight: .bold, design: .rounded) }
+  static let fileName = "NunitoSans-Variable"
+  static let family = "Nunito Sans"
+  /// The `wght` variation axis ('wght' as a four-character code).
+  static let weightAxis = 0x7767_6874
+
+  static func heavy(_ size: CGFloat) -> Font { font(size, weight: 900, fallback: .heavy) }
+  static func bold(_ size: CGFloat) -> Font { font(size, weight: 700, fallback: .bold) }
   static func semibold(_ size: CGFloat) -> Font {
-    .system(size: size, weight: .semibold, design: .rounded)
+    font(size, weight: 600, fallback: .semibold)
+  }
+
+  /// True once the bundled file is registered (the extension's bundle, or
+  /// a test bundle for the snapshot tests).
+  static let isAvailable: Bool = {
+    if UIFont.familyNames.contains(family) { return true }
+    for bundle in [Bundle.main] + Bundle.allBundles {
+      guard let url = bundle.url(forResource: fileName, withExtension: "ttf") else { continue }
+      CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+      if UIFont.familyNames.contains(family) { return true }
+    }
+    return false
+  }()
+
+  static func uiFont(_ size: CGFloat, weight: CGFloat, fallback: UIFont.Weight) -> UIFont {
+    let system = UIFont.systemFont(ofSize: size, weight: fallback)
+    let rounded = system.fontDescriptor.withDesign(.rounded) ?? system.fontDescriptor
+    guard isAvailable else { return UIFont(descriptor: rounded, size: size) }
+    let descriptor = UIFontDescriptor(fontAttributes: [
+      .family: family,
+      UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [
+        weightAxis: weight
+      ],
+      .cascadeList: [rounded],
+    ])
+    return UIFont(descriptor: descriptor, size: size)
+  }
+
+  private static func font(_ size: CGFloat, weight: CGFloat, fallback: UIFont.Weight) -> Font {
+    Font(uiFont(size, weight: weight, fallback: fallback) as CTFont)
   }
 }
 

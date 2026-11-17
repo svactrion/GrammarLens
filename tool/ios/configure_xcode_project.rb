@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # Configures ios/Runner.xcodeproj for the widgets and reminders task
-# (docs/design/ui-polish/handoff/TASK-widgets.md) without the Xcode UI.
+# (docs/design/ui-polish/handoff/TASK-widgets.md) and its integration
+# (INTEGRATE.md 3c: Nunito Sans in the extension) without the Xcode UI.
 #
 # Idempotent: running it again changes nothing. Backs up project.pbxproj to
 # build/pbxproj-backup/ before every save. Never touches team, signing style
@@ -148,6 +149,28 @@ ensure_source(runner, payload_ref, changes)
 %w[WidgetSnapshotTests.swift WidgetTimelineTests.swift ReminderSchedulerTests.swift].each do |f|
   ensure_source(tests, ensure_file(tests_group, f, changes), changes)
 end
+
+# --- INTEGRATE 3c: the app's Nunito Sans in the widgets --------------------
+# The one font file the app already ships (assets/fonts/), with its OFL
+# licence, copied into the extension's bundle; RunnerTests carries it too so
+# the snapshot tests draw what the widgets draw. Referenced from the project
+# folder (SOURCE_ROOT is ios/), not copied into ios/.
+fonts_group = ext_group.children.find { |g| g.isa == 'PBXGroup' && g.display_name == 'Fonts' } ||
+              ext_group.new_group('Fonts')
+font_refs = %w[NunitoSans-Variable.ttf OFL-NunitoSans.txt].map do |name|
+  path = "../assets/fonts/#{name}"
+  fonts_group.files.find { |f| f.path == path } || begin
+    changes << "file reference #{EXT_NAME}/Fonts/#{name} (#{path})"
+    fonts_group.new_reference(path, :project)
+  end
+end
+def ensure_resource(target, ref, changes)
+  return if target.resources_build_phase.files_references.include?(ref)
+  changes << "#{File.basename(ref.path)} → #{target.name} Resources"
+  target.resources_build_phase.add_file_reference(ref)
+end
+font_refs.each { |ref| ensure_resource(ext, ref, changes) }
+ensure_resource(tests, font_refs.first, changes)
 
 # --- save ------------------------------------------------------------------
 if changes.empty?
