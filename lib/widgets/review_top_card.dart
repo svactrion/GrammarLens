@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../motion.dart';
 import '../theme.dart';
 
 /// The card at the top of Review (1.2.0 final screens, brief §2): one shell
@@ -20,12 +21,16 @@ class ReviewTopCard extends StatelessWidget {
   /// A key for the [Card] itself (tests read its colour and edge).
   final Key? cardKey;
 
+  /// R12: a light band glints across the card every [CardGlint.period].
+  final bool glint;
+
   const ReviewTopCard({
     super.key,
     required this.color,
     required this.child,
     this.edge,
     this.cardKey,
+    this.glint = false,
   });
 
   /// The shell's inner padding.
@@ -33,16 +38,102 @@ class ReviewTopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.all(padding),
+      child: child,
+    );
     return Card(
       key: cardKey,
       color: color,
+      clipBehavior: glint ? Clip.antiAlias : Clip.none,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(appCardRadius),
         side: edge == null ? BorderSide.none : BorderSide(color: edge!),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(padding),
-        child: child,
+      child: glint
+          ? Stack(children: [
+              content,
+              const Positioned.fill(child: CardGlint()),
+            ])
+          : content,
+    );
+  }
+}
+
+/// R12: a soft light band that sweeps across a card in the first 55 % of
+/// every [period] (the board's gl-shine at 3.6 s). An ambient loop: not
+/// under Reduce Motion, off screen or in tests. Decorative.
+class CardGlint extends StatefulWidget {
+  const CardGlint({super.key});
+
+  static const period = Duration(milliseconds: 3600);
+  static const bandKey = ValueKey('card_glint_band');
+
+  @override
+  State<CardGlint> createState() => _CardGlintState();
+}
+
+class _CardGlintState extends State<CardGlint>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _loop;
+
+  @override
+  void initState() {
+    super.initState();
+    _loop = AnimationController(vsync: this, duration: CardGlint.period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context)) {
+      if (!_loop.isAnimating) _loop.repeat();
+    } else {
+      _loop
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _loop.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: _loop,
+          builder: (context, _) {
+            if (!_loop.isAnimating) return const SizedBox.shrink();
+            final t =
+                Curves.easeInOut.transform((_loop.value / .55).clamp(0.0, 1.0));
+            if (t >= 1) return const SizedBox.shrink();
+            return FractionalTranslation(
+              translation: Offset(-1.4 + 4.6 * t, 0),
+              child: FractionallySizedBox(
+                key: CardGlint.bandKey,
+                widthFactor: .3,
+                alignment: Alignment.centerLeft,
+                child: Transform(
+                  transform: Matrix4.skewX(-.35),
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [
+                        Color(0x00FFFFFF),
+                        Color(0x40FFFFFF),
+                        Color(0x00FFFFFF),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -863,6 +863,8 @@ class SuggestedFocusCard extends StatelessWidget {
       cardKey: cardKey,
       color: palette.button,
       edge: palette.buttonEdge,
+      // R12: the focus card glints every 3.6 s.
+      glint: spot != null,
       child: content,
     );
   }

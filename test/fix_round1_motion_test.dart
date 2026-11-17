@@ -15,6 +15,7 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
+import 'package:grammar_lens/widgets/review_top_card.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
 class _Storage extends StorageService {
@@ -193,6 +194,43 @@ void main() {
       await tester.pump(const Duration(milliseconds: 900));
       expect(ring, findsOneWidget);
       expect(grow, findsNothing);
+    });
+  });
+
+  group('R12: the focus card glints every 3.6 s', () {
+    const card = ReviewTopCard(
+        color: Color(0xFF0D3B8F), glint: true, child: SizedBox(height: 120));
+    final band = find.byKey(CardGlint.bandKey);
+
+    testWidgets('a band crosses in the first 55 %, then rests', (tester) async {
+      AppMotion.loopsEnabled = true;
+      addTearDown(() => AppMotion.loopsEnabled = false);
+      await pumpIn(tester, card);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(band, findsOneWidget);
+      final early = tester.getTopLeft(band).dx;
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(tester.getTopLeft(band).dx, greaterThan(early));
+      await tester.pump(const Duration(milliseconds: 1200)); // 2.3 s: rests
+      expect(band, findsNothing);
+      await tester.pump(const Duration(milliseconds: 1800)); // next round
+      expect(band, findsOneWidget);
+      // Clipped to the card's shape.
+      expect(
+          tester.widget<Card>(find.byType(Card)).clipBehavior, Clip.antiAlias);
+    });
+
+    testWidgets('none under Reduce Motion, none without glint', (tester) async {
+      AppMotion.loopsEnabled = true;
+      addTearDown(() => AppMotion.loopsEnabled = false);
+      await pumpIn(tester, card, reduceMotion: true);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(band, findsNothing);
+      await pumpIn(
+          tester,
+          const ReviewTopCard(
+              color: Color(0xFF0D3B8F), child: SizedBox(height: 120)));
+      expect(find.byType(CardGlint), findsNothing);
     });
   });
 }
