@@ -37,6 +37,23 @@ Format: what · options · choice · why.
   Real flows (onboarding, Daily Test) are also walked by hand where
   practical.
 
+- **D1-1 Dark page and card.** SPEC §3.1 lists SY03's dark page #15141A
+  and card #211F27 but also says to keep the app's theme values where they
+  exist. · Keep #151517 / #252528 (the app's dark theme) vs. switch the
+  whole dark theme. · **Kept the app's values** in `AppColors.dark`
+  (within a few steps of SY03's). · The rule's "keep the app's values";
+  changing the app-wide dark surfaces is out of this run's scope.
+- **D1-2 Mood filters.** SPEC X01 gives sad saturation 0.55 and sleep
+  brightness 0.82; the boards' static renders show full colour. ·
+  **Applied** (SPEC §5 outranks the render). Sad heroes look duller; easy
+  to remove (`CompanionView._sadFilter`).
+- **D1-3 Loops in tests.** ~2400 widget tests use `pumpAndSettle`, which
+  never settles under an endless loop. · `AppMotion.loopsEnabled` is false
+  in `test/flutter_test_config.dart`; loop tests turn it on. Haptics are
+  recorded (`HapticMap.log`) instead of reaching the platform.
+- **D1-4 Retired avatar files.** Deleted in B1 once nothing referenced
+  them (ASSETS.md); their name strings removed from the 8 ARB files.
+
 ## Blocked / not verified
 
 - Nothing is checked on a physical device in this run (TASK §6).
@@ -139,3 +156,36 @@ The hinted paths from TASK B0 were checked: all exist.
   paywall parts, Profile layers, errors, dark theme): the board gallery
   (`tool/ui_polish/`), which mounts the real widgets with sample data, one
   board per driver request.
+
+## B1 — Foundations
+
+Status: **done**.
+
+Commits: `49302e1` (assets moved, registered), `a91ea97` (AppColors,
+AppMotion, HapticMap, test config), `85e7160` (PressableButton,
+PressableCard), `be7e333` (nine heroes, picker order, retired → Fox, file
+and string removal), `0346fc4` (CompanionView). Gallery tooling for the
+captures: see B2.
+
+What was built:
+- Assets: `assets/companions/` (54 poses), `assets/companions/props/` (6),
+  `assets/ui/` (7 objects); registered in `pubspec.yaml`.
+- `lib/app_colors.dart` (`AppColors` ThemeExtension, light/dark; wheel
+  slice and hero stage colours; `lipCard`), `lib/motion.dart`
+  (`AppMotion`), `lib/utils/haptics.dart` (`HapticMap`).
+- `lib/widgets/pressable_button.dart`, `lib/widgets/companion_view.dart`.
+- `lib/models/avatar.dart`: nine heroes in picker order; retired ids read
+  as Fox; `StorageService.getUserProfile` rewrites a retired id to
+  `avatar_14` once. Personality traits (SPEC §3.5) in all 8 languages.
+
+Verified:
+- `flutter analyze`: no issues. `flutter test`: 2432 passed + the new
+  tests; one failure was a stale `build/unit_test_assets` cache (the
+  deleted avatar files), passing after the cache was removed.
+- New tests: `avatar_test` (9 heroes in order, ids, files on disk),
+  `avatar_retired_migration_test` (each retired id → Fox, stored as
+  `avatar_14`; current heroes and null untouched), `companion_view_test`,
+  `pressable_button_test`, `haptics_test`.
+- Simulator (iPhone 18 Pro, light): V00-CompanionSystem,
+  V00-MotionSystem, X01-ExpressionKit, X03-HeroSet captured through the
+  board gallery; poses, props and their placement match the boards.
