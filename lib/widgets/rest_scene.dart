@@ -47,8 +47,8 @@ class RestScene extends StatefulWidget {
   /// The score capsule, top right over the scene.
   final Widget? capsule;
 
-  /// V24's "Remind me tomorrow" row (TASK-widgets fixed decision 7), under
-  /// the countdown; none in previews.
+  /// The "Remind me tomorrow" row (TASK-widgets fixed decision 7): V24 has it
+  /// under the countdown, V24f under the Premium card; none in previews.
   final Widget? reminder;
   final DateTime Function() clock;
 
@@ -309,6 +309,7 @@ class _RestSceneState extends State<RestScene>
                 l10n.restCountdownSemantics(left.inHours, left.inMinutes % 60),
             awake: _awake,
             onWake: _wake,
+            reminder: widget.reminder,
           )
         else
           Container(
@@ -761,6 +762,9 @@ class _FreePanel extends StatelessWidget {
   final bool awake;
   final VoidCallback onWake;
 
+  /// V24f's "Remind me tomorrow" row, under the Premium card (the board).
+  final Widget? reminder;
+
   const _FreePanel({
     required this.offer,
     required this.hero,
@@ -769,6 +773,7 @@ class _FreePanel extends StatelessWidget {
     required this.countdownSemantics,
     required this.awake,
     required this.onWake,
+    this.reminder,
   });
 
   @override
@@ -994,6 +999,10 @@ class _FreePanel extends StatelessWidget {
             ),
             child: card,
           ),
+          if (reminder != null) ...[
+            const SizedBox(height: 12),
+            reminder!,
+          ],
         ],
       ),
     );
