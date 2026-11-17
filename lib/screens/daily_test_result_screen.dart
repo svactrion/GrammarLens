@@ -148,11 +148,12 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       );
       _reportCompletion(welcomeBadgeJustEarned);
       widget.onCompletionSaved?.call();
+      // SPEC §4 (v11): V10 Results → V11 Welcome badge → V12. The badge
+      // no longer opens over the results when the save lands (fix round 3,
+      // A1: the device showed it first); the results' "Climb my first step"
+      // opens it, and its Continue goes on.
       if (welcomeBadgeJustEarned && mounted) {
-        setState(() {
-          _showWelcomeCelebration = true;
-          _celebration = const _Celebration.welcome();
-        });
+        setState(() => _showWelcomeCelebration = true);
       }
       // What this completion reached in its month (N12, N15, N24): its
       // events, and a tier's celebration. The Welcome badge and a tier
@@ -194,6 +195,13 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// V11 after V10 (SPEC §4, v11): the Welcome badge opens from the
+  /// results' button; closing it leaves (the first climb, V12).
+  void _openWelcomeBadge() {
+    if (_celebration != null || _left || !mounted) return;
+    setState(() => _celebration = const _Celebration.welcome());
   }
 
   /// The way out: pops this route, or, for the Day-0 flow (not a route), calls
@@ -297,7 +305,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         label: context.l10n.dailyResultFirstStep,
         shine: true,
         trailingIcon: arrow,
-        onPressed: _leave,
+        onPressed: _openWelcomeBadge,
       );
     }
     final seeClimb = !widget.isDay0 &&
@@ -465,8 +473,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       ),
     );
     final celebration = _celebration;
-    if (celebration == null) return scaffold;
-    void close() => setState(() => _celebration = null);
+    // Always one Stack, so opening or closing a celebration never rebuilds
+    // the results under it (their scroll position and entrance stay put).
+    if (celebration == null) return Stack(children: [scaffold]);
+    void close() {
+      setState(() => _celebration = null);
+      // The Welcome badge is the step between the results and the first
+      // climb: closing it goes on. A tier medal (R05) closes back to the
+      // results, as before.
+      if (celebration.tier == null) _leave();
+    }
+
     const key = ValueKey('medal_celebration');
     final line = _medalLine;
     return Stack(children: [

@@ -196,10 +196,9 @@ void main() {
       }
       await tester.pumpAndSettle();
     }
-    // Batch 5 (N15): the answered test earns the Welcome badge, whose
-    // celebration opens over the results the moment the save lands; one
-    // tap closes it and the results, with "Start my climb", show.
-    if (answerFirst) await closeCelebration(tester);
+    // Fix round 3 (A1, SPEC §4 v11): the answered test earns the Welcome
+    // badge; the results show first, and their "Climb my first step" opens
+    // the badge (climbThroughWelcome).
   }
 
   /// V12 (UI polish): after "Climb my first step" the first climb's camera
@@ -270,7 +269,7 @@ void main() {
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await tester.pump();
       expect(burst, findsNothing);
@@ -302,7 +301,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await tester.pump();
       expect(burst, findsNothing);
@@ -374,14 +373,14 @@ void main() {
       storage.saveGate!.complete();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
-      // The save landed: the Welcome celebration first (N15).
-      await closeCelebration(tester);
+      // The save landed: the results with "Climb my first step" (A1: the
+      // badge comes after them).
       final climb = find.widgetWithText(PressableButton, 'Climb my first step');
       expect(tester.widget<PressableButton>(climb).onPressed, isNotNull);
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(climb);
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await tester.pump();
       // N36: no confetti of its own.
@@ -440,7 +439,7 @@ void main() {
       setReduceMotion(tester, false);
       await tester.pump();
 
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await tester.pump();
       // Not over the results, not over the confetti.
@@ -468,7 +467,7 @@ void main() {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
       await tester.pumpAndSettle();
@@ -513,7 +512,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester);
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty,
           limit: const Duration(seconds: 3));
@@ -567,7 +566,7 @@ void main() {
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await tester.pump();
       expect(find.byType(FirstClimbScreen), findsOneWidget);
       expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
@@ -590,9 +589,8 @@ void main() {
     });
 
     testWidgets(
-        'end to end: the Welcome celebration over the results, then the '
-        'results, the first climb, Home, the step and Premium, in that order',
-        (tester) async {
+        'end to end (A1): the results, then the Welcome badge, the first '
+        'climb, Home, the step and Premium, in that order', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       setReduceMotion(tester, false);
@@ -610,14 +608,19 @@ void main() {
         await tester.pumpAndSettle();
       }
       final order = <String>[];
-      expect(celebrationFinder, findsOneWidget);
+      // Fix round 3 (A1): the results first, no layer over them.
+      expect(celebrationFinder, findsNothing);
       expect(resultsTitle, findsOneWidget);
-      order.add('celebration');
-      await closeCelebration(tester);
       expect(find.widgetWithText(PressableButton, 'Climb my first step'),
           findsOneWidget);
       order.add('results');
       await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(celebrationFinder, findsOneWidget);
+      expect(find.byType(FirstClimbScreen), findsNothing);
+      order.add('badge');
+      await closeCelebration(tester);
       await tester.pump();
       // N36: one confetti on the first day, the layer's; none here.
       expect(burst, findsNothing);
@@ -637,9 +640,10 @@ void main() {
       }
       expect(premium, findsOneWidget);
       order.add('premium');
+      // SPEC §4 (v11): V10 Results → V11 Welcome badge → V12 First step.
       expect(order, [
-        'celebration',
         'results',
+        'badge',
         'first climb',
         'home',
         'step',
@@ -655,7 +659,7 @@ void main() {
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await passFirstClimb(tester, skip: true);
       for (var i = 0; i < 300 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
@@ -706,7 +710,7 @@ void main() {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await tester.pump();
       expect(find.text('First step done! 30 to the summit.'), findsOneWidget);
       await passFirstClimb(tester);

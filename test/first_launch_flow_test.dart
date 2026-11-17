@@ -352,13 +352,11 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    // Batch 5 (N15): the celebration over the results first.
-    await closeCelebration(tester);
-    expect(find.text('Climb my first step'), findsOneWidget);
+    // Fix round 3 (A1): the results first; "Climb my first step" opens the
+    // Welcome badge, whose Continue goes on to the first climb.
     expect(find.widgetWithText(PressableButton, 'Continue'), findsNothing);
     expect(completed, isNull);
-    // Reduced motion (the flow tests' setting): no confetti to wait for.
-    await tapResultButton(tester, 'Climb my first step');
+    await climbThroughWelcome(tester);
     // V12: the first climb, then Continue completes onboarding.
     expect(completed, isNull);
     await tester.pumpAndSettle();

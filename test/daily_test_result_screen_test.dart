@@ -661,8 +661,8 @@ void main() {
     }
 
     testWidgets(
-        'a completion that just earned the badge shows the one-time '
-        'celebration, exactly once', (tester) async {
+        'a completion that just earned the badge shows the results first; '
+        'their button opens the one-time celebration (A1)', (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
 
@@ -671,6 +671,10 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
+      expect(find.text('Welcome to the climb'), findsNothing);
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Welcome to the climb'), findsOneWidget);
       // The copy states the step rule: one answered question earns the day's
       // step, so it must not promise progress for every completed test.
@@ -698,7 +702,9 @@ void main() {
       expect(find.text('Climb my first step'), findsOneWidget);
       expect(find.text('See your climb'), findsNothing);
       expect(find.text('Back to Home'), findsNothing);
-      // The celebration's own Continue is open over the results.
+      // A1: no layer over the results yet; the footer holds only the climb
+      // button.
+      expect(celebrationFinder, findsNothing);
       expect(
           find.descendant(
               of: find.byKey(const Key('resultFooter')),
@@ -714,9 +720,10 @@ void main() {
     });
 
     testWidgets(
-        'N15: the celebration opens over the results when the save lands; '
-        'nothing in the list moves, and one tap shows the results',
-        (tester) async {
+        'A1: the save lands and the results stay alone; "Climb my first '
+        'step" opens the celebration over them, nothing in the list moves, '
+        'and closing it goes on', (tester) async {
+      var left = 0;
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       final pending = Completer<void>();
@@ -728,21 +735,27 @@ void main() {
           answers: answers,
           dailyTestService: dailyTestService,
           analyticsService: analyticsService,
+          onDone: () => left++,
         ),
       ));
       await tester.pump();
       // V10's rows enter one after another; let them land first.
       await tester.pump(const Duration(seconds: 1));
       expect(celebrationFinder, findsNothing);
+      expect(_rows, findsNWidgets(4));
+
+      pending.complete();
+      await tester.pumpAndSettle();
+      // The save landed: still the results alone (V10 before V11).
+      expect(celebrationFinder, findsNothing);
       final resultCards = _rows;
-      expect(resultCards, findsNWidgets(4));
       final before = [
         for (final e in resultCards.evaluate())
           tester.getTopLeft(find.byWidget(e.widget))
       ];
-
-      pending.complete();
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       // A layer, not a list item: the results stay where they were.
       expect(celebrationFinder, findsOneWidget);
@@ -758,9 +771,10 @@ void main() {
       expect(medal.asset, MedalArt.welcome);
       expect(medal.disc, MedalCelebration.disc);
 
+      expect(left, 0);
       await closeCelebration(tester);
-      expect(_rows, findsNWidgets(4));
-      expect(find.text('Climb my first step'), findsOneWidget);
+      // Closing the badge goes on (V12 in the Day-0 flow).
+      expect(left, 1);
     });
 
     testWidgets('an ordinary completion (not the first ever) shows nothing',
@@ -838,8 +852,12 @@ void main() {
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(find.text('Welcome to the climb'), findsNothing);
       expect(find.text('Climb my first step'), findsOneWidget);
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.text('Welcome to the climb'), findsOneWidget);
     });
 
     testWidgets('does not gate or delay the way out once saved',
@@ -852,7 +870,7 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(find.text('Welcome to the climb'), findsNothing);
       expect(
         tester
             .widget<PressableButton>(
@@ -1145,9 +1163,9 @@ void main() {
     }
 
     /// Pumps a Day-0 style result screen (left through [onDone]) whose save
-    /// earns the badge, and lets everything settle. The celebration opens
-    /// with its own burst (N15); unless [keepCelebration], it is closed
-    /// here, so what follows sees only the button's burst.
+    /// earns the badge, and lets everything settle: the results, with
+    /// "Climb my first step" (A1: no layer yet). With [keepCelebration] the
+    /// button is tapped, so the celebration is open (with its own burst).
     Future<void> pumpEarned(
       WidgetTester tester, {
       Brightness brightness = Brightness.light,
@@ -1171,14 +1189,18 @@ void main() {
       if (muteTickers) app = TickerMode(enabled: false, child: app);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      if (!keepCelebration && celebrationFinder.evaluate().isNotEmpty) {
-        await closeCelebration(tester);
+      expect(celebrationFinder, findsNothing);
+      if (keepCelebration &&
+          find.text('Climb my first step').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Climb my first step'));
+        await tester.pumpAndSettle();
       }
     }
 
     testWidgets(
-        'earning the badge opens the layer with one burst from its medal; '
-        'once it is closed nothing plays', (tester) async {
+        'earning the badge, the results\' button opens the layer with one '
+        'burst from its medal; closing it leaves and nothing plays',
+        (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1192,6 +1214,10 @@ void main() {
           onDone: () => left++,
         ),
       ));
+      await tester.pumpAndSettle();
+      expect(celebrationFinder, findsNothing);
+      expect(burst, findsNothing);
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       await tester.pump();
       expect(celebrationFinder, findsOneWidget);
@@ -1202,26 +1228,36 @@ void main() {
       expect(origin.dx, closeTo(medal.center.dx, 1));
       expect(origin.dy, closeTo(medal.center.dy, 1));
       await tester.pumpAndSettle();
+      expect(left, 0);
       await closeCelebration(tester);
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 500));
         expect(burst, findsNothing);
       }
-      expect(left, 0);
+      expect(left, 1);
     });
 
     testWidgets(
-        'N36: "Start my climb" plays no confetti: it leaves at once, once',
-        (tester) async {
+        'N36, A1: "Climb my first step" opens the badge (no confetti of its '
+        'own); the badge\'s close leaves once, and the button does nothing '
+        'after that', (tester) async {
       tallView(tester);
       await pumpEarned(tester);
       expect(find.text('Climb my first step'), findsOneWidget);
       await tester.tap(find.text('Climb my first step'));
       await tester.pump();
-      expect(burst, findsNothing);
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(left, 0);
+      // The only burst is the badge's own.
+      expect(burst, findsOneWidget);
+      expect(find.descendant(of: celebrationFinder, matching: burst),
+          findsOneWidget);
+      await tester.pumpAndSettle();
+      await closeCelebration(tester);
       expect(left, 1);
       await tester.tap(button, warnIfMissed: false);
       await tester.pump(const Duration(seconds: 3));
+      expect(celebrationFinder, findsNothing);
       expect(left, 1);
     });
 
@@ -1276,7 +1312,8 @@ void main() {
       await tester.pump(MedalCelebration.close);
       await tester.pump();
       expect(celebrationFinder, findsNothing);
-      expect(find.text('Climb my first step'), findsOneWidget);
+      // Closing the badge goes on (A1).
+      expect(left, 1);
     });
 
     testWidgets(
@@ -1303,8 +1340,7 @@ void main() {
       await tester.pump(MedalCelebration.close);
       await tester.pump();
       expect(celebrationFinder, findsNothing);
-      await tester.tap(find.text('Climb my first step'));
-      await tester.pump();
+      // Closing the badge left at once (A1); nothing played.
       expect(burst, findsNothing);
       expect(left, 1);
     });
@@ -1322,8 +1358,9 @@ void main() {
       storageService.failCompletionWith = null;
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
-      await closeCelebration(tester);
-      expect(find.text('Climb my first step'), findsOneWidget);
+      expect(celebrationFinder, findsNothing);
+      await climbThroughWelcome(tester);
+      expect(left, 1);
     });
 
     testWidgets('the layer fades in over 200 ms instead of jumping',
@@ -1339,6 +1376,8 @@ void main() {
           analyticsService: analyticsService,
         ),
       ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       await tester.pump();
       double opacity() =>
@@ -1372,8 +1411,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('from Home: "Start my climb" pops the route at once',
-        (tester) async {
+    testWidgets(
+        'from Home: "Climb my first step" opens the badge, and its close '
+        'pops the route at once', (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1396,8 +1436,7 @@ void main() {
       ));
       await tester.tap(find.text('open results'));
       await tester.pumpAndSettle();
-      await closeCelebration(tester);
-      await tester.tap(find.text('Climb my first step'));
+      await climbThroughWelcome(tester);
       await tester.pumpAndSettle();
       expect(find.text('open results'), findsOneWidget);
       expect(find.text('Daily Test Results'), findsNothing);

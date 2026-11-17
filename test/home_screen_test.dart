@@ -725,15 +725,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     expect(storage.steps, 9);
-    // Batch 5 (N15): the celebration over the results first; its own
-    // confetti went with it.
-    await closeCelebration(tester);
-    expect(find.byType(ConfettiBurst), findsNothing);
+    // Fix round 3 (A1): the results first, then "Climb my first step"
+    // opens the Welcome badge; closing it pops the results.
     expect(find.text('Climb my first step'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
+    await climbThroughWelcome(tester);
 
     // N36: no confetti of its own; the results pop and Home steps.
-    await tester.tap(find.text('Climb my first step'));
     await tester.pump();
     expect(find.byType(ConfettiBurst), findsNothing);
     for (var i = 0;
