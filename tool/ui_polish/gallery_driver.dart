@@ -33,6 +33,9 @@ const _settleMs = <String, int>{
 const _scrollShots = <String, List<int>>{
   'V23-Profile': [420],
   'V14-Home': [520],
+  // Fix round 1: the pawn and the next step's gold ring (under the nav bar
+  // in the first frame).
+  'V15-HomeNextDay': [360],
   'H04-HomePremium': [520],
   'X04-Ticket': [420],
   'X05-DailyCard': [560],
@@ -189,10 +192,12 @@ final _scripts = <String, Script>{
     await d.typeNow('She don\'t like it.');
     await _wait(400);
     await d.tapNow('daily_test_check');
-    // The book on its way to the Review tab (it flies 600–1100 ms).
-    await _wait(880);
+    // The book on its way to the Review tab (it flies 600–1100 ms after
+    // Check; a simulator screenshot lands some 200–300 ms after it is
+    // asked for).
+    await _wait(560);
     await shot('-book');
-    await _wait(420);
+    await _wait(700);
     await shot('');
   },
   'Q04-MultiBlank': (d, shot) async {
