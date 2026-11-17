@@ -233,6 +233,8 @@ class _SwitchRow extends StatelessWidget {
           child: Switch(
             key: switchKey,
             value: value,
+            // N03's switches are navy (the board).
+            activeTrackColor: c.navy,
             onChanged: onChanged,
           ),
         ),

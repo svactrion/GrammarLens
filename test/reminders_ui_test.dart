@@ -351,6 +351,32 @@ void main() {
       expect(_storage.settings.dailyTest, isTrue);
     });
 
+    testWidgets('one line at 320 pt with the largest text, nothing overflows',
+        (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.physicalSize = const Size(320, 640) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.dark),
+        home: Scaffold(
+          backgroundColor: Colors.indigo,
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 34),
+            child: Center(
+                child:
+                    RestReminderRow(controller: _controller, hero: Avatar.fox)),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final label = tester.widget<Text>(find.text(en.restRemind));
+      expect(label.maxLines, 1);
+    });
+
     testWidgets('the time opens the wheel', (tester) async {
       await pumpRow(tester);
       await tester.tap(find.byKey(RestReminderRow.timeKey));

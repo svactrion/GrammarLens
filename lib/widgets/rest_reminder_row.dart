@@ -88,11 +88,19 @@ class _RestReminderRowState extends State<RestReminderRow> {
       const Icon(Icons.notifications_none_rounded, color: onPanel, size: 20),
       const SizedBox(width: 8),
       Expanded(
-        child: Text(
-          l10n.restRemind,
-          style: theme.textTheme.titleSmall!
-              .withWeight(FontWeight.w800)
-              .copyWith(color: onPanel),
+        // One line, as on the board; a long translation or a large text
+        // size scales down rather than wrapping.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            l10n.restRemind,
+            maxLines: 1,
+            softWrap: false,
+            style: theme.textTheme.titleSmall!
+                .withWeight(FontWeight.w800)
+                .copyWith(color: onPanel),
+          ),
         ),
       ),
       const SizedBox(width: 8),
@@ -135,6 +143,7 @@ class _RestReminderRowState extends State<RestReminderRow> {
         label: l10n.restRemind,
         child: Switch(
           key: RestReminderRow.switchKey,
+          materialTapTargetSize: MaterialTapTargetSize.padded,
           value: _controller.isOn(ReminderKind.dailyTest),
           activeTrackColor: c.green,
           onChanged: _controller.loaded ? _toggle : null,
