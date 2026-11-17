@@ -144,6 +144,10 @@ final _scripts = <String, Script>{
     await _wait(500);
     await d.tapNow('onboarding_name');
     await d.typeNow('Ada');
+    // Fix round 1: Continue is enabled only once the typed name has been
+    // built; tapped at once (unsynchronized), the tap hit the disabled
+    // button, the goal step never came and the next tap waited forever.
+    await _wait(600);
     await d.tapNow('onboarding_continue');
     await _wait(900);
     await d.tapNow('onboarding_goal_work');
@@ -185,7 +189,10 @@ final _scripts = <String, Script>{
     await d.typeNow('She don\'t like it.');
     await _wait(400);
     await d.tapNow('daily_test_check');
-    await _wait(1300);
+    // The book on its way to the Review tab (it flies 600–1100 ms).
+    await _wait(880);
+    await shot('-book');
+    await _wait(420);
     await shot('');
   },
   'Q04-MultiBlank': (d, shot) async {
@@ -231,11 +238,17 @@ final _scripts = <String, Script>{
 };
 
 /// Taps and text entry without waiting for frames to stop: the boards'
-/// ambient loops never let the app go idle.
+/// ambient loops never let the app go idle. Each step gives up after
+/// [_stepTimeout] (flutter_driver waits forever for a widget that never
+/// comes, which is how V05-Goal "hung" in B11); the board is then reported
+/// as failed and the run goes on.
+const _stepTimeout = Duration(seconds: 15);
+
 extension on FlutterDriver {
   Future<void> tapNow(String key) =>
-      runUnsynchronized(() => tap(find.byValueKey(key)));
-  Future<void> typeNow(String text) => runUnsynchronized(() => enterText(text));
+      runUnsynchronized(() => tap(find.byValueKey(key), timeout: _stepTimeout));
+  Future<void> typeNow(String text) =>
+      runUnsynchronized(() => enterText(text, timeout: _stepTimeout));
 }
 
 Future<void> main() async {
@@ -270,7 +283,11 @@ Future<void> main() async {
 
       final script = _scripts[id];
       if (script != null) {
-        await script(driver, shot);
+        try {
+          await script(driver, shot);
+        } on DriverError catch (e) {
+          stdout.writeln('board $board failed: ${e.message}');
+        }
         continue;
       }
       await Future<void>.delayed(Duration(milliseconds: _settleMs[id] ?? 1600));

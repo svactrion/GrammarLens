@@ -1245,6 +1245,11 @@ class _GalleryMedalStorage extends StorageService {
   Future<WelcomeBadge?> getWelcomeBadge() async => WelcomeBadge(
       earnedAt: DateTime(2026, 9, 2), ruleVersion: 1, backfilled: false);
 
+  /// V23's "since Sep 2026".
+  @override
+  Future<DateTime?> getFirstDailyTestCompletion() async =>
+      DateTime(2026, 9, 2, 19, 40);
+
   @override
   Future<Map<(int, int), String>> getClimbMonthThemes() async => const {
         (2026, 9): 'green_slope',
