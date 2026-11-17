@@ -30,9 +30,9 @@
   "@appLoading": {
     "description": "The app's first frame under the launch splash, while the saved profile is read."
   },
-  "navHome": "Home",
+  "navHome": "Climb",
   "@navHome": {
-    "description": "Bottom navigation: the Home tab."
+    "description": "Bottom navigation: the first tab (Home: the Daily Test and this month's mountain). The UI polish boards name it 'Climb'."
   },
   "featureReview": "Review",
   "@featureReview": {
@@ -3548,5 +3548,411 @@
         "example": "Ada"
       }
     }
+  },
+  "homeDailyTodoLine": "{count} questions · about {minutes} minutes",
+  "@homeDailyTodoLine": {
+    "description": "Home's Daily Test card (X05) before the test: the line under the title.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "homeDailyDoneLine": "+{points} points · step {step} reached",
+  "@homeDailyDoneLine": {
+    "description": "Home's Daily Test card (X05) after the test: today's points and this month's step.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "9"
+      },
+      "step": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "homeDailyStartToday": "Start today’s test",
+  "@homeDailyStartToday": {
+    "description": "Home's Daily Test card (X05): the button that starts today's test."
+  },
+  "homeDailyReviewAnswers": "Review answers",
+  "@homeDailyReviewAnswers": {
+    "description": "Home's Daily Test card (X05) after the test: opens today's results."
+  },
+  "homeClimbNextTomorrow": "Step {step} opens tomorrow",
+  "@homeClimbNextTomorrow": {
+    "description": "Home's mountain card (V14): the bubble once today's test is done.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "homeClimbOneTestAway": "Step {step} is one test away!",
+  "@homeClimbOneTestAway": {
+    "description": "Home's mountain card (V15): the bubble before today's test.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "ticketFreeTitle": "1 free practice",
+  "@ticketFreeTitle": {
+    "description": "The free practice ticket (X04): its title for a free user."
+  },
+  "ticketUsedLine": "Nice work, {name}.",
+  "@ticketUsedLine": {
+    "description": "The used ticket (X04): the line under 'Used today'. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "ticketPickInReview": "Pick a weak spot in Review.",
+  "@ticketPickInReview": {
+    "description": "Home's ticket (V14) when there is no weak spot yet. 'Review' is the feature name."
+  },
+  "ticketUseItOn": "Use it on: {spot}",
+  "@ticketUseItOn": {
+    "description": "Home's ticket (V14): the weak spot it can be used on.",
+    "placeholders": {
+      "spot": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "homeShowcaseLead": "Master any topic with AI feedback.",
+  "@homeShowcaseLead": {
+    "description": "Home's topic showcase (V14) for a free user: the line under the title."
+  },
+  "homePickedForYou": "Picked for you",
+  "@homePickedForYou": {
+    "description": "Home's topic showcase (V14): the label of the weak spot's topic card."
+  },
+  "homePickedLine": "Your weak spot today",
+  "@homePickedLine": {
+    "description": "Home's topic showcase (V14): under the picked topic."
+  },
+  "homeUnlockTopics": "Unlock all {count} topics",
+  "@homeUnlockTopics": {
+    "description": "Home's topic showcase (V14): the button to the paywall; {count} is the number of topics.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "homePracticeTitle": "Practice",
+  "@homePracticeTitle": {
+    "description": "Home's practice card for Premium (H04): the title."
+  },
+  "homeSessionsToday": "Sessions today",
+  "@homeSessionsToday": {
+    "description": "Home's practice card for Premium (H04): before the sessions bar."
+  },
+  "homeSessionsSemantics": "{done} of {total} sessions today",
+  "@homeSessionsSemantics": {
+    "description": "VoiceOver label of the sessions bar (H04).",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "homePracticeWeakSpot": "Practice your weak spot",
+  "@homePracticeWeakSpot": {
+    "description": "Home's practice card for Premium (H04): the button."
+  },
+  "restBubble": "Resting at camp. See you tomorrow!",
+  "@restBubble": {
+    "description": "The rest scene (V24): the buddy's bubble."
+  },
+  "restSeeYou": "See you tomorrow, {name}",
+  "@restSeeYou": {
+    "description": "The rest scene (V24): the chip at the top. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "restTitle": "All done for today",
+  "@restTitle": {
+    "description": "The rest scene (V24): the panel's title."
+  },
+  "restBody": "Your buddy is resting until tomorrow.",
+  "@restBody": {
+    "description": "The rest scene (V24): under the panel's title."
+  },
+  "restPracticeTitle": "Practice",
+  "@restPracticeTitle": {
+    "description": "The rest scene (V24): the practice tile's title."
+  },
+  "restTestLine": "{correct}/{total} · +{points} points",
+  "@restTestLine": {
+    "description": "The rest scene (V24): the Daily Test tile's line.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "4"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      },
+      "points": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "restSessionsLine": "{done}/{total} sessions",
+  "@restSessionsLine": {
+    "description": "The rest scene (V24), Premium: the practice tile's line.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "restTicketUsed": "Ticket used",
+  "@restTicketUsed": {
+    "description": "The rest scene (V24), free: the practice tile's line."
+  },
+  "restNextTest": "Next Daily Test · step {step}",
+  "@restNextTest": {
+    "description": "The rest scene (V24): above the countdown (uppercased by the app). 'Daily Test' is the feature name.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "restCountdownSemantics": "Next Daily Test in {hours} h {minutes} min",
+  "@restCountdownSemantics": {
+    "description": "The rest scene (V24): VoiceOver label of the countdown. 'Daily Test' is the feature name.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "24"
+      }
+    }
+  },
+  "firstClimbMountain": "{mountain} · {days} steps to the summit",
+  "@firstClimbMountain": {
+    "description": "The first climb (V12): the chip at the top. {mountain} is this month's mountain's name.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "firstClimbStep": "Step {step} of {days}",
+  "@firstClimbStep": {
+    "description": "The first climb (V12): the chip that pops when the companion reaches the step.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "1"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "firstClimbBubble": "First step done! {left} to the summit.",
+  "@firstClimbBubble": {
+    "description": "The first climb (V12): the companion's bubble once the camera has opened back up. {left} is the steps left.",
+    "placeholders": {
+      "left": {
+        "type": "int",
+        "example": "29"
+      }
+    }
+  },
+  "firstClimbSemantics": "{hero} climbed to step {step} of {days}.",
+  "@firstClimbSemantics": {
+    "description": "The first climb (V12): what VoiceOver reads for the mountain scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "step": {
+        "type": "int",
+        "example": "1"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "monthRecapTitle": "{tier} on {mountain}!",
+  "@monthRecapTitle": {
+    "description": "The month recap (R04): the title when a medal was earned. {tier} is Bronze/Silver/Gold, {mountain} last month's mountain.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Green Slope"
+      }
+    }
+  },
+  "monthRecapClimbed": "You climbed {mountain}",
+  "@monthRecapClimbed": {
+    "description": "The month recap (R04): the title when no medal was earned.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Green Slope"
+      }
+    }
+  },
+  "monthRecapDays": "{steps} / {days} days",
+  "@monthRecapDays": {
+    "description": "The month recap (R04): the chip on the mountain, days climbed of the month's days.",
+    "placeholders": {
+      "steps": {
+        "type": "int",
+        "example": "24"
+      },
+      "days": {
+        "type": "int",
+        "example": "31"
+      }
+    }
+  },
+  "monthRecapToTier": "to {tier}",
+  "@monthRecapToTier": {
+    "description": "The month recap (R04): under the points still missing to the next medal.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Gold"
+      }
+    }
+  },
+  "monthRecapLine": "{tier} {points}",
+  "@monthRecapLine": {
+    "description": "The month recap (R04): a medal line's label on the points bar.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "78"
+      }
+    }
+  },
+  "monthRecapBarSemantics": "{score} points. Bronze at {bronze}, Silver at {silver}, Gold at {gold}.",
+  "@monthRecapBarSemantics": {
+    "description": "VoiceOver label of the month recap's points bar (R04).",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "228"
+      },
+      "bronze": {
+        "type": "int",
+        "example": "78"
+      },
+      "silver": {
+        "type": "int",
+        "example": "155"
+      },
+      "gold": {
+        "type": "int",
+        "example": "233"
+      }
+    }
+  },
+  "monthRecapSeeNew": "See my new mountain",
+  "@monthRecapSeeNew": {
+    "description": "The month recap (R04): the button to the new month's mountain."
+  },
+  "monthNewEyebrow": "{month} · {mountain}",
+  "@monthNewEyebrow": {
+    "description": "The new mountain (R04b): above the title (uppercased by the app).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "monthNewTitle": "A new mountain!",
+  "@monthNewTitle": {
+    "description": "The new mountain (R04b): the title."
+  },
+  "monthNewBody": "{days} steps to the summit. Bronze at {bronze} points, Silver {silver}, Gold {gold}.",
+  "@monthNewBody": {
+    "description": "The new mountain (R04b): under the title; the thresholds come from the medal rules.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "30"
+      },
+      "bronze": {
+        "type": "int",
+        "example": "75"
+      },
+      "silver": {
+        "type": "int",
+        "example": "150"
+      },
+      "gold": {
+        "type": "int",
+        "example": "225"
+      }
+    }
+  },
+  "monthNewStart": "Start climbing",
+  "@monthNewStart": {
+    "description": "The new mountain (R04b): the button that closes it."
   }
 }
