@@ -11,6 +11,7 @@ import '../motion.dart';
 import '../theme.dart';
 import '../utils/content_width.dart';
 import '../utils/haptics.dart';
+import '../widgets/learning_goal_icon.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/buddy_picker.dart';
 import '../widgets/companion_view.dart';
@@ -574,19 +575,6 @@ class _Entrance extends StatelessWidget {
   }
 }
 
-IconData _iconFor(LearningGoal goal) {
-  switch (goal) {
-    case LearningGoal.examPrep:
-      return Icons.school_outlined;
-    case LearningGoal.work:
-      return Icons.work_outline_rounded;
-    case LearningGoal.school:
-      return Icons.menu_book_rounded;
-    case LearningGoal.general:
-      return Icons.chat_bubble_outline_rounded;
-  }
-}
-
 /// One goal as a big card (V05): an icon tile, title and description. The
 /// selected card gets a navy frame on the sky surface and lifts (1.03, a
 /// slight tilt); the buddy pops out of its corner in the cheer pose with a
@@ -668,7 +656,8 @@ class GoalCard extends StatelessWidget {
                           color: selected ? c.card : tile,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(_iconFor(goal), color: tileFg, size: 26),
+                        child: Icon(learningGoalIcon(goal),
+                            color: tileFg, size: 26),
                       ),
                       const SizedBox(width: 13),
                       Expanded(

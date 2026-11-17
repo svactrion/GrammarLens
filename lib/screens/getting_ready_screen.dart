@@ -15,6 +15,7 @@ import '../utils/haptics.dart';
 import '../widgets/companion_view.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/error_state.dart';
+import '../widgets/learning_goal_icon.dart';
 import '../widgets/rays.dart';
 import '../widgets/speech_bubble.dart';
 
@@ -488,7 +489,7 @@ class _YourClimb extends StatelessWidget {
       (Icons.auto_awesome_outlined, hero.name(l10n), c.cream, c.orangeDeep),
       if (goal != null)
         (
-          Icons.work_outline_rounded,
+          learningGoalIcon(goal!),
           switch (goal!) {
             LearningGoal.examPrep => l10n.readyGoalExam,
             LearningGoal.work => l10n.readyGoalWork,

@@ -44,7 +44,6 @@ import 'package:grammar_lens/widgets/score_capsule.dart';
 import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
 import 'package:grammar_lens/widgets/speech_bubble.dart';
-import 'package:grammar_lens/widgets/monthly_climb/climb_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
 import 'package:grammar_lens/widgets/home_practice.dart';
 import 'package:grammar_lens/widgets/rest_reminder_row.dart';
