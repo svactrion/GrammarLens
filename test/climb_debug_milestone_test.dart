@@ -151,7 +151,7 @@ void main() {
       await pumpHome(tester, _RecordingStorage());
       expect(sheetFinder, findsOneWidget);
       expect(celebration, findsNothing);
-      await tester.tapAt(const Offset(20, 120));
+      await closeMonthCard(tester);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(celebration, findsNothing, reason: 'not during the zoom');

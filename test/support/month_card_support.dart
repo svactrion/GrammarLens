@@ -147,3 +147,9 @@ Future<void> settleZoom(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 25));
   }
 }
+
+/// Closes the full-screen month card (UI polish R04/R04b) without its
+/// button: the system back, where the old sheet took a tap outside.
+Future<void> closeMonthCard(WidgetTester tester) async {
+  await tester.binding.handlePopRoute();
+}

@@ -9,8 +9,8 @@ import 'package:grammar_lens/services/month_transition.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/month_card_sheet.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
-
-import 'support/l10n_support.dart';
+import 'package:grammar_lens/widgets/monthly_climb/mountain_scene.dart';
+import 'package:grammar_lens/utils/haptics.dart';
 
 import 'support/month_card_support.dart';
 import 'support/recording_analytics_sink.dart';
@@ -23,39 +23,74 @@ String _sheetText(WidgetTester tester) => tester
     .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
     .join(' | ');
 
+/// Home's mountain under the full-screen card (offstage while it is open).
+final _homeMountain = find.byType(MonthlyMountain, skipOffstage: false);
+
+/// UI polish (R04, R04b): "See my new mountain" on the recap (when shown),
+/// then "Start climbing" closes the card.
+Future<void> _closeByButton(WidgetTester tester) async {
+  final next = find.byKey(MonthCardSheet.seeNewMountainKey);
+  if (next.evaluate().isNotEmpty) {
+    await tester.tap(next);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+  await tester.tap(find.byKey(MonthCardSheet.startClimbingKey));
+}
+
+/// The system back on the full-screen card: closed without its button.
+Future<void> _closeByBack(WidgetTester tester) async {
+  await tester.binding.handlePopRoute();
+}
+
+/// Runs the recap's points bar to its end.
+Future<void> _runBar(WidgetTester tester) async {
+  for (var i = 0; i < 160; i++) {
+    await tester.pump(const Duration(milliseconds: 25));
+  }
+}
+
 void main() {
-  group('variants, end to end (M3, M5, M13, M15)', () {
+  setUp(() => HapticMap.log = []);
+
+  group('variants, end to end (M3, M5, M13, M15; UI polish R04, R04b)', () {
     testWidgets(
-        'summary: last month, medal, steps, points, near-miss, next '
-        'month and theme, one button; K-c behind the sheet', (tester) async {
+        'summary (R04): last month, its medal title, steps, points, the gap, '
+        'the near-miss and next month; Home\'s new mountain held behind',
+        (tester) async {
       await pumpHome(tester, CardStorage());
       expect(_sheet, findsOneWidget);
       final text = _sheetText(tester);
-      expect(text, contains('Your October climb'));
-      expect(text, contains('Silver medal'));
-      expect(text, contains('24 / 31 steps'));
-      expect(text, contains('228 points'));
+      expect(text, contains('YOUR OCTOBER CLIMB'));
+      expect(text, contains('Silver on Green Slope!'));
+      expect(text, contains('24 / 31 days'));
+      expect(text, contains('228 | points'));
+      expect(text, contains('5 | to Gold'));
       expect(text, contains('Just 5 points from Gold'));
       expect(text, contains('Next: November · Ember Peak'));
-      expect(find.widgetWithText(FilledButton, 'See the mountain'),
-          findsOneWidget);
-      final mountain = tester.widget<MonthlyMountain>(_mountain);
+      expect(find.byKey(MonthCardSheet.seeNewMountainKey), findsOneWidget);
+      expect(find.byKey(MonthCardSheet.startClimbingKey), findsNothing);
+      // The recap's own mountain is last month's, edge to edge.
+      final scene = tester.widget<MountainScene>(
+          find.descendant(of: _sheet, matching: find.byType(MountainScene)));
+      expect(scene.theme, ClimbThemes.greenSlope);
+      expect(scene.avatarDay, 24);
+      final mountain = tester.widget<MonthlyMountain>(_homeMountain);
       expect(mountain.zoom!.value, 0);
       expect(mountain.theme, ClimbThemes.emberPeak);
     });
 
     testWidgets(
-        'N16: the medal is last month\'s theme and tier, a 48 pt disc, '
-        'in the medal row', (tester) async {
+        'N16: once the bar has run, the header medal is last month\'s theme '
+        'and tier', (tester) async {
       await pumpHome(tester, CardStorage());
+      await _runBar(tester);
       final badge = tester.widget<MedalBadge>(find.descendant(
           of: find.byKey(MonthCardSheet.medalKey),
           matching: find.byType(MedalBadge)));
       // October 2026 is Green Slope; the card is November's (Ember Peak).
       expect(badge.asset, MedalArt.monthly('green_slope', MedalTier.silver));
-      // N30: by the screen's height (the test screen is 932 pt tall).
-      expect(badge.disc, MonthCardSheet.medalDiscFor(932));
-      expect(MonthCardSheet.medalDiscRegular, 112);
+      expect(badge.disc, MonthCardSheet.headerMedal);
       expect(badge.earned, isTrue);
     });
 
@@ -71,29 +106,46 @@ void main() {
       expect(MonthCardSheet.medalDiscFor(568), 48);
     });
 
-    testWidgets(
-        'N30: the medal centred, large, its tier under it; steps and points '
-        'under the medal', (tester) async {
-      await pumpHome(tester, CardStorage());
-      final sheet = tester.getRect(_sheet);
-      final medal = tester.getRect(find.byType(MedalBadge));
-      expect(medal.center.dx, closeTo(sheet.center.dx, 1));
-      final steps = tester.getRect(find.textContaining('24 / 31'));
-      expect(steps.top, greaterThan(medal.bottom));
-      expect(tester.getRect(find.text('Silver medal')).top,
-          greaterThan(medal.bottom));
+    test('the bar stops at each medal line passed, then at the score', () {
+      // October 2026: Bronze 78, Silver 155, Gold 233.
+      expect(MonthCardSheet.barStops(2026, 10, 228), [78, 155, 228]);
+      expect(MonthCardSheet.barStops(2026, 10, 74), [74]);
+      expect(MonthCardSheet.barStops(2026, 10, 155), [78, 155]);
+      expect(MonthCardSheet.barStops(2026, 10, 300), [78, 155, 233, 300]);
     });
 
-    testWidgets('summary without a medal: no medal row; the gap to Bronze',
+    testWidgets(
+        'the bar fills to Bronze, Silver and the score: a light tap at each '
+        'stop and success on reaching the month\'s medal', (tester) async {
+      await pumpHome(tester, CardStorage());
+      HapticMap.log = [];
+      await _runBar(tester);
+      expect(HapticMap.log, ['light', 'success', 'light']);
+      // The bar's marker ends at the score.
+      expect(
+          find.descendant(
+              of: find.byKey(MonthCardSheet.pointsBarKey),
+              matching: find.text('228')),
+          findsOneWidget);
+    });
+
+    testWidgets('summary without a medal: no medal; the gap to Bronze',
         (tester) async {
       await pumpHome(tester, CardStorage(score: 74, steps: 8));
-      expect(find.byKey(MonthCardSheet.medalKey), findsNothing);
-      expect(_sheetText(tester), contains('Just 4 points from Bronze'));
+      await _runBar(tester);
+      expect(
+          find.descendant(
+              of: find.byKey(MonthCardSheet.medalKey),
+              matching: find.byType(MedalBadge)),
+          findsNothing);
+      final text = _sheetText(tester);
+      expect(text, contains('You climbed Green Slope'));
+      expect(text, contains('Just 4 points from Bronze'));
     });
 
     testWidgets('Gold: no near-miss line', (tester) async {
       await pumpHome(tester, CardStorage(score: 300, steps: 30));
-      expect(_sheetText(tester), contains('Gold medal'));
+      expect(_sheetText(tester), contains('Gold on Green Slope!'));
       expect(find.byKey(MonthCardSheet.nearMissKey), findsNothing);
     });
 
@@ -102,15 +154,29 @@ void main() {
       expect(find.byKey(MonthCardSheet.nearMissKey), findsNothing);
     });
 
-    testWidgets('fresh start: avatar, title, theme and tagline, no numbers',
-        (tester) async {
-      await pumpHome(tester, CardStorage(steps: 0)..frozen = null);
+    testWidgets(
+        '"See my new mountain" opens the new mountain (R04b): the month, its '
+        'mountain, its steps and medal lines', (tester) async {
+      await pumpHome(tester, CardStorage());
+      await tester.tap(find.byKey(MonthCardSheet.seeNewMountainKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(MonthCardSheet.newMountainKey), findsOneWidget);
       final text = _sheetText(tester);
-      expect(text, contains('A new mountain awaits'));
-      expect(text, contains('Ember Peak'));
-      expect(text, contains(ClimbThemes.emberPeak.tagline(en)));
-      expect(text, contains('Your avatar is ready at the start.'));
-      expect(RegExp(r'\d').hasMatch(text), isFalse, reason: text);
+      expect(text, contains('NOVEMBER · EMBER PEAK'));
+      expect(text, contains('A new mountain!'));
+      // November 2026: 30 days; Bronze 75, Silver 150, Gold 225.
+      expect(
+          text,
+          contains('30 steps to the summit. Bronze at 75 points, Silver 150, '
+              'Gold 225.'));
+    });
+
+    testWidgets('fresh start: the new mountain only, no recap', (tester) async {
+      await pumpHome(tester, CardStorage(steps: 0)..frozen = null);
+      expect(find.byKey(MonthCardSheet.newMountainKey), findsOneWidget);
+      expect(find.byKey(MonthCardSheet.seeNewMountainKey), findsNothing);
+      expect(_sheetText(tester), contains('A new mountain!'));
+      expect(_sheetText(tester), isNot(contains('CLIMB')));
     });
 
     testWidgets('a user new this month gets no card', (tester) async {
@@ -139,19 +205,11 @@ void main() {
     }
 
     testWidgets('the button', (tester) async {
-      await closeAndCheck(
-          tester,
-          () => tester
-              .tap(find.widgetWithText(FilledButton, 'See the mountain')));
+      await closeAndCheck(tester, () => _closeByButton(tester));
     });
 
-    testWidgets('a swipe down', (tester) async {
-      await closeAndCheck(
-          tester, () => tester.fling(_sheet, const Offset(0, 500), 1500));
-    });
-
-    testWidgets('a tap outside', (tester) async {
-      await closeAndCheck(tester, () => tester.tapAt(const Offset(20, 120)));
+    testWidgets('the system back', (tester) async {
+      await closeAndCheck(tester, () => _closeByBack(tester));
     });
   });
 
@@ -179,17 +237,11 @@ void main() {
     }
 
     testWidgets('button', (tester) async {
-      expect(await run(tester, () => tester.tap(find.text(en.monthCardButton))),
+      expect(await run(tester, () => _closeByButton(tester)),
           MonthCardDismissal.button);
     });
-    testWidgets('drag', (tester) async {
-      expect(
-          await run(
-              tester, () => tester.fling(_sheet, const Offset(0, 500), 1500)),
-          MonthCardDismissal.drag);
-    });
-    testWidgets('barrier', (tester) async {
-      expect(await run(tester, () => tester.tapAt(const Offset(20, 120))),
+    testWidgets('the system back: barrier', (tester) async {
+      expect(await run(tester, () => _closeByBack(tester)),
           MonthCardDismissal.barrier);
     });
   });
@@ -204,7 +256,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await pumpHome(tester, storage, key: const ValueKey(2));
     expect(_sheet, findsOneWidget);
-    await tester.tap(find.text(en.monthCardButton));
+    await _closeByButton(tester);
     await settleZoom(tester);
     await pumpHome(tester, storage, key: const ValueKey(3));
     expect(_sheet, findsNothing);
@@ -212,15 +264,12 @@ void main() {
 
   for (final screen in const [Size(320, 568), Size(375, 812), Size(430, 932)]) {
     testWidgets(
-        'after the sheet closes the Daily Test entry is on screen and opens the '
+        'after the card closes the Daily Test entry is on screen and opens the '
         'test during the zoom (M21), ${screen.width.toInt()} pt',
         (tester) async {
       final sink = RecordingAnalyticsSink();
       await pumpHome(tester, CardStorage(), screen: screen, sink: sink);
-      // The button may be below the sheet's fold (it scrolls when needed).
-      await tester.ensureVisible(find.text(en.monthCardButton));
-      await tester.pump();
-      await tester.tap(find.text(en.monthCardButton));
+      await _closeByButton(tester);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       expect(_sheet, findsNothing);
@@ -231,7 +280,7 @@ void main() {
       expect(shown, greaterThanOrEqualTo(HomeScreen.monthCardTodayPeek - .5));
       // 1.2.0: the entry is the card's button, and it is in the part that
       // shows.
-      final button = tester.getRect(find.text('Start daily test'));
+      final button = tester.getRect(find.text('Start today’s test'));
       expect(button.top, greaterThanOrEqualTo(list.top));
       await tester.tapAt(button.center);
       // The tap reached the Today card: the Daily Test opens (its route is
@@ -255,13 +304,9 @@ void main() {
     Future<void> closeBy(WidgetTester tester, String method) async {
       switch (method) {
         case 'button':
-          await tester.ensureVisible(find.text(en.monthCardButton));
-          await tester.pump();
-          await tester.tap(find.text(en.monthCardButton));
-        case 'drag':
-          await tester.fling(_sheet, const Offset(0, 500), 1500);
+          await _closeByButton(tester);
         case 'barrier':
-          await tester.tapAt(const Offset(20, 120));
+          await _closeByBack(tester);
       }
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -290,7 +335,7 @@ void main() {
       });
     });
 
-    for (final method in ['button', 'drag', 'barrier']) {
+    for (final method in ['button', 'barrier']) {
       testWidgets('dismissed once by $method, with how long it was open',
           (tester) async {
         var now = DateTime(2026, 11, 1, 9);
@@ -331,7 +376,7 @@ void main() {
       }
       final sink = RecordingAnalyticsSink();
       await pumpHome(tester, CardStorage(), sink: sink);
-      await closeBy(tester, 'drag');
+      await closeBy(tester, 'barrier');
       // The zoom has started (its pause, then 1.8 s; Reduce Motion's
       // 250 ms cross-fade may already have ended).
       await tester.pump(const Duration(milliseconds: 100));
@@ -376,7 +421,7 @@ void main() {
         'the month\'s theme', (tester) async {
       final sink = await zoomUntilEnd(tester, during: () async {
         // 1.2.0: the entry is the Daily Test card's button.
-        await tester.tapAt(tester.getCenter(find.text('Start daily test')));
+        await tester.tapAt(tester.getCenter(find.text('Start today’s test')));
       });
       expect(ended(sink)!['outcome'], 'daily_test_opened');
       expect(named(sink, 'mode_selected').single.parameters,

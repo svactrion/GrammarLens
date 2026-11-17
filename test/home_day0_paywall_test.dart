@@ -373,8 +373,8 @@ void main() {
       await pumpHome(tester, offer: false, pending: null);
       await tester.pumpAndSettle();
       // 1.2.0 (Q15): Home's Premium row is gone; a free user's way to the
-      // paywall from Home is a locked topic (the Topic practice strip).
-      final row = find.text('Explore all topics');
+      // paywall from Home is the topic showcase (UI polish V14).
+      final row = find.text('Unlock all 5 topics');
       await tester.ensureVisible(row);
       await tester.pumpAndSettle();
 

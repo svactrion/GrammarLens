@@ -13,8 +13,10 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
+import '../widgets/monthly_climb/climb_zoom.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
+import 'first_climb_screen.dart';
 import 'getting_ready_screen.dart';
 import 'mountain_intro_screen.dart';
 import 'onboarding_screen.dart';
@@ -46,10 +48,14 @@ class FirstLaunchFlow extends StatefulWidget {
   /// [dayZeroCompleted] is true only when the user finished the test and left
   /// through the result screen's button; leaving the test unfinished is false.
   /// It is what makes Home offer the first-day paywall.
+  ///
+  /// [firstClimbShown] is true when the first climb's camera (V12) already
+  /// played here, so Home skips its own first-run zoom.
   final void Function(
     UserProfile profile, {
     PendingClimb? pendingClimb,
     bool dayZeroCompleted,
+    bool firstClimbShown,
   }) onComplete;
 
   /// The clock for this month's mountain; tests pin it.
@@ -74,7 +80,8 @@ enum _Step {
   gettingReady,
   mountainIntro,
   dailyTest,
-  dailyTestResult
+  dailyTestResult,
+  firstClimb
 }
 
 class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
@@ -168,12 +175,38 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   /// places, both equally valid endings (PRD v2 §12.3): abandoning Daily Test
   /// itself, or the result screen's one button ("Start my climb" after the
   /// confetti, or "Continue"): only the second counts as [completed].
-  void _finish({bool completed = false}) {
+  void _finish({bool completed = false, bool firstClimbShown = false}) {
     widget.onComplete(
       _profile!,
       pendingClimb: _pendingClimb,
       dayZeroCompleted: completed,
+      firstClimbShown: firstClimbShown,
     );
+  }
+
+  /// The result screen's button: with a step earned, the first climb (V12)
+  /// plays before Home; otherwise straight to Home.
+  void _onResultDone() {
+    if (_pendingClimb == null) {
+      _finish(completed: true);
+      return;
+    }
+    // V12 is the first run's zoom (PROGRESS.md D5-3): it claims the same
+    // one-time flag Home's in-card zoom claimed.
+    unawaited(widget.storageService
+        .claimOneTimeFlag(StorageService.firstRunZoomFlag)
+        .then((_) {}, onError: (_) {}));
+    setState(() => _step = _Step.firstClimb);
+  }
+
+  /// The camera's end, reported as Home's first-run zoom reported it (M19).
+  void _onFirstClimbCameraEnded(ClimbZoomOutcome outcome) {
+    final now = widget.clock();
+    unawaited(widget.analyticsService.monthZoomEnded(
+        themeId:
+            (_theme ?? ClimbThemeRotation.shownFor(now.year, now.month)).id,
+        outcome: outcome.wireName,
+        trigger: ClimbZoomTrigger.firstRun.wireName));
   }
 
   @override
@@ -232,7 +265,16 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           analyticsService: widget.analyticsService,
           isDay0: true,
           onCompletionSaved: _onResultSaved,
-          onDone: () => _finish(completed: true),
+          onDone: _onResultDone,
+        );
+      case _Step.firstClimb:
+        return FirstClimbScreen(
+          theme: _theme ?? ClimbThemeRotation.shownFor(now.year, now.month),
+          hero: _profile?.avatar ?? Avatar.fox,
+          days: days,
+          step: _pendingClimb?.step ?? 1,
+          onCameraEnded: _onFirstClimbCameraEnded,
+          onContinue: () => _finish(completed: true, firstClimbShown: true),
         );
     }
   }

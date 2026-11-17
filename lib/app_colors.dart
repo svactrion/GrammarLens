@@ -47,6 +47,10 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color goldDeep;
   final Color goldSoft;
 
+  /// A soft lilac tile (a topic's tile colour).
+  final Color lilac;
+  final Color onLilac;
+
   /// A wrong answer's segment and box (the boards' soft orange #E38B5A).
   final Color wrong;
 
@@ -115,6 +119,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.gold,
     required this.goldDeep,
     required this.goldSoft,
+    required this.lilac,
+    required this.onLilac,
     required this.wrong,
     required this.orangeSoft,
     required this.orangeSoftLip,
@@ -168,6 +174,8 @@ class AppColors extends ThemeExtension<AppColors> {
     gold: Color(0xFFFFC23C),
     goldDeep: Color(0xFF8A5C00),
     goldSoft: Color(0xFFFFF1C7),
+    lilac: Color(0xFFEFE6FB),
+    onLilac: Color(0xFF5B3A9E),
     wrong: Color(0xFFE38B5A),
     orangeSoft: Color(0xFFFDE4CF),
     orangeSoftLip: Color(0xFFF2CDAE),
@@ -213,6 +221,8 @@ class AppColors extends ThemeExtension<AppColors> {
     gold: Color(0xFFFFC23C),
     goldDeep: Color(0xFF8A5C00),
     goldSoft: Color(0xFF3D3218),
+    lilac: Color(0xFF2E2742),
+    onLilac: Color(0xFFD9C8FA),
     wrong: Color(0xFFE38B5A),
     orangeSoft: Color(0xFF3A2A1C),
     orangeSoftLip: Color(0xFF2A1E14),
@@ -302,6 +312,8 @@ class AppColors extends ThemeExtension<AppColors> {
       gold: l(gold, other.gold),
       goldDeep: l(goldDeep, other.goldDeep),
       goldSoft: l(goldSoft, other.goldSoft),
+      lilac: l(lilac, other.lilac),
+      onLilac: l(onLilac, other.onLilac),
       wrong: l(wrong, other.wrong),
       orangeSoft: l(orangeSoft, other.orangeSoft),
       orangeSoftLip: l(orangeSoftLip, other.orangeSoftLip),

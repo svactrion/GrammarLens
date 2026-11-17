@@ -6,10 +6,8 @@ import 'package:flutter/material.dart';
 import 'l10n/l10n.dart';
 import 'models/app_theme_mode.dart';
 import 'models/app_text_size.dart';
-import 'models/avatar.dart';
 import 'models/pending_climb.dart';
 import 'models/user_profile.dart';
-import 'screens/avatar_picker_screen.dart';
 import 'screens/first_launch_flow.dart';
 import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
@@ -34,8 +32,9 @@ class GrammarLensApp extends StatefulWidget {
   final AnalyticsService? analyticsService;
   final ClaudeService? claudeService;
 
-  /// Test-only clock forwarded to [HomeScreen] so a day rollover can be
-  /// driven end to end through the app's lifecycle handling.
+  /// Test-only clock forwarded to [HomeScreen] (and the first-launch flow's
+  /// month) so a day rollover can be driven end to end through the app's
+  /// lifecycle handling.
   final DateTime Function()? clock;
 
   const GrammarLensApp({
@@ -97,6 +96,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // that replaces the first-launch flow, however it ended. Cleared by that
   // Home in `initState`, like [_offerDay0Paywall].
   bool _firstRunZoom = false;
+
+  // The first climb (V12) already played the first run's camera, so Home
+  // skips its in-card zoom; read once, like [_firstRunZoom].
+  bool _firstRunZoomPlayed = false;
 
   @override
   void initState() {
@@ -287,6 +290,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _initialPendingClimb = null;
       _offerDay0Paywall = false;
       _firstRunZoom = false;
+      _firstRunZoomPlayed = false;
     });
   }
 
@@ -322,61 +326,6 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _tabIndex = index;
       _tabTransition = transition;
     });
-  }
-
-  // Mirrors SettingsScreen's own `_fallbackAvatar`: `AvatarPickerScreen`
-  // requires a non-null starting avatar (PRD v2 §13.5's "no empty state"
-  // rule), but `_profile!.avatar` is nullable — only a legacy profile from
-  // before onboarding started auto-assigning one can actually be null in
-  // practice. Computed once, not per tap, so a legacy profile doesn't show
-  // a different random character on every open before the user ever
-  // settles on one.
-  late final Avatar _fallbackAvatarForPicker = Avatar.random();
-
-  /// Persists an avatar change and updates in-memory state — the same two
-  /// steps `SettingsScreen._changeAvatar` already does for its own entry
-  /// point, written again here rather than shared: the two call sites read
-  /// from different state shapes (`SettingsScreen` has `widget.profile`/
-  /// `widget.onProfileUpdated`; this class has `_profile`/`setState`
-  /// directly), so sharing would cost more in indirection than the ~5
-  /// lines it would save.
-  Future<void> _changeAvatar(Avatar avatar) async {
-    final updated = _profile!.copyWith(avatar: avatar);
-    try {
-      await _storageService.saveUserProfile(updated);
-      setState(() => _profile = updated);
-    } catch (_) {
-      // Silent by design, matching SettingsScreen's own posture for this
-      // exact failure mode: a failed background save shouldn't surface an
-      // error over what's otherwise a cosmetic preference.
-    }
-  }
-
-  /// Home's avatar now opens the same full-screen picker Settings does,
-  /// via a real route push (not `_switchTab`) so the `Hero` flight in
-  /// `HomeScreen`/`AvatarPickerScreen` has an actual route transition to
-  /// animate across — a tab switch is a `TabSwitcher` swap, which Hero
-  /// cannot animate through at all: it has no push/pop transition for a
-  /// flight to run during. `MediaQuery.disableAnimationsOf` is checked
-  /// explicitly, the same manual-gating pattern this app already uses
-  /// everywhere else motion appears (e.g. `BuddyPicker`'s ring
-  /// animation) — Flutter's route transitions don't automatically shorten
-  /// themselves for reduced-motion settings.
-  void _openAvatarPickerFromHome(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final picker = AvatarPickerScreen(
-      currentAvatar: _profile!.avatar ?? _fallbackAvatarForPicker,
-      onAvatarChanged: _changeAvatar,
-    );
-    Navigator.of(context).push(
-      reduceMotion
-          ? PageRouteBuilder(
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-              pageBuilder: (_, __, ___) => picker,
-            )
-          : MaterialPageRoute(builder: (_) => picker),
-    );
   }
 
   ThemeMode get _flutterThemeMode {
@@ -434,12 +383,17 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
-              onComplete: (profile, {pendingClimb, dayZeroCompleted = false}) =>
+              clock: widget.clock ?? DateTime.now,
+              onComplete: (profile,
+                      {pendingClimb,
+                      dayZeroCompleted = false,
+                      firstClimbShown = false}) =>
                   setState(() {
                 _profile = profile;
                 _initialPendingClimb = pendingClimb;
                 _offerDay0Paywall = dayZeroCompleted;
                 _firstRunZoom = true;
+                _firstRunZoomPlayed = firstClimbShown;
               }),
             );
           }
@@ -459,8 +413,12 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               offerDay0Paywall: _offerDay0Paywall,
               onOfferDay0PaywallTaken: () => _offerDay0Paywall = false,
               firstRunZoom: _firstRunZoom,
-              onFirstRunZoomTaken: () => _firstRunZoom = false,
-              onAvatarTap: () => _openAvatarPickerFromHome(context),
+              firstRunZoomPlayed: _firstRunZoomPlayed,
+              onFirstRunZoomTaken: () {
+                _firstRunZoom = false;
+                _firstRunZoomPlayed = false;
+              },
+              onOpenProfile: () => _switchTab(2),
               onGoToReview: () =>
                   _switchTab(1, transition: TabTransition.slide),
             ),

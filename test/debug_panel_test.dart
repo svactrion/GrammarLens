@@ -341,8 +341,18 @@ void main() {
           ClimbDebugControls.instance.playMonthCard(v);
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 400));
+          // The full-screen route's first frame is built offstage.
+          await tester.pump();
           expect(find.byType(MonthCardSheet), findsOneWidget);
-          await tester.tapAt(const Offset(20, 120));
+          // UI polish: the full-screen card (R04, then R04b) closes with
+          // "Start climbing".
+          final next = find.byKey(MonthCardSheet.seeNewMountainKey);
+          if (next.evaluate().isNotEmpty) {
+            await tester.tap(next);
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 500));
+          }
+          await tester.tap(find.byKey(MonthCardSheet.startClimbingKey));
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 400));
           await settleZoom(tester);
@@ -406,20 +416,24 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('N30: summary_gold shows the medal large and centred',
-        (tester) async {
+    testWidgets(
+        'N30 (UI polish R04): summary_gold shows the gold medal beside the '
+        'title once the bar has run', (tester) async {
       await pumpHome(tester, _RecordingStorage()..usedBefore = false);
       ClimbDebugControls.instance
           .playMonthCard(ClimbDebugMonthCardValue.summaryGold);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+      for (var i = 0; i < 160; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
       final medal = find.byKey(MonthCardSheet.medalKey);
       expect(medal, findsOneWidget);
       final badge = tester.widget<MedalBadge>(
           find.descendant(of: medal, matching: find.byType(MedalBadge)));
-      expect(badge.disc, MonthCardSheet.medalDiscFor(932));
-      expect(tester.getCenter(medal).dx, closeTo(430 / 2, 1));
-      await tester.tapAt(const Offset(20, 120));
+      expect(badge.disc, MonthCardSheet.headerMedal);
+      expect(badge.asset, contains('gold'));
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
     });
 

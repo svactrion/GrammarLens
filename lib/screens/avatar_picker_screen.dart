@@ -10,16 +10,9 @@ import 'lucky_wheel_screen.dart';
 /// flight.
 const String avatarHeroTag = 'profile-avatar';
 
-/// Shared between this screen's centered avatar and Home's own greeting
-/// avatar (`home_screen.dart`), for the Home → picker → back flight.
-/// Deliberately a *different* tag from [avatarHeroTag], not reused: both
-/// Home and Settings live inside the same `TabSwitcher` in `app.dart`
-/// (every tab stays mounted, not just the visible one), so if both routes
-/// used the same tag, two `Hero`s with an identical tag would be mounted
-/// simultaneously the moment either one pushes this screen — Flutter
-/// throws on exactly that ("multiple heroes that share the same tag").
-/// One tag per *entry point*, not one tag per destination, keeps that
-/// impossible by construction.
+/// The tag Home's avatar used before the UI polish removed it from Home
+/// (V14); kept only for the v1.2.0 hero measurement script in
+/// `tool/design_measure/v120`.
 const String homeAvatarHeroTag = 'home-avatar';
 
 /// Change your buddy (R06): the onboarding turntable ([BuddyPicker]) opened
