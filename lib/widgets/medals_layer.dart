@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app_colors.dart';
 import '../l10n/l10n.dart';
+import '../models/medal_tier.dart';
 import '../motion.dart';
 import '../theme.dart';
 import '../utils/haptics.dart';
@@ -14,9 +15,11 @@ import 'monthly_medal_collection.dart';
 abstract final class MedalsLayer {
   static const closeKey = ValueKey('medals_layer_close');
 
-  /// "N earned" under the title (moved here from Profile's section header,
-  /// which V23 does not have).
-  static const earnedKey = ValueKey('medals_layer_earned');
+  /// The tier counters on top (n Gold, n Silver, n Bronze, n Welcome).
+  static const countersKey = ValueKey('medals_layer_counters');
+
+  /// A year's header.
+  static ValueKey<String> yearKey(int year) => ValueKey('medals_layer_$year');
 
   /// The time the medals fly from the shelf (SPEC PF02: 350 ms); the blur
   /// reaches 10 in its first 250 ms.
@@ -26,8 +29,10 @@ abstract final class MedalsLayer {
   static const settleStagger = Duration(milliseconds: 40);
 }
 
-/// PF02: every medal over the blurred profile, newest first, by year; the
-/// running month grey; the Welcome badge last. A layer, not a page: X or
+/// PF02: every medal over the blurred profile: the tier counters, then
+/// each year newest first, a 3-column grid read left to right, top to
+/// bottom, newest at the top left; the running month first ("in
+/// progress"); the Welcome badge at the month it was earned. A layer, not a page: X or
 /// a tap outside closes it. The medals on the shelf fly into the panel
 /// (Hero) and fly back when it closes; the others settle 40 ms apart. A
 /// tap on a medal opens its detail (PF03, the existing medal detail).
@@ -93,10 +98,14 @@ class _MedalsLayer extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final reduced = AppMotion.reduced(context);
-    final months = collection.shelf();
-    final years = <int>{for (final m in months) m.year}.toList();
-    // The order the medals settle in: newest first, the Welcome badge last.
-    final order = {for (final (i, m) in months.indexed) (m.year, m.month): i};
+    // PF02 (fix round 2, item 6): every slot newest first, the running
+    // month first and the earned Welcome badge at the month it was earned
+    // (it used to come after every year); each with its year.
+    final badge = collection.welcomeBadge;
+    final slots = collection.allSlots();
+    int yearOf(ShelfMonth? m) => m?.year ?? badge!.earnedAt.year;
+    final years = <int>{for (final m in slots) yearOf(m)}.toList();
+
     Widget settle(int i, Widget child) {
       final delay = MedalsLayer.settleStagger * i;
       final total = AppMotion.base + delay;
@@ -113,42 +122,122 @@ class _MedalsLayer extends StatelessWidget {
       );
     }
 
-    Widget medal(ShelfMonth m) => settle(
-          order[(m.year, m.month)]!,
-          InkWell(
-            key: MonthlyMedalCollection.slotKey(m.year, m.month),
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              HapticMap.light();
-              m.showDetail(context);
-            },
-            child: SizedBox(
-              width: 92,
-              child: Column(children: [
-                MedalHero(
-                  tag: MonthlyMedalCollection.heroTag(m.year, m.month),
-                  child: m.medal(64,
-                      fadedOpacity: MonthlyMedalCollection.runningFade),
-                ),
+    Widget cell(Key key, Widget medal, String month, String line,
+            VoidCallback onTap,
+            {String? semantics}) =>
+        InkWell(
+          key: key,
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            HapticMap.light();
+            onTap();
+          },
+          child: Semantics(
+            label: semantics,
+            excludeSemantics: semantics != null,
+            button: true,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                medal,
                 const SizedBox(height: 4),
-                Text(
-                  m.running ? l10n.profileMedalThisMonth : m.label(l10n),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall!
-                      .withWeight(FontWeight.w800)
-                      .copyWith(color: m.running ? c.muted : c.text),
-                ),
+                Text(month,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(fontSize: 14, color: c.text)),
+                Text(line,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall!
+                        .withWeight(FontWeight.w700)
+                        .copyWith(fontSize: 12, color: c.muted)),
               ]),
             ),
           ),
         );
+
+    Widget slot(int i, ShelfMonth? m) {
+      if (m == null) {
+        return settle(
+          i,
+          cell(
+            MonthlyMedalCollection.welcomeSlotKey,
+            const MedalHero(
+              tag: MonthlyMedalCollection.welcomeHeroTag,
+              child: MedalBadge.welcome(disc: 64, earned: true),
+            ),
+            monthShort(badge!.earnedAt.month, l10n),
+            l10n.medalWelcomeSlot,
+            () => showWelcomeDetail(context, badge),
+            semantics: l10n.medalWelcomeEarned,
+          ),
+        );
+      }
+      return settle(
+        i,
+        cell(
+          MonthlyMedalCollection.slotKey(m.year, m.month),
+          MedalHero(
+            tag: MonthlyMedalCollection.heroTag(m.year, m.month),
+            child:
+                m.medal(64, fadedOpacity: MonthlyMedalCollection.runningFade),
+          ),
+          monthShort(m.month, l10n),
+          m.running ? l10n.medalsInProgress : m.tier!.label(l10n),
+          () => m.showDetail(context),
+        ),
+      );
+    }
+
+    Widget chip(String text, Color fill, Color ink) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+          decoration: BoxDecoration(
+              color: fill, borderRadius: BorderRadius.circular(999)),
+          child: Text(text,
+              style: theme.textTheme.labelMedium!
+                  .withWeight(FontWeight.w800)
+                  .copyWith(fontSize: 13, color: ink)),
+        );
+
+    final grid = <Widget>[];
+    for (final year in years) {
+      grid.add(Padding(
+        padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
+        child: Text('$year', // l10n-guard: a year
+            key: MedalsLayer.yearKey(year),
+            style: theme.textTheme.titleMedium!
+                .withWeight(FontWeight.w900)
+                .copyWith(fontSize: 16, color: c.text)),
+      ));
+      final inYear = [
+        for (final (i, m) in slots.indexed)
+          if (yearOf(m) == year) (i, m)
+      ];
+      for (var r = 0; r < inYear.length; r += 3) {
+        grid.add(Padding(
+          padding: EdgeInsets.only(top: r == 0 ? 0 : 18),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            for (var k = r; k < r + 3; k++)
+              Expanded(
+                child: k < inYear.length
+                    ? slot(inYear[k].$1, inYear[k].$2)
+                    : const SizedBox.shrink(),
+              ),
+          ]),
+        ));
+      }
+    }
+
     return SafeArea(
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: Material(
             color: c.card,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(30),
             clipBehavior: Clip.antiAlias,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
@@ -157,7 +246,7 @@ class _MedalsLayer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
+                    padding: const EdgeInsets.fromLTRB(18, 18, 14, 0),
                     child: Row(children: [
                       Expanded(
                         child: Column(
@@ -165,25 +254,27 @@ class _MedalsLayer extends StatelessWidget {
                           children: [
                             Semantics(
                               header: true,
-                              child: Text(l10n.settingsMedalCollection,
-                                  style: theme.textTheme.titleLarge!
+                              child: Text(l10n.medalsAllTitle,
+                                  style: theme.textTheme.headlineSmall!
                                       .withWeight(FontWeight.w900)
-                                      .copyWith(color: c.text)),
+                                      .copyWith(fontSize: 24, color: c.text)),
                             ),
-                            Text(
-                              l10n.settingsMedalsEarned(
-                                  collection.earnedCount),
-                              key: MedalsLayer.earnedKey,
-                              style: theme.textTheme.labelMedium!
-                                  .withWeight(FontWeight.w700)
-                                  .copyWith(color: c.muted),
-                            ),
+                            Text(l10n.medalsNewestFirst,
+                                style: theme.textTheme.labelMedium!
+                                    .withWeight(FontWeight.w700)
+                                    .copyWith(fontSize: 13, color: c.muted)),
                           ],
                         ),
                       ),
                       IconButton(
                         key: MedalsLayer.closeKey,
                         tooltip: l10n.profileMedalsClose,
+                        style: IconButton.styleFrom(
+                          backgroundColor: c.disabledFill,
+                          fixedSize: const Size(44, 44),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                         icon: Icon(Icons.close_rounded, color: c.text),
                       ),
@@ -191,52 +282,41 @@ class _MedalsLayer extends StatelessWidget {
                   ),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          for (final year in years) ...[
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                              child: Text('$year', // l10n-guard: a year
-                                  style: theme.textTheme.labelLarge!
-                                      .withWeight(FontWeight.w900)
-                                      .copyWith(color: c.muted)),
-                            ),
-                            Wrap(spacing: 6, runSpacing: 12, children: [
-                              for (final m in months)
-                                if (m.year == year) medal(m),
-                            ]),
-                          ],
-                          const SizedBox(height: 16),
-                          Center(
-                            child: settle(
-                              months.length,
-                              InkWell(
-                                key: MonthlyMedalCollection.welcomeSlotKey,
-                                borderRadius: BorderRadius.circular(16),
-                                onTap: () {
-                                  HapticMap.light();
-                                  showWelcomeDetail(
-                                      context, collection.welcomeBadge);
-                                },
-                                child: Semantics(
-                                  label: collection.welcomeBadge != null
-                                      ? l10n.medalWelcomeEarned
-                                      : l10n.medalWelcomeLocked,
-                                  excludeSemantics: true,
-                                  button: true,
-                                  child: MedalHero(
-                                    tag: MonthlyMedalCollection.welcomeHeroTag,
-                                    child: MedalBadge.welcome(
-                                        disc: 64,
-                                        earned:
-                                            collection.welcomeBadge != null),
-                                  ),
-                                ),
-                              ),
-                            ),
+                          Wrap(
+                            key: MedalsLayer.countersKey,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              chip(
+                                  l10n.medalsTierCount(
+                                      collection.countOf(MedalTier.gold),
+                                      MedalTier.gold.label(l10n)),
+                                  c.goldSoft,
+                                  c.goldDeep),
+                              chip(
+                                  l10n.medalsTierCount(
+                                      collection.countOf(MedalTier.silver),
+                                      MedalTier.silver.label(l10n)),
+                                  AppColors.silverSoft,
+                                  AppColors.onSilverSoft),
+                              chip(
+                                  l10n.medalsTierCount(
+                                      collection.countOf(MedalTier.bronze),
+                                      MedalTier.bronze.label(l10n)),
+                                  AppColors.bronzeSoft,
+                                  AppColors.onBronzeSoft),
+                              chip(
+                                  l10n.medalsTierCount(badge == null ? 0 : 1,
+                                      l10n.medalWelcomeSlot),
+                                  c.sky,
+                                  c.onSky),
+                            ],
                           ),
+                          ...grid,
                         ],
                       ),
                     ),

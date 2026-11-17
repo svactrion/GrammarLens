@@ -143,7 +143,12 @@ class MonthlyMedalCollection extends StatelessWidget {
   /// running month, then the past medals and the earned Welcome badge (a
   /// null slot) by month. A month's medal is finalized at the month's end, so in the
   /// month the badge was earned it comes before the badge.
-  List<ShelfMonth?> shelfSlots() {
+  List<ShelfMonth?> shelfSlots() => allSlots().take(shelfMax).toList();
+
+  /// Every slot of the collection, newest first (PF02, and the shelf's
+  /// first [shelfMax]): the running month, then the past medals and the
+  /// earned Welcome badge (a null slot) at the month it was earned.
+  List<ShelfMonth?> allSlots() {
     final months = shelf();
     final badge = welcomeBadge;
     final slots = <ShelfMonth?>[...months];
@@ -153,8 +158,13 @@ class MonthlyMedalCollection extends StatelessWidget {
           months.indexWhere((m) => !m.running && m.year * 12 + m.month < at);
       slots.insert(i < 0 ? slots.length : i, null);
     }
-    return slots.take(shelfMax).toList();
+    return slots;
   }
+
+  /// PF02's counters: finalized medals of [tier] (the running month's
+  /// tier is not final yet, so it is not counted).
+  int countOf(MedalTier tier) =>
+      shelf().where((m) => !m.running && m.tier == tier).length;
 
   /// The medals earned: the Welcome badge and every month on [shelf] with
   /// a tier (the running month once it has one). PF02's header.

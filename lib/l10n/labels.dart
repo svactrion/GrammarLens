@@ -201,6 +201,10 @@ DateFormat _latin(DateFormat format) => format..useNativeDigits = false;
 String monthName(int month, AppLocalizations l10n) =>
     _latin(DateFormat.MMMM(_dateLocale(l10n))).format(DateTime(2000, month));
 
+/// A month's short name ("Oct"): PF02's grid.
+String monthShort(int month, AppLocalizations l10n) =>
+    _latin(DateFormat.MMM(_dateLocale(l10n))).format(DateTime(2000, month));
+
 /// A month and its year ("October 2026").
 String monthYear(int year, int month, AppLocalizations l10n) =>
     _latin(DateFormat.yMMMM(_dateLocale(l10n))).format(DateTime(year, month));

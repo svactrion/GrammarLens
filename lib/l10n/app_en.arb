@@ -105,6 +105,30 @@
       }
     }
   },
+  "medalsAllTitle": "All medals",
+  "@medalsAllTitle": {
+    "description": "PF02's title: the layer with every medal."
+  },
+  "medalsNewestFirst": "Newest first",
+  "@medalsNewestFirst": {
+    "description": "PF02's subtitle: the medals are ordered newest first."
+  },
+  "medalsInProgress": "in progress",
+  "@medalsInProgress": {
+    "description": "PF02: under the running month's medal, which is not final yet."
+  },
+  "medalsTierCount": "{count} {tier}",
+  "@medalsTierCount": {
+    "description": "PF02's counter chip, e.g. '2 Silver'; tier is Gold, Silver, Bronze or Welcome.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "settingsMedalsRetry": "Retry medal history",
   "@settingsMedalsRetry": {
     "description": "Profile: button shown when the medals could not be loaded."

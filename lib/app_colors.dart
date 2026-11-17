@@ -251,6 +251,13 @@ class AppColors extends ThemeExtension<AppColors> {
   static const ribbonLip = Color(0xFF082A6B);
   static const onRibbonMuted = Color(0xFFC9D6FF);
 
+  /// PF02's silver and bronze counters (the gold one is [goldSoft] /
+  /// [goldDeep], the Welcome one [sky] / [onSky]); the same in both themes.
+  static const silverSoft = Color(0xFFECEFF3);
+  static const onSilverSoft = Color(0xFF4B5563);
+  static const bronzeSoft = Color(0xFFF6E7D8);
+  static const onBronzeSoft = Color(0xFF8A5A2B);
+
   static const List<Color> wheelSlices = [
     Color(0xFFFF7A1A),
     Color(0xFF0D3B8F),

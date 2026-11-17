@@ -366,11 +366,15 @@ void main() {
     await tester.tap(seeAll);
     await tester.pumpAndSettle();
     expect(find.byType(BackdropFilter), findsOneWidget);
-    // The count moved here from Profile's header (V23 has none).
-    expect(tester.widget<Text>(find.byKey(MedalsLayer.earnedKey)).data,
-        '4 earned');
-    // Newest first: October (running), September, August; the Welcome
-    // badge last.
+    // Fix round 2 (item 6): the tier counters on top (finalized medals
+    // only; the running month's tier is not final).
+    final counters = find.byKey(MedalsLayer.countersKey);
+    expect(find.descendant(of: counters, matching: find.text('1 Welcome')),
+        findsOneWidget);
+    expect(find.descendant(of: counters, matching: find.byType(Text)),
+        findsNWidgets(4));
+    // Newest first: October (running), September, August, read left to
+    // right; the Welcome badge at the month it was earned, further on.
     final order = [
       MonthlyMedalCollection.slotKey(2026, 10),
       MonthlyMedalCollection.slotKey(2026, 9),
