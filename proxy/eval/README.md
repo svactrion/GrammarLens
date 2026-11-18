@@ -272,3 +272,123 @@ The results then go into the build log and §16 of the report, and the owner
 decides the generator (`SHARED_GENERATOR` in `src/shared_daily_test.ts`, one
 line).
 
+
+---
+
+# The first-wave topics measurement (1.5.0)
+
+What and why: `docs/TOPICS.md`; what was built, the dry run's numbers and the
+decisions (T-1 …): `docs/1.5.0-topics-progress.md`. It generates Topic
+Practice sets for the five first-wave topics (6 sets each) and for `articles`
+as a control (3 sets) through the live practice path, has an answer key and
+typical learner mistakes written for every question, scores those answers
+with the production scoring model, and runs automatic checks on every
+question. The first-wave topics stay switched off: nothing here deploys or
+changes the Worker.
+
+**It calls the Anthropic API and costs money: about $1.30 (198 calls), never
+more than $15.00 of measured spend.** Before each call the script checks that
+what is spent plus that call's estimate × 1.25 stays within $15.00; a call
+that would not is skipped and recorded.
+
+## Owner checklist — first-wave topics
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A separate API key (recommended)
+
+In the Anthropic Console (Settings → API keys) create a key only for this
+run, for example "grammarlens-topics", **in the Default workspace** (in
+1.4.0 a key without a workspace was refused on every call). Its spend then
+shows on its own line, and you revoke it when the run is done. Do not use and
+do not revoke the Worker's live key: the app depends on it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. Nothing is printed and the key does not land in your shell history.
+The script reads the key from the environment only (not from `.dev.vars`),
+sends it only to `api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics --dry-run
+```
+
+It must show **198 calls**, **Estimated spend $1.30: within the dry-run
+limit of $12.00**, and end with `API key: found in the environment (not
+shown)`. If the last line says the key is not in the environment, repeat
+step 3. If it says `esbuild: command not found`, run `npm ci` once and
+repeat.
+
+### 5. The run
+
+```bash
+caffeinate -i npm run eval -- topics run
+```
+
+(`caffeinate -i` keeps the Mac awake.) **About 10 minutes.** One line per
+call appears in the Terminal (counts, tokens and cost only, never a
+question or an answer), and the same lines go to
+`eval/out/topics-…/progress.log`.
+
+### 6. What "done" looks like
+
+The last line in the Terminal, and in `progress.log`, reads like:
+
+```text
+2026-11-19T09:12:44.000Z topics run done: 190 calls ok; spent $0.90 of $15.00; folder eval/out/topics-2026-11-19T09-02-10-000Z
+```
+
+The number of calls is between 165 and 198 (a question without a second
+correct answer needs fewer scoring calls). To read the last line again:
+
+```bash
+tail -n 1 "$(ls -d eval/out/topics-* | tail -n 1)/progress.log"
+```
+
+**If the last line says `topics run incomplete`** (some calls failed, or the
+Terminal was closed half way), run the same folder again. Finished calls are
+not repeated and are not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics run --out "$(ls -d eval/out/topics-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines:
+
+```bash
+tail -n 10 "$(ls -d eval/out/topics-* | tail -n 1)/progress.log"
+```
+
+### 7. Afterwards
+
+- Revoke the separate key in the Console, and close this Terminal window (or
+  run `unset ANTHROPIC_API_KEY`).
+- Tell Claude Code, in a new prompt: **"The first-wave topics run is done.
+  Start Phase B of docs/TOPICS.md."** and paste the `topics run done` line
+  (it names the folder and the spend). The run folder stays on this Mac
+  under `proxy/eval/out/`, which is not in the repository; Claude Code reads
+  it from there.
+
+Better not to open the files in the run folder before you have labelled phase
+B's sheet: they show the automatic flags and the scorer's verdicts, which
+should not colour your own.

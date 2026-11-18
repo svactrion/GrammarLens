@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-18
+    notes: "First-wave practice topics (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): the question-quality measurement's tooling built in proxy/eval on branch ui-polish-widgets (sets through the live practice path, an answer key and typical mistakes written per question, scoring with the production model, automatic checks per question). The dry run: 198 calls, about $1.30, hard cap $15. No API call made; the paid run is the owner's, from his Terminal. The topics stay switched off; not on main, not shipped."
+  - version:
+    date: 2026-11-18
     notes: "Fix round 5 of the UI polish on branch ui-polish-widgets, after the owner's third device pass: the free rest scene's panel is the ticket deck the owner chose (today's used ticket and a deck of the app's tickets on the Premium card); the Premium rest scene has its own done tiles and step card again; both panels end just above the nav bar; Profile's month progress card shows the medals on the bar; the paywall closes only with its X (no swipe or system back). Not on main, not shipped, waiting for the owner's fourth device pass."
   - version:
     date: 2026-11-18
@@ -29,16 +32,13 @@ recent:
   - version:
     date: 2026-11-17
     notes: "UI polish and the widgets and reminders integrated on branch ui-polish-widgets: the free rest scene got 'Remind me tomorrow', the pawn and the Wake button clear the nav bar on 6.1-6.3 inch phones, the widgets use Nunito Sans, an install over 1.4.0 keeps its data (tested), the release build checked. Not on main, not shipped, not checked on a device."
-  - version:
-    date: 2026-11-17
-    notes: "Home-screen widgets (Climb small and medium, Tip medium) and daily reminder notifications (one a day, chosen time, settings under Profile) built on branch widgets-notifications with the app's own iOS bridge; no new package, nothing leaves the device. Not merged, not shipped, not checked on a device."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
   - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
   - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4 and 5 done there after the owner's device passes; not on main, not shipped, waiting for the owner's fourth device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
-  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): code on the UI polish branch, hidden until the question-quality check and owner review"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement's tooling is built (docs/TOPICS.md phase A, docs/1.5.0-topics-progress.md), next the owner's paid run, then the report and the owner's labels"
 
 monetization:
   model: subscription

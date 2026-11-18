@@ -398,6 +398,19 @@ Owner decisions so far:
 - **First-wave topics in the UI polish run (owner, 2026-11-17):** app and
   proxy code written but switched off; no deploy, no paid measurement; they
   ship only after the question-quality check and the owner's review.
+- **First-wave topics ship in 1.5.0 (owner, 2026-11-18;
+  [`TOPICS.md`](TOPICS.md)):** before the switch, a quality measurement, the
+  owner's review of a sample, then release prep. **Phase A done
+  (2026-11-18): the measurement's tooling is built in `proxy/eval` on branch
+  `ui-polish-widgets`; no API call was made.** 6 Topic Practice sets per
+  new topic and 3 of `articles` as a control through the live practice
+  path, an answer key and typical mistakes written per question, scoring
+  with the production model, five automatic checks per question. The dry
+  run: 198 calls, about $1.30, hard cap $15.00. **Next: the owner's paid
+  run** from his Terminal (`proxy/eval/README.md`, "Owner checklist —
+  first-wave topics"), then the report and the label sheet (phase B). The
+  topics stay switched off. Record and decisions:
+  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
     as `school`, a new value of the `learning_goal` user property). It is

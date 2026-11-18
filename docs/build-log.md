@@ -14542,3 +14542,36 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   first section of `DEVICE-CHECKS.md`.
 - **[Disk]** 16 GiB free before, 14 GiB after the builds, 18 GiB after the
   allowed cleanup (`flutter clean`, this project's DerivedData folders).
+
+## 2026-11-18 (First-wave topics: the quality measurement's tooling, phase A; no API call)
+
+- **[Decision]** The owner decided the five first-wave practice topics ship
+  in 1.5.0, after a quality measurement and his review of a sample
+  (`docs/TOPICS.md`). They stay switched off until then
+  (`kFirstWaveTopicsEnabled`, `FIRST_WAVE_TOPICS_ENABLED`).
+- **[Engineering]** `npm run eval -- topics --dry-run | topics run [--out
+  DIR]` in `proxy/eval` (`lib/topics_measurement.ts`, `lib/topics_checks.ts`,
+  two commands in `run.ts`): 6 Topic Practice sets of 5 questions per new
+  topic and 3 of `articles` as a control through the live practice path
+  (the production prompt, model and effort), with the first-wave topics
+  known for that request only: a third parameter on
+  `buildGeneratePracticeSetBodyFor`, the routes unchanged. A practice
+  question has no answer key, so one harness call per set writes the key, a
+  second correct answer when one exists and typical learner mistakes; every
+  built answer is scored by the production scoring cell (`claude-haiku-5-5`,
+  `low`, D3 + D11); five automatic checks run on every question (topic, one
+  natural answer per blank, duplicates, length and level, the hint card
+  against the key). It reuses the 1.4.0 measurement's call, retry, spend
+  accounting, resumable folder, `progress.log` and key check.
+- **[Cost]** The dry run: 198 calls, estimated $1.30 (limit for the dry
+  run $12.00); hard cap $15.00 of measured spend, checked before every
+  call; $10.41 if every call wrote all its `max_tokens` allows.
+- **[Verified]** `npm run typecheck` clean; `npm test` 585 passed (62 new,
+  no network). The run's path rehearsed on a local stand-in for `fetch`: a
+  run with failed calls ends "incomplete", the same folder run again makes
+  only the missing calls, a third run makes none; the key reaches no file
+  and no log.
+- **[Not verified]** Anything against the real API: no call was made from
+  this session. The paid run is the owner's, from his own Terminal
+  (`proxy/eval/README.md`, "Owner checklist — first-wave topics").
+- Record and decisions T-1 to T-11: `docs/1.5.0-topics-progress.md`.
