@@ -92,7 +92,9 @@ describe('the topics measurement: generation through the live practice path', ()
       expect(body.output_config.effort).toBe(PRODUCTION_PRACTICE.effort);
       expect(body.max_tokens).toBe(control.max_tokens);
       expect(body.messages[0]?.content).toBe(
-        `Topic: "${topic.title}" — ${topic.description}\nGenerate exactly 5 fresh practice items: 2 sentence_writing, 2 error_correction, and 1 fill_in_blank. Each "id" must be a short unique slug.`,
+        // A topic's generation note, when it has one, ends the topic line
+        // (test/topic_generation_note.test.ts pins which topic has one).
+        `Topic: "${topic.title}" — ${topic.description}${topic.generationNote ? ` ${topic.generationNote}` : ''}\nGenerate exactly 5 fresh practice items: 2 sentence_writing, 2 error_correction, and 1 fill_in_blank. Each "id" must be a short unique slug.`,
       );
     }
   });

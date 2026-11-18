@@ -11,6 +11,14 @@ export interface TopicInfo {
   readonly id: string;
   readonly title: string;
   readonly description: string;
+  /**
+   * A note for practice generation only: one sentence the worker adds to the
+   * topic line of the practice request, after the description. It narrows
+   * what the generator writes for the topic; it is not part of the topic's
+   * identity, is not mirrored in the app, and is never sent to or shown in
+   * it. A topic without one sends exactly the request it always did.
+   */
+  readonly generationNote?: string;
 }
 
 export const TOPICS: readonly TopicInfo[] = [
@@ -54,6 +62,11 @@ export const FIRST_WAVE_TOPICS: readonly TopicInfo[] = [
     id: 'conditionals',
     title: 'Conditionals',
     description: 'If-sentences: real, unreal and past ("If it rains, we will stay").',
+    // Owner decision 2026-11-18 (docs/1.5.0-topics-progress.md, T-34): the
+    // first measurement's failures sat on the mixed conditional, which the
+    // description and the hint card (three types) do not cover.
+    generationNote:
+      'Use the first, second and third conditional only; no mixed conditional (a past condition with a present result, or a present condition with a past result).',
   },
   {
     id: 'passiveVoice',

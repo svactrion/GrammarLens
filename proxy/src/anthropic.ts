@@ -239,7 +239,10 @@ export function buildGeneratePracticeSetBodyFor(
       {
         role: 'user',
         content:
-          `Topic: "${topic.title}" — ${topic.description}\n` +
+          // The topic line: the title, the description and, for a topic that
+          // has one, its generation note. Without a note the line is what
+          // it always was, byte for byte.
+          `Topic: "${topic.title}" — ${topic.description}${topic.generationNote ? ` ${topic.generationNote}` : ''}\n` +
           `Generate exactly ${req.count} fresh practice items: ${itemMix(req.count)}. Each "id" must be a short unique slug.`,
       },
     ],
