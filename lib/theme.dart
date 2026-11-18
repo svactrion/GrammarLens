@@ -945,11 +945,12 @@ SwitchThemeData appSwitchTheme(AppColors c) => SwitchThemeData(
       // draws a small outlined thumb otherwise).
       thumbIcon: const WidgetStatePropertyAll(
           Icon(Icons.circle, color: Colors.transparent)),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled)) {
-          return c.track.withValues(alpha: .5);
-        }
-        return states.contains(WidgetState.selected) ? c.navy : c.track;
+      // A map, not a closure: two builds of the theme stay equal, so
+      // MaterialApp's AnimatedTheme does not animate on every rebuild.
+      trackColor: WidgetStateProperty<Color?>.fromMap({
+        WidgetState.disabled: c.track.withValues(alpha: .5),
+        WidgetState.selected: c.navy,
+        WidgetState.any: c.track,
       }),
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       trackOutlineWidth: const WidgetStatePropertyAll(0),

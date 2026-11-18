@@ -49,4 +49,14 @@ void main() {
       }
     });
   }
+
+  // The switch style is part of the theme: two builds must stay equal, or
+  // MaterialApp's AnimatedTheme animates on every rebuild (it did with a
+  // closure for the track colour, and Reduce Motion tests saw it running).
+  for (final b in Brightness.values) {
+    test('${b.name}: two builds of the theme are equal', () {
+      expect(buildAppTheme(b), buildAppTheme(b));
+      expect(buildAppTheme(b).switchTheme, buildAppTheme(b).switchTheme);
+    });
+  }
 }
