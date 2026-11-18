@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium: günde {count} oturuma kadar, tüm konular.",
   "dailyLimitCount": "{total} pratik oturumundan {done} tamam",
   "paywallHeadlineName": "Bugünkü hatanı ilerlemeye çevir, {name}.",
-  "paywallSeePlans": "Planları gör",
+  "paywallComparePlans": "Planları karşılaştır",
   "paywallSelectedPlan": "{plan} paket",
   "paywallTimelineTitle": "Ücretsiz denemen nasıl işler",
   "paywallTimelineToday": "Bugün: Premium’un tamamı açılır. Ödeme yok.",

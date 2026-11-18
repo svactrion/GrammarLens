@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium：1日最大{count}セッション、全トピック。",
   "dailyLimitCount": "{total}回中{done}回の練習が完了",
   "paywallHeadlineName": "今日のミスを成長に変えよう、{name}。",
-  "paywallSeePlans": "プランを見る",
+  "paywallComparePlans": "プランを比べる",
   "paywallSelectedPlan": "{plan}プラン",
   "paywallTimelineTitle": "無料トライアルのしくみ",
   "paywallTimelineToday": "今日：Premiumのすべてが使えます。支払いはありません。",

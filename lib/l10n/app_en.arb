@@ -4248,9 +4248,9 @@
       }
     }
   },
-  "paywallSeePlans": "See plans",
-  "@paywallSeePlans": {
-    "description": "Paywall (V13): scrolls down to the plans."
+  "paywallComparePlans": "Compare plans",
+  "@paywallComparePlans": {
+    "description": "V13 (v11): the hint under the first view; tapping it scrolls to Free vs Premium (13 → 13c → 13a)."
   },
   "paywallSelectedPlan": "{plan} plan",
   "@paywallSelectedPlan": {

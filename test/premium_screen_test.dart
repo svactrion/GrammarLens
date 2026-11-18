@@ -16,6 +16,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
@@ -1571,19 +1572,27 @@ void main() {
   });
 
   testWidgets(
-      'V13c: Free vs Premium is on the page, after the plans, with no '
-      'toggle; "See plans" scrolls to the plans', (tester) async {
+      'V13c (v11): Free vs Premium is on the page before the plans, with no '
+      'toggle; "Compare plans" scrolls to it, "Choose your plan" on to the '
+      'plans', (tester) async {
     await pumpPremium(
         tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
     expect(find.byKey(PremiumScreen.compareToggleKey), findsNothing);
     final table = find.byKey(PremiumScreen.compareKey);
     expect(table, findsOneWidget);
-    final plansTitle = find.text('Choose your plan');
-    expect(tester.getTopLeft(table).dy,
-        greaterThan(tester.getTopLeft(plansTitle).dy));
-    await tester.tap(find.byKey(PremiumScreen.seePlansKey));
+    final plansTitle = find.descendant(
+        of: find.byKey(const Key('premiumBody')),
+        matching: find.text('Choose your plan'));
+    expect(tester.getTopLeft(plansTitle.last).dy,
+        greaterThan(tester.getTopLeft(table).dy));
+    await tester.tap(find.byKey(PremiumScreen.comparePlansKey));
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(plansTitle).dy, lessThan(200));
+    expect(tester.getTopLeft(table).dy, lessThan(200));
+    await tester.tap(find.byKey(PremiumScreen.choosePlanHintKey));
+    await tester.pumpAndSettle();
+    // The plans end the page: scrolled as far as it goes, the title in the
+    // upper half of the screen.
+    expect(tester.getTopLeft(plansTitle.last).dy, lessThan(844 / 2));
   });
 
   testWidgets(
@@ -1611,7 +1620,7 @@ void main() {
               .alwaysIncludeSemantics,
           isTrue);
     }
-    await tester.tap(find.byKey(PremiumScreen.seePlansKey));
+    await scrollAndTap(tester, find.byKey(PremiumScreen.choosePlanHintKey));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 420));
     await tester.pump(const Duration(milliseconds: 80));
@@ -2922,10 +2931,12 @@ void main() {
       expect(middle.reduce((a, b) => a < b ? a : b), lessThan(-14));
     });
 
-    testWidgets('"See plans" arrow floats every 1.8 s', (tester) async {
+    testWidgets('"Compare plans" floats every 1.8 s (v11)', (tester) async {
       await pumpLive(tester);
       final arrow = find.ancestor(
-          of: find.byIcon(Icons.arrow_downward_rounded),
+          of: find.descendant(
+              of: find.byKey(PremiumScreen.comparePlansKey),
+              matching: find.byIcon(Icons.keyboard_arrow_down_rounded)),
           matching: find.byType(Transform));
       final dys = <double>[];
       for (var t = 0; t < 1800; t += 100) {
@@ -2949,6 +2960,127 @@ void main() {
       await pumpLive(tester, reduce: true);
       expect(find.byKey(CtaGlow.shineKey), findsNothing);
       expect(find.byKey(CtaGlow.pulseKey), findsNothing);
+    });
+  });
+
+  // Fix round 3, C4 (SPEC §1.17, V13, V13c, V13a; v11): value before
+  // price. The page reads first view → Free vs Premium → plans and trial.
+  group('C4: the paywall order 13 → 13c → 13a', () {
+    double top(WidgetTester tester, Finder f) => tester.getTopLeft(f).dy;
+    final body = find.byKey(const Key('premiumBody'));
+    final priceLine = find.textContaining('per year, auto-renews');
+
+    String ctaLabel(WidgetTester tester) => tester
+        .widgetList<Text>(find.descendant(
+            of: find.byKey(PremiumScreen.ctaKey), matching: find.byType(Text)))
+        .map((t) => t.data)
+        .join();
+
+    testWidgets(
+        'the first view: "Compare plans", no plan boxes, the yearly plan '
+        'already driving the pinned button and its full price line',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      final hint = find.byKey(PremiumScreen.comparePlansKey);
+      expect(find.descendant(of: hint, matching: find.text('Compare plans')),
+          findsOneWidget);
+      final footerTop = top(tester, find.byKey(const Key('premiumFooter')));
+      expect(top(tester, hint), lessThan(footerTop));
+      for (final id in ['Annual', 'Monthly']) {
+        final card = find.byKey(ValueKey('planCard_$id'));
+        if (card.evaluate().isNotEmpty) {
+          expect(top(tester, card), greaterThan(footerTop),
+              reason: 'no price box on the first view');
+        }
+      }
+      expect(ctaLabel(tester), 'Start my 7-day free trial');
+      expect(priceLine, findsOneWidget);
+      expect(top(tester, priceLine), greaterThan(footerTop));
+    });
+
+    testWidgets(
+        'the order down the page; the button and its price line stay pinned '
+        'to the end', (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      final order = [
+        find.byKey(PremiumScreen.comparePlansKey),
+        find.byKey(PremiumScreen.compareKey),
+        find.byKey(PremiumScreen.compareNoteKey),
+        find.byKey(PremiumScreen.choosePlanHintKey),
+        find.descendant(of: body, matching: find.text('Choose your plan')).last,
+        find.byKey(const ValueKey('planCard_Annual')),
+        find.byKey(const ValueKey('planCard_Monthly')),
+        find.byKey(PremiumScreen.timelineKey),
+      ];
+      for (var i = 1; i < order.length; i++) {
+        expect(top(tester, order[i]), greaterThan(top(tester, order[i - 1])),
+            reason: 'item $i after item ${i - 1}');
+      }
+      for (var i = 0; i < 10; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+        await tester.pumpAndSettle();
+      }
+      expect(find.byKey(PremiumScreen.ctaKey).hitTestable(), findsOneWidget);
+      expect(priceLine.hitTestable(), findsOneWidget);
+      expect(ctaLabel(tester), 'Start my 7-day free trial');
+    });
+
+    testWidgets('in each plan row the billed amount is the largest price',
+        (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+      for (final (id, billed) in [
+        ('Annual', r'$49.99'),
+        ('Monthly', r'$5.99')
+      ]) {
+        final card = find.byKey(ValueKey('planCard_$id'));
+        await tester.scrollUntilVisible(card, 300);
+        double sizeOf(Finder text) =>
+            tester.renderObject<RenderParagraph>(text).text.style!.fontSize!;
+        final price = find.descendant(of: card, matching: find.text(billed));
+        expect(price, findsOneWidget, reason: id);
+        final priceSize = sizeOf(price);
+        for (final e in find
+            .descendant(of: card, matching: find.byType(RichText))
+            .evaluate()) {
+          final p = e.renderObject! as RenderParagraph;
+          final text = p.text.toPlainText();
+          if (text == billed) continue;
+          expect(p.text.style?.fontSize ?? 0, lessThan(priceSize),
+              reason: '$id: "$text" is smaller than $billed');
+        }
+      }
+    });
+
+    testWidgets('V13r shares the page: the same order under the rest top',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          rest: const PaywallRest(
+              theme: ClimbThemes.emberPeak,
+              weakSpot: 'Articles',
+              hero: Avatar.fox,
+              name: 'Ada'),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+      final compare = top(tester, find.byKey(PremiumScreen.compareKey));
+      expect(
+          top(tester, find.byKey(PremiumScreen.restTopKey)), lessThan(compare));
+      expect(top(tester, find.byKey(const ValueKey('planCard_Annual'))),
+          greaterThan(compare));
     });
   });
 }

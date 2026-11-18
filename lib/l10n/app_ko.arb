@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium: 하루 최대 {count}세션, 모든 주제.",
   "dailyLimitCount": "{total}회 중 {done}회 연습 완료",
   "paywallHeadlineName": "오늘의 실수를 성장으로 바꿔요, {name}.",
-  "paywallSeePlans": "플랜 보기",
+  "paywallComparePlans": "플랜 비교하기",
   "paywallSelectedPlan": "{plan} 플랜",
   "paywallTimelineTitle": "무료 체험 방법",
   "paywallTimelineToday": "오늘: Premium의 모든 기능이 열려요. 결제는 없어요.",

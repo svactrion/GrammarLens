@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium: bis zu {count} Einheiten am Tag, alle Themen.",
   "dailyLimitCount": "{done} von {total} Übungseinheiten erledigt",
   "paywallHeadlineName": "Mach aus dem heutigen Fehler Fortschritt, {name}.",
-  "paywallSeePlans": "Tarife ansehen",
+  "paywallComparePlans": "Tarife vergleichen",
   "paywallSelectedPlan": "Tarif {plan}",
   "paywallTimelineTitle": "So funktioniert dein Gratistest",
   "paywallTimelineToday": "Heute: Alles in Premium wird freigeschaltet. Nichts zu zahlen.",

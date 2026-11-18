@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium: حتى {count} جلسات يوميًا، كل الموضوعات.",
   "dailyLimitCount": "اكتملت {done} من {total} جلسات تدريب",
   "paywallHeadlineName": "حوّل خطأ اليوم إلى تقدّم يا {name}.",
-  "paywallSeePlans": "اعرض الخطط",
+  "paywallComparePlans": "قارن الخطط",
   "paywallSelectedPlan": "خطة {plan}",
   "paywallTimelineTitle": "كيف تعمل تجربتك المجانية",
   "paywallTimelineToday": "اليوم: يُفتح كل ما في Premium. لا شيء للدفع.",

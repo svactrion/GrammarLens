@@ -101,7 +101,12 @@ class PremiumScreen extends StatefulWidget {
   static const ctaKey = ValueKey('premium_cta');
   static const restoreKey = ValueKey('premium_restore');
   static const heroKey = ValueKey('premium_hero');
-  static const seePlansKey = ValueKey('premium_see_plans');
+
+  /// V13 (v11): "Compare plans" under the first view.
+  static const comparePlansKey = ValueKey('premium_compare_plans');
+
+  /// V13c (v11): "Choose your plan" under the comparison.
+  static const choosePlanHintKey = ValueKey('premium_choose_plan_hint');
   static const closeKey = ValueKey('premium_close');
   static const exitStartKey = ValueKey('premium_exit_start');
   static const exitContinueFreeKey = ValueKey('premium_exit_continue_free');
@@ -171,6 +176,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   final _scroll = ScrollController();
   final _plansKey = GlobalKey();
+  final _compareKey = GlobalKey();
 
   /// The plans have scrolled up out of view (V13c): their name sits above
   /// the pinned button.
@@ -200,7 +206,17 @@ class _PremiumScreenState extends State<PremiumScreen> {
     if (passed != _plansPassed) setState(() => _plansPassed = passed);
   }
 
-  /// "See plans" (V13): the plans scroll into view.
+  /// V13 (v11): "Compare plans" scrolls Free vs Premium into view.
+  void _toCompare() {
+    final compare = _compareKey.currentContext;
+    if (compare == null) return;
+    Scrollable.ensureVisible(compare,
+        alignment: .05,
+        duration: AppMotion.orInstant(context, AppMotion.slow),
+        curve: AppMotion.enter);
+  }
+
+  /// V13c (v11): "Choose your plan" scrolls the plans into view.
   void _seePlans() {
     final plans = _plansKey.currentContext;
     if (plans == null) return;
@@ -513,31 +529,51 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       const _BenefitsCard(),
                     ],
                     const SizedBox(height: 8),
-                    // V13: no price boxes on the first view; "See plans"
-                    // scrolls to them (13 → 13a → 13c on one page).
+                    // V13 (v11): no price boxes on the first view; value
+                    // before price: "Compare plans" leads to Free vs Premium
+                    // (13c), then the plans and the trial (13a), one page.
                     Center(
-                      child: TextButton(
-                        key: PremiumScreen.seePlansKey,
-                        onPressed: _seePlans,
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Text(context.l10n.paywallSeePlans,
-                              style: theme.textTheme.titleSmall
-                                  ?.withWeight(FontWeight.w900)
-                                  .copyWith(color: colorScheme.secondary)),
-                          const SizedBox(width: 6),
-                          _NudgingArrow(color: colorScheme.secondary),
-                        ]),
+                      child: _ScrollHint(
+                        key: PremiumScreen.comparePlansKey,
+                        label: context.l10n.paywallComparePlans,
+                        onTap: _toCompare,
                       ),
                     ),
                     const SizedBox(height: 18),
+                    KeyedSubtree(
+                      key: PremiumScreen.compareKey,
+                      child: KeyedSubtree(
+                        key: _compareKey,
+                        child: _ComparisonTable(
+                            theme: theme,
+                            colorScheme: colorScheme,
+                            hero: _userAvatar,
+                            reveal: _scroll),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: _ScrollHint(
+                        key: PremiumScreen.choosePlanHintKey,
+                        label: context.l10n.paywallChoosePlan,
+                        onTap: _seePlans,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // V13a (v11): the plans and the trial at the page's end.
+                    // The selected plan (yearly by default) drives the
+                    // pinned button from the first view on.
                     Semantics(
                       key: _plansKey,
                       header: true,
                       child: Text(
                         context.l10n.paywallChoosePlan,
-                        style: theme.textTheme.titleSmall
+                        style: theme.textTheme.titleLarge
                             ?.withWeight(FontWeight.w900)
-                            .copyWith(color: colorScheme.onSurface),
+                            .copyWith(
+                                color: colorScheme.onSurface,
+                                fontSize: 20,
+                                height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -570,16 +606,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         onChanged: (period) =>
                             setState(() => _selectedPeriod = period),
                       ),
-                    // V13c: Free vs Premium, then the trial timeline.
-                    const SizedBox(height: 22),
-                    KeyedSubtree(
-                      key: PremiumScreen.compareKey,
-                      child: _ComparisonTable(
-                          theme: theme,
-                          colorScheme: colorScheme,
-                          hero: _userAvatar,
-                          reveal: _scroll),
-                    ),
                     if (_trialDays(selectedTerms?.trial) case final days?) ...[
                       const SizedBox(height: 18),
                       _TrialTimeline(days: days),
@@ -2680,25 +2706,68 @@ class _TrialTimeline extends StatelessWidget {
   }
 }
 
-/// V13: "See plans"' arrow nudges down every 1.8 s (an ambient loop).
-class _NudgingArrow extends StatefulWidget {
-  final Color color;
-  const _NudgingArrow({required this.color});
+/// V13 / V13c (v11): a small grey hint with a chevron under it ("Compare
+/// plans", "Choose your plan"); the chevron floats every 1.8 s; tapping it
+/// scrolls on. At least 44 pt tall to tap.
+class _ScrollHint extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _ScrollHint({super.key, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: _Floating(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(fontSize: 12, color: c.muted)),
+                const SizedBox(height: 2),
+                Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 18, color: c.muted),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// V13 / V13c: the hint floats up 8 pt and back every 1.8 s (the boards'
+/// `gl-float`, an ambient loop).
+class _Floating extends StatefulWidget {
+  final Widget child;
+  const _Floating({required this.child});
 
   static const period = Duration(milliseconds: 1800);
 
   @override
-  State<_NudgingArrow> createState() => _NudgingArrowState();
+  State<_Floating> createState() => _FloatingState();
 }
 
-class _NudgingArrowState extends State<_NudgingArrow>
+class _FloatingState extends State<_Floating>
     with SingleTickerProviderStateMixin {
   late final AnimationController _nudge;
 
   @override
   void initState() {
     super.initState();
-    _nudge = AnimationController(vsync: this, duration: _NudgingArrow.period);
+    _nudge = AnimationController(vsync: this, duration: _Floating.period);
   }
 
   @override
@@ -2728,8 +2797,7 @@ class _NudgingArrowState extends State<_NudgingArrow>
             offset:
                 Offset(0, -8 * (1 - math.cos(2 * math.pi * _nudge.value)) / 2),
             child: child),
-        child:
-            Icon(Icons.arrow_downward_rounded, size: 18, color: widget.color),
+        child: widget.child,
       );
 }
 

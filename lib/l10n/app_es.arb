@@ -674,7 +674,7 @@
   "practiceResultsMoreLine": "Premium: hasta {count} sesiones al día, todos los temas.",
   "dailyLimitCount": "{done} de {total} sesiones de práctica hechas",
   "paywallHeadlineName": "Convierte el error de hoy en progreso, {name}.",
-  "paywallSeePlans": "Ver planes",
+  "paywallComparePlans": "Comparar planes",
   "paywallSelectedPlan": "Plan {plan}",
   "paywallTimelineTitle": "Cómo funciona tu prueba gratis",
   "paywallTimelineToday": "Hoy: se desbloquea todo Premium. Nada que pagar.",
