@@ -327,7 +327,7 @@ cloud, Zzz, sweat) and no board uses a tear; it is not deleted.
 | V02 Welcome trio (`welcome_screen`) | V02: fox, frog, panda wave | wave (Fox sways; sides float) | — (wave has none) |
 | V03 Meet turntable (`buddy_picker`) | V03: fox wave | wave | — |
 | V03b wheel, landed (`lucky_wheel_screen`) | V03b: frog cheer | cheer | sparkle ✱ (was hidden) |
-| V04 Name (`onboarding_screen`) | V04/V04s (v11): wave → inspect → cheer | see C2 | see C2 |
+| V04 Name (`name_companion_stage`, C2) | V04/V04s (v11): wave → inspect → cheer | wave / inspect / cheer (one hop) | **hidden**: the board's three sparkles replace cheer's one (F3-16) |
 | V05 goal pop-out (`onboarding_screen` `_PopOut`) | V05: fox cheer | cheer | sparkle |
 | V05b Getting ready (`getting_ready_screen`) | V05b: fox inspect, fox cheer | inspect → cheer | sparkle at cheer |
 | V06, V12 pawn (`mountain_scene`) | base pose | idle; cheer on V12's arrival | sparkle on arrival |
@@ -359,8 +359,10 @@ cloud, Zzz, sweat) and no board uses a tear; it is not deleted.
 | N01 soft ask (`reminder_soft_ask`) | N01: base pose | idle ✱ (was wave) | — |
 | N03 notifications (`notification_settings_screen`) | N03: base pose | idle | — |
 
-✱ = changed by B8. The only prop still hidden is V24f's Zzz (the board's
-dream bubble takes its place). Checked on renders that no newly shown prop
+✱ = changed by B8. Props still hidden: V24f's Zzz (the board's dream
+bubble takes its place) and V04's cheer sparkle (the board draws three of
+its own). V05's small waving greeting chip is gone with C2 (its board has
+none; the greeting is V04's now). Checked on renders that no newly shown prop
 covers text: the dialog's cloud sits above the card; R11's cloud above the
 head; the card's thought bubble beside the slot, above no text; the medal's
 sparkle beside the head, under the medal.
@@ -371,6 +373,104 @@ with the sweat drop and a head shake, and no cheer; the companion dialog
 (V13b, R10, R08 reset share it) shows the sad companion's cloud over no
 text (fails before B8); R11's error state shows its cloud. Captures:
 `V09-oops`, `V13b-cloud`, `R11-cloud`.
+
+### C1. Splash (V01)
+
+**Change (`8ce54bd`).** The first launch takes 2.2 s (was 1.4 s, "rushed" on
+the device): the icon assembles as before, the wordmark rises at 1 s, the
+small lens scans the word from 1.15 s for 900 ms (was 300 ms), and the intro
+ends at 2.2 s, then the 200 ms fade to the app. Later launches keep the
+square and the wordmark only, 600 ms (F3-12). **Tests:**
+`test/fix3_splash_test.dart` (the lens crosses the word left to right in its
+window, gone after it; the intro ends at 2.2 s; a later launch shows no lens
+and ends within 800 ms); `launch_gate_test`'s timing check follows v11.
+
+### C2. The name screen (V04, V04s)
+
+**Change (`c71aff4`).** `NameCompanionStage`: the companion 142 pt and
+centred over a white disc in a warm radial glow that breathes (3.2 s), its
+bubble above it (tail down, 18/900, pops on each change). Three states,
+driven by the field: **asks** (empty: wave, "Hi! What should I call
+you?", Continue disabled), **listens** (typing: inspect, three navy dots),
+**greets** (700 ms after the last key with a valid name: cheer, one hop,
+the board's three sparkles, "Nice to meet you, <name>!" with the name in
+orange and cut to 16 characters + "…", a green tick at the field's end, a
+light haptic once per name). Typing again listens; clearing asks. The field
+has the board's 3 pt navy border and 6 pt sky focus ring, 24/800 text, and
+the note with an n/40 counter beside it. Validation unchanged (trimmed,
+not empty, 40 at most). New string `onboardingNameAsk` (8 languages); the
+greeting reuses `onboardingNiceToMeet` (F3-13). Opening: the companion rises
+12 pt with a fade (300 ms), the bubble pops (350 ms). Reduce Motion: no
+hop, no glow loop, no rise or pop. **Tests:**
+`test/fix3_name_screen_test.dart`: asks → listens → (not at 650 ms) greets
+at 700 ms → listens again → greets (a new name: a second haptic; a name
+already greeted: none) → asks; spaces only never greet; the 16-character
+cut with the field whole; the board's layout (142 pt, centred, the bubble
+13 pt above, the glow under the companion); the bubble in all 8 languages
+at the largest text size with a 20-character name (no overflow, inside
+the screen). Captures: `V04-asks`, `V04-listens`, `V04-greets` (light and
+dark).
+
+### C3. V12's bubble
+
+**Change (`7c02cd6`).** `AnchoredBubble` places "First step done! 29 to the
+summit." from the companion's box in the wide shot (the scene's own
+mapping): the tail's tip 12 pt above the head and under its centre, the
+bubble ≥ 16 pt from the screen's sides and between the step chip and
+Continue (8 pt off each, measured after layout); below with the tail up
+when there is no room above, else the side with more room. It fades in
+with Continue when the camera has opened back up. **Tests:**
+`test/fix3_v12_bubble_test.dart` on the real V12 at 375 × 667, 390 × 844,
+393 × 852, 402 × 874, 428 × 926 and 440 × 956 (tip 12 pt above the head,
+tail under the centre, inside the edges, between chip and button), and the
+bubble alone opening below a companion near the top and clamped at a screen
+edge with the tail still over the companion. Captures: `V12-end-<size>`
+(and dark at 390 × 844).
+
+### C4. Paywall order (V13 → V13c → V13a)
+
+**Change (`480f175`).** The page now reads: the first view (unchanged, no
+price boxes) → the "Compare plans" hint (new string, 8 languages; "See
+plans" removed) → Free vs Premium with its companion and the "Cancel
+anytime" note → a "Choose your plan" hint → "Choose your plan" (20/900) and
+the plan rows → the trial timeline. Both hints are the boards' small grey
+label over a chevron, floating every 1.8 s, and scroll to their section.
+The pinned button and its full price line are unchanged and always on
+screen; the yearly plan stays preselected and drives the button and the
+line from the first view. In each plan row the billed amount was already
+the largest text (titleLarge 900; the monthly equivalent and the struck-out
+price are label size). V13r shares the page, so it has the same order
+under its rest top. **Tests** (`premium_screen_test`, group "C4"): the first
+view (the hint above the footer, no plan box above the footer, "Start my
+7-day free trial" and the yearly price line); the order down the page; the
+button and the price line still on screen at the page's end; the billed
+amount larger than every other text in each plan row (live prices); V13r's
+order. The two older tests that encoded 13 → 13a → 13c follow v11. iPad:
+see "Checks".
+
+### C5. Profile ribbon (V23)
+
+**Change (`78a1bd1`).** The ribbon, tails included, is the screen's width −
+60 (330 at 390, 368 at 428; on a tablet, no wider than the page's column),
+replacing fix round 2's fixed 286 pt body. The name and the "Climbing with"
+line each stay on one line (`OneLineText`): a line that does not fit
+shrinks, to 85 % at most, then ends with "…". 62 pt tall at the default
+text size. **Tests:** `test/fix3_profile_ribbon_test.dart` at 375 × 667,
+390 × 844, 402 × 874, 428 × 926 and 440 × 956, default and largest text
+(width, centred, 62 pt, one line each at ≥ 85 %), and a long name (85 %,
+"…"); `fix_round2_profile_test` follows the new width. Captures:
+`V23-ribbon-<size>-<text>`.
+
+### C6. Pose changes
+
+**Change (`73913f8`).** In `CompanionView`: a change of pose cross-fades
+(200 ms by default; V24s keeps its 400 ms for falling asleep) and the new
+pose scales 0.96 → 1; under Reduce Motion a plain 150 ms fade instead of a
+cut. Every screen gets it: Profile's wave on tap, the rest scene's wake,
+V04's three states, V05b. A `cheerHops` option (two by default, V04 one).
+**Test:** `test/fix3_pose_switch_test.dart` (both poses for 200 ms, the old
+one only fading, the new one from 0.96 to 1; Reduce Motion: 150 ms, no
+scale).
 
 ### Decisions (F3-n)
 
@@ -437,6 +537,45 @@ text (fails before B8); R11's error state shows its cloud. Captures:
   prop unless the board replaces it or it covers text; the boards were
   drawn before the kit, and the dots sit under the companion, not where
   the bubble goes.
+- **F3-12. Later launches' splash.** SPEC: at most 800 ms. Options: (a) keep
+  600 ms; (b) lengthen to 800 ms. Choice: (a). Why: within the limit, the
+  device test did not mention later launches, and daily users open the app
+  every day (rule 5).
+- **F3-13. The greeting's string.** "Nice to meet you, {name}!" already
+  existed in all 8 languages (`onboardingNiceToMeet`), shown on V05's small
+  greeting chip. Options: (a) a new key and keep V05's chip; (b) reuse the
+  key on V04 and drop V05's chip. Choice: (b). Why: V05's board has no chip
+  and v11 moves the greeting to V04 (rule 3); both would greet twice. The
+  key's description now names V04.
+- **F3-14. V04's hop.** SPEC: "cheer pose, one hop"; the board loops
+  `gl-hop`. Choice: one hop, then still (the sparkles and the glow keep
+  moving). Why: rule 2 (SPEC) before rule 3 (the board).
+- **F3-15. "Once per name".** Options: (a) once per greeting of a name
+  different from the last; (b) once per distinct name while the screen is
+  open. Choice: (b), a set of the names greeted. Why: "Ada" → "Adam" →
+  "Ada" would otherwise buzz three times for two names.
+- **F3-16. V04's props.** The board draws three sparkles round the
+  greeting companion where cheer's kit sparkle would sit. Choice: the
+  board's three, the kit's hidden (listed in B8's table). Back from V05,
+  V04 opens greeting the name already given, without a haptic.
+- **F3-17. V12's bubble limits.** SPEC gives the gap and the edges, not the
+  vertical limits. Choice: between the step chip and Continue, 8 pt off
+  each, measured after layout; when neither side fits, the side with more
+  room. Why: the chips and the button stay readable (rule 5).
+- **F3-18. C4's second hint.** The V13c board's hint under the note reads
+  "Choose your plan", the same words as V13a's title. Choice: reuse
+  `paywallChoosePlan` for both; "See plans" (`paywallSeePlans`) is removed
+  from the 8 ARB files since nothing uses it.
+- **F3-19. The plan label over the pinned button.** Fix round 2 shows the
+  selected plan's name above the button once the plans have scrolled out
+  of view upwards. Kept: with the plans at the page's end it shows only
+  when the timeline is scrolled to the top. Why: rule 4, harmless.
+- **F3-20. The ribbon on a tablet.** "Screen width − 60" would be about
+  960 pt on an iPad. Choice: no wider than the page's column (640 pt).
+  Why: rule 5; the stage above it is that wide.
+- **F3-21. Paywall hint taps.** The boards draw the hints as decorations
+  (`aria-hidden`). Choice: they stay buttons (scroll to their section, 44 pt
+  to tap), as "See plans" was. Why: rule 4.
 
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
