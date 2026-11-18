@@ -163,7 +163,10 @@ void main() {
       ));
       expect(find.text('10:24'), findsOneWidget);
       expect(find.text('See you tomorrow, Ada'), findsOneWidget);
-      expect(find.text('NEXT DAILY TEST · STEP 4'), findsOneWidget);
+      // Fix round 4 (SPEC V24f v12): V24 has V24f's header, the countdown
+      // on its right.
+      expect(find.text('All done for today'), findsOneWidget);
+      expect(find.text('next Daily Test'), findsOneWidget);
       now = now.add(const Duration(minutes: 1));
       await tester.pump(const Duration(minutes: 1));
       expect(find.text('10:23'), findsOneWidget);

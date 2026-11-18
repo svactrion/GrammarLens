@@ -23,6 +23,10 @@ class RestReminderRow extends StatefulWidget {
   static const switchKey = ValueKey('rest_reminder_switch');
   static const timeKey = ValueKey('rest_reminder_time');
 
+  /// The row's height (V24f v12: the board's 40 pt row, at the app's
+  /// 44 pt touch targets).
+  static const height = 44.0;
+
   @override
   State<RestReminderRow> createState() => _RestReminderRowState();
 }
@@ -84,71 +88,85 @@ class _RestReminderRowState extends State<RestReminderRow> {
     final l10n = context.l10n;
     const onPanel = Colors.white;
     final time = reminderTimeLabel(_controller.settings.minutes);
-    return Row(children: [
-      const Icon(Icons.notifications_none_rounded, color: onPanel, size: 20),
-      const SizedBox(width: 8),
-      Expanded(
-        // One line, as on the board; a long translation or a large text
-        // size scales down rather than wrapping.
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.centerStart,
-          child: Text(
-            l10n.restRemind,
-            maxLines: 1,
-            softWrap: false,
-            style: theme.textTheme.titleSmall!
-                .withWeight(FontWeight.w800)
-                .copyWith(color: onPanel),
-          ),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Semantics(
-        button: true,
-        label: l10n.reminderTimeSemantics(time),
-        excludeSemantics: true,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: RestReminderRow.timeKey,
-            borderRadius: BorderRadius.circular(12),
-            onTap: _pickTime,
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 44),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: onPanel.withValues(alpha: .35)),
+    // V24f v12: one compact row under the card. The board draws it 40 pt;
+    // it keeps the app's 44 pt touch targets (TASK §4), so 44.
+    return SizedBox(
+        height: RestReminderRow.height,
+        child: Row(children: [
+          const Icon(Icons.notifications_none_rounded,
+              color: onPanel, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            // One line, as on the board; a long translation or a large text
+            // size scales down rather than wrapping.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                l10n.restRemind,
+                maxLines: 1,
+                softWrap: false,
+                style: theme.textTheme.titleSmall!
+                    .withWeight(FontWeight.w800)
+                    .copyWith(color: onPanel),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(
-                  time, // l10n-guard: a clock time of numbers
-                  textScaler: TextScaler.noScaling,
-                  style: theme.textTheme.titleSmall!
-                      .withWeight(FontWeight.w800)
-                      .copyWith(
-                          color: onPanel,
-                          fontFeatures: const [FontFeature.tabularFigures()]),
-                ),
-                const SizedBox(width: 2),
-                const Icon(Icons.expand_more_rounded, color: onPanel, size: 18),
-              ]),
             ),
           ),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Semantics(
-        label: l10n.restRemind,
-        child: Switch(
-          key: RestReminderRow.switchKey,
-          materialTapTargetSize: MaterialTapTargetSize.padded,
-          value: _controller.isOn(ReminderKind.dailyTest),
-          activeTrackColor: c.green,
-          onChanged: _controller.loaded ? _toggle : null,
-        ),
-      ),
-    ]);
+          const SizedBox(width: 8),
+          Semantics(
+            button: true,
+            label: l10n.reminderTimeSemantics(time),
+            excludeSemantics: true,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: RestReminderRow.timeKey,
+                borderRadius: BorderRadius.circular(12),
+                onTap: _pickTime,
+                // A 44 pt tap target round the board's compact chip.
+                child: SizedBox(
+                  height: RestReminderRow.height,
+                  child: Center(
+                    child: Container(
+                      height: 30,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(9),
+                        border:
+                            Border.all(color: onPanel.withValues(alpha: .3)),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(
+                          time, // l10n-guard: a clock time of numbers
+                          textScaler: TextScaler.noScaling,
+                          style: theme.textTheme.titleSmall!
+                              .withWeight(FontWeight.w800)
+                              .copyWith(color: onPanel, fontFeatures: const [
+                            FontFeature.tabularFigures()
+                          ]),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(Icons.expand_more_rounded,
+                            color: onPanel, size: 18),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Semantics(
+            label: l10n.restRemind,
+            // The padded switch (48 pt) is held to the row's 44 pt.
+            child: Switch(
+              key: RestReminderRow.switchKey,
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              value: _controller.isOn(ReminderKind.dailyTest),
+              activeTrackColor: c.green,
+              onChanged: _controller.loaded ? _toggle : null,
+            ),
+          ),
+        ]));
   }
 }

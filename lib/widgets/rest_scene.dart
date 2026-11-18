@@ -20,7 +20,7 @@ import 'monthly_climb/climb_route.dart';
 import 'monthly_climb/climb_trail_table.dart';
 import 'monthly_climb/mountain_scene.dart';
 import 'speech_bubble.dart';
-import 'step_bar.dart';
+import '../utils/upper_case.dart';
 
 /// The time left until local midnight (the next Daily Test, the next free
 /// ticket).
@@ -29,12 +29,17 @@ Duration timeToMidnight(DateTime now) =>
 
 /// The rest scene (V24, SPEC §1.8): replaces Home's content once every daily
 /// right is used. The camp at the companion's own step — the tent behind,
-/// the campfire in front (the logs image, the flame drawn on top with its
-/// base in the middle of the pile), warm ground light, rising sparks — the
-/// companion asleep with its Zzz, "See you tomorrow, <name>", and a
-/// countdown to the next Daily Test (local midnight), updated every minute.
-/// The board's reminder switch comes in through [reminder] (TASK-widgets
-/// fixed decision 7).
+/// the companion asleep, the campfire at its front right on the same
+/// ground with a warm glow under it — over the month's mountain, and the
+/// night sheet under it: the "All done for today" header with two done
+/// ticks and the countdown to the next Daily Test (local midnight, updated
+/// every minute), V24f's Premium card for free users ([offer]), and the
+/// "Remind me tomorrow" row ([reminder], TASK-widgets fixed decision 7).
+///
+/// V24 (Premium) keeps "See you tomorrow, <name>", the speech bubble and the
+/// Zzz; V24f (free) has the dream bubble instead (SPEC §1.15). Fix round 4
+/// (SPEC V24f v12): both use the same scene, header and reminder row, and
+/// the page fits one screen (see [designSheetTop]).
 class RestScene extends StatefulWidget {
   final ClimbTheme theme;
   final int days;
@@ -42,22 +47,21 @@ class RestScene extends StatefulWidget {
   final Avatar hero;
   final String name;
 
-  /// "4/5 · +9 points" for the Daily Test tile, and the practice tile's
-  /// line ("Ticket used" / "5/5 sessions").
+  /// The header's two done ticks: "Daily Test 4/5", then "Free ticket used"
+  /// (V24f) or "5/5 sessions" (V24).
   final String testLine;
   final String practiceLine;
 
   /// The score capsule, top right over the scene.
   final Widget? capsule;
 
-  /// The "Remind me tomorrow" row (TASK-widgets fixed decision 7): V24 has it
-  /// under the countdown, V24f under the Premium card; none in previews.
+  /// The "Remind me tomorrow" row (TASK-widgets fixed decision 7), the
+  /// sheet's last row in both scenes; none in previews.
   final Widget? reminder;
   final DateTime Function() clock;
 
-  /// V24f (free users, SPEC §1.15): the dream bubble, the "All done"
-  /// header and the Premium card with "Wake <Hero> up". Null for Premium
-  /// users, who keep V24.
+  /// V24f (free users, SPEC §1.15): the dream bubble and the Premium card
+  /// with "Wake <Hero> up". Null for Premium users, who keep V24.
   final RestOffer? offer;
 
   const RestScene({
@@ -75,45 +79,85 @@ class RestScene extends StatefulWidget {
     this.offer,
   });
 
-  /// Fix round 3, B1 (SPEC V24f "Layout (v11)"): the scene is full-bleed
-  /// from the top of the screen down to the night sheet, which is attached
-  /// under it with rounded top corners. The art is drawn at the boards'
-  /// scale (600 px of art over a 390 pt board, so 600 / 390 of the screen
-  /// width) and is never scaled up to free room: when the sheet needs room
-  /// the scene is cropped from the top. The camp stays fully visible.
+  /// The boards' width; the scene's sizes follow the screen's width.
+  static const boardWidth = 390.0;
+
+  /// V24f's dream bubble's width at 390 pt (the board's 216).
+  static const dreamWidth = 216.0;
+
+  /// The art is drawn at the boards' scale (600 px of art over a 390 pt
+  /// board, so 600 / 390 of the screen width) and is never scaled up.
   static const artWidthShare = 600 / 390;
 
-  /// The boards' sheet top on their 844 pt screen (V24 466, V24f 376): the
-  /// first frame's guess, before the fit.
-  static const boardSheetTopPremium = 466.0;
-  static const boardSheetTopFree = 376.0;
-  static const boardScreenHeight = 844.0;
+  /// Fix round 4 (SPEC V24f v12, "One screen"): the sheet's top below the
+  /// safe area, at 390 pt wide (the v12 board: 312 on its 844 pt screen,
+  /// 47 pt of status bar), scaled with the width. The sheet only rises
+  /// above it to keep its last row [anchorClearance] above the nav bar; it
+  /// never moves lower, so any spare room stays under the reminder row, as
+  /// on the board.
+  static const designSheetTop = 265.0;
 
-  /// The boards' room between the camp's lowest point (the fire) and the
-  /// sheet, at 390 pt wide (V24 114, V24f 94). It shrinks to [minCampGap]
-  /// before the scene is cropped any further.
-  static const boardCampGapPremium = 114.0;
-  static const boardCampGapFree = 94.0;
+  /// V24's own board (Premium): the sheet at 466 and the companion's top at
+  /// 254 on its 844 pt screen. V24 shares V24f's camp, header and reminder
+  /// row (SPEC V24f v12); its sheet is shorter (no Premium card), so its
+  /// scene keeps its board's taller frame.
+  static const designSheetTopPremium = 419.0;
+  static const bandAboveCampPremium = 207.0;
+
+  /// The boards' band from the safe area's top to the companion's top
+  /// (174 − 47 at 390 wide): the dream bubble with its dots (V24f), the
+  /// "See you tomorrow" chip and the speech bubble (V24), the capsule.
+  static const bandAboveCamp = 127.0;
+
+  /// The least band kept for them when the sheet needs room: the scene is
+  /// cropped from the top down to this (fix round 3's rule).
+  static const topBand = 100.0;
+
+  /// The camp (tent, companion, fire) stays fully visible at least this far
+  /// above the sheet.
   static const minCampGap = 12.0;
 
   /// The sheet's top corner radius; the scene runs this far under it.
   static const sheetRadius = 28.0;
 
-  /// On Home's first view, "Wake <Hero> up" (V24f) or the sheet's last row
-  /// (V24) stays this far above the floating nav bar when the camp leaves
-  /// room for it.
+  /// On Home's first view, the reminder row (the sheet's last row) stays
+  /// this far above the floating nav bar wherever the camp leaves room for
+  /// it; the page then has no scroll extent.
   static const anchorClearance = 8.0;
 
-  /// Room at the top of the scene for the bubble, the chip and the score
-  /// capsule, under the status bar.
-  static const topBand = 96.0;
+  /// The companion's size in the scene's image units (84 pt at 390 wide on
+  /// the board), times k = the art's scale / 900.
+  static const companionUnits = 126.0;
 
-  /// The camp's height in the scene's image units (the tent's top 120 above
-  /// the step, the fire's foot 56 below it), times [k] = scale / 900.
-  static const campUnits = 176.0;
+  /// The companion's left edge from its step, in image units × k: its
+  /// feet stand on the step, a little left of it, so the camp to its right
+  /// (tent, fire) stays on the trail's ground.
+  static const companionLeftUnits = 78.0;
+
+  /// The camp's centre right of the step, in image units × k: the camera
+  /// centres it across the screen.
+  static const campCentreUnits = 18.0;
+
+  /// Shares of the companion's size S, from the v12 board and the images:
+  /// the feet (the boards' `transform-origin: 50% 92%`; fox_sleep's lowest
+  /// pixel is at 0.897 of its box), the tent (80 × 65 at 48, 2 from the
+  /// companion's box at S = 84), the fire's box (56 × 66, its left 72 from
+  /// the companion's) and the camp's height, the companion's top to the
+  /// fire's foot (the logs image's lowest pixels, the stones in front).
+  static const feetShare = .9;
+  static const tentLeftShare = 48 / 84;
+  static const tentTopShare = 2 / 84;
+  static const tentWidthShare = 80 / 84;
+  static const tentHeightShare = 65 / 84;
+  static const fireLeftShare = 72 / 84;
+  static const fireWidthShare = 56 / 84;
+  static const fireHeightShare = 66 / 84;
+  static const campHeightShare = feetShare + Campfire.pileBaseFromFoot;
 
   static const sceneKey = ValueKey('rest_scene_layer');
   static const sheetKey = ValueKey('rest_sheet');
+  static const headerKey = ValueKey('rest_header');
+  static const campGlowKey = ValueKey('rest_camp_glow');
 
   static const dreamKey = ValueKey('rest_dream');
   static const awakeBubbleKey = ValueKey('rest_awake_bubble');
@@ -133,28 +177,25 @@ class _RestSceneState extends State<RestScene>
     with SingleTickerProviderStateMixin {
   Timer? _minute;
 
-  /// B1: where the night sheet starts on the page (the scene's visible
-  /// height), fitted after layout; null until the first fit (a guess from
-  /// the boards' proportions is drawn first).
+  /// Where the night sheet starts on the page (the scene's visible
+  /// height), fitted after layout; null until the first fit (the design
+  /// top is drawn first).
   double? _sheetTop;
   double _minSheetTop = 0;
+  double _designSheetTop = 0;
   double? _navClearance;
-  final _cardSlotKey = GlobalKey();
   final _sheetBoxKey = GlobalKey();
   final _endKey = GlobalKey();
 
-  /// Fits [_sheetTop] so the anchor (V24f: the Wake button, from the card's
-  /// laid-out slot, its slide-in excluded; V24: the sheet's last row) ends
+  /// v12: fits [_sheetTop] so the sheet's last row (the reminder row) ends
   /// [RestScene.anchorClearance] above the floating nav bar on the first
-  /// view (or the safe area's bottom where there is no bar), but never so
-  /// high that the camp would not fit ([_minSheetTop]).
+  /// view (or the safe area's bottom where there is no bar): the design top
+  /// where it fits, higher where it does not (the scene cropped from the
+  /// top), never so high that the camp would not fit ([_minSheetTop]).
   void _fitSheet() {
     if (!mounted) return;
     final sheet = _sheetBoxKey.currentContext?.findRenderObject() as RenderBox?;
-    final offer = widget.offer;
-    final anchorContext =
-        (offer != null ? _cardSlotKey : _endKey).currentContext;
-    final anchor = anchorContext?.findRenderObject() as RenderBox?;
+    final anchor = _endKey.currentContext?.findRenderObject() as RenderBox?;
     if (sheet == null ||
         anchor == null ||
         !sheet.attached ||
@@ -163,20 +204,22 @@ class _RestSceneState extends State<RestScene>
         !anchor.hasSize) {
       return;
     }
-    final anchorBottom = anchor
-            .localToGlobal(Offset(0, anchor.size.height), ancestor: sheet)
-            .dy -
-        (offer != null ? _FreePanel.cardPadding.bottom : 0);
-    final media = MediaQuery.of(context);
-    final clearance = _navClearance;
-    final barTop = clearance == null
-        ? media.size.height - media.padding.bottom - 16
-        : media.size.height - (clearance - NavBarClearance.gap);
-    final want = barTop - RestScene.anchorClearance - anchorBottom;
-    final top = math.max(_minSheetTop, want);
+    final anchorBottom =
+        anchor.localToGlobal(Offset(0, anchor.size.height), ancestor: sheet).dy;
+    final barTop = _barTop(MediaQuery.of(context));
+    final fits = barTop - RestScene.anchorClearance - anchorBottom;
+    final top = math.max(_minSheetTop, math.min(_designSheetTop, fits));
     if (_sheetTop == null || (top - _sheetTop!).abs() > .5) {
       setState(() => _sheetTop = top);
     }
+  }
+
+  /// The floating nav bar's top on the screen.
+  double _barTop(MediaQueryData media) {
+    final clearance = _navClearance;
+    return clearance == null
+        ? media.size.height - media.padding.bottom - 16
+        : media.size.height - (clearance - NavBarClearance.gap);
   }
 
   /// V24s: "Wake <Hero> up" was tapped: the companion is awake while the
@@ -234,45 +277,99 @@ class _RestSceneState extends State<RestScene>
     final step0 = ClimbRoute(days).stepAt(step);
     final media = MediaQuery.of(context);
     final safeTop = media.padding.top;
-
-    // The panel is the night's own colour in both themes (the board).
-    final panel = c.nightTop;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
     const onPanel = Colors.white;
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
+      final u = width / RestScene.boardWidth;
       // The boards' scale, whatever the scene's height.
       final scale = width * RestScene.artWidthShare;
       final k = scale / 900;
-      final campHeight = RestScene.campUnits * k;
+      final s = RestScene.companionUnits * k;
+      final campHeight = RestScene.campHeightShare * s;
       final minTop =
           safeTop + RestScene.topBand + campHeight + RestScene.minCampGap;
       _minSheetTop = minTop;
-      final sheetTop = math.max(
+      final premium = offer == null;
+      _designSheetTop = math.max(
           minTop,
-          _sheetTop ??
-              media.size.height *
-                  (offer == null
-                      ? RestScene.boardSheetTopPremium
-                      : RestScene.boardSheetTopFree) /
-                  RestScene.boardScreenHeight);
-      final boardGap = (offer == null
-              ? RestScene.boardCampGapPremium
-              : RestScene.boardCampGapFree) *
-          width /
-          390;
-      final gap = (sheetTop - safeTop - RestScene.topBand - campHeight)
-          .clamp(RestScene.minCampGap, math.max(RestScene.minCampGap, boardGap))
-          .toDouble();
+          safeTop +
+              (premium
+                      ? RestScene.designSheetTopPremium
+                      : RestScene.designSheetTop) *
+                  u);
+      final sheetTop = math.max(minTop, _sheetTop ?? _designSheetTop);
       final sceneHeight = sheetTop + RestScene.sheetRadius;
-      // The camera: the camp's centre across the middle, its fire [gap]
-      // above the sheet (cropping from the top as the sheet rises).
-      final cover = math.max(width, sceneHeight * climbImageAspect);
+      // The camp: its top where the board has it, under the bubble band;
+      // when the sheet rises, the gap under the camp shrinks to 12 first,
+      // then the camp moves up with it (the scene cropped from the top).
+      final campTop = math.max(
+          safeTop + RestScene.topBand,
+          math.min(
+              safeTop +
+                  (premium
+                          ? RestScene.bandAboveCampPremium
+                          : RestScene.bandAboveCamp) *
+                      u,
+              sheetTop - RestScene.minCampGap - campHeight));
+      final feetY = campTop + RestScene.feetShare * s;
+      // The camera: the camp's centre across the middle, the companion's
+      // feet at [feetY]. High on the mountain (late in the month) the art's
+      // top edge would come into view: the art then starts lower and its
+      // sky is continued above it by a mirrored copy ([pad]).
+      final wantedOriginY = feetY - step0.dy * scale;
+      final pad = math.max(0.0, wantedOriginY);
+      final artBox = Size(width, sceneHeight - pad);
+      final cover = math.max(width, artBox.height * climbImageAspect);
       final zoom = math.max(1.0001, scale / cover);
-      final campBottom = sheetTop - gap;
-      final originY = campBottom - 56 * k - step0.dy * scale;
-      final focus =
-          Offset(step0.dx + 38 / 900, (sceneHeight / 2 - originY) / scale);
+      final focus = Offset(step0.dx + RestScene.campCentreUnits / 900,
+          (artBox.height / 2 - (wantedOriginY - pad)) / scale);
+      final map = SceneMap(artBox, zoom: zoom, focus: focus);
+      final stepAt = map.toBox(step0) + Offset(0, pad);
+      final compLeft = stepAt.dx - RestScene.companionLeftUnits * k;
+      final compTop = stepAt.dy - RestScene.feetShare * s;
+      final feet = compTop + RestScene.feetShare * s;
+      final fireLeft = compLeft + RestScene.fireLeftShare * s;
+      final fireWidth = RestScene.fireWidthShare * s;
+      final fireHeight = RestScene.fireHeightShare * s;
+      final fireBottom = compTop + campHeight;
+      final glowWidth = 140 / 84 * s;
+      final glowHeight = 74 / 84 * s;
+      final brightness = theme.brightness;
       final sheetPad = ContentWidth.sidePaddingOf(context);
+      final clearance = _navClearance;
+      final bottomPad = clearance == null
+          ? media.padding.bottom + 16
+          : clearance - NavBarClearance.gap + RestScene.anchorClearance;
+
+      // V24f: the dream bubble (or, while waking, "I'm awake!"); V24: the
+      // speech bubble. Its foot at the companion's head, its top never
+      // under the status bar (nor, on V24, under the "See you" chip).
+      final Widget? bubble = offer == null
+          ? SpeechBubble(
+              text: l10n.restBubble,
+              pointer: BubblePointer.bottomStart,
+              compact: true,
+            )
+          : _awake
+              ? SpeechBubble(
+                  key: RestScene.awakeBubbleKey,
+                  text: l10n.restAwake,
+                  pointer: BubblePointer.bottomStart,
+                  compact: true,
+                )
+              : offer.weakSpot == null
+                  ? null
+                  : _DreamBubble(
+                      key: RestScene.dreamKey,
+                      hero: widget.hero.name(l10n),
+                      spot: offer.weakSpot!);
+      // V24's bubble ends above the Zzz; the dream's dots reach the head.
+      final bubbleFoot = offer == null ? compTop - .2 * s : compTop + .1 * s;
+      final bubbleStart =
+          offer == null ? math.max(16.0, compLeft - 50 * k) : 16.0 * u;
+      final bubbleMinTop = offer == null ? safeTop + 12 + 40 : safeTop + 8;
+
       return Stack(
         children: [
           Positioned(
@@ -284,121 +381,139 @@ class _RestSceneState extends State<RestScene>
             child: ClipRect(
               child: Stack(
                 children: [
-                  Positioned.fill(
+                  if (pad > 0)
+                    // The art's sky continued upwards: the art's top,
+                    // mirrored (its edge rows meet without a seam).
+                    Positioned(
+                      left: map.origin.dx,
+                      top: pad - map.imageSize.height,
+                      width: map.imageSize.width,
+                      height: map.imageSize.height,
+                      child: Transform.flip(
+                        flipY: true,
+                        child: Image.asset(
+                            widget.theme.backgroundFor(brightness),
+                            fit: BoxFit.fill,
+                            excludeFromSemantics: true),
+                      ),
+                    ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: pad,
+                    height: artBox.height,
                     child: MountainScene(
                       theme: widget.theme,
                       days: days,
                       showFlag: false,
                       zoom: zoom,
                       focus: focus,
-                      overlay: (context, map) {
-                        // The camp stands at the companion's step.
-                        final p = map.toBox(step0);
-                        final k = map.scale / 900;
-                        return Stack(clipBehavior: Clip.none, children: [
-                          // The tent behind the companion.
-                          Positioned(
-                            left: p.dx + 4 * k,
-                            top: p.dy - 120 * k,
-                            width: 130 * k,
-                            height: 110 * k,
-                            child: Image.asset('assets/climb/objects/tent.webp',
-                                fit: BoxFit.contain,
-                                excludeFromSemantics: true),
-                          ),
-                          // The companion asleep at its step.
-                          Positioned(
-                            left: p.dx - 70 * k,
-                            top: p.dy - 104 * k,
-                            width: 110 * k,
-                            height: 110 * k,
-                            child: AnimatedBuilder(
-                              animation: _hop,
-                              builder: (context, child) => Transform.translate(
-                                  offset: Offset(0,
-                                      -16 * k * math.sin(math.pi * _hop.value)),
-                                  child: child),
-                              child: CompanionView(
-                                  hero: widget.hero,
-                                  mood: _awake
-                                      ? CompanionMood.wave
-                                      : CompanionMood.sleep,
-                                  // V24f: a dream bubble instead of the Zzz.
-                                  showProp: offer == null,
-                                  poseSwitch: _awake
-                                      ? const Duration(milliseconds: 200)
-                                      : const Duration(milliseconds: 400),
-                                  size: 110 * k),
-                            ),
-                          ),
-                          // The campfire in front.
-                          Positioned(
-                            left: p.dx + 70 * k,
-                            top: p.dy - 40 * k,
-                            width: 76 * k,
-                            height: 96 * k,
-                            // V24s: the fire grows as the companion wakes.
-                            child: AnimatedScale(
-                              scale: _awake ? 1.25 : 1,
-                              alignment: Alignment.bottomCenter,
-                              duration: AppMotion.orInstant(
-                                  context, const Duration(milliseconds: 300)),
-                              curve: AppMotion.pop,
-                              child: const Campfire(),
-                            ),
-                          ),
-                          // The bubble above the sleeping companion, below
-                          // the name chip and the capsule.
-                          // V24f: the dream bubble top left, as on the board
-                          // (its foot 120 pt above the companion's head at
-                          // 390 wide); V24: the speech bubble above the
-                          // companion. Never under the status bar.
-                          PositionedDirectional(
-                            start: offer == null
-                                ? math.max(16.0, p.dx - 120 * k)
-                                : 16,
-                            end: 16,
-                            top: math.max(
-                                safeTop + 12,
-                                offer == null
-                                    ? p.dy - 104 * k - 92 * width / 390
-                                    : p.dy - 104 * k - 122 * width / 390),
-                            child: Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 230),
-                                child: AnimatedSwitcher(
-                                  duration: AppMotion.orInstant(
-                                      context, AppMotion.base),
-                                  child: offer == null
-                                      ? SpeechBubble(
-                                          text: l10n.restBubble,
-                                          pointer: BubblePointer.bottomStart,
-                                          compact: true,
-                                        )
-                                      : _awake
-                                          ? SpeechBubble(
-                                              key: RestScene.awakeBubbleKey,
-                                              text: l10n.restAwake,
-                                              pointer:
-                                                  BubblePointer.bottomStart,
-                                              compact: true,
-                                            )
-                                          : offer.weakSpot == null
-                                              ? const SizedBox.shrink()
-                                              : _DreamBubble(
-                                                  key: RestScene.dreamKey,
-                                                  hero: widget.hero.name(l10n),
-                                                  spot: offer.weakSpot!),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ]);
-                      },
                     ),
                   ),
+                  // The status bar's shade (the board's 120 pt gradient).
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: 120 * u,
+                    child: const IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.sceneTopShade,
+                              Color(0x00000000),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // The warm light on the ground, under the camp.
+                  Positioned(
+                    key: RestScene.campGlowKey,
+                    left: fireLeft + fireWidth / 2 - glowWidth / 2,
+                    top: feet - glowHeight / 2,
+                    width: glowWidth,
+                    height: glowHeight,
+                    child: const CampGlow(),
+                  ),
+                  // The tent behind the companion.
+                  Positioned(
+                    left: compLeft + RestScene.tentLeftShare * s,
+                    top: compTop + RestScene.tentTopShare * s,
+                    width: RestScene.tentWidthShare * s,
+                    height: RestScene.tentHeightShare * s,
+                    child: Image.asset('assets/climb/objects/tent.webp',
+                        fit: BoxFit.contain, excludeFromSemantics: true),
+                  ),
+                  // The companion asleep at its step.
+                  Positioned(
+                    left: compLeft,
+                    top: compTop,
+                    width: s,
+                    height: s,
+                    child: AnimatedBuilder(
+                      animation: _hop,
+                      builder: (context, child) => Transform.translate(
+                          offset: Offset(
+                              0, -16 * k * math.sin(math.pi * _hop.value)),
+                          child: child),
+                      child: CompanionView(
+                          hero: widget.hero,
+                          mood:
+                              _awake ? CompanionMood.wave : CompanionMood.sleep,
+                          // V24f: a dream bubble instead of the Zzz.
+                          showProp: offer == null,
+                          poseSwitch: _awake
+                              ? const Duration(milliseconds: 200)
+                              : const Duration(milliseconds: 400),
+                          size: s),
+                    ),
+                  ),
+                  // The campfire at its front right, on the same ground.
+                  Positioned(
+                    left: fireLeft,
+                    top: fireBottom - fireHeight,
+                    width: fireWidth,
+                    height: fireHeight,
+                    // V24s: the fire grows as the companion wakes.
+                    child: AnimatedScale(
+                      scale: _awake ? 1.25 : 1,
+                      alignment: Alignment.bottomCenter,
+                      duration: AppMotion.orInstant(
+                          context, const Duration(milliseconds: 300)),
+                      curve: AppMotion.pop,
+                      child: const Campfire(),
+                    ),
+                  ),
+                  if (bubble != null)
+                    Positioned.fill(
+                      child: CustomSingleChildLayout(
+                        delegate: _AboveHead(
+                          foot: bubbleFoot,
+                          minTop: bubbleMinTop,
+                          start: bubbleStart,
+                          maxWidth: math.min(width - bubbleStart - 16,
+                              offer == null ? 230.0 : RestScene.dreamWidth * u),
+                          rtl: rtl,
+                        ),
+                        child: AnimatedSwitcher(
+                          duration:
+                              AppMotion.orInstant(context, AppMotion.base),
+                          layoutBuilder: (current, previous) => Stack(
+                            alignment: AlignmentDirectional.bottomStart,
+                            children: [
+                              ...previous,
+                              if (current != null) current,
+                            ],
+                          ),
+                          child: bubble,
+                        ),
+                      ),
+                    ),
                   if (offer == null)
                     PositionedDirectional(
                       key: RestScene.seeYouKey,
@@ -408,11 +523,13 @@ class _RestSceneState extends State<RestScene>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: panel.withValues(alpha: .82),
+                          color: c.nightTop.withValues(alpha: .82),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           l10n.restSeeYou(widget.name),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelLarge!
                               .withWeight(FontWeight.w800)
                               .copyWith(color: onPanel),
@@ -446,120 +563,37 @@ class _RestSceneState extends State<RestScene>
                 ),
                 child: Padding(
                   key: _sheetBoxKey,
-                  padding: EdgeInsets.fromLTRB(sheetPad, 18, sheetPad,
-                      _navClearance ?? media.padding.bottom + 16),
-                  child: offer != null
-                      ? _FreePanel(
+                  padding: EdgeInsets.fromLTRB(
+                      sheetPad, 14, sheetPad, math.max(0.0, bottomPad)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _RestHeader(
+                        key: RestScene.headerKey,
+                        ticks: [widget.testLine, widget.practiceLine],
+                        countdown: '$hh:$mm',
+                        countdownLabel: offer == null
+                            ? l10n.restNextDailyTest
+                            : l10n.restNextFreeTest,
+                        countdownSemantics: l10n.restCountdownSemantics(
+                            left.inHours, left.inMinutes % 60),
+                      ),
+                      if (offer != null) ...[
+                        const SizedBox(height: 10),
+                        _FreePanel(
                           offer: offer,
                           hero: widget.hero,
-                          testLine: widget.testLine,
-                          countdown: '$hh:$mm',
-                          countdownSemantics: l10n.restCountdownSemantics(
-                              left.inHours, left.inMinutes % 60),
                           awake: _awake,
                           onWake: _wake,
-                          reminder: widget.reminder,
-                          cardSlotKey: _cardSlotKey,
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [
-                              Icon(Icons.nightlight_round,
-                                  color: c.gold, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(l10n.restTitle,
-                                    style: theme.textTheme.titleLarge!
-                                        .withWeight(FontWeight.w900)
-                                        .copyWith(color: onPanel)),
-                              ),
-                            ]),
-                            const SizedBox(height: 2),
-                            Text(l10n.restBody,
-                                style: theme.textTheme.bodyMedium!.copyWith(
-                                    color: onPanel.withValues(alpha: .75))),
-                            const SizedBox(height: 12),
-                            Row(children: [
-                              Expanded(
-                                  child: _DoneTile(
-                                      title: l10n.featureDailyTest,
-                                      line: widget.testLine)),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                  child: _DoneTile(
-                                      title: l10n.restPracticeTitle,
-                                      line: widget.practiceLine)),
-                            ]),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: .08),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: Row(children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n
-                                            .restNextTest(step + 1)
-                                            .toUpperCase(),
-                                        style: theme.textTheme.labelMedium!
-                                            .withWeight(FontWeight.w900)
-                                            .copyWith(
-                                                color: onPanel.withValues(
-                                                    alpha: .7),
-                                                letterSpacing: 1.1),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      StepBar(
-                                        segments: [
-                                          for (var i = 0; i < 10; i++)
-                                            i <
-                                                    (step % 10 == 0 && step > 0
-                                                        ? 10
-                                                        : step % 10)
-                                                ? c.gold
-                                                : null,
-                                        ],
-                                        track:
-                                            Colors.white.withValues(alpha: .18),
-                                        height: 6,
-                                        gap: 4,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Semantics(
-                                  label: l10n.restCountdownSemantics(
-                                      left.inHours, left.inMinutes % 60),
-                                  excludeSemantics: true,
-                                  child: Text(
-                                    '$hh:$mm', // l10n-guard: a time span of numbers
-                                    textScaler: TextScaler.noScaling,
-                                    style: theme.textTheme.headlineMedium!
-                                        .withWeight(FontWeight.w900)
-                                        .copyWith(
-                                            color: onPanel,
-                                            fontFeatures: const [
-                                          FontFeature.tabularFigures()
-                                        ]),
-                                  ),
-                                ),
-                              ]),
-                            ),
-                            if (widget.reminder != null) ...[
-                              const SizedBox(height: 10),
-                              widget.reminder!,
-                            ],
-                            SizedBox(key: _endKey, height: 0),
-                          ],
                         ),
+                      ],
+                      if (widget.reminder != null) ...[
+                        const SizedBox(height: 10),
+                        widget.reminder!,
+                      ],
+                      SizedBox(key: _endKey, height: 0),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -570,58 +604,238 @@ class _RestSceneState extends State<RestScene>
   }
 }
 
-class _DoneTile extends StatelessWidget {
-  final String title;
-  final String line;
-  const _DoneTile({required this.title, required this.line});
+/// Places a bubble with its foot at [foot] (its top never above [minTop])
+/// and its start edge at [start] from the start side.
+class _AboveHead extends SingleChildLayoutDelegate {
+  final double foot;
+  final double minTop;
+  final double start;
+  final double maxWidth;
+  final bool rtl;
+  const _AboveHead(
+      {required this.foot,
+      required this.minTop,
+      required this.start,
+      required this.maxWidth,
+      required this.rtl});
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
+      BoxConstraints(maxWidth: math.max(0.0, maxWidth));
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final x = rtl ? size.width - start - childSize.width : start;
+    final y = math.max(minTop, foot - childSize.height);
+    return Offset(x, y);
+  }
+
+  @override
+  bool shouldRelayout(_AboveHead old) =>
+      old.foot != foot ||
+      old.minTop != minTop ||
+      old.start != start ||
+      old.maxWidth != maxWidth ||
+      old.rtl != rtl;
+}
+
+/// The sheet's header (V24f v12, also V24): the moon, "All done for today"
+/// with two small done ticks under it, and the countdown on the right.
+class _RestHeader extends StatelessWidget {
+  final List<String> ticks;
+  final String countdown;
+  final String countdownLabel;
+  final String countdownSemantics;
+  const _RestHeader({
+    super.key,
+    required this.ticks,
+    required this.countdown,
+    required this.countdownLabel,
+    required this.countdownSemantics,
+  });
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = context.l10n;
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: .12)),
+    const onPanel = Colors.white;
+    final muted = onPanel.withValues(alpha: .72);
+    Widget tick(String text) => Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 15,
+            height: 15,
+            decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
+            child: const Icon(Icons.check_rounded, size: 11, color: onPanel),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium!
+                    .withWeight(FontWeight.w800)
+                    .copyWith(color: muted)),
+          ),
+        ]);
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Icon(Icons.nightlight_round, color: c.gold, size: 20),
       ),
-      child: Row(children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
-          child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.restTitle,
+                style: theme.textTheme.titleMedium!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(color: onPanel, height: 1.1)),
+            const SizedBox(height: 4),
+            Wrap(spacing: 10, runSpacing: 4, children: [
+              for (final t in ticks) tick(t),
+            ]),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  maxLines: 1,
+      ),
+      const SizedBox(width: 10),
+      Semantics(
+        label: countdownSemantics,
+        excludeSemantics: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              countdown, // l10n-guard: a time span of numbers
+              textScaler: TextScaler.noScaling,
+              style: theme.textTheme.titleLarge!
+                  .withWeight(FontWeight.w900)
+                  .copyWith(
+                      color: onPanel,
+                      height: 1.1,
+                      fontFeatures: const [FontFeature.tabularFigures()]),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Text(countdownLabel,
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall!
-                      .withWeight(FontWeight.w900)
-                      .copyWith(color: Colors.white)),
-              Text(line,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium!
-                      .copyWith(color: Colors.white.withValues(alpha: .7))),
-            ],
+                  style: theme.textTheme.labelSmall!
+                      .withWeight(FontWeight.w800)
+                      .copyWith(color: muted)),
+            ),
+          ],
+        ),
+      ),
+    ]);
+  }
+}
+
+/// The warm light on the ground under the camp (the board's 140 × 74
+/// glow at S = 84): breathes 1.6 s (`gl-glowpulse`), still under Reduce
+/// Motion.
+class CampGlow extends StatefulWidget {
+  const CampGlow({super.key});
+
+  @override
+  State<CampGlow> createState() => _CampGlowState();
+}
+
+class _CampGlowState extends State<CampGlow>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context) && _t == null) {
+      _t = AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 1600))
+        ..repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget glow(double p) {
+      final wave = (1 - math.cos(2 * math.pi * p)) / 2;
+      return Opacity(
+        opacity: .55 + .3 * wave,
+        child: Transform.scale(
+          scale: 1 + .08 * wave,
+          child: const DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [
+                AppColors.fireGround,
+                Color(0x00FFAA3C),
+              ]),
+            ),
           ),
         ),
-      ]),
+      );
+    }
+
+    final t = _t;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        // An oval: the circle stretched to the box.
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox.square(
+            dimension: 100,
+            child: t == null
+                ? glow(0)
+                : AnimatedBuilder(
+                    animation: t, builder: (context, _) => glow(t.value)),
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// The campfire: the logs image with two flame layers flickering in
-/// opposite phase (0.5 s and 0.38 s), sparks rising (1.4 s) and a warm
-/// ground light breathing (1.6 s). Still under Reduce Motion.
+/// The campfire (V24f v12): the logs image (logs on a ring of stones) with
+/// the flame standing in the middle of the pile — two layers, an orange
+/// one (yellow at its heart, red at its rim, a soft orange halo) and a pale
+/// yellow one inside, flickering in opposite phase (`gl-flame`, 0.5 s and
+/// 0.38 s) — and three sparks rising (1.4 s). Its box is the board's
+/// 56 × 66: the flame is about 40 % of the companion's height. Still under
+/// Reduce Motion.
 class Campfire extends StatefulWidget {
   const Campfire({super.key});
+
+  /// The board's box and its parts (px at S = 84).
+  static const boxWidth = 56.0;
+  static const boxHeight = 66.0;
+  static const logsLeft = 2.0;
+  static const logsWidth = 52.0;
+  static const logsHeight = 39.0;
+
+  /// The log pile's lowest pixel in `campfire_logs.webp` (270 of 384 rows;
+  /// measured on its saturated pixels): the logs' base, which stands on
+  /// the companion's foot line. The stones' ring reaches lower, in front.
+  static const pileBase = 270 / 384;
+
+  /// From the companion's feet to the fire box's foot, a share of S.
+  static const pileBaseFromFoot = logsHeight * (1 - pileBase) / 84;
+
+  /// The flame: its base (the pile's middle) above the box's foot, its
+  /// size; the flame is 40 % of the companion's height (SPEC v12).
+  static const flameBase = 18.0;
+  static const flameWidth = 26.0;
+  static const flameHeight = .4 * 84;
+  static const heartBase = 20.0;
+  static const heartWidth = 12.0;
+  static const heartHeight = 18.0;
 
   @override
   State<Campfire> createState() => _CampfireState();
@@ -635,7 +849,8 @@ class _CampfireState extends State<Campfire>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (AppMotion.loopsOn(context) && _t == null) {
-      // One clock for every layer: 5.6 s holds whole cycles of each.
+      // One clock for every layer: 5.6 s holds whole cycles of each (0.5,
+      // 0.38 ≈ 5.6 / 15 and 1.4).
       _t = AnimationController(
           vsync: this, duration: const Duration(milliseconds: 5600))
         ..repeat();
@@ -650,21 +865,25 @@ class _CampfireState extends State<Campfire>
 
   @override
   Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    Widget paint(double seconds) => CustomPaint(
-          painter: _FirePainter(
-              seconds: seconds, flame: c.orange, core: c.gold, glow: c.orange),
-          foregroundPainter:
-              _FlamePainter(seconds: seconds, flame: c.orange, core: c.gold),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: FractionallySizedBox(
-              widthFactor: 1,
-              heightFactor: .5,
-              child: Image.asset('assets/ui/campfire_logs.webp',
-                  fit: BoxFit.contain, excludeFromSemantics: true),
-            ),
-          ),
+    Widget paint(double seconds) => LayoutBuilder(
+          builder: (context, box) {
+            final x = box.maxWidth / Campfire.boxWidth;
+            final y = box.maxHeight / Campfire.boxHeight;
+            return Stack(clipBehavior: Clip.none, children: [
+              Positioned(
+                left: Campfire.logsLeft * x,
+                bottom: 0,
+                width: Campfire.logsWidth * x,
+                height: Campfire.logsHeight * y,
+                child: Image.asset('assets/ui/campfire_logs.webp',
+                    fit: BoxFit.contain, excludeFromSemantics: true),
+              ),
+              Positioned.fill(
+                child: CustomPaint(
+                    painter: _FlamePainter(seconds: seconds, x: x, y: y)),
+              ),
+            ]);
+          },
         );
     final t = _t;
     return ExcludeSemantics(
@@ -676,81 +895,87 @@ class _CampfireState extends State<Campfire>
   }
 }
 
-/// The ground light and the rising sparks, under the logs.
-class _FirePainter extends CustomPainter {
+/// The flame's two layers and the sparks, in the board's 56 × 66 box
+/// scaled by [x] and [y].
+class _FlamePainter extends CustomPainter {
   final double seconds;
-  final Color flame;
-  final Color core;
-  final Color glow;
-  _FirePainter(
-      {required this.seconds,
-      required this.flame,
-      required this.core,
-      required this.glow});
+  final double x;
+  final double y;
+  _FlamePainter({required this.seconds, required this.x, required this.y});
+
+  /// `gl-flame` at phase [p]: scaleY 1 → 1.12 → .92 → 1 and scaleX
+  /// 1 → .94 → 1.05 → 1 (at 30 % and 60 %).
+  static (double, double) _flicker(double p) {
+    double lerp(double a, double b, double t) => a + (b - a) * t;
+    if (p < .3) {
+      final t = p / .3;
+      return (lerp(1, .94, t), lerp(1, 1.12, t));
+    }
+    if (p < .6) {
+      final t = (p - .3) / .3;
+      return (lerp(.94, 1.05, t), lerp(1.12, .92, t));
+    }
+    final t = (p - .6) / .4;
+    return (lerp(1.05, 1, t), lerp(.92, 1, t));
+  }
+
+  /// The board's flame shape: rounded, fuller at the foot
+  /// (`border-radius: 50% 50% 42% 42% / 60% 60% 40% 40%`).
+  static RRect _shape(Rect r) => RRect.fromRectAndCorners(r,
+      topLeft: Radius.elliptical(r.width * .5, r.height * .6),
+      topRight: Radius.elliptical(r.width * .5, r.height * .6),
+      bottomLeft: Radius.elliptical(r.width * .42, r.height * .4),
+      bottomRight: Radius.elliptical(r.width * .42, r.height * .4));
 
   @override
   void paint(Canvas canvas, Size size) {
-    final breathe = .75 + .25 * math.sin(seconds / 1.6 * 2 * math.pi);
-    final base = Offset(size.width / 2, size.height * .82);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: base,
-            width: size.width * 1.6 * breathe,
-            height: size.height * .35 * breathe),
+    final cx = size.width / 2;
+    // The outer flame.
+    final (ax, ay) = _flicker((seconds / .5) % 1.0);
+    final ow = Campfire.flameWidth * x * ax;
+    final oh = Campfire.flameHeight * y * ay;
+    final ob = size.height - Campfire.flameBase * y;
+    final outer = Rect.fromLTWH(cx - ow / 2, ob - oh, ow, oh);
+    canvas.drawRRect(
+        _shape(outer),
         Paint()
-          ..shader = RadialGradient(colors: [
-            glow.withValues(alpha: .45),
-            glow.withValues(alpha: 0),
-          ]).createShader(Rect.fromCenter(
-              center: base,
-              width: size.width * 1.6,
-              height: size.height * .35)));
-    for (var i = 0; i < 4; i++) {
-      final p = ((seconds + i * .35) / 1.4) % 1.0;
-      final x = size.width / 2 + math.sin((p + i) * 6) * size.width * .12;
-      final y = size.height * .55 - p * size.height * .6;
+          ..color = AppColors.fireHalo
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 * x));
+    canvas.drawRRect(
+        _shape(outer),
+        Paint()
+          ..shader = const RadialGradient(
+            center: Alignment(0, .5),
+            radius: 1.15,
+            colors: [AppColors.fireCore, AppColors.fireMid, AppColors.fireRim],
+            stops: [0, .45, 1],
+          ).createShader(outer));
+    // The heart, in the opposite phase.
+    final (bx, by) = _flicker(1 - (seconds / .38) % 1.0);
+    final hw = Campfire.heartWidth * x * bx;
+    final hh = Campfire.heartHeight * y * by;
+    final hb = size.height - Campfire.heartBase * y;
+    canvas.drawOval(Rect.fromLTWH(cx - hw / 2, hb - hh, hw, hh),
+        Paint()..color = AppColors.fireHeart);
+    // Three sparks (`gl-zz2`, 1.4 s, 0.45 s apart).
+    for (var i = 0; i < 3; i++) {
+      final p = ((seconds - i * .45) / 1.4) % 1.0;
+      final opacity = p < .3 ? p / .3 : 1 - (p - .3) / .7;
+      final r = 1.5 * x * (.6 + .5 * p);
+      final at = Offset(
+          (21.5 + 7 * i + 14 * p) * x, size.height - (51.5 + 30 * p) * y);
       canvas.drawCircle(
-          Offset(x, y), 1.6, Paint()..color = core.withValues(alpha: 1 - p));
+          at,
+          r,
+          Paint()
+            ..color =
+                AppColors.fireSpark.withValues(alpha: opacity.clamp(0.0, 1.0)));
     }
   }
 
   @override
-  bool shouldRepaint(_FirePainter old) => old.seconds != seconds;
-}
-
-/// The flame drawn on top of the logs, its base in the middle of the pile.
-class _FlamePainter extends CustomPainter {
-  final double seconds;
-  final Color flame;
-  final Color core;
-  _FlamePainter(
-      {required this.seconds, required this.flame, required this.core});
-
-  Path _flame(Offset base, double w, double h) => Path()
-    ..moveTo(base.dx - w / 2, base.dy)
-    ..quadraticBezierTo(
-        base.dx - w * .6, base.dy - h * .55, base.dx, base.dy - h)
-    ..quadraticBezierTo(
-        base.dx + w * .6, base.dy - h * .55, base.dx + w / 2, base.dy)
-    ..close();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final base = Offset(size.width / 2, size.height * .78);
-    final a = math.sin(seconds / .5 * 2 * math.pi);
-    final b = -math.sin(seconds / .38 * 2 * math.pi);
-    canvas.drawPath(
-        _flame(
-            base, size.width * (.46 + .04 * a), size.height * (.62 + .06 * a)),
-        Paint()..color = flame);
-    canvas.drawPath(
-        _flame(
-            base, size.width * (.26 + .03 * b), size.height * (.4 + .05 * b)),
-        Paint()..color = core);
-  }
-
-  @override
-  bool shouldRepaint(_FlamePainter old) => old.seconds != seconds;
+  bool shouldRepaint(_FlamePainter old) =>
+      old.seconds != seconds || old.x != x || old.y != y;
 }
 
 /// V24f's offer (SPEC §1.15): what the free users' rest scene says and does.
@@ -899,40 +1124,28 @@ class _DreamBubbleState extends State<_DreamBubble>
   }
 }
 
-/// V24f's sheet: the "All done for today" header with two done ticks and
-/// the countdown to the next free Daily Test, then the Premium card: navy
-/// to plum, a thin gold border and a slow glint; "PREMIUM" and "Not
-/// sleepy yet?", "Keep practising today", five mini tickets (one used,
-/// four locked, popping in 60 ms apart), the free and Premium allowances,
-/// today's weak spot, and "Wake <Hero> up". The card slides up 300 ms after
-/// the scene; it glows while the companion wakes (V24s).
+/// V24f's Premium card (v12, compact): navy to plum, a thin gold border and
+/// a slow glint; "Keep practising today" with the PREMIUM chip on one row,
+/// five mini tickets (one used, four locked, popping in 60 ms apart), the
+/// free and Premium allowances, today's weak spot and the 48 pt "Wake <Hero>
+/// up". The card slides up 300 ms after the scene; it glows while the
+/// companion wakes (V24s).
 class _FreePanel extends StatelessWidget {
   final RestOffer offer;
   final Avatar hero;
-  final String testLine;
-  final String countdown;
-  final String countdownSemantics;
   final bool awake;
   final VoidCallback onWake;
 
-  /// V24f's "Remind me tomorrow" row, under the Premium card (the board).
-  final Widget? reminder;
+  static const cardPadding = EdgeInsets.fromLTRB(14, 12, 14, 14);
 
-  /// Holds the card's slot (INTEGRATE 3a: the scene is fitted from it).
-  final Key? cardSlotKey;
-
-  static const cardPadding = EdgeInsets.fromLTRB(16, 14, 16, 16);
+  /// The board's button height (v12).
+  static const buttonHeight = 48.0;
 
   const _FreePanel({
     required this.offer,
     required this.hero,
-    required this.testLine,
-    required this.countdown,
-    required this.countdownSemantics,
     required this.awake,
     required this.onWake,
-    this.reminder,
-    this.cardSlotKey,
   });
 
   @override
@@ -943,30 +1156,13 @@ class _FreePanel extends StatelessWidget {
     final reduced = AppMotion.reduced(context);
     const onPanel = Colors.white;
     final muted = onPanel.withValues(alpha: .72);
-    Widget tick(String text) => Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
-            child: const Icon(Icons.check_rounded, size: 12, color: onPanel),
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium!
-                    .withWeight(FontWeight.w800)
-                    .copyWith(color: muted)),
-          ),
-        ]);
     final spot = offer.weakSpot;
     final days = offer.trialDays;
     final card = AnimatedContainer(
       key: RestScene.premiumCardKey,
       duration: AppMotion.orInstant(context, AppMotion.base),
       clipBehavior: Clip.antiAlias,
-      padding: _FreePanel.cardPadding,
+      padding: cardPadding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         gradient: LinearGradient(
@@ -988,70 +1184,64 @@ class _FreePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
+              Expanded(
+                child: Text(l10n.restKeepPractising,
+                    style: theme.textTheme.titleMedium!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: onPanel, height: 1.1)),
+              ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                     color: c.gold, borderRadius: BorderRadius.circular(999)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.auto_awesome_rounded, size: 12, color: c.onOrange),
                   const SizedBox(width: 4),
-                  Text(l10n.featurePremium.toUpperCase(),
+                  Text(upperCaseFor(context, l10n.featurePremium),
                       style: theme.textTheme.labelSmall!
                           .withWeight(FontWeight.w900)
-                          .copyWith(color: c.onOrange, letterSpacing: .8)),
+                          .copyWith(color: c.onOrange, letterSpacing: 1)),
                 ]),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(l10n.restNotSleepy,
-                    style: theme.textTheme.labelLarge!
-                        .withWeight(FontWeight.w800)
-                        .copyWith(color: muted)),
               ),
             ]),
             const SizedBox(height: 8),
-            Text(l10n.restKeepPractising,
-                style: theme.textTheme.titleLarge!
-                    .withWeight(FontWeight.w900)
-                    .copyWith(color: onPanel)),
-            const SizedBox(height: 10),
             Semantics(
               label: l10n.restFreeVsPremium(
                   StorageService.freeDailyPracticeLimit,
                   StorageService.dailySessionLimit),
               excludeSemantics: true,
-              child: Row(children: [
-                for (var i = 0; i < StorageService.dailySessionLimit; i++) ...[
-                  if (i > 0) const SizedBox(width: 6),
-                  Expanded(
-                    child: TweenAnimationBuilder<double>(
-                      key: RestScene.ticketKey(i),
-                      tween: Tween(begin: reduced ? 1 : 0, end: 1),
-                      duration: reduced
-                          ? Duration.zero
-                          : AppMotion.base + AppMotion.stagger * (i + 5),
-                      curve: Interval(
-                          (AppMotion.stagger * (i + 5)).inMilliseconds /
-                              (AppMotion.base + AppMotion.stagger * (i + 5))
-                                  .inMilliseconds,
-                          1,
-                          curve: AppMotion.pop),
-                      builder: (context, t, child) =>
-                          Transform.scale(scale: t, child: child),
-                      child: i < StorageService.freeDailyPracticeLimit
-                          ? _MiniTicket.used(l10n.restTicketUsedStub)
-                          : const _MiniTicket.locked(),
-                    ),
+              child: Wrap(spacing: 6, runSpacing: 6, children: [
+                for (var i = 0; i < StorageService.dailySessionLimit; i++)
+                  TweenAnimationBuilder<double>(
+                    key: RestScene.ticketKey(i),
+                    tween: Tween(begin: reduced ? 1 : 0, end: 1),
+                    duration: reduced
+                        ? Duration.zero
+                        : AppMotion.base + AppMotion.stagger * (i + 5),
+                    curve: Interval(
+                        (AppMotion.stagger * (i + 5)).inMilliseconds /
+                            (AppMotion.base + AppMotion.stagger * (i + 5))
+                                .inMilliseconds,
+                        1,
+                        curve: AppMotion.pop),
+                    builder: (context, t, child) =>
+                        Transform.scale(scale: t, child: child),
+                    child: i < StorageService.freeDailyPracticeLimit
+                        ? _MiniTicket.used(
+                            upperCaseFor(context, l10n.restTicketUsedStub))
+                        : const _MiniTicket.locked(),
                   ),
-                ],
               ]),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
                 l10n.restFreeVsPremium(StorageService.freeDailyPracticeLimit,
                     StorageService.dailySessionLimit),
-                style: theme.textTheme.labelMedium!.copyWith(color: muted)),
-            const SizedBox(height: 8),
+                style: theme.textTheme.labelSmall!
+                    .withWeight(FontWeight.w700)
+                    .copyWith(color: muted)),
+            const SizedBox(height: 6),
             Text.rich(
               TextSpan(
                 children: spot == null
@@ -1061,9 +1251,9 @@ class _FreePanel extends StatelessWidget {
               ),
               style: theme.textTheme.bodyMedium!
                   .withWeight(FontWeight.w800)
-                  .copyWith(color: onPanel),
+                  .copyWith(color: onPanel, height: 1.3),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             // While the companion wakes the button stays orange (V24s) but
             // takes no second tap.
             IgnorePointer(
@@ -1073,6 +1263,7 @@ class _FreePanel extends StatelessWidget {
                 label: days == null
                     ? l10n.restWakeUp(hero.name(l10n))
                     : l10n.restWakeUpTrial(hero.name(l10n), days),
+                height: buttonHeight,
                 tone: ButtonTone.orange,
                 trailingIcon: Icons.arrow_forward_rounded,
                 shine: true,
@@ -1084,77 +1275,19 @@ class _FreePanel extends StatelessWidget {
         ),
       ]),
     );
-    // The sheet itself (its colour, corners and padding) is the scene's.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Icon(Icons.nightlight_round, color: c.gold, size: 20),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.restTitle,
-                    style: theme.textTheme.titleLarge!
-                        .withWeight(FontWeight.w900)
-                        .copyWith(color: onPanel)),
-                const SizedBox(height: 4),
-                Wrap(spacing: 12, runSpacing: 4, children: [
-                  tick(testLine),
-                  tick(l10n.restFreeTicketUsed),
-                ]),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Semantics(
-            label: countdownSemantics,
-            excludeSemantics: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  countdown,
-                  textScaler: TextScaler.noScaling,
-                  style: theme.textTheme.headlineSmall!
-                      .withWeight(FontWeight.w900)
-                      .copyWith(
-                          color: onPanel,
-                          fontFeatures: const [FontFeature.tabularFigures()]),
-                ),
-                Text(l10n.restNextFreeTest,
-                    style: theme.textTheme.labelSmall!
-                        .withWeight(FontWeight.w700)
-                        .copyWith(color: muted)),
-              ],
-            ),
-          ),
-        ]),
-        const SizedBox(height: 14),
-        // The card slides up 300 ms after the scene.
-        TweenAnimationBuilder<double>(
-          key: cardSlotKey,
-          tween: Tween(begin: reduced ? 1 : 0, end: 1),
-          duration: reduced
-              ? Duration.zero
-              : const Duration(milliseconds: 300) + AppMotion.slow,
-          curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
-          builder: (context, t, child) => Opacity(
-            opacity: t,
-            child: Transform.translate(
-                offset: Offset(0, 24 * (1 - t)), child: child),
-          ),
-          child: card,
-        ),
-        if (reminder != null) ...[
-          const SizedBox(height: 12),
-          reminder!,
-        ],
-      ],
+    // The card slides up 300 ms after the scene.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: reduced ? 1 : 0, end: 1),
+      duration: reduced
+          ? Duration.zero
+          : const Duration(milliseconds: 300) + AppMotion.slow,
+      curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child:
+            Transform.translate(offset: Offset(0, 24 * (1 - t)), child: child),
+      ),
+      child: card,
     );
   }
 }
@@ -1171,7 +1304,8 @@ class _MiniTicket extends StatelessWidget {
     final c = AppColors.of(context);
     final used = usedLabel != null;
     return SizedBox(
-      height: 34,
+      width: 50,
+      height: 30,
       child: used
           ? CustomPaint(
               painter:

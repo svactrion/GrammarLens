@@ -3760,32 +3760,6 @@
   "@restTitle": {
     "description": "The rest scene (V24): the panel's title."
   },
-  "restBody": "Your buddy is resting until tomorrow.",
-  "@restBody": {
-    "description": "The rest scene (V24): under the panel's title."
-  },
-  "restPracticeTitle": "Practice",
-  "@restPracticeTitle": {
-    "description": "The rest scene (V24): the practice tile's title."
-  },
-  "restTestLine": "{correct}/{total} · +{points} points",
-  "@restTestLine": {
-    "description": "The rest scene (V24): the Daily Test tile's line.",
-    "placeholders": {
-      "correct": {
-        "type": "int",
-        "example": "4"
-      },
-      "total": {
-        "type": "int",
-        "example": "5"
-      },
-      "points": {
-        "type": "int",
-        "example": "9"
-      }
-    }
-  },
   "restSessionsLine": "{done}/{total} sessions",
   "@restSessionsLine": {
     "description": "The rest scene (V24), Premium: the practice tile's line.",
@@ -3797,20 +3771,6 @@
       "total": {
         "type": "int",
         "example": "5"
-      }
-    }
-  },
-  "restTicketUsed": "Ticket used",
-  "@restTicketUsed": {
-    "description": "The rest scene (V24), free: the practice tile's line."
-  },
-  "restNextTest": "Next Daily Test · step {step}",
-  "@restNextTest": {
-    "description": "The rest scene (V24): above the countdown (uppercased by the app). 'Daily Test' is the feature name.",
-    "placeholders": {
-      "step": {
-        "type": "int",
-        "example": "2"
       }
     }
   },
@@ -4761,9 +4721,9 @@
   "@restNextFreeTest": {
     "description": "V24f: under the countdown to midnight."
   },
-  "restNotSleepy": "Not sleepy yet?",
-  "@restNotSleepy": {
-    "description": "V24f: beside the PREMIUM chip on the Premium card."
+  "restNextDailyTest": "next Daily Test",
+  "@restNextDailyTest": {
+    "description": "V24 (Premium) rest scene header, under the countdown on the right: the time until the next Daily Test."
   },
   "restKeepPractising": "Keep practising today",
   "@restKeepPractising": {

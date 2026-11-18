@@ -297,6 +297,19 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// V24f's Premium card runs from [navy] to this plum (both themes).
   static const premiumPlum = Color(0xFF2A1E5C);
+
+  /// The rest scene's campfire (V24f v12; the same in both themes, the
+  /// scene is a night scene): the outer flame's heart, middle and rim, its
+  /// soft halo, the pale inner flame, the sparks, and the warm light on the
+  /// ground (60 %); the shade under the status bar (55 %).
+  static const fireCore = Color(0xFFFFE07A);
+  static const fireMid = Color(0xFFFF9A2A);
+  static const fireRim = Color(0xFFFF5A1F);
+  static const fireHalo = Color(0xE6FF8C28);
+  static const fireHeart = Color(0xFFFFF1B0);
+  static const fireSpark = Color(0xFFFFC23C);
+  static const fireGround = Color(0x99FFAA3C);
+  static const sceneTopShade = Color(0x8C140E1E);
   static const onSilverSoft = Color(0xFF4B5563);
   static const bronzeSoft = Color(0xFFF6E7D8);
   static const onBronzeSoft = Color(0xFF8A5A2B);

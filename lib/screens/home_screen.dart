@@ -1410,16 +1410,15 @@ class _HomeScreenState extends State<HomeScreen>
               clock: widget.clock,
               capsule: capsule,
               reminder: RestReminderRow(controller: _reminders, hero: hero),
-              testLine: _hasFullAccess
-                  ? l10n.restTestLine(completion.correct,
-                      completion.results.length, todayPoints ?? 0)
-                  // V24f's done tick: "Daily Test 4/5".
-                  : l10n.restDailyTestDone(
-                      completion.correct, completion.results.length),
+              // The header's done ticks (v12, both scenes): "Daily Test
+              // 4/5", then the practice: "5/5 sessions" or "Free ticket
+              // used" (the points are on the capsule).
+              testLine: l10n.restDailyTestDone(
+                  completion.correct, completion.results.length),
               practiceLine: _hasFullAccess
                   ? l10n.restSessionsLine(
                       _sessionsToday, StorageService.dailySessionLimit)
-                  : l10n.restTicketUsed,
+                  : l10n.restFreeTicketUsed,
               // V24f (SPEC §1.15): free users' rest scene leads to Premium;
               // Premium users keep V24.
               offer: _hasFullAccess

@@ -37,6 +37,7 @@ Future<void> pumpFix3(WidgetTester tester, Widget home,
     double bottom = 34,
     Brightness brightness = Brightness.light,
     AppTextSize textSize = AppTextSize.medium,
+    Locale? locale,
     bool settle = true}) async {
   await loadFix3Fonts();
   tester.view.physicalSize = size * 3.0;
@@ -50,6 +51,7 @@ Future<void> pumpFix3(WidgetTester tester, Widget home,
       theme: buildAppTheme(brightness, textSize: textSize),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
       home: home,
     ),
   ));
@@ -57,8 +59,18 @@ Future<void> pumpFix3(WidgetTester tester, Widget home,
 }
 
 Future<void> fix3Capture(WidgetTester tester, String name,
-    {bool dark = false}) async {
-  if (Platform.environment['FIX3_CAPTURE'] != '1') return;
+        {bool dark = false}) =>
+    _capture(tester, name, dark: dark, round: 3);
+
+/// Fix round 4: the same, with `FIX4_CAPTURE=1`, into
+/// `build/fix4-captures/[dark/]`.
+Future<void> fix4Capture(WidgetTester tester, String name,
+        {bool dark = false}) =>
+    _capture(tester, name, dark: dark, round: 4);
+
+Future<void> _capture(WidgetTester tester, String name,
+    {required bool dark, required int round}) async {
+  if (Platform.environment['FIX${round}_CAPTURE'] != '1') return;
   await tester.runAsync(() async {
     for (final element in find.byType(Image).evaluate()) {
       await precacheImage((element.widget as Image).image, element);
@@ -66,11 +78,12 @@ Future<void> fix3Capture(WidgetTester tester, String name,
   });
   await tester.pump();
   await tester.runAsync(() async {
-    final render =
-        fix3Boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final render = fix3Boundary.currentContext!.findRenderObject()!
+        as RenderRepaintBoundary;
     final image = await render.toImage(pixelRatio: 2);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    final out = File('build/fix3-captures/${dark ? 'dark/' : ''}$name.png');
+    final out =
+        File('build/fix$round-captures/${dark ? 'dark/' : ''}$name.png');
     out.parent.createSync(recursive: true);
     out.writeAsBytesSync(bytes!.buffer.asUint8List());
   });
