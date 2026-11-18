@@ -314,6 +314,11 @@ class AppColors extends ThemeExtension<AppColors> {
   static const bronzeSoft = Color(0xFFF6E7D8);
   static const onBronzeSoft = Color(0xFF8A5A2B);
 
+  /// V23 v12's tier marks under the month's bar (light; dark uses
+  /// [onBronzeSoftDark] / [onSilverSoftDark], gold [goldText]).
+  static const bronzeMark = Color(0xFF9A6A3A);
+  static const silverMark = Color(0xFF6F7782);
+
   /// The same counters on dark surfaces (SY03, v11: soft fills become dark
   /// tints of their hue with light text; fix round 3, D).
   static const silverSoftDark = Color(0xFF2E323A);

@@ -254,7 +254,6 @@ const _sameIn = {
   'pt': {
     'tierBronze', // the same word in Portuguese
     'avatarPanda', // the same word in Portuguese
-    'medalGoalPoints', // "pts" is the Portuguese abbreviation too
     'medalThresholdPoints', // "pts" is the Portuguese abbreviation too
   },
 };

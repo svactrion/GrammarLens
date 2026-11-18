@@ -2081,24 +2081,6 @@
       }
     }
   },
-  "medalTopLabel": "Top medal ",
-  "@medalTopLabel": {
-    "description": "The progress card's goal line past Gold, before the medal's name (keep the trailing space)."
-  },
-  "medalNextLabel": "Next medal ",
-  "@medalNextLabel": {
-    "description": "The progress card's goal line, before the next medal's name (keep the trailing space)."
-  },
-  "medalGoalPoints": " / {goal} pts",
-  "@medalGoalPoints": {
-    "description": "The progress card's goal after the score (keep the leading space; 'pts' short for points).",
-    "placeholders": {
-      "goal": {
-        "type": "int",
-        "example": "180"
-      }
-    }
-  },
   "medalThresholdPoints": "{points} pts",
   "@medalThresholdPoints": {
     "description": "A medal's threshold on the progress card.",
@@ -2120,6 +2102,20 @@
       "max": {
         "type": "int",
         "example": "300"
+      }
+    }
+  },
+  "medalTierMark": "{tier} {points}",
+  "@medalTierMark": {
+    "description": "Profile's month progress card (V23 v12): a tier's mark under the 10-segment bar, at its place: the tier's name and its points threshold, e.g. 'Bronze 75'.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "75"
       }
     }
   },

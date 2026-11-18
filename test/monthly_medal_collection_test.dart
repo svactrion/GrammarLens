@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/app_colors.dart';
+import 'package:grammar_lens/widgets/score_capsule.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
@@ -22,6 +25,13 @@ import 'support/l10n_support.dart';
 /// numbers count up), a tap outside closes it. The running month's
 /// progress card takes every number from `MonthlyMedalRules`.
 void main() {
+  // The card's marks are measured in the app's font (fix round 4, V23 v12).
+  setUpAll(() async {
+    await (FontLoader('NunitoSans')
+          ..addFont(rootBundle.load('assets/fonts/NunitoSans-Variable.ttf')))
+        .load();
+  });
+
   Future<void> pumpCollection(
     WidgetTester tester, {
     double width = 320,
@@ -476,29 +486,29 @@ void main() {
         findsOneWidget);
   });
 
-  group('N9: the progress card', () {
+  // Fix round 4, item 4 (SPEC V23 v12): the title and "<mountain> · N
+  // active days", the score capsule at the top right, 10 segments filled by
+  // the month's points, the tier marks at their places, the monthly total.
+  group('N9 / V23 v12: the progress card', () {
     String text(WidgetTester tester, Key key) {
       final w = tester.widget(find.byKey(key));
       return w is Text ? (w.data ?? w.textSpan!.toPlainText()) : '';
     }
 
-    String goal(WidgetTester tester) => [
-          for (final t in tester.widgetList<Text>(find.descendant(
-              of: find.byKey(MonthlyProgressCard.goalKey),
-              matching: find.byType(Text))))
-            t.data ?? t.textSpan!.toPlainText()
-        ].join(' | ');
-
-    double bar(WidgetTester tester) => tester
-        .widget<LinearProgressIndicator>(find.descendant(
-            of: find.byKey(MonthlyProgressCard.cardKey),
-            matching: find.byType(LinearProgressIndicator)))
-        .value!;
+    double fill(WidgetTester tester, int i) {
+      final segment =
+          tester.getRect(find.byKey(MonthlyProgressCard.segmentKey(i)));
+      final filled = find.descendant(
+          of: find.byKey(MonthlyProgressCard.segmentKey(i)),
+          matching: find.byType(ColoredBox));
+      return tester.getRect(filled).width / segment.width;
+    }
 
     for (final (year, month) in [(2026, 11), (2027, 2)]) {
       testWidgets(
-          'the four states for $year-$month, every number from '
-          'MonthlyMedalRules, never a negative count', (tester) async {
+          '$year-$month: 0, mid-month and every tier passed: the segments, '
+          'the capsule, the marks and the total from MonthlyMedalRules',
+          (tester) async {
         int th(MedalTier t) => MonthlyMedalRules.threshold(year, month, t);
         final max = MonthlyMedalRules.maxScore(year, month);
         MonthlyMedalProgress at(int score) => MonthlyMedalProgress(
@@ -511,48 +521,55 @@ void main() {
               wrong: 0,
               skipped: 0,
             );
-        final cases = <int, (String, String, double)>{
-          // Before Bronze.
-          7: (
-            'Next medal Bronze | 7 / ${th(MedalTier.bronze)} pts',
-            '${th(MedalTier.bronze) - 7} points to your first monthly medal',
-            7 / th(MedalTier.bronze),
-          ),
-          // Bronze exactly: the next medal is Silver.
-          th(MedalTier.bronze): (
-            'Next medal Silver | ${th(MedalTier.bronze)} / '
-                '${th(MedalTier.silver)} pts',
-            'Bronze earned · ${th(MedalTier.silver) - th(MedalTier.bronze)} '
-                'points to Silver',
-            th(MedalTier.bronze) / th(MedalTier.silver),
-          ),
-          // Silver: the next is Gold.
-          th(MedalTier.silver) + 1: (
-            'Next medal Gold | ${th(MedalTier.silver) + 1} / '
-                '${th(MedalTier.gold)} pts',
-            'Silver earned · ${th(MedalTier.gold) - th(MedalTier.silver) - 1} '
-                'points to Gold',
-            (th(MedalTier.silver) + 1) / th(MedalTier.gold),
-          ),
-          // Gold and beyond: a completion line, nothing left.
-          max: (
-            'Top medal Gold | $max / $max pts',
-            "Gold earned. That's this month's top medal.",
-            1.0,
-          ),
-        };
-        for (final MapEntry(key: score, value: (g, toGo, value))
-            in cases.entries) {
+        for (final score in [
+          0,
+          max ~/ 6,
+          th(MedalTier.bronze),
+          th(MedalTier.silver) + 1,
+          th(MedalTier.gold),
+          max,
+        ]) {
           await pumpCollection(tester, width: 375, currentProgress: at(score));
-          expect(goal(tester), g, reason: '$score');
-          expect(text(tester, MonthlyProgressCard.toGoKey), toGo,
-              reason: '$score');
-          expect(bar(tester), closeTo(value, 1e-9), reason: '$score');
+          // The segments: score / max of ten, the last one partly.
+          for (var i = 0; i < MonthlyProgressCard.segments; i++) {
+            expect(fill(tester, i),
+                closeTo(MonthlyProgressCard.segmentFill(i, score, max), .02),
+                reason: '$score, segment $i');
+          }
+          final full = score * MonthlyProgressCard.segments ~/ max;
+          if (full > 0) expect(fill(tester, full - 1), closeTo(1, .02));
+          if (full < MonthlyProgressCard.segments && score % (max ~/ 10) == 0) {
+            expect(fill(tester, full), closeTo(0, .02));
+          }
+          // The capsule holds the points.
+          expect(
+              tester
+                  .widget<ScoreCapsule>(
+                      find.byKey(MonthlyProgressCard.pointsKey))
+                  .points,
+              score);
           expect(text(tester, MonthlyProgressCard.totalKey),
               'Monthly total: $score / $max points');
+          // The marks: "Bronze 75", each centred on its place under the bar
+          // (moved in only at the card's edges), in order.
+          final bar = tester.getRect(find.byKey(MonthlyProgressCard.barKey));
+          var lastRight = bar.left - 1;
           for (final tier in MedalTier.values) {
-            expect(text(tester, MonthlyProgressCard.thresholdKey(tier)),
-                '${th(tier)} pts');
+            final mark = find.byKey(MonthlyProgressCard.thresholdKey(tier));
+            expect(
+                text(tester, MonthlyProgressCard.thresholdKey(tier)),
+                '${tier.name[0].toUpperCase()}${tier.name.substring(1)} '
+                '${th(tier)}');
+            final rect = tester.getRect(mark);
+            final place = bar.left + th(tier) / max * bar.width;
+            expect(rect.top, greaterThan(bar.bottom));
+            expect(rect.left, greaterThan(lastRight));
+            expect(rect.left, greaterThanOrEqualTo(bar.left - .5));
+            expect(rect.right, lessThanOrEqualTo(bar.right + .5));
+            if (rect.left > bar.left + .5 && rect.right < bar.right - .5) {
+              expect(rect.center.dx, closeTo(place, 1), reason: '$tier');
+            }
+            lastRight = rect.right;
           }
           // No negative number anywhere on the card.
           for (final t in tester.widgetList<Text>(find.descendant(
@@ -561,38 +578,47 @@ void main() {
             expect(
                 (t.data ?? t.textSpan!.toPlainText()).contains('-'), isFalse);
           }
-          expect(
-              tester
-                  .widget<Text>(find
-                      .descendant(
-                          of: find.byKey(MonthlyProgressCard.pointsKey),
-                          matching: find.byType(Text))
-                      .first)
-                  .data,
-              '$score');
+          expect(tester.takeException(), isNull);
         }
       });
     }
 
     testWidgets(
-        'the month, theme and active days head it; the orange label holds '
-        'the points', (tester) async {
+        'the month, theme and active days head it; the capsule at the top '
+        'right; VoiceOver reads it whole', (tester) async {
       await pumpCollection(tester,
           width: 375,
           currentProgress: november(score: 80),
           themeIds: storedThemes);
       expect(find.text('November progress'), findsOneWidget);
       expect(find.text('Ember Peak · 6 active days'), findsOneWidget);
-      final label =
-          tester.widget<Container>(find.byKey(MonthlyProgressCard.pointsKey));
-      final context = tester.element(find.byKey(MonthlyProgressCard.pointsKey));
-      expect((label.decoration! as BoxDecoration).color,
-          Theme.of(context).colorScheme.primary);
+      final card = tester.getRect(find.byKey(MonthlyProgressCard.cardKey));
+      final capsule = tester.getRect(find.byKey(MonthlyProgressCard.pointsKey));
+      final title = tester.getRect(find.text('November progress'));
+      expect(capsule.right, closeTo(card.right - 16, 1));
+      expect(capsule.top, lessThan(title.bottom));
       expect(
           find.bySemanticsLabel(RegExp(r'^November progress, Ember Peak, '
               r'6 active days\. Next medal Silver, 80 of \d+ points\.')),
           findsOneWidget);
     });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('renders in ${brightness.name}, Arabic too', (tester) async {
+        await pumpCollection(tester,
+            width: 390,
+            brightness: brightness,
+            currentProgress: november(score: 120),
+            themeIds: storedThemes);
+        expect(tester.takeException(), isNull);
+        final c = AppColors.of(
+            tester.element(find.byKey(MonthlyProgressCard.cardKey)));
+        final bronze = tester.widget<Text>(
+            find.byKey(MonthlyProgressCard.thresholdKey(MedalTier.bronze)));
+        expect(bronze.style!.color,
+            MonthlyProgressCard.markColor(MedalTier.bronze, c, brightness));
+      });
+    }
 
     testWidgets('it sits under the shelf, as a card of its own',
         (tester) async {

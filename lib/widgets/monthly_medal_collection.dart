@@ -11,7 +11,7 @@ import '../motion.dart';
 import '../services/monthly_medal_rules.dart';
 import '../utils/haptics.dart';
 import 'medal_badge.dart';
-import 'medal_tier_color.dart';
+import 'score_capsule.dart';
 import '../theme.dart';
 import '../l10n/l10n.dart';
 
@@ -602,13 +602,15 @@ Future<void> showMedalDetail(BuildContext context,
 const _detailFlight = Duration(milliseconds: 350);
 
 /// N9: the running month's progress, a card of its own under the shelf.
-/// The month's points in an orange label; the next medal, the points
-/// towards it and its bar; how many points are left (never negative: the
-/// next tier comes from `MonthlyMedalRules.nextTier`, which is always above
-/// the score); the three thresholds; the month's total. Every number from
-/// `MonthlyMedalRules` and the progress, so no month's thresholds are
-/// assumed. Four states: before Bronze, Bronze reached (next Silver), Silver
-/// reached (next Gold), Gold reached (a completion line).
+/// Fix round 4 (SPEC V23 v12; the device still showed the old card, an
+/// orange points box, one bar and the tiers listed under it): "<Month>
+/// progress" and "<mountain> · N active days" on the left, the
+/// [ScoreCapsule] (the ring round the clay star, the points, "N to Bronze")
+/// at the top right, a bar of [segments] segments filled by the month's
+/// points, the tier marks under it at their positions ("Bronze 75 · Silver
+/// 150 · Gold 225") and "Monthly total: N / 300 points". Every number comes
+/// from `MonthlyMedalRules` and the progress, so no month's thresholds are
+/// assumed.
 class MonthlyProgressCard extends StatelessWidget {
   final MonthlyMedalProgress progress;
   final ClimbTheme theme;
@@ -617,17 +619,26 @@ class MonthlyProgressCard extends StatelessWidget {
       {super.key, required this.progress, required this.theme});
 
   static const cardKey = ValueKey('medal_progress_card');
+
+  /// The score capsule (top right).
   static const pointsKey = ValueKey('medal_progress_points');
-  static const goalKey = ValueKey('medal_progress_goal');
-  static const toGoKey = ValueKey('medal_progress_to_go');
+  static const barKey = ValueKey('medal_progress_bar');
   static const totalKey = ValueKey('medal_progress_total');
   static ValueKey<String> thresholdKey(MedalTier tier) =>
       ValueKey('medal_threshold_${tier.name}');
+  static ValueKey<String> segmentKey(int i) =>
+      ValueKey('medal_progress_segment_$i');
 
-  /// The bar's height.
-  static const barHeight = 9.0;
+  /// The board's bar: 10 segments, 12 pt tall, 5 apart.
+  static const segments = 10;
+  static const barHeight = 12.0;
+  static const segmentGap = 5.0;
 
-  /// The line under the bar for [progress].
+  /// How full segment [i] (0-based) is, 0–1, for [score] of [max].
+  static double segmentFill(int i, int score, int max) =>
+      max <= 0 ? 0 : (score / max * segments - i).clamp(0.0, 1.0).toDouble();
+
+  /// The line under the bar for [progress] (VoiceOver reads it).
   static String toGoLine(MonthlyMedalProgress progress, AppLocalizations l10n) {
     final reached = MonthlyMedalRules.tierFor(
         year: progress.year, month: progress.month, score: progress.score);
@@ -640,10 +651,22 @@ class MonthlyProgressCard extends StatelessWidget {
         reached.label(l10n), l10n.medalPoints(gap), tier.label(l10n));
   }
 
+  /// A tier mark's text colour (the board's metals, legible in dark).
+  static Color markColor(MedalTier tier, AppColors c, Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    return switch (tier) {
+      MedalTier.bronze =>
+        dark ? AppColors.onBronzeSoftDark : AppColors.bronzeMark,
+      MedalTier.silver =>
+        dark ? AppColors.onSilverSoftDark : AppColors.silverMark,
+      MedalTier.gold => c.goldText,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final scheme = t.colorScheme;
+    final c = AppColors.of(context);
     final p = progress;
     final l10n = context.l10n;
     final month = monthName(p.month, l10n);
@@ -652,17 +675,13 @@ class MonthlyProgressCard extends StatelessWidget {
       for (final tier in MedalTier.values)
         tier: MonthlyMedalRules.threshold(p.year, p.month, tier),
     };
-    // The goal: the next medal's threshold; past Gold, the month's maximum.
     final goal = next == null ? p.maxScore : thresholds[next.$1]!;
-    final value = next == null ? 1.0 : (p.score / goal).clamp(0.0, 1.0);
-    final muted = scheme.onSurfaceVariant;
-    final small = t.textTheme.labelSmall?.withWeight(FontWeight.w400);
     final days = l10n.medalActiveDays(p.activeDays);
     final toGo = toGoLine(p, l10n);
     final goalLine = next == null
         ? l10n.medalGoldReachedSemantics(p.score, p.maxScore)
         : l10n.medalNextSemantics(next.$1.label(l10n), p.score, goal);
-
+    final markStyle = t.textTheme.labelMedium!.withWeight(FontWeight.w800);
     return Card(
       key: cardKey,
       margin: EdgeInsets.zero,
@@ -682,134 +701,150 @@ class MonthlyProgressCard extends StatelessWidget {
             p.score,
             p.maxScore),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(17, 18, 17, 15),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
               Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(l10n.medalProgressTitle(month),
-                          style: t.textTheme.titleMedium?.copyWith(
-                              color: scheme.onSurface, letterSpacing: -.3)),
-                      const SizedBox(height: 4),
+                          style: t.textTheme.titleMedium!
+                              .withWeight(FontWeight.w900)
+                              .copyWith(color: c.text)),
+                      const SizedBox(height: 2),
                       Text(l10n.medalThemeDays(theme.title(l10n), days),
-                          style: small?.copyWith(color: muted)),
+                          style: t.textTheme.labelMedium!
+                              .withWeight(FontWeight.w600)
+                              .copyWith(color: c.muted)),
                     ]),
               ),
               const SizedBox(width: 12),
-              Container(
-                key: pointsKey,
-                constraints: const BoxConstraints(minWidth: 54),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-                decoration: BoxDecoration(
-                  color: scheme.primary,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${p.score}',
-                      style: t.textTheme.headlineMedium
-                          ?.copyWith(color: scheme.onPrimary, height: 1)),
-                  const SizedBox(height: 3),
-                  Text(l10n.medalPointsUnit(p.score),
-                      style: t.textTheme.labelSmall
-                          ?.withWeight(FontWeight.w800)
-                          .copyWith(color: scheme.onPrimary)),
-                ]),
-              ),
+              ScoreCapsule(
+                  key: pointsKey,
+                  points: p.score,
+                  year: p.year,
+                  month: p.month),
             ]),
-            const SizedBox(height: 18),
-            Wrap(
-              key: goalKey,
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 10,
-              runSpacing: 4,
-              children: [
-                Text.rich(
-                    TextSpan(children: [
-                      TextSpan(
-                          text: next == null
-                              ? l10n.medalTopLabel
-                              : l10n.medalNextLabel),
-                      TextSpan(
-                          text: next == null
-                              ? MedalTier.gold.label(l10n)
-                              : next.$1.label(l10n),
-                          style: TextStyle(color: scheme.onSurface)
-                              .withWeight(FontWeight.w800)),
-                    ]),
-                    style: t.textTheme.labelMedium
-                        ?.withWeight(FontWeight.w400)
-                        .copyWith(color: muted)),
-                Text.rich(
-                    TextSpan(children: [
-                      TextSpan(
-                          text: '${p.score}',
-                          style: TextStyle(color: scheme.onSurface)
-                              .withWeight(FontWeight.w800)),
-                      TextSpan(text: l10n.medalGoalPoints(goal)),
-                    ]),
-                    style: t.textTheme.labelMedium
-                        ?.withWeight(FontWeight.w400)
-                        .copyWith(color: muted)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(barHeight / 2),
-              child: LinearProgressIndicator(
-                value: value,
-                minHeight: barHeight,
-                color: scheme.primary,
-                backgroundColor: scheme.outlineVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(toGo,
-                key: toGoKey,
-                style: t.textTheme.labelMedium
-                    ?.withWeight(FontWeight.w400)
-                    .copyWith(color: muted)),
-            const SizedBox(height: 17),
-            Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
-            const SizedBox(height: 14),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final MapEntry(key: tier, value: v) in thresholds.entries)
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                          color: tier.color, shape: BoxShape.circle),
+            const SizedBox(height: 12),
+            // The board's 10 segments, each 30 points of a 300-point month,
+            // filled from the start; the last one partly.
+            Row(key: barKey, children: [
+              for (var i = 0; i < segments; i++) ...[
+                if (i > 0) const SizedBox(width: segmentGap),
+                Expanded(
+                  child: Container(
+                    key: segmentKey(i),
+                    height: barHeight,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: c.track,
+                      borderRadius: BorderRadius.circular(barHeight / 2),
                     ),
-                    const SizedBox(width: 6),
-                    Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(tier.label(l10n),
-                              style: t.textTheme.labelSmall
-                                  ?.withWeight(FontWeight.w800)
-                                  .copyWith(color: scheme.onSurface)),
-                          const SizedBox(height: 2),
-                          Text(l10n.medalThresholdPoints(v),
-                              key: thresholdKey(tier),
-                              style: small?.copyWith(color: muted)),
-                        ]),
-                  ]),
+                    child: FractionallySizedBox(
+                      alignment: AlignmentDirectional.centerStart,
+                      widthFactor: segmentFill(i, p.score, p.maxScore),
+                      child: ColoredBox(color: c.orange),
+                    ),
+                  ),
+                ),
               ],
-            ),
-            const SizedBox(height: 14),
+            ]),
+            const SizedBox(height: 6),
+            // The tier marks under the bar, each centred on its threshold's
+            // place (kept inside the card at the ends).
+            Builder(builder: (context) {
+              final rtl = Directionality.of(context) == TextDirection.rtl;
+              return SizedBox(
+                height: MediaQuery.textScalerOf(context)
+                        .scale(markStyle.fontSize ?? 12) *
+                    1.4,
+                child: CustomMultiChildLayout(
+                  delegate: _TierMarks(
+                    shares: [
+                      for (final tier in MedalTier.values)
+                        p.maxScore <= 0 ? 0 : thresholds[tier]! / p.maxScore,
+                    ],
+                    rtl: rtl,
+                  ),
+                  children: [
+                    for (final (i, tier) in MedalTier.values.indexed)
+                      LayoutId(
+                        id: i,
+                        child: Text(
+                          l10n.medalTierMark(
+                              tier.label(l10n), thresholds[tier]!),
+                          key: thresholdKey(tier),
+                          maxLines: 1,
+                          style: markStyle.copyWith(
+                              color: markColor(tier, c, t.brightness)),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
             Text(l10n.medalMonthlyTotal(p.score, p.maxScore),
-                key: totalKey, style: small?.copyWith(color: muted)),
+                key: totalKey,
+                style: t.textTheme.labelMedium!
+                    .withWeight(FontWeight.w600)
+                    .copyWith(color: c.muted)),
           ]),
         ),
       ),
     );
   }
+}
+
+/// Lays the tier marks out under the bar: each centred on its share of the
+/// width, moved in where it would leave the card, and never over the one
+/// before it.
+class _TierMarks extends MultiChildLayoutDelegate {
+  final List<double> shares;
+  final bool rtl;
+  _TierMarks({required this.shares, required this.rtl});
+
+  @override
+  void performLayout(Size size) {
+    var minLeft = 0.0;
+    final placed = <(int, Size, double)>[];
+    for (var i = 0; i < shares.length; i++) {
+      if (!hasChild(i)) continue;
+      final child = layoutChild(i, BoxConstraints.loose(size));
+      final share = rtl ? 1 - shares[i] : shares[i];
+      final centre = share * size.width;
+      placed.add((i, child, centre));
+    }
+    // In reading order (left to right on screen): each at its place, moved
+    // in at the card's edges and clear of the one before; if the last one
+    // then runs past the end, the row is pushed back from the end.
+    placed.sort((a, b) => a.$3.compareTo(b.$3));
+    final lefts = <double>[];
+    for (final (_, child, centre) in placed) {
+      var left = (centre - child.width / 2)
+          .clamp(0.0, math.max(0.0, size.width - child.width))
+          .toDouble();
+      left = math.max(left, minLeft);
+      lefts.add(left);
+      minLeft = left + child.width + gap;
+    }
+    var maxRight = size.width;
+    for (var k = placed.length - 1; k >= 0; k--) {
+      final width = placed[k].$2.width;
+      lefts[k] = math.max(0.0, math.min(lefts[k], maxRight - width));
+      maxRight = lefts[k] - gap;
+    }
+    for (var k = 0; k < placed.length; k++) {
+      positionChild(placed[k].$1, Offset(lefts[k], 0));
+    }
+  }
+
+  /// The least room between two marks.
+  static const gap = 6.0;
+
+  @override
+  bool shouldRelayout(_TierMarks old) =>
+      old.rtl != rtl || old.shares.join(',') != shares.join(',');
 }
