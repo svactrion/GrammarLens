@@ -142,6 +142,59 @@ void main() {
     });
   }
 
+  // FIX3 §4: the dark captures of a wrong answer and of V13b.
+  testWidgets('dark: V09\'s oops and V13b\'s cloud render', (tester) async {
+    final question = kDayZeroQuestions
+        .firstWhere((q) => q.item.type == PracticeItemType.fillInBlank);
+    await pumpFix3(
+      tester,
+      DailyTestScreen(
+        dailyTestService:
+            _Service(DailyTestSet(day: '2026-11-18', questions: [question])),
+        analyticsService: AnalyticsService(),
+        userName: 'Ada',
+        hero: Avatar.fox,
+        onFinished: (set, answers) {},
+        onExit: () {},
+      ),
+      size: const Size(402, 874),
+      top: 62,
+      brightness: Brightness.dark,
+    );
+    await tester.enterText(
+        find.byKey(QuestionView.answerFieldKey), 'something wrong');
+    await tester.pump();
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await fix3Capture(tester, 'V09-oops', dark: true);
+    await pumpFix3(
+      tester,
+      Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => showCompanionDialog(
+                context: context,
+                hero: Avatar.fox,
+                title: 'Leaving already, Ada?',
+                body: 'Your free trial is one tap away.',
+                primaryLabel: 'Start my free trial',
+                secondaryLabel: 'Continue with free',
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+      size: const Size(402, 874),
+      top: 62,
+      brightness: Brightness.dark,
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await fix3Capture(tester, 'V13b-cloud', dark: true);
+  });
+
   // One component for all three: V13b (premium_screen), R10 (the Daily
   // Test's and practice's leave dialog, the default sad mood) and R08's
   // reset (data_screen); each passes the sad mood.

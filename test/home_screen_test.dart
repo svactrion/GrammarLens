@@ -1771,6 +1771,26 @@ void main() {
                 tester,
                 '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
                 '${size.height.toInt()}-${textSize.name}');
+            // FIX3 §4: the dark captures at the five sizes (default text).
+            if (textSize == AppTextSize.medium &&
+                Platform.environment['FIX3_CAPTURE'] == '1') {
+              await pumpShell(tester,
+                  size: size,
+                  top: top,
+                  bottom: bottom,
+                  storage: storage,
+                  subs: premium
+                      ? _FakeSubscriptionService(hasAccess: true)
+                      : _FakeSubscriptionService(offering: _restOffering()),
+                  reminders: reminders,
+                  textSize: textSize,
+                  brightness: Brightness.dark);
+              await _captureShell(
+                  tester,
+                  '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
+                  '${size.height.toInt()}-${textSize.name}',
+                  dark: true);
+            }
             if (!premium) {
               final row = find.byType(RestReminderRow);
               final card = tester.getRect(find.byKey(RestScene.premiumCardKey));
