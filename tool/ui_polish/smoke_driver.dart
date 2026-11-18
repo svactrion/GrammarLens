@@ -46,7 +46,8 @@ Future<void> main() async {
 
   d = await FlutterDriver.connect();
   try {
-    await wait(2600);
+    // The debug start plus the first launch's 2.2 s splash.
+    await wait(5000);
     await shot('welcome');
     await tap(find.byValueKey('welcome_get_started'));
     await wait(1200);
@@ -128,7 +129,11 @@ Future<void> main() async {
     }
     await wait(3500);
     await shot('V21-results');
-    // Back to Home through the nav bar.
+    // The results are a route over the tabs: back to Review, then Home
+    // through the nav bar.
+    await tap(find.text('Back to topics'));
+    await wait(1500);
+    await shot('back-on-review');
     await tap(find.text('Climb'));
     await wait(1200);
     await shot('A2-home-rest-and-N01');
