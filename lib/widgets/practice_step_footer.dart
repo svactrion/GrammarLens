@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/haptics.dart';
+
 import '../l10n/l10n.dart';
 import '../theme.dart';
 
@@ -94,7 +96,13 @@ class PracticeStepFooter extends StatelessWidget {
                 child: FilledButton(
                   key: primaryKey,
                   style: primaryStyle(context),
-                  onPressed: primaryEnabled ? onPrimary : null,
+                  // SPEC §3.4 v12: Next and Submit are felt (light).
+                  onPressed: primaryEnabled
+                      ? () {
+                          HapticMap.light();
+                          onPrimary();
+                        }
+                      : null,
                   child: Text(primaryLabel),
                 ),
               ),

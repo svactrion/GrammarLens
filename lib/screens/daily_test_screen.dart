@@ -594,7 +594,10 @@ class _CheckFooter extends StatelessWidget {
                     key: DailyTestScreen.checkKey,
                     label: last ? l10n.questionFinish : l10n.checkButton,
                     tone: ButtonTone.orange,
-                    haptic: last ? ButtonHaptic.medium : ButtonHaptic.light,
+                    // SPEC §3.4 v12: Check's (and the last question's
+                    // Finish, which checks too) right / wrong feedback is
+                    // its haptic; the button adds none.
+                    haptic: ButtonHaptic.none,
                     onPressed: hasAnswer ? onCheck : null,
                   ),
                 ),

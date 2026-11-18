@@ -56,6 +56,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // Fix round 4, item 6 (SPEC §3.4 v12): Check's right / wrong feedback is
+  // its one haptic (the button added a light one before); the sheet's
+  // forward button gives light.
+  testWidgets('v12: one haptic per Check, then light for Continue',
+      (tester) async {
+    await pump(tester);
+    await answer(tester, set.questions.first.correctAnswer);
+    expect(HapticMap.log, ['success']);
+    HapticMap.log = [];
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
+    await tester.pumpAndSettle();
+    expect(HapticMap.log, ['light']);
+    HapticMap.log = [];
+    await answer(tester, 'something wrong');
+    expect(HapticMap.log, ['warning']);
+  });
+
   testWidgets('a right answer: "Nice, Ada!", +2, success; the chip counts 2',
       (tester) async {
     await pump(tester);
