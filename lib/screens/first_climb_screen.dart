@@ -9,12 +9,12 @@ import '../models/climb_theme.dart';
 import '../motion.dart';
 import '../theme.dart';
 import '../utils/haptics.dart';
+import '../widgets/anchored_bubble.dart';
 import '../widgets/companion_view.dart';
 import '../widgets/monthly_climb/climb_route.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/mountain_scene.dart';
 import '../widgets/pressable_button.dart';
-import '../widgets/speech_bubble.dart';
 
 /// V12: the first step on the mountain, after the first Daily Test. One
 /// camera on the whole mountain (cover framing: the image always fills the
@@ -49,6 +49,9 @@ class FirstClimbScreen extends StatefulWidget {
   static const continueKey = ValueKey('first_climb_continue');
   static const sceneKey = ValueKey('first_climb_scene');
 
+  /// The companion on the mountain (its box is the bubble's anchor).
+  static const double avatarSize = 64;
+
   /// The camera's phases (SPEC §5.2 V12), after a short hold on the wide
   /// shot.
   static const hold = Duration(milliseconds: 300);
@@ -76,6 +79,29 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
   bool _arrived = false;
   bool _started = false;
   bool _ended = false;
+
+  /// V12 (v11): the bubble stays between the step chip and Continue;
+  /// measured after layout.
+  final _chipKey = GlobalKey();
+  final _buttonKey = GlobalKey();
+  double? _bubbleMinTop;
+  double? _bubbleMaxBottom;
+
+  void _measureBubbleLimits() {
+    final chip = _chipKey.currentContext?.findRenderObject() as RenderBox?;
+    final button = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (chip == null || button == null || !chip.hasSize || !button.hasSize) {
+      return;
+    }
+    final minTop = chip.localToGlobal(Offset(0, chip.size.height)).dy + 8;
+    final maxBottom = button.localToGlobal(Offset.zero).dy - 8;
+    if (minTop != _bubbleMinTop || maxBottom != _bubbleMaxBottom) {
+      setState(() {
+        _bubbleMinTop = minTop;
+        _bubbleMaxBottom = maxBottom;
+      });
+    }
+  }
 
   double _at(Duration d) =>
       d.inMicroseconds / FirstClimbScreen.total.inMicroseconds;
@@ -197,7 +223,7 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
                 days: widget.days,
                 avatar: widget.hero,
                 avatarDay: widget.step - 1 + walk,
-                avatarSize: 64,
+                avatarSize: FirstClimbScreen.avatarSize,
                 avatarLift: hop * 10,
                 avatarMood: _arrived ? CompanionMood.cheer : CompanionMood.idle,
                 zoom: zoom,
@@ -239,6 +265,7 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
                   ),
                   const SizedBox(height: 10),
                   Center(
+                    key: _chipKey,
                     child: AnimatedScale(
                       scale: _arrived ? 1 : 0,
                       duration: AppMotion.orInstant(context, AppMotion.base),
@@ -250,18 +277,11 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  // The bubble under the chips (V12), Continue at the
-                  // bottom; both once the camera has opened back up.
-                  _Ending(
-                    animation: _ending,
-                    child: SpeechBubble(
-                      text: l10n.firstClimbBubble(widget.days - widget.step),
-                      pointer: BubblePointer.bottomStart,
-                    ),
-                  ),
                   const Spacer(),
+                  // Continue at the bottom once the camera has opened back
+                  // up (the bubble is placed over the scene, below).
                   _Ending(
+                    key: _buttonKey,
                     animation: _ending,
                     child: IgnorePointer(
                       ignoring: !_ended,
@@ -277,6 +297,37 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
                   ),
                 ],
               ),
+            ),
+          ),
+          // V12 (v11): the bubble right above the companion, its tail at
+          // it, placed from where the wide shot shows it; once the camera
+          // has opened back up.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: LayoutBuilder(builder: (context, box) {
+                WidgetsBinding.instance
+                    .addPostFrameCallback((_) => _measureBubbleLimits());
+                final map = SceneMap(box.biggest, focus: focus);
+                final p = map.toBox(route.pointAt(widget.step.toDouble()));
+                const s = FirstClimbScreen.avatarSize;
+                final padding = MediaQuery.paddingOf(context);
+                return FadeTransition(
+                  opacity: _ending,
+                  child: AnimatedBuilder(
+                    animation: _ending,
+                    builder: (context, child) => Transform.translate(
+                        offset: Offset(0, 8 * (1 - _ending.value)),
+                        child: child),
+                    child: AnchoredBubble(
+                      anchor: Rect.fromLTWH(p.dx - s / 2, p.dy - s * .9, s, s),
+                      text: l10n.firstClimbBubble(widget.days - widget.step),
+                      minTop: _bubbleMinTop ?? padding.top + 120,
+                      maxBottom: _bubbleMaxBottom ??
+                          box.maxHeight - padding.bottom - 96,
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
           // VoiceOver reads the scene as one line.
@@ -295,7 +346,7 @@ class _FirstClimbScreenState extends State<FirstClimbScreen>
 class _Ending extends StatelessWidget {
   final Animation<double> animation;
   final Widget child;
-  const _Ending({required this.animation, required this.child});
+  const _Ending({super.key, required this.animation, required this.child});
 
   @override
   Widget build(BuildContext context) => FadeTransition(
