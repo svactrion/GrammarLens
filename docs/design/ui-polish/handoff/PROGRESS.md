@@ -758,6 +758,23 @@ a still shows them; differences are listed.
 | A wrong answer with oops | `V09-oops`, gallery `V09-Wrong` | same | match per SPEC v11 (the board draws the base pose; v11 says oops) |
 | V13b with the cloud | `V13b-cloud`, gallery `V13b-ExitReminder` | same | match per SPEC v11 (the cloud over the sad companion) |
 
+### Not verified
+
+- **Anything on a device**: haptics (V04's greeting, the buttons), the real
+  keyboard on V04, the splash's feel, performance, the dark mode walk on
+  the phone's own screen, the widgets' "before the test" state. The second
+  pass is the first section of `DEVICE-CHECKS.md`.
+- **A2's exact moment on the phone**: the two causes found are fixed and the
+  owner's path passes in the app-level tests and the simulator walk; which
+  refresh brought the rest scene on the phone could not be replayed.
+- **375 × 667 and 428 × 926**: no such simulator; checked as widget-test
+  renders at those sizes (B1, C3, C5).
+- **The practice in the smoke walk** used a local stand-in for the proxy
+  (canned items and feedback on localhost): no real generation or scoring,
+  no paid call. No purchase (the seeded app has no store).
+- **Contrast of graphics** (borders, progress segments, rings) is not in the
+  ratio test; see D.
+
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
 `INTEGRATE.md`: `ui-polish` (fix round 2, `7f38e21`) and
