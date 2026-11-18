@@ -94,8 +94,22 @@ class CompanionView extends StatefulWidget {
   final CompanionAmbient ambient;
 
   /// How long a change of pose cross-fades (V24s: waking 200 ms, falling
-  /// asleep again 400 ms).
+  /// asleep again 400 ms). The new pose also scales 0.96 → 1 (§3.3, v11);
+  /// under Reduce Motion it is a 150 ms fade ([reducedPoseSwitch]).
   final Duration poseSwitch;
+
+  /// How many hops cheer's one-shot makes when the pose appears (§3.5:
+  /// two; V04's greeting: one), 300 ms each.
+  final int cheerHops;
+
+  /// Reduce Motion's pose change: a plain fade (§3.3, v11).
+  static const reducedPoseSwitch = Duration(milliseconds: 150);
+
+  /// The new pose's scale at the start of its cross-fade (§3.3, v11).
+  static const poseSwitchScale = .96;
+
+  /// The pose image's cross-fade (tests read its scale).
+  static ValueKey<String> poseKey(String asset) => ValueKey('pose_$asset');
 
   const CompanionView({
     super.key,
@@ -109,6 +123,7 @@ class CompanionView extends StatefulWidget {
     this.hopping = false,
     this.ambient = CompanionAmbient.mood,
     this.poseSwitch = const Duration(milliseconds: 200),
+    this.cheerHops = 2,
   });
 
   /// The body's transform (tests read its motion).
@@ -147,6 +162,7 @@ class CompanionView extends StatefulWidget {
     CompanionAmbient ambient = CompanionAmbient.mood,
     double once = 1,
     bool looping = true,
+    int cheerHops = 2,
   }) {
     // Distances follow the size above the boards' 110 pt, never below
     // their points (fix round 2: visible on a phone).
@@ -159,7 +175,7 @@ class CompanionView extends StatefulWidget {
     // Motion: the widget never starts them there).
     if (once < 1) {
       if (mood == CompanionMood.cheer) {
-        return _hop((once * 2) % 1.0, 16 * k);
+        return _hop((once * cheerHops) % 1.0, 16 * k);
       }
       if (mood == CompanionMood.oops) {
         final local = (once * 2) % 1.0;
@@ -266,8 +282,8 @@ class _CompanionViewState extends State<CompanionView>
   );
   bool _initialized = false;
 
-  static Duration _onceDuration(CompanionMood mood) => switch (mood) {
-        CompanionMood.cheer => const Duration(milliseconds: 600),
+  Duration _onceDuration(CompanionMood mood) => switch (mood) {
+        CompanionMood.cheer => Duration(milliseconds: 300 * widget.cheerHops),
         CompanionMood.oops => const Duration(milliseconds: 720),
         _ => Duration.zero,
       };
@@ -341,7 +357,11 @@ class _CompanionViewState extends State<CompanionView>
   /// The body's transform for loop phase [t] (0–1) and one-shot [o] (0–1).
   Matrix4 _body(double t, double o) {
     final f = CompanionView.frameAt(widget.mood, t,
-        size: widget.size, ambient: _ambient, once: o, looping: _loop != null);
+        size: widget.size,
+        ambient: _ambient,
+        once: o,
+        looping: _loop != null,
+        cheerHops: widget.cheerHops);
     return Matrix4.identity()
       ..translateByDouble(0, f.dy, 0, 1)
       ..rotateZ(_deg(f.turn))
@@ -465,9 +485,30 @@ class _CompanionViewState extends State<CompanionView>
     } else if (widget.mood == CompanionMood.sleep) {
       image = ColorFiltered(colorFilter: _sleepFilter, child: image);
     }
+    // §3.3 (v11): a change of pose cross-fades, the new pose scaling
+    // 0.96 → 1; under Reduce Motion a plain 150 ms fade.
+    final reduced = AppMotion.reduced(context);
+    final poseKey = CompanionView.poseKey(asset);
     image = AnimatedSwitcher(
-      duration: AppMotion.orInstant(context, widget.poseSwitch),
-      child: KeyedSubtree(key: ValueKey(asset), child: image),
+      duration: reduced ? CompanionView.reducedPoseSwitch : widget.poseSwitch,
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.center,
+        children: [...previous, if (current != null) current],
+      ),
+      transitionBuilder: (child, animation) {
+        final incoming = child.key == poseKey;
+        return FadeTransition(
+          opacity: animation,
+          child: reduced || !incoming
+              ? child
+              : ScaleTransition(
+                  scale: Tween(begin: CompanionView.poseSwitchScale, end: 1.0)
+                      .animate(animation),
+                  child: child,
+                ),
+        );
+      },
+      child: KeyedSubtree(key: poseKey, child: image),
     );
 
     final listenable = Listenable.merge([if (_loop != null) _loop!, _once]);
