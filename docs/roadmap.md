@@ -406,10 +406,23 @@ Owner decisions so far:
   new topic and 3 of `articles` as a control through the live practice
   path, an answer key and typical mistakes written per question, scoring
   with the production model, five automatic checks per question. The dry
-  run: 198 calls, about $1.30, hard cap $15.00. **Next: the owner's paid
-  run** from his Terminal (`proxy/eval/README.md`, "Owner checklist —
-  first-wave topics"), then the report and the label sheet (phase B). The
-  topics stay switched off. Record and decisions:
+  run: 198 calls, about $1.30, hard cap $15.00. **The owner's paid run is
+  done (2026-11-18):** 189 calls, all ok, $0.76; 32 of 33 sets passed the
+  gate; 464 built answers for 164 of the 165 questions. **Phase B done
+  (2026-11-18, no API call):** the report
+  [`1.5.0-topics-report.md`](1.5.0-topics-report.md) (counts and rates
+  only), and in the run folder, outside the repository, a blind label sheet
+  with all 165 questions and their built answers and a details file for
+  after the labels. Owner decisions of 2026-11-18: every question is
+  labelled, not a sample; the built answers are labelled too; the sheet is
+  blind. First reading, no verdict yet: every resembling pair of questions
+  is across sets (Conditionals 15 of 30 questions, Prepositions 11, the
+  control 0), and on the live path two Topic Practice requests for one
+  topic are the same request byte for byte (no seed, no earlier question,
+  no list to avoid); the scorer agreed with the built answers on 96.4 % in
+  the new topics. **Next: the labels** (in the owner's Cowork chat, Claude
+  first, the owner spot-checks), then phase C. The topics stay switched
+  off. Record and decisions:
   [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported

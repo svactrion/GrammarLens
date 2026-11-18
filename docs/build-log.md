@@ -14575,3 +14575,47 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   this session. The paid run is the owner's, from his own Terminal
   (`proxy/eval/README.md`, "Owner checklist — first-wave topics").
 - Record and decisions T-1 to T-11: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics: the owner's run; phase B, the report and the blind label sheet; no API call)
+
+- **[Measured]** The owner ran the measurement from his Terminal
+  (`proxy/eval/out/topics-2026-11-18T16-35-34-632Z`): 189 calls, all ok,
+  $0.76 of the $15.00 cap ($1.30 estimated), 5 min 32 s. 33 sets, 165
+  questions; 32 sets passed the gate (one Conditionals fill-in-the-blank
+  question has no blank); 464 built answers for 164 questions.
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, phases B and C
+  rewritten): every question is labelled, not a sample of 50 (with 10 per
+  topic, 0 defects of 10 still leaves a true rate of up to 26 % open; with
+  30, one defect passes and two fail); the built answers are labelled too,
+  because their truth is by construction; the sheet is blind.
+- **[Engineering]** `npm run eval -- topics analyze --out DIR`
+  (`proxy/eval/lib/topics_analysis.ts`, `topics_sheet.ts`), no API call and
+  no change to the run's files. It writes `docs/1.5.0-topics-report.md`
+  (counts and rates only; it refuses to write a report that holds a
+  question, an answer or a sheet key) and, into the run folder, which is not
+  in the repository: `sheet/questions.txt` (the hint cards, then every
+  question in mixed order under an opaque key with its built answers under
+  shuffled letters), `sheet/labels.csv` (to fill), `private/sheet-mapping.json`
+  and `private/details.txt` (the gate, the flags, the scorer's verdicts and
+  explanations, the resembling questions side by side; not opened before
+  the sheet is filled). A sheet that exists is read back and checked, never
+  rewritten.
+- **[Finding]** Duplicates: every resembling pair is across sets, none
+  inside a set; Conditionals 15 of 30 questions (one group of 5 reaching
+  into 5 of 6 sets), Prepositions 11, Relative Clauses 7, Comparatives &
+  Superlatives 7, Passive Voice 2, the control 0 of 15. From the code: on
+  the live path two Topic Practice requests for one topic and length are
+  the same request byte for byte (the app sends `deviceId`, `topicId`,
+  `count`; no seed, no earlier question, no list to avoid), so only the
+  model's sampling makes two sets differ. Nothing was changed.
+- **[Finding]** The scorer against the built answers, truth by construction:
+  the five new topics 96.4 % agreement (406 of 421), false "correct" 0.8 %,
+  false "needs work" 7.1 %, 10 of the 15 disagreements on second answers;
+  the control 86.0 % (37 of 43), 5 of its 24 mistakes called correct. Not a
+  verdict before the labels.
+- **[Verified]** `npm run typecheck` clean; `npm test` 620 passed (35 new,
+  no network); the run folder's own files byte for byte unchanged.
+- **[Not verified]** Any question's quality: nothing is labelled yet. The
+  sheet is labelled in the owner's Cowork chat (Claude first, the owner
+  spot-checks); phase C follows.
+- Record and decisions T-12 to T-22: `docs/1.5.0-topics-progress.md`.

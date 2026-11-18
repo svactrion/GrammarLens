@@ -392,3 +392,49 @@ tail -n 10 "$(ls -d eval/out/topics-* | tail -n 1)/progress.log"
 Better not to open the files in the run folder before you have labelled phase
 B's sheet: they show the automatic flags and the scorer's verdicts, which
 should not colour your own.
+
+## Phase B — the report and the label sheet (no API call)
+
+After the run, from `proxy/`:
+
+```bash
+npm run eval -- topics analyze --out eval/out/topics-2026-11-18T16-35-34-632Z
+```
+
+It needs no key and calls nothing. It reads the run folder (and changes none
+of the run's files) and writes:
+
+| File | Where | For whom |
+|---|---|---|
+| `docs/1.5.0-topics-report.md` | the repository | everyone: counts and rates only, safe to read before and while labelling |
+| `sheet/questions.txt` | the run folder | the labellers: read it |
+| `sheet/labels.csv` | the run folder | the labellers: fill it |
+| `private/sheet-mapping.json` | the run folder | **nobody until the sheet is filled** |
+| `private/details.txt` | the run folder | **nobody until the sheet is filled** |
+
+The run's own files (`items.json`, `answers.json`, `checks.json`,
+`records.json`, `run-report.md`) also stay closed until the sheet is filled:
+they show which answer is the key, the automatic flags and the scorer's
+verdicts.
+
+**Labelling.** `sheet/questions.txt` starts with the instructions and the
+six hint cards, then lists the 165 questions in mixed order, each under a
+key, with its built answers under letters. For each question fill its row in
+`sheet/labels.csv`:
+
+| Column | What to write |
+|---|---|
+| `verdict` | `ok` or `defect` |
+| `why` | for a defect, one or more of `several_answers`, `off_topic`, `bad_english`, `hint_wrong`, `level`, `other`, separated by `;` |
+| `note` | anything; needed with `other` |
+| `also_accept` | answers that must count as right and are not among the listed ones, separated by `\|` |
+| `A` … `D` | for each listed answer `right`, `wrong` or `unsure`; a cell that already says `n/a` stays as it is |
+
+Keep the first line and the `key` column as they are, and save as CSV with
+commas (UTF-8).
+
+**Checking the sheet.** Run the same command again at any time: a sheet that
+exists is never rewritten. It prints how many rows are labelled, names every
+row not started, and names every value to fix. When it prints `165 of 165
+rows labelled, 0 not started, 0 with something to fix`, the sheet is done:
+tell Claude Code to start Phase C of `docs/TOPICS.md`.

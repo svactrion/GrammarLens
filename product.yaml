@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-18
+    notes: "First-wave practice topics: the owner's measurement run is done (189 calls, $0.76 of the $15 cap; 165 generated questions, 464 built answers) and its report is written (docs/1.5.0-topics-report.md, counts and rates only). A blind label sheet with every question and built answer and a details file are in the run folder, outside the repository. Owner decisions: every question is labelled, the built answers too, the sheet is blind. No question is judged yet; next the labels, then the pass criteria. The topics stay switched off; not on main, not shipped."
+  - version:
+    date: 2026-11-18
     notes: "First-wave practice topics (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): the question-quality measurement's tooling built in proxy/eval on branch ui-polish-widgets (sets through the live practice path, an answer key and typical mistakes written per question, scoring with the production model, automatic checks per question). The dry run: 198 calls, about $1.30, hard cap $15. No API call made; the paid run is the owner's, from his Terminal. The topics stay switched off; not on main, not shipped."
   - version:
     date: 2026-11-18
@@ -29,16 +32,13 @@ recent:
   - version:
     date: 2026-11-18
     notes: "Fix round 3 of the UI polish on branch ui-polish-widgets, after the owner's device test: Day 0 shows the results before the Welcome badge; the reminder question opens on the first rest scene at once; the rest scenes are full-bleed; the name screen's companion asks, listens and greets; the paywall reads first view, comparison, then plans; the summit flag stands on each mountain's apex; one practice loading screen; the expression kit everywhere; dark mode readable (contrast-checked text colours). Not on main, not shipped, waiting for the owner's second device pass."
-  - version:
-    date: 2026-11-17
-    notes: "UI polish and the widgets and reminders integrated on branch ui-polish-widgets: the free rest scene got 'Remind me tomorrow', the pawn and the Wake button clear the nav bar on 6.1-6.3 inch phones, the widgets use Nunito Sans, an install over 1.4.0 keeps its data (tested), the release build checked. Not on main, not shipped, not checked on a device."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
   - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
   - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4 and 5 done there after the owner's device passes; not on main, not shipped, waiting for the owner's fourth device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
-  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement's tooling is built (docs/TOPICS.md phase A, docs/1.5.0-topics-progress.md), next the owner's paid run, then the report and the owner's labels"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement is run and reported (docs/1.5.0-topics-report.md, docs/1.5.0-topics-progress.md), next the labels on the blind sheet (Claude in the owner's Cowork chat, the owner spot-checks), then the pass criteria per topic and release prep on the owner's go"
 
 monetization:
   model: subscription
