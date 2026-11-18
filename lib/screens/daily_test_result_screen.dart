@@ -394,7 +394,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
                         prefix: '+',
                         style: theme.textTheme.labelLarge!
                             .withWeight(FontWeight.w900)
-                            .copyWith(color: c.goldDeep)),
+                            .copyWith(color: c.goldText)),
                   ]),
                   const SizedBox(height: 16),
                   Row(children: [
@@ -403,7 +403,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
                         value: _CountUp(value: points, prefix: '+'),
                         label: l10n.dailyResultPointsLabel,
                         background: c.goldSoft,
-                        foreground: c.goldDeep,
+                        foreground: c.goldText,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -413,7 +413,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
                             Text('${_completion.step}'), // l10n-guard: a number
                         label: l10n.dailyResultStepLabel,
                         background: c.cream,
-                        foreground: c.orangeDeep,
+                        foreground: c.orangeText,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -557,6 +557,9 @@ class _AnswerRowState extends State<_AnswerRow> {
     final label = isSkipped
         ? l10n.resultSkipped
         : (isCorrect ? l10n.resultCorrect : l10n.resultNeedsWork);
+    // The label in the matching text colour (SY03: light on dark).
+    final markText =
+        isSkipped ? c.muted : (isCorrect ? c.greenText : c.redText);
     final questionExplanation = result.question.explanation;
     final explanation = switch (result.match?.kind) {
       AnswerMatchKind.commonWrong => result.match?.comment,
@@ -657,7 +660,7 @@ class _AnswerRowState extends State<_AnswerRow> {
                       Text(label,
                           style: theme.textTheme.labelLarge!
                               .withWeight(FontWeight.w800)
-                              .copyWith(color: markColor)),
+                              .copyWith(color: markText)),
                       const SizedBox(height: 8),
                       MistakeBreakdown(
                         prompt: result.question.item.fullText,

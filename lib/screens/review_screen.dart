@@ -622,13 +622,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(minHeight: 44),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.sort_rounded, size: 18, color: c.navy),
+                          Icon(Icons.sort_rounded, size: 18, color: c.navyText),
                           const SizedBox(width: 4),
                           Text(
                             _sortOrder.label(l10n),
                             style: theme.textTheme.labelLarge
                                 ?.withWeight(FontWeight.w900)
-                                .copyWith(color: c.navy),
+                                .copyWith(color: c.navyText),
                           ),
                         ]),
                       ),
@@ -676,7 +676,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     decoration: lipCard(c,
                         color: c.goldSoft, border: c.gold, lip: c.goldDeep),
                     child: Row(children: [
-                      Icon(Icons.auto_awesome_rounded, color: c.goldDeep),
+                      Icon(Icons.auto_awesome_rounded, color: c.goldText),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

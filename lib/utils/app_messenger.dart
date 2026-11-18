@@ -237,7 +237,11 @@ class _SnackContent extends StatelessWidget {
           width: 26,
           height: 26,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: Icon(icon, size: 17, color: c.onNavy),
+          // SY03: the warning's "!" in dark ink on the orange disc (white
+          // is 2.5:1 there).
+          child: Icon(icon,
+              size: 17,
+              color: kind == MessageKind.warning ? c.onOrange : c.onNavy),
         ),
         const SizedBox(width: 12),
         Expanded(

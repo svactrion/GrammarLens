@@ -343,7 +343,9 @@ class _TicketState extends State<Ticket> with TickerProviderStateMixin {
               child: _flipBack(
                   rtl,
                   _NextSlot(
-                      nextIn: widget.nextIn, color: c.navy, muted: c.muted)),
+                      nextIn: widget.nextIn,
+                      color: c.navyText,
+                      muted: c.muted)),
             ),
           ),
         ));

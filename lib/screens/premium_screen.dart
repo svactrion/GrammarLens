@@ -1197,7 +1197,7 @@ class _RestTop extends StatelessWidget {
                 Text(l10n.paywallRestPractiseNow,
                     style: theme.textTheme.labelMedium!
                         .withWeight(FontWeight.w900)
-                        .copyWith(color: c.navy, letterSpacing: 1.2)),
+                        .copyWith(color: c.navyText, letterSpacing: 1.2)),
                 const SizedBox(height: 6),
                 Text(spot,
                     style: theme.textTheme.titleLarge!
@@ -1226,7 +1226,7 @@ class _RestTop extends StatelessWidget {
                             : l10n.paywallRestAfterPremium,
                         style: theme.textTheme.labelLarge!
                             .withWeight(FontWeight.w800)
-                            .copyWith(color: c.navy)),
+                            .copyWith(color: c.navyText)),
                   ],
                 ),
               ],
@@ -1988,8 +1988,8 @@ class _ComparisonTable extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(text,
                   maxLines: 1,
-                  style:
-                      valueStyle.copyWith(color: premium ? c.navy : c.muted)),
+                  style: valueStyle.copyWith(
+                      color: premium ? c.navyText : c.muted)),
             ),
           _CompareCheck() => Container(
               width: 26,
@@ -2698,7 +2698,7 @@ class _TrialTimeline extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           step(Icons.lock_open_rounded, c.green, l10n.paywallTimelineToday),
-          step(Icons.event_rounded, c.navy, l10n.paywallTimelineEnd(days),
+          step(Icons.event_rounded, c.navyText, l10n.paywallTimelineEnd(days),
               line: false),
         ],
       ),

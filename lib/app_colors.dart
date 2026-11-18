@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 /// light and a dark set, so dark mode comes from the theme and never from
 /// per-screen work (SY03). Read with [AppColors.of].
 ///
-/// Orange and navy accents are the same in both themes (SPEC §3.1); the
-/// surfaces (soft fills, lip shadow, skeleton) follow the theme.
+/// Orange and navy fills are the same in both themes (SPEC §3.1); the
+/// surfaces (soft fills, lip, skeleton) follow the theme. Text, icons and
+/// outlines in an accent colour use the `…Text` tokens, which have a light
+/// counterpart on dark surfaces (SY03, v11; fix round 3, D): navy is a
+/// fill only where white text sits on it.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   /// The solid bottom "lip" under cards (`0 Npx 0 lip`, no blur).
@@ -96,6 +99,16 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color nightTop;
   final Color nightBottom;
 
+  /// Accent text, icons and outlines on the page, cards and soft fills
+  /// (SY03, v11): navy, orange, gold, green (right) and red (wrong) in
+  /// light; light counterparts in dark. Each passes 4.5:1 on those
+  /// surfaces (`test/fix3_contrast_test.dart`).
+  final Color navyText;
+  final Color orangeText;
+  final Color goldText;
+  final Color greenText;
+  final Color redText;
+
   const AppColors({
     required this.lip,
     required this.text,
@@ -142,6 +155,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.onToast,
     required this.nightTop,
     required this.nightBottom,
+    required this.navyText,
+    required this.orangeText,
+    required this.goldText,
+    required this.greenText,
+    required this.redText,
   });
 
   /// The theme's set; under a plain `ThemeData` (a widget pumped alone in a
@@ -198,10 +216,16 @@ class AppColors extends ThemeExtension<AppColors> {
     onToast: Color(0xFFF2EEE8),
     nightTop: Color(0xFF1B2347),
     nightBottom: Color(0xFF3A2C3F),
+    navyText: Color(0xFF0D3B8F),
+    orangeText: Color(0xFFA14805),
+    goldText: Color(0xFF8A5C00),
+    greenText: Color(0xFF13734A),
+    redText: Color(0xFFB83232),
   );
 
   static const dark = AppColors(
-    lip: Color(0xFF0E0D12),
+    // SY03 (v11): a lighter line under cards instead of a shadow colour.
+    lip: Color(0xFF2E2C36),
     text: Color(0xFFF0ECE7),
     muted: Color(0xFFA9A6B2),
     orange: Color(0xFFFF7A1A),
@@ -214,15 +238,19 @@ class AppColors extends ThemeExtension<AppColors> {
     onNavyMuted: Color(0xFFDFE8FA),
     sky: Color(0xFF243859),
     onSky: Color(0xFFD8E1FF),
-    green: Color(0xFF2FB877),
+    // Fix round 3, D: white ticks and labels sit on it (3.4:1; the
+    // brighter #2FB877 gave 2.6:1); it still reads 5.3:1 on the page.
+    green: Color(0xFF1F9D63),
     greenDeep: Color(0xFF13734A),
-    greenSoft: Color(0xFF1B3A2B),
+    // SY03 (v11): right and wrong as dark tints with light text.
+    greenSoft: Color(0xFF173A2A),
     greenLip: Color(0xFF0B4F32),
-    onGreenSoft: Color(0xFFB7E4C9),
-    red: Color(0xFFE05A5A),
-    redSoft: Color(0xFF3F2121),
+    onGreenSoft: Color(0xFF7FD6A6),
+    // Fix round 3, D: white button labels on it (5.1:1; #E05A5A gave 3.6:1).
+    red: Color(0xFFC93A3A),
+    redSoft: Color(0xFF42201F),
     redLip: Color(0xFF8E2222),
-    onRedSoft: Color(0xFFF4B8B4),
+    onRedSoft: Color(0xFFFF9C92),
     gold: Color(0xFFFFC23C),
     goldDeep: Color(0xFF8A5C00),
     goldSoft: Color(0xFF3D3218),
@@ -246,6 +274,11 @@ class AppColors extends ThemeExtension<AppColors> {
     onToast: Color(0xFFF2EEE8),
     nightTop: Color(0xFF0E1226),
     nightBottom: Color(0xFF231B28),
+    navyText: Color(0xFF9DB8FF),
+    orangeText: Color(0xFFFFA463),
+    goldText: Color(0xFFF2C66B),
+    greenText: Color(0xFF7FD6A6),
+    redText: Color(0xFFFF9C92),
   );
 
   /// The wheel's slice colours, in hero order (SPEC §3.1). The same in both
@@ -355,6 +388,11 @@ class AppColors extends ThemeExtension<AppColors> {
       onToast: l(onToast, other.onToast),
       nightTop: l(nightTop, other.nightTop),
       nightBottom: l(nightBottom, other.nightBottom),
+      navyText: l(navyText, other.navyText),
+      orangeText: l(orangeText, other.orangeText),
+      goldText: l(goldText, other.goldText),
+      greenText: l(greenText, other.greenText),
+      redText: l(redText, other.redText),
     );
   }
 }

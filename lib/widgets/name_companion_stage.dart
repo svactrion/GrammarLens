@@ -380,7 +380,7 @@ class _Bubble extends StatelessWidget {
           height: MediaQuery.textScalerOf(context).scale(18 * 1.3),
           child: Align(
             widthFactor: 1,
-            child: ThinkingDots(color: c.navy, size: 9),
+            child: ThinkingDots(color: c.navyText, size: 9),
           ),
         );
       case NameStage.greets:
@@ -393,7 +393,7 @@ class _Bubble extends StatelessWidget {
         content = Text.rich(
           TextSpan(children: [
             TextSpan(text: parts.first),
-            TextSpan(text: shown, style: TextStyle(color: c.orangeDeep)),
+            TextSpan(text: shown, style: TextStyle(color: c.orangeText)),
             if (parts.length > 1) TextSpan(text: parts.sublist(1).join(mark)),
           ]),
           textAlign: TextAlign.center,

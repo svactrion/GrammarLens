@@ -248,7 +248,7 @@ Future<void> showDailyLimitSheet(BuildContext context, {Avatar? hero}) {
               excludeSemantics: true,
               child: Column(children: [
                 StepBar(
-                  segments: [for (var i = 0; i < total; i++) c.navy],
+                  segments: [for (var i = 0; i < total; i++) c.navyText],
                   track: c.track,
                   height: 10,
                   gap: 6,
@@ -258,7 +258,7 @@ Future<void> showDailyLimitSheet(BuildContext context, {Avatar? hero}) {
                 Text(l10n.dailyLimitCount(total, total),
                     style: theme.textTheme.labelLarge!
                         .withWeight(FontWeight.w800)
-                        .copyWith(color: c.navy)),
+                        .copyWith(color: c.navyText)),
               ]),
             ),
             const SizedBox(height: 10),

@@ -17,12 +17,12 @@ import 'step_bar.dart';
       TopicId.modalVerbs => (c.sky, c.onSky),
       TopicId.modalPastForms => (c.greenSoft, c.onGreenSoft),
       TopicId.tenseSelection => (c.lilac, c.onLilac),
-      TopicId.articles => (c.goldSoft, c.goldDeep),
+      TopicId.articles => (c.goldSoft, c.goldText),
       TopicId.conditionals => (c.sky, c.onSky),
       TopicId.passiveVoice => (c.lilac, c.onLilac),
       TopicId.prepositions => (c.greenSoft, c.onGreenSoft),
       TopicId.relativeClauses => (c.cream, c.orangeDeep),
-      TopicId.comparativesSuperlatives => (c.goldSoft, c.goldDeep),
+      TopicId.comparativesSuperlatives => (c.goldSoft, c.goldText),
     };
 
 /// The free user's topic showcase on Home (V14): "Topic practice" with the
@@ -199,7 +199,7 @@ class PracticeCard extends StatelessWidget {
                 child: StepBar(
                   segments: [
                     for (var i = 0; i < sessionLimit; i++)
-                      i < sessionsToday ? c.navy : null,
+                      i < sessionsToday ? c.navyText : null,
                   ],
                   track: c.track,
                   height: 9,
@@ -211,7 +211,7 @@ class PracticeCard extends StatelessWidget {
                   '${math.min(sessionsToday, sessionLimit)}/$sessionLimit', // l10n-guard: a count
                   style: theme.textTheme.labelLarge!
                       .withWeight(FontWeight.w900)
-                      .copyWith(color: c.navy)),
+                      .copyWith(color: c.navyText)),
             ]),
           ),
           const SizedBox(height: 14),

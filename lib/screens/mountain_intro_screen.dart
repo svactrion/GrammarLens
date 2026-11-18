@@ -147,7 +147,7 @@ class _MountainIntroScreenState extends State<MountainIntroScreen>
                                     l10n.mountainIntroSummit(widget.days),
                                     style: text.labelMedium!
                                         .withWeight(FontWeight.w900)
-                                        .copyWith(color: c.navy),
+                                        .copyWith(color: c.navyText),
                                   ),
                                 ),
                               ),
@@ -183,7 +183,7 @@ class _MountainIntroScreenState extends State<MountainIntroScreen>
                             style: text.labelMedium!
                                 .withWeight(FontWeight.w900)
                                 .copyWith(
-                                    color: c.orangeDeep, letterSpacing: 1.2),
+                                    color: c.orangeText, letterSpacing: 1.2),
                           ),
                           const SizedBox(height: 6),
                           Text(

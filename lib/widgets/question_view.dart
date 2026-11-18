@@ -762,7 +762,7 @@ class _QuestionViewState extends State<QuestionView>
           suffixIcon: grade == null
               ? null
               : Icon(grade.correct ? Icons.check_rounded : Icons.close_rounded,
-                  color: grade.correct ? c.greenDeep : c.red,
+                  color: grade.correct ? c.greenText : c.redText,
                   semanticLabel: grade.correct
                       ? context.l10n.checkCorrectSemantics
                       : context.l10n.checkWrongSemantics),

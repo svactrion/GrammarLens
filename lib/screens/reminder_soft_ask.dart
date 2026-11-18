@@ -242,7 +242,8 @@ class _Option extends StatelessWidget {
               color: selected ? c.sky : c.card,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                  color: selected ? c.navy : c.line, width: selected ? 2.5 : 2),
+                  color: selected ? c.navyText : c.line,
+                  width: selected ? 2.5 : 2),
               boxShadow: [BoxShadow(color: c.lip, offset: const Offset(0, 3))],
             ),
             child: Row(children: [
@@ -256,7 +257,7 @@ class _Option extends StatelessWidget {
                 ),
               if (selected) ...[
                 const SizedBox(width: 10),
-                Icon(Icons.check_rounded, size: 20, color: c.navy),
+                Icon(Icons.check_rounded, size: 20, color: c.navyText),
               ],
             ]),
           ),

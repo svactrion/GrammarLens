@@ -215,7 +215,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 Text(widget.topic.title(l10n),
                     style: theme.textTheme.labelLarge!
                         .withWeight(FontWeight.w800)
-                        .copyWith(color: c.orangeDeep)),
+                        .copyWith(color: c.orangeText)),
               ],
             ),
           ),

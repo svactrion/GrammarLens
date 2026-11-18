@@ -230,7 +230,7 @@ class _WatchCard extends StatelessWidget {
           Text(context.l10n.welcomeWatch,
               style: theme.textTheme.labelMedium!
                   .withWeight(FontWeight.w900)
-                  .copyWith(color: c.navy, letterSpacing: 1.4)),
+                  .copyWith(color: c.navyText, letterSpacing: 1.4)),
           const SizedBox(height: 12),
           EnglishContent(
             child: LayoutBuilder(builder: (context, box) {
@@ -246,9 +246,9 @@ class _WatchCard extends StatelessWidget {
                           decoration: reveal > 0
                               ? TextDecoration.lineThrough
                               : TextDecoration.none,
-                          decorationColor: c.red,
+                          decorationColor: c.redText,
                           decorationThickness: 2.5,
-                          color: Color.lerp(c.text, c.red, reveal),
+                          color: Color.lerp(c.text, c.redText, reveal),
                         ),
                       ),
                       const TextSpan(text: WelcomeDemo.wrongAfter),
@@ -291,7 +291,7 @@ class _WatchCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(WelcomeDemo.rightWord,
-                                style: sentence.copyWith(color: c.greenDeep)),
+                                style: sentence.copyWith(color: c.greenText)),
                           ),
                         ),
                         const TextSpan(text: WelcomeDemo.rightAfter),

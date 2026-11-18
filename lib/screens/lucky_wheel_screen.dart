@@ -574,7 +574,7 @@ class _Wheel extends StatelessWidget {
                           .textTheme
                           .displaySmall!
                           .withWeight(FontWeight.w900)
-                          .copyWith(color: c.navy, fontSize: 44 * k))
+                          .copyWith(color: c.navyText, fontSize: 44 * k))
                   : AnimatedBuilder(
                       animation: land,
                       builder: (context, child) => Transform.scale(

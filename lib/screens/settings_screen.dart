@@ -1134,7 +1134,7 @@ class _NameSheetState extends State<_NameSheet> {
     void save() => Navigator.of(context).pop(text.trim());
     final frame = OutlineInputBorder(
       borderRadius: BorderRadius.circular(18),
-      borderSide: BorderSide(color: c.navy, width: 3),
+      borderSide: BorderSide(color: c.navyText, width: 3),
     );
     // PF04 (fix round 2, item 5): a sheet above the keyboard, sized to its
     // content, so its top sits just under the companion stage, which stays

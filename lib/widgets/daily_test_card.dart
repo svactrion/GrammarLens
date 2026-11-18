@@ -293,7 +293,7 @@ class DailyTestCard extends StatelessWidget {
 
   Widget _button(BuildContext context, AppColors c, Duration fade) {
     final Widget child = switch (state) {
-      DailyTestCardState.loading => _LoadingSlot(color: c.orangeDeep),
+      DailyTestCardState.loading => _LoadingSlot(color: c.orangeText),
       DailyTestCardState.todo => PressableButton(
           key: buttonKey,
           label: buttonLabel,

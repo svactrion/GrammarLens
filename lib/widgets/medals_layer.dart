@@ -296,7 +296,7 @@ class _MedalsLayer extends StatelessWidget {
                                       collection.countOf(MedalTier.gold),
                                       MedalTier.gold.label(l10n)),
                                   c.goldSoft,
-                                  c.goldDeep),
+                                  c.goldText),
                               chip(
                                   l10n.medalsTierCount(
                                       collection.countOf(MedalTier.silver),

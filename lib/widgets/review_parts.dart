@@ -95,13 +95,13 @@ class InlineMistake extends StatelessWidget {
           style: switch (mark) {
             _Mark.plain => null,
             _Mark.wrong => TextStyle(
-                color: c.red,
+                color: c.redText,
                 decoration: TextDecoration.lineThrough,
-                decorationColor: c.red,
+                decorationColor: c.redText,
                 decorationThickness: 2),
             _Mark.right => const TextStyle()
                 .withWeight(FontWeight.w900)
-                .copyWith(color: c.greenDeep, backgroundColor: c.greenSoft),
+                .copyWith(color: c.greenText, backgroundColor: c.greenSoft),
           },
           semanticsLabel: switch (mark) {
             _Mark.wrong => context.l10n.mistakeWrongSemantics(text),
@@ -164,7 +164,7 @@ class ReviewSpotCard extends StatelessWidget {
                 child: Text(topic.title(l10n).toUpperCase(),
                     style: theme.textTheme.labelSmall!
                         .withWeight(FontWeight.w900)
-                        .copyWith(color: c.orangeDeep, letterSpacing: 1)),
+                        .copyWith(color: c.orangeText, letterSpacing: 1)),
               ),
               if (spot.frequency == 1)
                 Container(
@@ -177,7 +177,7 @@ class ReviewSpotCard extends StatelessWidget {
                   child: Text(l10n.reviewSpotNew,
                       style: theme.textTheme.labelSmall!
                           .withWeight(FontWeight.w900)
-                          .copyWith(color: c.orangeDeep)),
+                          .copyWith(color: c.orangeText)),
                 ),
             ]),
             const SizedBox(height: 6),

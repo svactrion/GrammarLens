@@ -512,7 +512,7 @@ class PointsChip extends StatelessWidget {
                   .textTheme
                   .labelLarge!
                   .withWeight(FontWeight.w900)
-                  .copyWith(color: c.goldDeep, fontSize: 15),
+                  .copyWith(color: c.goldText, fontSize: 15),
             ),
           ),
         ]),
@@ -639,7 +639,7 @@ class _FeedbackPanel extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final right = check.isCorrect;
-    final fg = right ? c.greenDeep : c.red;
+    final fg = right ? c.greenText : c.redText;
     final title = right
         ? (name == null || name!.isEmpty
             ? l10n.checkNice
@@ -712,7 +712,7 @@ class _FeedbackPanel extends StatelessWidget {
                           child: Text(check.correctAnswer,
                               style: theme.textTheme.bodyLarge!
                                   .withWeight(FontWeight.w900)
-                                  .copyWith(color: c.greenDeep)),
+                                  .copyWith(color: c.greenText)),
                         ),
                       ],
                     ),
@@ -723,26 +723,26 @@ class _FeedbackPanel extends StatelessWidget {
                       explanation,
                       style: theme.textTheme.bodyLarge!
                           .withWeight(right ? FontWeight.w800 : FontWeight.w400)
-                          .copyWith(color: right ? c.greenDeep : c.text),
+                          .copyWith(color: right ? c.greenText : c.text),
                     )
                   else if (right)
                     Text(check.correctAnswer,
                         style: theme.textTheme.bodyLarge!
                             .withWeight(FontWeight.w800)
-                            .copyWith(color: c.greenDeep)),
+                            .copyWith(color: c.greenText)),
                   if (!right) ...[
                     const SizedBox(height: 10),
                     _Pop(
                       delay: const Duration(milliseconds: 250),
                       child: Row(children: [
                         Icon(Icons.menu_book_outlined,
-                            key: bookKey, size: 18, color: c.navy),
+                            key: bookKey, size: 18, color: c.navyText),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(l10n.checkGoesToWeakSpots,
                               style: theme.textTheme.labelLarge!
                                   .withWeight(FontWeight.w800)
-                                  .copyWith(color: c.navy)),
+                                  .copyWith(color: c.navyText)),
                         ),
                       ]),
                     ),
@@ -874,7 +874,7 @@ class _BookFlight extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-            child: Icon(Icons.menu_book_rounded, size: 18, color: c.navy),
+            child: Icon(Icons.menu_book_rounded, size: 18, color: c.navyText),
           ),
         ),
       ),

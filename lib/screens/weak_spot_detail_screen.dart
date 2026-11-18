@@ -208,7 +208,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
             widget.topic.title(l10n).toUpperCase(),
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w900)
-                .copyWith(color: c.orangeDeep, letterSpacing: 1),
+                .copyWith(color: c.orangeText, letterSpacing: 1),
           ),
           const SizedBox(height: 7),
         ],

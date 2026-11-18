@@ -334,7 +334,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(color: c.navy, width: 3),
+                          borderSide: BorderSide(color: c.navyText, width: 3),
                         ),
                       ),
                     ),
@@ -446,7 +446,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               minimumSize: const Size(44, 44),
                               padding: EdgeInsets.zero,
                               alignment: AlignmentDirectional.centerStart,
-                              foregroundColor: c.navy,
+                              foregroundColor: c.navyText,
                               textStyle: theme.textTheme.labelSmall!
                                   .withWeight(FontWeight.w700),
                             ),
@@ -628,9 +628,9 @@ class GoalCard extends StatelessWidget {
     final tilt = tiltFor(position);
     final (tile, tileFg) = switch (goal) {
       LearningGoal.examPrep => (c.cream, c.orangeDeep),
-      LearningGoal.work => (c.sky, c.navy),
+      LearningGoal.work => (c.sky, c.navyText),
       LearningGoal.school => (c.lilac, c.onLilac),
-      LearningGoal.general => (c.greenSoft, c.greenDeep),
+      LearningGoal.general => (c.greenSoft, c.greenText),
     };
     return Semantics(
       inMutuallyExclusiveGroup: true,
@@ -661,7 +661,7 @@ class GoalCard extends StatelessWidget {
                   decoration: lipCard(
                     c,
                     color: selected ? c.sky : c.card,
-                    border: selected ? c.navy : c.line,
+                    border: selected ? c.navyText : c.line,
                     lip: selected ? c.navy : c.lip,
                     borderWidth: selected ? 3 : 2,
                     radius: 24,
@@ -712,7 +712,7 @@ class GoalCard extends StatelessWidget {
                                           style: theme.textTheme.labelLarge!
                                               .withWeight(FontWeight.w900)
                                               .copyWith(
-                                                  color: c.navy,
+                                                  color: c.navyText,
                                                   fontStyle: FontStyle.italic),
                                         ),
                                       ),

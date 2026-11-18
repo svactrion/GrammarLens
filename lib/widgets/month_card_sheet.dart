@@ -800,7 +800,7 @@ class _NewMountainState extends State<_NewMountain>
                         .toUpperCase(),
                     style: theme.textTheme.labelMedium!
                         .withWeight(FontWeight.w900)
-                        .copyWith(color: c.orangeDeep, letterSpacing: 1.2),
+                        .copyWith(color: c.orangeText, letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 4),
                   Semantics(

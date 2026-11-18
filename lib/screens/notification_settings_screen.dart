@@ -308,7 +308,7 @@ class _DeniedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Icon(Icons.notifications_off_rounded, color: c.red, size: 20),
+            Icon(Icons.notifications_off_rounded, color: c.redText, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(l10n.notifDeniedTitle,

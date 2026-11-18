@@ -210,13 +210,13 @@ class _PracticeReviewingState extends State<PracticeReviewing>
               Text(l10n.practiceReviewingOnItsWay.toUpperCase(),
                   style: theme.textTheme.labelSmall!
                       .withWeight(FontWeight.w900)
-                      .copyWith(color: c.navy, letterSpacing: 1.1)),
+                      .copyWith(color: c.navyText, letterSpacing: 1.1)),
               const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child: LinearProgressIndicator(
                   minHeight: 8,
-                  color: c.navy,
+                  color: c.navyText,
                   backgroundColor: c.track,
                   // Reduce Motion: a still bar (no loop).
                   value: AppMotion.loopsOn(context) ? null : math.min(1, .6),

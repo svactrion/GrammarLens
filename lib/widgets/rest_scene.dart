@@ -845,7 +845,7 @@ class _DreamBubbleState extends State<_DreamBubble>
           Text(l10n.restTodaysWeakSpot,
               style: theme.textTheme.labelMedium!
                   .withWeight(FontWeight.w800)
-                  .copyWith(color: c.navy)),
+                  .copyWith(color: c.navyText)),
         ],
       ),
     );

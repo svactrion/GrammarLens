@@ -77,7 +77,7 @@ class _ProfileStageState extends State<ProfileStage> {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: lipCard(c, radius: 18),
             child: Column(children: [
-              Icon(icon, size: 20, color: c.orangeDeep),
+              Icon(icon, size: 20, color: c.orangeText),
               const SizedBox(height: 4),
               Text(value,
                   style: theme.textTheme.titleLarge!

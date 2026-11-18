@@ -253,14 +253,14 @@ class _GettingReadyScreenState extends State<GettingReadyScreen>
                         TextSpan(text: '$percent'), // l10n-guard: a number
                         TextSpan(
                             text: '%', // l10n-guard: the percent sign
-                            style: TextStyle(fontSize: 30, color: c.navy)),
+                            style: TextStyle(fontSize: 30, color: c.navyText)),
                       ]),
                       textAlign: TextAlign.center,
                       textScaler: TextScaler.noScaling,
                       style: theme.textTheme.displayMedium!
                           .withWeight(FontWeight.w900)
                           .copyWith(
-                        color: c.navy,
+                        color: c.navyText,
                         fontSize: 60,
                         height: 1.05,
                         letterSpacing: -2,
@@ -696,11 +696,11 @@ class _ReadyRow extends StatelessWidget {
                 ),
                 child: done
                     ? Icon(Icons.check_rounded, size: 18, color: c.onNavy)
-                    : _Dots(color: c.navy, running: active),
+                    : _Dots(color: c.navyText, running: active),
               ),
             ),
             const SizedBox(width: 12),
-            Icon(icon, size: 20, color: c.navy),
+            Icon(icon, size: 20, color: c.navyText),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

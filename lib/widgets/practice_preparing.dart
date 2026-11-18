@@ -126,7 +126,7 @@ class _PracticePreparingState extends State<PracticePreparing>
                   decorative: true),
             ),
             const SizedBox(height: 8),
-            Center(child: ThinkingDots(color: c.navy)),
+            Center(child: ThinkingDots(color: c.navyText)),
             const SizedBox(height: 16),
             ExcludeSemantics(
               child: Text(message,
@@ -180,7 +180,7 @@ class _PracticePreparingState extends State<PracticePreparing>
         Text(context.l10n.practiceDidYouKnow.toUpperCase(),
             style: theme.textTheme.labelSmall!
                 .withWeight(FontWeight.w900)
-                .copyWith(color: c.navy, fontSize: 12, letterSpacing: 1.2)),
+                .copyWith(color: c.navyText, fontSize: 12, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         AnimatedSwitcher(
           duration: AppMotion.base,
@@ -205,7 +205,7 @@ class _PracticePreparingState extends State<PracticePreparing>
                 width: k == i ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: k == i ? c.navy : c.line,
+                  color: k == i ? c.navyText : c.line,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
