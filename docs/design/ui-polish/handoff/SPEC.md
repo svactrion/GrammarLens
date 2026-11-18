@@ -1,4 +1,4 @@
-# GrammarLens UI polish — design specification (final, v12, 2026-11-18)
+# GrammarLens UI polish — design specification (final, v13, 2026-11-18)
 
 v10 (after the owner's first device test): §1.14–§1.16, V05, V05b, V24, the new V24f, V24s, V13r and PW05r.
 
@@ -9,6 +9,9 @@ v11 (after the device test of the integrated build, 2026-11-18): §1.17–§1.21
 v12 (after the owner's second device pass, 2026-11-18): §1.22–§1.26, §3.4 (forward buttons), §3.5 (props by the head),
 §3.7 (upper case per language), V13 / V13c / V13a / V13r (compact footer, no "Maybe later"), V20 (centred, honest checklist),
 V23 (the month progress card), V24f (one screen, the campfire), §5.10 (W01 widgets v12).
+
+v13 (after the owner's third device pass, 2026-11-18): §1.27–§1.30, V24f (the ticket-deck panel, chosen by the owner),
+V24 (its own board again), V23 (the new month progress card, board V23p), V13 (closes only with X).
 
 The design was made on a claude.ai design canvas ("GrammarLens — Tüm Ekranlar
 ve Senaryolar", page "Yeni tasarım — gruplar"). This folder is a complete,
@@ -132,6 +135,12 @@ Reading the boards:
     designed dark variant (no system grey).
 25. **Forward buttons give a light haptic** (§3.4).
 26. **Loading screens centre their content** (V18, V20).
+27. **The free rest scene's panel is the ticket deck** (V24f v13, the owner's
+    choice between two options; the top half stays as v12).
+28. **The month progress card shows the medals on the bar** (V23p).
+29. **The paywall closes only with X** (V13 v13): no swipe-back, no drag-down.
+30. **The Premium rest scene follows its own board** (V24): the done tiles and
+    the step-bar card come back (fix round 4's F4-1 is reverted).
 
 ## 2. Scope
 
@@ -552,6 +561,11 @@ drawn on top of the logs, its base in the middle of the pile), warm ground
 light, rising sparks, the companion asleep (sleep pose + Zzz), "See you
 tomorrow, <name>" and a countdown to the next Daily Test (local midnight).
 OUT: the reminder switch and time on this board (§1.10) — leave them out.
+v13: follow V24's own board again: under "All done for today" the two done
+tiles (Daily Test, Practice) and the "Next Daily Test · step N" card with its
+step bar and countdown, then the reminder row (built since fix round 2);
+the panel ends just above the nav bar with no empty band (fix round 4 had
+removed the tiles and the step card and left about 200 pt empty).
 Motion: two flame layers flicker in opposite phase (0.5 s and 0.38 s); sparks
 rise in 1.4 s; ground light breathes (1.6 s); Zzz 2.4 s; the countdown
 updates every minute.
@@ -601,6 +615,30 @@ right, on the same ground: the logs' base on the companion's foot line, the
 flame about 40 % of the companion's height, two layers (orange outside,
 yellow inside) with a soft warm glow on the ground under it, as on the board.
 V24 (Premium) uses the same scene, header and reminder row.
+Panel (v13; the owner chose it on the canvas over a second option, and it
+replaces the panel described above; the top half, scene, camp, fire, dream
+bubble and score capsule, stays exactly as v12): the night panel (#1F1A2E)
+fits its content and ends just above the nav bar; the scene fills the rest
+(the art is never scaled; the sheet never starts below the art's lower edge).
+In order:
+1. The moon and "All done for today".
+2. Today's free ticket, used: the X04 compact "used" ticket made small (about
+   150 × 50): navy body with the sawtooth tear, the gold USED stamp, and the
+   stub's dashed, light slot showing a clock, the next free ticket's time and
+   NEXT. Beside it: "Today's free ticket is used." and, in white, "Not sleepy
+   yet?".
+3. The navy Premium card (the 140° navy → #2A1E5C gradient, gold hairline
+   border): a gold ✦ PREMIUM tag on the left and "5 practices a day" on the
+   right; a deck of four X04 tickets (notches, perforation, stub), offset
+   7 pt diagonally, the back ones a shade darker with a sparkle on the stub;
+   the front ticket says "NEXT UP", the weak spot's name (one line, …),
+   "AI feedback on every answer", and "+4 / TODAY" on its stub; under the
+   deck, "Wake <Hero> up · 7 days free".
+4. The reminder row.
+New strings in all 8 languages. Motion: the panel slides up 300 ms after the
+scene; the back tickets settle 60 ms apart, the front one last; the front
+ticket's shine every 3.4 s; on Wake the deck gathers into the front ticket
+(150 ms), the companion wakes, then the paywall rises (V13r).
 Motion: dream dots appear one by one (200 ms apart), the bubble floats
 (3.2 s); the Premium card slides up 300 ms after the scene; locked tickets pop
 60 ms apart; glint every 3.6 s.
@@ -858,6 +896,11 @@ links on one centred row, 12 pt, separated by "·"; no "Maybe later" (the X
 at the top right closes; V13b once per session). About 150 pt tall at
 390 × 844, so "Compare plans" is on the first view on 6.1"–6.3" phones too
 (closes F3-26). The same footer on V13c, V13a and V13r.
+Closing (v13; on the device some paywalls closed with a swipe): the paywall
+closes only with its X, wherever it is opened (onboarding, Home, Review, the
+rest scene's V13r, Profile): no iOS edge swipe back, no drag down, no tap
+outside. The X stays clearly visible; its first tap in a session still opens
+V13b. A purchase or a restore closes it as today.
 Behaviour: copy that counts topics must use the real number of available
 topics.
 Motion: companions float, the middle one hops; "Compare plans" arrow nudges
@@ -926,6 +969,20 @@ weak spots); "Medal collection" on the thick shelf (medal_shelf_v2) with 3
 medals standing on its top surface (newest first; a locked slot for the
 current month) and "See all" (→ PF02); the month progress card with the
 thresholds; then the existing settings rows.
+Month progress card (v13 replaces the v12 text below; board V23p): "<Month>
+progress" and "<mountain> · N active days" on the left; on the right the
+points large ("9" + "/ 300") and the distance to the next medal ("66 to
+Bronze", orange; "Gold reached", green, after 225). The bar runs 0–300 and is
+split inside into four equal parts by 4 pt gaps at 75, 150 and 225; unfilled
+parts are tinted toward their medal (bronze, silver, gold, the last neutral);
+the orange fill runs through the parts. Above each gap stands that medal's
+image (from the medal shelf) in a ring with a short stem down to the gap:
+earned = full colour, green ring and a small tick; not yet = muted colour,
+grey ring; the next one's name is darker. Under each medal its name and
+points. A navy dot (light blue in dark mode) marks the current points. The
+10-segment bar and the "Monthly total" line are gone. Motion: the fill runs
+part by part (200 ms each); a medal passed pops and gets its tick. Screen
+reader: "9 of 300 points; Bronze at 75, Silver at 150, Gold at 225".
 Month progress card (v12: the device still showed the old card, with an
 orange "5 points" box, one bar and the tiers listed underneath): as on the
 V23 board: "<Month> progress" and "<mountain> · N active days" on the left,
