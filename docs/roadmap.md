@@ -315,14 +315,17 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
 
 #### UI polish + 4th tab (planned, opened 2026-11-17)
 
-**Status (2026-11-17): the UI polish is built on branch `ui-polish`**
+**Status (2026-11-18): the UI polish is built on branch `ui-polish`**
 (batches B0–B11, fix round 1, and fix round 2 after the owner's first
-device test on his iPhone 14 Plus), **and integrated with the widgets and
-reminders on branch `ui-polish-widgets`** (`INTEGRATE.md`: the merge, V24f's
-reminder row, the pawn above the nav bar on 6.1"–6.3" phones, Nunito Sans
-in the widgets, a release build check); **not on `main`, not shipped, not
-checked on a device.** The integration was built and checked on the
-simulator only; the owner's phone checks, in order, are in
+device test on his iPhone 14 Plus), **integrated with the widgets and
+reminders on branch `ui-polish-widgets`** (`INTEGRATE.md`), **and fix round
+3 is done there** (`FIX3.md`, SPEC v11, after the owner's device test of
+the integrated build: the Day 0 order, N01 on the first rest scene, the
+full-bleed rest scenes, the new name screen, the paywall order, the summit
+flag, one practice loading screen, the expression kit everywhere, dark
+mode); **not on `main`, not shipped, waiting for the owner's second device
+pass.** Fix round 3 was built and checked on the simulator and in tests
+only; the second pass, in order, is the first section of
 [`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
 record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
