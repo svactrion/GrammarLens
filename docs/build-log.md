@@ -14504,3 +14504,41 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   order, is the first section of `DEVICE-CHECKS.md`.
 - **[Disk]** 16 GiB free before, 17 GiB after the allowed cleanup (`flutter
   clean`, this project's DerivedData folder).
+
+## 2026-11-18 (UI polish fix round 5 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 5 (`docs/design/ui-polish/handoff/FIX5.md`,
+  SPEC v13), after the owner's third device pass (iPhone 14 Plus): the
+  paywall footer and V24f on one screen confirmed; a new V24f panel chosen
+  on the canvas; a clearer month progress card asked for; some paywalls
+  closed with a swipe. Record: `PROGRESS.md` "Fix round 5" (each item's
+  cause, fix and tests; decisions F5-1 to F5-19).
+- **[Engineering]** V24f's panel is the ticket deck: the title, today's
+  free ticket used (the app's ticket made small, with the time to the next
+  one) and the Premium card with a deck of four of the app's tickets ("NEXT
+  UP", the weak spot, "+4 / TODAY") over "Wake Fox up". V24 (Premium) has
+  its own board's done tiles and step-bar card again. Both panels end just
+  above the nav bar and the scene fills the rest (no empty band, no scroll
+  from 390 × 844 up at the default and next text size); the night panel is
+  the same in light and dark.
+- **[Engineering]** Profile's month progress card shows the medals on the
+  bar: the points with "/ 300" and the distance to the next medal, a 0–300
+  bar split at 75 / 150 / 225, each medal over its gap (earned: colour and
+  a tick), a dot at the points; the fill runs part by part.
+- **[Engineering]** The paywall closes only with its X, wherever it opens:
+  six entry points used page routes whose iOS edge swipe closed it, and the
+  rest scene's route closed with a system back; the paywall now blocks
+  both itself. Each entry point has a test.
+- **[Verified]** After the last code change: `flutter analyze` clean,
+  2863 Flutter tests and 23 Swift tests (64 widget snapshots) pass, the
+  simulator build with `xcodebuild` and the release build (`--no-codesign`,
+  50.3 MB, with the widget extension) succeed; `flutter build ios
+  --simulator` still hits Xcode's "Could not compute dependency graph", as
+  in round 4. A Turkish smoke walk on the simulator from a fresh install
+  reached the new rest-scene panel on one screen, Profile's new card and
+  the paywall from Wake, which stayed through edge swipes and a drag down
+  and closed with X.
+- **[Not verified]** Anything on a device. The owner's fourth pass is the
+  first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 16 GiB free before, 14 GiB after the builds, 18 GiB after the
+  allowed cleanup (`flutter clean`, this project's DerivedData folders).

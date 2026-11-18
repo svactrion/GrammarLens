@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-18
+    notes: "Fix round 5 of the UI polish on branch ui-polish-widgets, after the owner's third device pass: the free rest scene's panel is the ticket deck the owner chose (today's used ticket and a deck of the app's tickets on the Premium card); the Premium rest scene has its own done tiles and step card again; both panels end just above the nav bar; Profile's month progress card shows the medals on the bar; the paywall closes only with its X (no swipe or system back). Not on main, not shipped, waiting for the owner's fourth device pass."
+  - version:
+    date: 2026-11-18
     notes: "Fix round 4 of the UI polish on branch ui-polish-widgets, after the owner's second device pass: the free rest scene fits one screen with the campfire by the companion; a compact paywall footer without 'Maybe later'; the tip widget shows the user's own latest mistake and every widget has a dark design; Profile's month progress card as designed; props placed by each companion's head; a light haptic on forward buttons; loading screens centred with an honest checklist; Turkish capitals with the dotted I. Not on main, not shipped, waiting for the owner's third device pass."
   - version:
     date: 2026-11-18
@@ -29,15 +32,12 @@ recent:
   - version:
     date: 2026-11-17
     notes: "Home-screen widgets (Climb small and medium, Tip medium) and daily reminder notifications (one a day, chosen time, settings under Profile) built on branch widgets-notifications with the app's own iOS bridge; no new package, nothing leaves the device. Not merged, not shipped, not checked on a device."
-  - version:
-    date: 2026-11-17
-    notes: "UI polish built on branch ui-polish: new Home with the mountain and the rest scene, Daily Test with per-question Check and new results, Review with the free ticket, practice screens, one-page paywall, Profile, first-wave topics in code but switched off. Not merged, not shipped, not checked on a device."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
   - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
-  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3 and 4 done there after the owner's device passes; not on main, not shipped, waiting for the owner's third device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
+  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4 and 5 done there after the owner's device passes; not on main, not shipped, waiting for the owner's fourth device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
   - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): code on the UI polish branch, hidden until the question-quality check and owner review"
 
 monetization:

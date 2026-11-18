@@ -328,10 +328,14 @@ owner's second device pass: V24f on one screen with the campfire by the
 companion, the compact paywall footer without "Maybe later", widgets v12
 with the user's own mistake and designed dark variants, Profile's month
 progress card, props by each hero's head, forward-button haptics, centred
-loading screens with an honest checklist, Turkish capitals); **not on
-`main`, not shipped, waiting for the owner's third device pass.** Fix
-rounds 3 and 4 were built and checked on the simulator and in tests only;
-the third pass, in order, is the first section of
+loading screens with an honest checklist, Turkish capitals), **and fix
+round 5 is done there** (`FIX5.md`, SPEC v13, after the owner's third
+device pass: V24f's ticket-deck panel chosen by the owner, V24 on its own
+board again, both panels ending just above the nav bar, Profile's month
+progress card with the medals on the bar, a paywall that closes only with
+its X); **not on `main`, not shipped, waiting for the owner's fourth
+device pass.** Fix rounds 3 to 5 were built and checked on the simulator
+and in tests only; the fourth pass, in order, is the first section of
 [`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
 record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).

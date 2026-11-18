@@ -6,6 +6,424 @@ its fix rounds, and the integration with the widgets and reminders
 and how, decisions, open items. The final summary is below the Integration
 section.
 
+## Fix round 5 (owner's third device pass, 2026-11-18)
+
+`FIX5.md`, SPEC v13. On the third pass (iPhone 14 Plus) the owner confirmed
+the paywall footer and V24f on one screen, chose a new panel for V24f on
+the canvas (the ticket deck), asked for a clearer month progress card, and
+found that some paywalls close with a swipe; a simulator capture also
+showed round 4's V24 (Premium) with about 200 pt of empty panel. This
+round fixes these on `ui-polish-widgets`. **Status: done** (items 1–4,
+steps 0, Checks and Docs below; the checks ran after the last code change,
+`5427ce8`, the smoke driver; the app's last change is `c7eaf5e`). Not on `main`, not shipped, not checked on a device; the
+fourth pass is the first section of `DEVICE-CHECKS.md`.
+
+| Step | Status | Commits |
+|---|---|---|
+| 0 Start | done | `7fddad1` |
+| 1 V24f's panel: the ticket deck | done | `6f7ae07` (with item 2: one file) |
+| 2 V24 (Premium) back to its own board | done | `6f7ae07` |
+| 3 The month progress card | done | `a9a36c1` |
+| 4 The paywall closes only with X | done | `c7eaf5e` |
+| Checks | done | `cef8544` (a flaky test, F5-9), `5427ce8` (the smoke walk) |
+| Docs | done | this commit |
+
+### 0. Start
+
+`df -h ~`: **16 GiB** free at the start (228 GiB disk); nothing needed
+deleting then. On `ui-polish-widgets`, `git pull --ff-only` (up to date);
+`FIX5.md`, SPEC v13, the changed V24f board and screen and the new V23p
+board and screen committed as "docs: fix round 5 task and SPEC v13"
+(`7fddad1`). The end-of-run figure is under "Checks: builds, tests, disk".
+
+### 1. V24f's panel: the ticket deck
+
+**What was asked.** The owner chose a new panel on the canvas: under the
+unchanged top half (scene, camp, fire, dream bubble, score capsule), the
+title alone, today's free ticket used (small, with the time to the next
+one), and the navy Premium card with a deck of four tickets, then the
+reminder row; built from the app's real ticket (X04), not new drawings;
+the panel fits its content and ends just above the nav bar.
+
+**Before.** Round 4's sheet: a header with two done ticks and the
+countdown, a compact Premium card with five 50 × 30 mini tickets (one
+used, four locked), the allowance line, "Practise <spot> now…" and Wake;
+the sheet never started lower than the board's top (F4-4), so spare room
+stayed under the row.
+
+**Fix (`6f7ae07`).**
+- `widgets/ticket.dart`: X04's outline (notches, torn edge, stub),
+  stamp and slot take a scale (`_Geo`), the ticket itself unchanged. Two
+  new widgets from them: **`MiniUsedTicket`** (150 × 50 + a 3 pt lip: the
+  navy torn body with a white hairline, the gold USED stamp sized to its
+  word, the dashed light slot with a clock, the time to local midnight and
+  NEXT; mirrored in Arabic as X04 is) and **`TicketDeck`** (four X04
+  tickets 92 pt tall with a 70 pt stub, 7 pt apart diagonally, the back
+  ones a shade darker with the stub's sparkle; the front one: "✦ NEXT UP",
+  the weak spot on one line, "AI feedback on every answer", "+4 / TODAY"
+  on its stub, its glint every 3.4 s; the back tickets settle 60 ms apart,
+  the front one last; `gathered` draws them into the front one in 150 ms).
+- `widgets/rest_scene.dart`: the night panel is the boards' **#1F1A2E in
+  both themes** (`AppColors.restPanel`); V24f's rows, 12 pt apart: the moon
+  and "All done for today"; the used ticket with "Today's free ticket is
+  used." and, in white, "Not sleepy yet?"; the Premium card (140° navy →
+  plum, gold hairline, a dark lip): the gold ✦ PREMIUM tag and "5
+  practices a day", the deck, "Wake Fox up · 7 days free" (50 pt); the
+  reminder row (44 pt, F4-3). The panel slides up 300 ms after the scene.
+  On Wake the deck gathers (150 ms), the companion wakes, then V13r
+  rises; the deck spreads again when the paywall closes.
+- **The fit (both panels):** the panel's last row ends 8 pt above the nav
+  bar; the sheet's top is fitted after layout and the scene fills the rest
+  (the board's top is only the first frame's guess). The sheet never rises
+  above the camp's room (then the page scrolls: the SE, the largest text).
+  The art is never scaled: where the fitted panel would start below the
+  art's lower edge (early in the month on tall phones), the camp and the
+  art move down together (F5-3).
+- Strings: 7 new in the 8 languages (`restTodaysTicketUsed`,
+  `restPracticesADay`, `restNextUp`, `restAiFeedback`, `restDeckToday`,
+  `restDeckSemantics`, `restDeckAnyTopic`); "Not sleepy yet?" restored with
+  its translations; 10 that only round 4's sheet used removed. The weak
+  spot's name stays English (§3.7); NEXT UP and TODAY are upper-cased by
+  language (`SIRADAKİ`, `BUGÜN`).
+
+**Tests.** `test/home_screen_test.dart` "v13": V24f and V24 at six phones
+(390 × 844, 393 × 852, 402 × 874, 428 × 926, 440 × 956 and the SE) × the
+default, next and largest text: full-bleed scene, the panel attached, the
+camp whole ≥ 12 pt above it, the fire on the companion's ground, **the art
+never scaled** (the mountain's box no taller than the art), the dream
+bubble under the status bar; from 390 × 844 up at the default and next
+text **no scroll extent and the reminder row 8.0 pt above the bar (no
+empty band)**; the row reachable everywhere. Steps 20, 26, 30 (the sky
+continued, the camp at its board place) and steps 0 and 1 on the tallest
+phones (the camp and art moved down); Turkish at 428 × 926, next text.
+The V24f content test (USED, the time, NEXT, the two lines, PREMIUM, "5
+practices a day", the four tickets 7 pt apart, NEXT UP, the spot, +4,
+TODAY, the deck's label, the 50 pt button), no weak spot ("Any of N
+topics", the real count), Wake (gathered at 160 ms, awake after, V13r, X → V13b, the deck
+spread again). `test/fix5_rest_panel_test.dart` (12): the mini ticket
+(size, texts, label, Turkish stamp readable, Arabic mirrored), the deck
+(offsets, texts, one line, settle order, gather and back, Reduce Motion,
+the glint only with loops, Arabic), the panel colour the same in light and
+dark for V24f and V24.
+
+Measured (widget renders, `build/fix5-captures/v24-numbers.md`; sheet top
+· gap camp → panel · row above the bar · Wake above the bar · scroll):
+
+| Size | Text | V24f | V24 |
+|---|---|---|---|
+| 390 × 844 | default | 291 · 29.8 · 8.0 · 79.5 · 0 | 452 · 110.8 · 8.0 · 0 |
+| 390 × 844 | next | 287 · 25.8 · 8.0 · 79.5 · 0 | 441 · 99.8 · 8.0 · 0 |
+| 393 × 852 | default / next | 299 / 295 · 24.2 / 20.2 · 8.0 · 0 | 460 / 449 · 8.0 · 0 |
+| 402 × 874 | default / next | 321 / 317 · 38.2 / 34.2 · 8.0 · 0 | 482 / 471 · 8.0 · 0 |
+| 428 × 926 | default / next | 373 / 369 · 91.0 / 87.0 · 8.0 · 0 | 534 / 523 · 8.0 · 0 |
+| 440 × 956 | default / next | 403 / 399 · 99.4 / 95.4 · 8.0 · 0 | 564 / 553 · 8.0 · 0 |
+| 428 × 926, Turkish | next | 358 · 76.0 · 8.0 · 0 | 523 · 125.4 · 8.0 · 0 |
+| 375 × 667 (SE) | default | 215.8 · 12 · scrolls 67.8 | 309 · 12 · 8.0 · 0 |
+| 390–402 wide | largest | scrolls 1.9–18.8 | 341–398 · 8.0 · 0 |
+
+### 2. V24 (Premium) back to its own board
+
+**What was wrong.** F4-1 had removed V24's two done tiles and its "Next
+Daily Test · step N" card and kept its board's taller frame, so the short
+panel left about 200 pt empty under the reminder row.
+
+**Fix (`6f7ae07`, with item 1).** V24's panel is its board again: the moon,
+"All done for today" and "Your buddy is resting until tomorrow."; the
+**Daily Test** tile ("4/5 · +9 points") and the **Practice** tile ("5/5
+sessions"); the card with "NEXT DAILY TEST · STEP N", the month's ten-step
+bar (this round of ten in gold) and the countdown; the reminder row. The
+four strings V24 used before round 4 (`restBody`, `restPracticeTitle`,
+`restTestLine`, `restNextTest`) restored from git with their translations.
+The panel fits its content and ends 8 pt above the bar (item 1's fit), so
+the scene fills the rest: no empty band at the five sizes (the table
+above). This changes F4-1 (F5-2).
+
+**Tests.** The v13 layout tests above (V24 rows); Home's "every daily right
+used (Premium)" test (the body line, the tiles' titles and lines, "NEXT
+DAILY TEST · STEP 4", the countdown, the step bar); `b5_home_mountain_test`
+(the countdown updates every minute in the card).
+
+### 3. The month progress card
+
+**What was wrong (device).** "Bronze 75" under the bar did not say where 75
+is on it.
+
+**Fix (`a9a36c1`).** `MonthlyProgressCard` (in
+`widgets/monthly_medal_collection.dart`) rebuilt to board V23p: "<Month>
+progress" and "<mountain> · N active days" on the left; on the right the
+points large with "/ 300" and the distance ("66 to Bronze" in orange,
+"Gold reached" in green, the score capsule's own strings). The bar runs
+0–300 in four parts split by 4 pt gaps at 75, 150 and 225; unfilled parts
+tinted toward bronze, silver, gold and neutral (the board's colours, light
+and dark); the orange fill runs through them. Over each gap, the medal's
+image (the shelf's, for the running month's mountain) in a ring on a stem:
+earned = full colour, a green ring and a tick; not yet = muted (less
+saturated, faded) with a grey ring. Names and points under the bar, an
+earned or the next medal's name darker. The dot (navy; light blue in dark)
+at the points. The fill runs part by part, 200 ms each, the dot with its
+front; a passed medal pops and gets its tick; at once under Reduce Motion.
+The 10-segment bar and the "Monthly total" line are gone. VoiceOver: the
+title, the line, the distance, then the bar as "9 of 300 points; Bronze at
+75, Silver at 150, Gold at 225" (2 new strings in the 8 languages; 9 that
+only the old card used removed). Every number from `MonthlyMedalRules`.
+
+**Tests.** `test/fix5_progress_card_test.dart` (23): 0, 9, 75, 120, 150,
+225, 240 and 300 points in light and dark — "N / 300", the distance and its
+colour, each part's fill and tint, each medal's tick, ring colour and
+muting, the names' colours, each medal and name over its gap, the dot's
+place and colour, the screen-reader label, no "Monthly total"; Small,
+Medium and Large text inside the card; the fill part by part (half the
+first part at 100 ms, Bronze's tick and pop at 250 ms, the dot at the
+fill's front, all in place at the end); Reduce Motion at once; Arabic
+(the bar from the right). `monthly_medal_collection_test` "v13" (two
+months' numbers from the rules: the gaps at the thresholds, the medals
+over them, the fills, the ticks, the dot); `settings_screen_test` and
+`debug_sample_collection_test` read the points from "N / 300" now.
+
+### 4. The paywall closes only with X
+
+**Diagnosis first.** A test per entry point, in iOS's behaviour
+(`test/support/paywall_close.dart`: a slow and a flung swipe from the left
+edge, a drag down from the top, a system back), run before the fix. Every
+way the paywall is opened:
+
+| Entry point (source) | Route | Before the fix |
+|---|---|---|
+| Home's topic cards and weak spot (`home`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| After the first climb, onboarding (`day0_after_climb`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| Review's used ticket, "See Premium" (`review_quota`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| The weak spot's locked row (`weak_spot_quota`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| A topic's practice when the free one is used (`practice_launch`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| The practice results' offer (`practice_result`) | `MaterialPageRoute` | closed by the **edge swipe** |
+| V24f's Wake → V13r (`rest_scene`) | its own `PageRouteBuilder` | no swipe; closed by a **system back** |
+| Profile | — | Profile opens no paywall (searched; F5-18) |
+
+Cause: on iOS a `MaterialPageRoute` has the Cupertino edge swipe back, and
+the paywall's `PopScope` only *observed* pops (to log `system_back`), so
+the swipe and the system back closed it. No route is a sheet or has a
+barrier, so a drag down or a tap outside closed none.
+
+**Fix (`c7eaf5e`), in one place:** the paywall's `PopScope` no longer lets
+the route pop by itself (`canPop: false`), which also turns off the edge
+swipe (Flutter's `popGestureEnabled` is false for a route that would not
+pop); the X (V13b first in a session when the store's offer is loaded),
+and a purchase's Continue close it through `_dismiss()`, which pops the
+route itself. Restore is unchanged (F5-16).
+
+**Tests.** Each entry point's own test now opens the paywall through its
+real flow, swipes, drags down and sends a system back (it stays), then
+closes with X (`home_screen_test`: a topic card, V13b once then at once;
+V13r from Wake; `home_day0_paywall_test`; `review_screen_test`;
+`practice_launch_free_tier_test`: a topic and the weak spot's row;
+`results_screen_test`). `premium_screen_test`: a system back no longer
+closes it nor logs `paywall_dismissed`; the X logs `close_button`.
+`test/fix5_paywall_close_test.dart` (14): each source's paywall in its
+route type, light and dark, stays after the gestures; X → V13b → closed;
+renders it after the attempts.
+
+### Decisions
+
+- **F5-1. "The five sizes".** FIX5 names five sizes without listing them.
+  Choice: round 4's phones from 390 × 844 up (390 × 844, 393 × 852,
+  402 × 874, 428 × 926, 440 × 956); the SE (375 × 667) is still tested and
+  may scroll. Why: FIX5's own rule, "no scroll at 390 × 844 and larger".
+- **F5-2. F4-1 and F4-4 change.** F4-1 had V24 drop its tiles and step card
+  and keep its board's taller frame; F4-4 kept spare room under the row.
+  Now both panels fit their content and end 8 pt above the nav bar
+  (round 4's `anchorClearance`), and the scene fills the rest; the boards'
+  sheet tops are only the first frame's guess. Why: SPEC V24f v13 and V24
+  v13 ("ends just above the nav bar", "no empty band").
+- **F5-3. Where the panel would start below the art.** Early in the month
+  the camp's step is near the art's bottom; on the tallest phones the
+  fitted panel starts lower than the art reaches. Options: (a) hold the
+  panel at the art's edge and leave an empty band under the row; (b) scale
+  the art; (c) move the camp and the art down together. Choice: (c). Why:
+  SPEC V24f v13 ("the art is never scaled; the sheet never starts below the
+  art's lower edge") and FIX5 ("no empty band"); the top of the scene then
+  shows more sky (the round 4 mirrored sky where needed).
+- **F5-4. The night panel's colour.** Round 4 used the theme's night
+  gradient (different in light and dark). Choice: the boards' #1F1A2E in
+  both themes (`AppColors.restPanel`, also behind the page). Why: SPEC
+  V24f v13 ("the night panel (#1F1A2E)") and FIX5 ("the panel is the same
+  in both").
+- **F5-5. The used ticket and the deck "from X04's shapes and colours".**
+  Choice: X04's own paths (notch halves, torn edge, perforation, stub),
+  stamp and slot, scaled to the board's sizes (150 × 50; 92 pt tickets
+  with a 70 pt stub, 7 pt apart), and X04's colours: the navy body (the
+  board's lighter #1A4BB0 is not an app colour) with the board's white
+  hairline so it reads on the dark panel; the front ticket X04's flat
+  orange (the board drew a gradient); the back ones a shade darker toward
+  X04's lip; the board's thin highlight along each deck ticket's top left
+  out (not part of X04). The panel's ticket colours are the light theme's
+  (the panel is the same in both). Why: FIX5 ("not new drawings").
+- **F5-6. The small ticket's stamp takes its word's width.** X04's stamp is
+  a fixed 72 × 40 box; made small, "KULLANILDI" would shrink to about 6 pt.
+  Choice: the stamp wraps its word at 10.5 pt and shrinks only past the
+  body's width. Why: legible in every language; "USED" looks as on the
+  board.
+- **F5-7. The headers.** V24f: the moon and the title only (the board); the
+  countdown moved into the used ticket's slot (the time to the next free
+  ticket, local midnight). V24: the title with "Your buddy is resting until
+  tomorrow." (its board). Round 4's done ticks are gone from both.
+- **F5-8. No weak spot yet.** The board has no such state; the deck's front
+  ticket needs a one-line title. Choice: "Any of N topics" (new string,
+  the real topic count), the same line under it. Why: rule 5, the
+  smallest; round 4 named the topics the same way.
+- **F5-9. A flaky test (Checks).** `l10n_layout_test` "pt at 320 pt, Large,
+  Profile" failed one run in nine (nothing this round touched it):
+  without a hero Profile shows a random one, and with the crab the
+  Portuguese ribbon line "Escalando com Caranguejo" needs 84 % at 320 pt,
+  past the ribbon's 85 % (then "…", as its rule says). Options: change the
+  ribbon's rule (other long names, e.g. the sloth in Turkish, need 73 %),
+  or name the hero in the test. Choice: the site names the fox (`cef8544`).
+  Why: the ribbon's behaviour is as designed; the test was not
+  deterministic.
+- **F5-10. Wake's order.** The deck gathers (150 ms), then the companion
+  wakes (the hop, "I'm awake!"), then after round 4's 600 ms V13r rises;
+  the button takes no tap from the first until the paywall closes; then
+  the deck spreads again and the companion sleeps. Why: SPEC V24f v13's
+  motion, in order.
+- **F5-11. Motion.** V24f's whole panel slides up 24 pt (fading in from
+  40 %) 300 ms after the scene; V24's does not (its board names no panel
+  motion). The back tickets settle 350 ms each, 60 ms apart, back-most
+  first, the front one last. All at once under Reduce Motion.
+- **F5-12. Kept from round 4.** The reminder row stays 44 pt (F4-3; the
+  board's 40); Wake is the board's 50 pt.
+- **F5-13. The card's medals and words.** The medal images are the running
+  month's mountain's (`MedalArt.monthly`, the shelf's; the board shows
+  Green Slope's on an Ember Peak card). The distance and "Gold reached" are
+  the score capsule's strings, so both say the same. The four tints and the
+  fill's light end are the board's colours (new constants, light and dark);
+  the grey ring is the app's line colour.
+- **F5-14. The card's screen reader.** Round 4's card was one long summary
+  ending with the monthly total. Choice: the title, the line, the distance
+  and the bar's own label ("9 of 300 points; Bronze at 75, Silver at 150,
+  Gold at 225", the SPEC's words) as separate items; the points are not
+  read twice. Why: the SPEC gives the bar's label; the total line is gone.
+- **F5-15. The card's fill.** It runs on the card's first build and when
+  the points change; the dot moves with the fill's front; a passed medal
+  scales up to 1.18 and back over the next 200 ms as its tick appears.
+- **F5-16. Restore.** SPEC: "a purchase or a restore closes it as today".
+  Today a restore shows its message on the paywall and the X closes it.
+  Choice: unchanged. Why: rule 4.
+- **F5-17. V13b.** It still opens only when the store's offer is loaded (it
+  states the trial), on the first X of a session, as before.
+- **F5-18. "Profile" as an entry point.** FIX5 lists Profile; the app's
+  Profile opens no paywall (searched every push of `PremiumScreen`).
+  Recorded; nothing to change.
+- **F5-19. "The paywall at each entry point after a swipe attempt".** The
+  behaviour is tested in each entry point's own flow (item 4); the
+  captures render each source's paywall in its route type after the
+  gestures (`fix5_paywall_close_test`), and the smoke walk tries the edge
+  swipe on the simulator on V13r from Wake.
+
+### Checks: the listed captures against their boards
+
+Light renders in `build/fix5-captures/`, dark in `build/fix5-captures/dark/`
+(widget-test renders at a phone's size in the app's font,
+`FIX5_CAPTURE=1`), and the smoke walk's simulator screenshots in
+`build/fix5-captures/smoke-tr/`. Each was looked at next to its board.
+
+| Board | Light | Dark | Match / what differs |
+|---|---|---|---|
+| V24f (v13 panel) at 390 × 844, 393 × 852, 402 × 874, 428 × 926, 440 × 956, default and next text | `V24f-<size>-default`, `-next` | same names | match: the title alone, the used ticket with USED, the time and NEXT, the two lines, the Premium card with the tag, "5 practices a day", the deck of four 7 pt apart, NEXT UP, the spot, +4 TODAY, Wake, the row just above the bar; the panel the same in both themes. Differs: the ticket body is the app's navy (the board's is lighter, F5-5), the front ticket flat orange (the board: a gradient), no highlight line on the deck tickets; the panel starts 291 pt down at 390 × 844 (the board: 314) because the app's text is a step larger than the board's and the row is 44 pt (F4-2, F4-3) |
+| V24f in Turkish, 428 × 926, next text | `V24f-428x926-next-tr` | same | match: one screen, "KULLANILDI" readable on the small ticket (F5-6), SIRADAKİ, BUGÜN, "Günde 5 pratik" |
+| V24f late and early in the month | `V24f-390x844-step20/26/30`, `V24f-440x956-step0`, `V24f-428x926-step1` | — | match: the camp at its board place late in the month (the sky continued), the camp and art moved down early on the tall phones (F5-3); no empty band |
+| V24 (its own board again) at the five sizes, default and next | `V24-<size>-default`, `-next` | same names | match: "See you tomorrow, Ada", the bubble and Zzz, the title with its line, the two done tiles, NEXT DAILY TEST · STEP N with the step bar and the countdown, the row just above the bar. Differs: the panel starts 452 pt down at 390 × 844 (the board: 466; larger app text), the scene shows the month's own step |
+| V24 in Turkish, 428 × 926 | `V24-428x926-next-tr` | same | match |
+| V23p, 0, 9, 75, 120, 150, 225, 240, 300 points | `V23-progress-<points>` | same names | match: the points and "/ 300", the distance in orange / green, four tinted parts with gaps at the thresholds, the medals over them (earned with the green ring and the tick, the rest faded), the names and points, the dot (navy / light blue). Differs: the running month's mountain's medals (the board shows Green Slope's, F5-13) |
+| V13 at each entry point after the swipe, the drag down and the system back (home, day0_after_climb, review_quota, weak_spot_quota, practice_launch, practice_result) | `V13-after-swipe-<source>` | same names | match: the paywall still open, the X at the top left, the compact footer |
+| V13r from Wake after the gestures | `V13-after-swipe-rest_scene`; the walk's `V13r-after-edge-swipe`, `V13r-after-drag-down` | `V13-after-swipe-rest_scene` | match: still open; X → V13b → the scene |
+| Mini ticket, deck (X04 made small) | `X04-mini-used`, `-tr`, `V24f-deck` | — | match X04's used ticket: navy torn body with its notch halves, the stamp, the dashed slot |
+
+### Checks: the smoke walk (Turkish, a fresh install)
+
+Driven by `tool/ui_polish/smoke_driver.dart` (Flutter Driver; a simulator
+screenshot after each step; extended this round, `5427ce8`) on the iPhone
+18 Pro simulator (402 × 874, `49ECC1F0…`) **after removing the app, so a
+fresh install**, with `SEED_LANGUAGE=tr` and `SMOKE_LANG=tr`; the practice
+used the local stand-in for the proxy (canned items and feedback on
+localhost, no AI call; the scoring held back 9 s). 34 screenshots in
+`build/fix5-captures/smoke-tr/`; the walk ended with exit 0.
+
+What was seen, in order, in Turkish: Welcome; the name screen; the goals;
+getting ready; the mountain intro; the Day 0 test (the first answer wrong,
+the sweat drop by the head); the results, then the badge, then the first
+climb; the paywall and its X → V13b → Home; Review; the free ticket on a
+practice (consent, V18, three answers, V20 waiting, the results); Home:
+the rest scene with N01 at once; "Şimdi değil"; **V24f with the new panel
+on one screen** ("Bugünlük her şey tamam"; the small "KULLANILDI" ticket
+with "5:18 SONRAKİ"; "Bugünkü ücretsiz bilet kullanıldı." / "Daha uykun
+gelmedi mi?"; PREMIUM and "Günde 5 pratik"; the deck with "SIRADAKİ",
+"Gerund vs. Infinitive", "Her cevaba yapay zekâ geri bildirimi", "+4
+BUGÜN"; "Tilki uyansın · 7 gün ücretsiz"; "Yarın hatırlat" just above the
+bar); a drag up did not move it; **Profile's progress card** ("Kasım
+ilerlemesi", "Kor Zirvesi · 1 aktif gün", "9 / 300", "Bronz için 66", the
+four tinted parts, the three faded medals over the gaps with Bronz 75,
+Gümüş 150, Altın 225, the navy dot near the start); back to Home; **Wake →
+V13r**; then, with the simulator tool, **two swipes from the left edge
+(from x = 10, slow and fast) and one from the screen's very edge**: the
+paywall stayed (the driver: "V13r after the edge swipe: true"); **a drag
+down**: it stayed ("true"); **the X closed it at once** — V13b had already
+opened once this session on the Day 0 paywall, so it does not open again
+(its rule, F5-17); back on the rest scene, the companion asleep, the deck
+spread again.
+
+V13r has no swipe of its own (its route never had one); the six page-route
+entry points' edge swipe was checked in the widget tests in iOS's
+behaviour (item 4), not on the simulator: after the walk the driver's
+build is gone from the simulator, and the walk does not reach them.
+
+### Checks: builds, tests, disk
+
+After the last code change (`5427ce8`; the app's own last change
+`c7eaf5e`):
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | no issues |
+| `flutter test` (with `FIX5_CAPTURE=1`) | **2863 passed**, 0 failed |
+| Swift `RunnerTests` (with the widget snapshots, iPhone 18 Pro simulator) | **23 tests, 0 failures**; 64 snapshots |
+| Simulator build of Runner + widget extension (`xcodebuild … -destination "platform=iOS Simulator,id=49ECC1F0…" build`, as in round 4) | **BUILD SUCCEEDED**, `GrammarLensWidgets.appex` embedded |
+| `flutter build ios --release --no-codesign` | **built** `Runner.app` (50.3 MB reported; 1.4.0 (7)) with `GrammarLensWidgets.appex` |
+
+`flutter build ios --simulator --debug` (the Flutter wrapper, tried twice)
+still stops after 4 s with Xcode's "Could not compute dependency graph:
+Failed to receive dependency graph response" (exit status 255), as in
+round 4; the same scheme builds for the simulator with `xcodebuild`
+(above), and the smoke walk built and ran the app with `flutter drive`.
+
+What the checks found and fixed: the flaky Profile layout test (F5-9,
+`cef8544`); the old card's "Monthly total" line read by two Profile tests,
+and round 4's system-back test, which asserted the behaviour item 4
+removes (changed with their items).
+
+**Disk.** 16 GiB free at the start; 14 GiB after the builds; after the
+allowed cleanup (`flutter clean` in `~/GrammarLens` with the captures moved
+aside and back, then `flutter pub get`; this project's two DerivedData
+folders, `Runner-gqpsqce…` for `~/GrammarLens/ios/Runner.xcworkspace` and
+`Runner-ghmgufz…` for `~/GrammarLens/macos/Runner.xcworkspace`) **18 GiB
+free**. Nothing else was touched (the BirdApp DerivedData stays).
+
+### Not verified
+
+- **Anything on a device**: the new panel and its motion at the owner's
+  own text size, the deck's glint and gather, the progress card's fill,
+  the paywall's swipe and drag on the phone with each entry point. The
+  fourth pass is the first section of `DEVICE-CHECKS.md`.
+- **The six page-route entry points' edge swipe on a simulator**: checked
+  in widget tests with iOS's behaviour (the route's swipe gesture is
+  Flutter's own, the same code on the device), not by hand on the
+  simulator (the smoke walk reaches V13r only).
+- **393 × 852, 428 × 926, 440 × 956 and the SE**: no such simulator here;
+  checked as widget-test renders at those sizes (items 1 and 2).
+- **V24 (Premium) on the simulator**: the walk is a free user's; V24 was
+  checked in widget tests and renders only.
+- **The practice in the smoke walk** used the local stand-in for the proxy:
+  no real generation or scoring, no paid call.
+- **"The next text size"** is the app's Large (F4-2); the owner's phone
+  setting is not known.
+
 ## Fix round 4 (owner's second device pass, 2026-11-18)
 
 `FIX4.md`, SPEC v12. The owner ran fix round 3's second pass on his iPhone
@@ -1824,14 +2242,15 @@ not open the app there). All of it is in `DEVICE-CHECKS.md`.
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
 `ui-polish` (pushed), **integrated with the widgets and reminders on
 branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix rounds
-3 and 4 done there** (pushed; "Fix round 4" at the top: the owner's second
-device pass, SPEC v12; "Fix round 3" under it). Not merged into `main`, not
-shipped. The owner tested `ui-polish` and then `ui-polish-widgets` on his
-iPhone 14 Plus twice; fix rounds 3 and 4 were built and checked **on the
-simulator and in tests only**. What only the phone can confirm is in
-[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its first section, "Fix round 4 —
-third pass", in order. Decisions for the owner to review: F4-1 to F4-13
-("Fix round 4", "Decisions").
+3, 4 and 5 done there** (pushed; "Fix round 5" at the top: the owner's
+third device pass, SPEC v13; "Fix round 4" and "Fix round 3" under it). Not
+merged into `main`, not shipped. The owner tested `ui-polish` and then
+`ui-polish-widgets` on his iPhone 14 Plus three times; fix rounds 3 to 5
+were built and checked **on the simulator and in tests only**. What only
+the phone can confirm is in [`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its
+first section, "Fix round 5 — fourth pass", in order. Decisions for the
+owner to review: F5-1 to F5-19 ("Fix round 5", "Decisions"), and F4-1 to
+F4-13 before them (F5-2 changes F4-1 and F4-4).
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -1851,7 +2270,8 @@ third pass", in order. Decisions for the owner to review: F4-1 to F4-13
 | Fix round 2 (owner device test, 2026-11-17) | done | see "Fix round 2" below |
 | Integration with the widgets (2026-11-17) | done | see "Integration" above |
 | Fix round 3 (owner device test of the integration, 2026-11-18) | done | see "Fix round 3" above |
-| Fix round 4 (owner's second device pass, 2026-11-18) | done | see "Fix round 4" at the top |
+| Fix round 4 (owner's second device pass, 2026-11-18) | done | see "Fix round 4" above |
+| Fix round 5 (owner's third device pass, 2026-11-18) | done | see "Fix round 5" at the top |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery

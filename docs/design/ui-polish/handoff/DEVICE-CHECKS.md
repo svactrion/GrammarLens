@@ -2,8 +2,9 @@
 
 One ordered checklist for the owner's phone. It covers the UI polish
 (SPEC v10, fix rounds 1 and 2), the widgets and reminders, the
-integration of the two (`INTEGRATE.md`), fix round 3 (`FIX3.md`, SPEC v11)
-and fix round 4 (`FIX4.md`, SPEC v12), whose third pass comes first. It merges fix round 2's "Owner
+integration of the two (`INTEGRATE.md`), fix round 3 (`FIX3.md`, SPEC v11),
+fix round 4 (`FIX4.md`, SPEC v12) and fix round 5 (`FIX5.md`, SPEC v13),
+whose fourth pass comes first. It merges fix round 2's "Owner
 device checks" (`PROGRESS.md`) and the widgets run's "Owner steps"
 (`PROGRESS-widgets.md`). Nothing on this list was checked on a device; the
 simulator results are in `PROGRESS.md` ("Integration").
@@ -12,11 +13,117 @@ Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
 
-## Fix round 4 — third pass (start here)
+## Fix round 5 — fourth pass (start here)
+
+Fix round 5 (`FIX5.md`, SPEC v13) built the panel you chose for V24f, the
+new month progress card and a paywall that closes only with its X. This
+section is the fourth pass, in order; it is short. The third pass (FR4),
+the second (FR3) and the first (sections 1–4) below stay for reference.
+Nothing here was checked on a device: the simulator and test results are in
+`PROGRESS.md` ("Fix round 5"). Write down anything that differs (the item
+number and what you saw).
+
+### FR5-1. Build and install
+
+The same commands as FR4-1; **no Xcode step**. Install over the current
+test build; do not delete it.
+
+```bash
+cd ~/GrammarLens
+```
+
+```bash
+git switch ui-polish-widgets
+```
+
+```bash
+git pull --ff-only
+```
+
+```bash
+flutter pub get
+```
+
+```bash
+flutter devices
+```
+
+```bash
+flutter run --release -d <iPhone ID> --dart-define-from-file=config/prod.json
+```
+
+When it says the app is running, press `q`; the app stays on the phone.
+Keep the interface in Turkish and your larger text size, as before.
+
+### FR5-2. On this install
+
+These need **today's Daily Test done and today's free ticket used** (Review
+→ a weak spot → use the ticket, answer, submit), then Home.
+
+1. **V24f's new panel.** Under the unchanged camp and dream bubble: the
+   moon and "Bugünlük her şey tamam" alone on its row; then the small navy
+   used ticket — the gold "KULLANILDI" stamp, a torn edge, and a light
+   dashed slot with a clock, the time to the next free ticket (local
+   midnight) and "SONRAKİ" — beside "Bugünkü ücretsiz bilet kullanıldı."
+   and, in white, "Daha uykun gelmedi mi?"; then the navy Premium card: the
+   gold ✦ PREMIUM tag on the left, "Günde 5 pratik" on the right, a deck of
+   four orange tickets stepped down to the right, the front one saying
+   "SIRADAKİ", your weak spot (one line), "Her cevaba yapay zekâ geri
+   bildirimi" and "+4 / BUGÜN" on its stub, a light sweep over it every few
+   seconds; "Tilki uyansın · 7 gün ücretsiz"; then "Yarın hatırlat". The
+   reminder row ends just above the floating bar, with no empty band under
+   it, and nothing scrolls. The panel looks the same in light and dark
+   mode. — V24f
+2. **Wake.** Tap "Tilki uyansın": the tickets slide into the front one,
+   the companion wakes, then the paywall rises. — V24f, V24s, V13r
+3. **The paywall from Wake stays until X.** On that paywall: swipe from the
+   left edge to the right — nothing happens; drag down from the top —
+   nothing closes it. Tap the X at the top left: the first time this
+   session the reminder pop-up (V13b) opens; "Ücretsiz devam et" closes it
+   and you are back on the rest scene, the companion asleep, the tickets
+   spread again. — V13r, V13b
+4. **The paywall from a Home topic card.** On a day before the rest scene
+   (or after a fresh install), tap a locked topic card on Home: the
+   paywall opens. The swipe from the left edge and the drag down do
+   nothing; the X closes it (V13b only on the first X of a session). If you
+   can, try the others the same way: Review's "Premium'a göz at" after the
+   ticket is used, a weak spot's locked "Premium ile çalış", the offer
+   on a practice's results. — V13
+5. **Profile's progress card.** Profile → under the medal shelf: "Kasım
+   ilerlemesi" and "<mountain> · N aktif gün" on the left; on the right
+   your points large with "/ 300" and, in orange, "Bronz için N" (in green
+   "Altın kazanıldı" once past 225). The bar has four parts with gaps at
+   75, 150 and 225, each part tinted toward its medal; the orange fill runs
+   through them part by part when the card appears; over each gap stands
+   that medal in a ring (earned: full colour, a green ring and a small
+   tick; not yet: faded, a grey ring), with its name and points under the
+   bar; a navy dot marks your points. Check it in dark mode too: a dark
+   card, the dot light blue. — V23p
+
+### Still open from the third pass
+
+These need **today's Daily Test not yet done** (the next day, or a fresh
+install); they were not reached on the third pass.
+
+1. **The sweat drop** on a wrong Daily Test answer starts at the
+   companion's temple and falls along its cheek. — FR4-2 item 1
+2. **Forward buttons are felt**: "Kontrol et" gives only its right or wrong
+   feedback; "Devam et", "İleri" and "Gönder" give a light tap. — FR4-2
+   item 2
+3. **V20** centred, the last item waiting until the results are ready. —
+   FR4-2 item 3
+4. **Home's first view**: the pawn and the gold ring on the next step above
+   the floating bar. — FR3-3 item 1
+5. **The Daily Test card's companion** hops while it waits. — FR3-3 item 2
+6. **The widgets' "before the test" state**: "Step N is waiting" / "one
+   test away", your mountain at your step; a tap opens the Daily Test. —
+   FR3-3 item 3, FR4-2 item 8
+
+## Fix round 4 — third pass
 
 Fix round 4 (`FIX4.md`, SPEC v12) changed what you found on the second
-pass. This section is the third pass, in order; the second pass (FR3) and
-the first pass (sections 1–4) below stay for reference. Nothing here was
+pass. This section was the third pass; its items you could not reach are
+listed again under "Still open from the third pass" above. Nothing here was
 checked on a device: the simulator and test results are in `PROGRESS.md`
 ("Fix round 4"). Write down anything that differs (the item number and what
 you saw).
