@@ -365,10 +365,11 @@ final Map<String, WidgetBuilder> galleryBoards = {
       ),
   // B8: the paywall (one scrolling page), with the debug fixture offering.
   'V13-Paywall': (_) => _paywall(),
-  'V13a-PaywallPlans': (_) => _ScrollAfter(560, child: _paywall()),
-  // Fix round 2: 110 pt above the page's end, so the board's heading with
-  // the companion is in view.
-  'V13c-PaywallCompare': (_) => _ScrollAfter(-110, child: _paywall()),
+  // Fix round 3 (C4, v11): the page reads 13 → 13c → 13a, so the plans
+  // and the trial are at its end (110 pt above it) and Free vs Premium is
+  // right after the first view (560 pt down, its heading in view).
+  'V13a-PaywallPlans': (_) => _ScrollAfter(-110, child: _paywall()),
+  'V13c-PaywallCompare': (_) => _ScrollAfter(560, child: _paywall()),
   'V13b-ExitReminder': (_) => _paywall(),
   'V13r-PaywallRest': (_) => PremiumScreen(
         storageService: _GalleryProfileStorage(),
