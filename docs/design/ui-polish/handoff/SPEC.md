@@ -1,10 +1,14 @@
-# GrammarLens UI polish — design specification (final, v11, 2026-11-18)
+# GrammarLens UI polish — design specification (final, v12, 2026-11-18)
 
 v10 (after the owner's first device test): §1.14–§1.16, V05, V05b, V24, the new V24f, V24s, V13r and PW05r.
 
 v11 (after the device test of the integrated build, 2026-11-18): §1.17–§1.21, §3.2 (shine), §3.3 (pose changes),
 §3.5 (props everywhere), §3.6 (switch), §4, V01, V04 (+ the new V04s), V05, V05b, V06, V10/V11, V12, V13 / V13c / V13a
 (new order), V18, V23, V24f, §5.10 (N01, N03), SY03 (dark mode rules).
+
+v12 (after the owner's second device pass, 2026-11-18): §1.22–§1.26, §3.4 (forward buttons), §3.5 (props by the head),
+§3.7 (upper case per language), V13 / V13c / V13a / V13r (compact footer, no "Maybe later"), V20 (centred, honest checklist),
+V23 (the month progress card), V24f (one screen, the campfire), §5.10 (W01 widgets v12).
 
 The design was made on a claude.ai design canvas ("GrammarLens — Tüm Ekranlar
 ve Senaryolar", page "Yeni tasarım — gruplar"). This folder is a complete,
@@ -116,6 +120,18 @@ Reading the boards:
     its mood's prop; wrong answers use `oops`.
 21. **Splash slower on first launch** (V01): about 2.2 s; later launches stay
     short.
+22. **The free rest scene fits one screen** (V24f v12): no scrolling at
+    390 × 844 and larger at the default and the next text size; the reminder
+    row is on the first view.
+23. **The paywall footer is compact and has no "Maybe later"** (V13 v12): the
+    X at the top right is the way out (V13b once per session). Apple does not
+    require a "Maybe later" button; it requires a clearly visible way to
+    dismiss, the full price line, Restore, Terms and Privacy, all kept.
+24. **Widgets v12** (W01): the medium tip widget shows the user's own latest
+    mistake and its correction under a short rule; every widget has a
+    designed dark variant (no system grey).
+25. **Forward buttons give a light haptic** (§3.4).
+26. **Loading screens centre their content** (V18, V20).
 
 ## 2. Scope
 
@@ -199,6 +215,11 @@ tokens, so dark mode comes from the theme, not from per-screen work.
 
 Rules: at most one haptic when a screen opens; none in loops; follow the
 system setting.
+v12: every forward button (Next, Continue, Finish, Done, "Climb my first
+step" … in onboarding, the Daily Test, practice and results) gives light on
+tap, so moving on is felt. A tap that already has its own haptic (Check's
+right / wrong feedback, a primary CTA's medium, the greeting) does not get a
+second one.
 
 ### 3.5 Companion system (V00-CompanionSystem, X01, X03)
 
@@ -220,6 +241,14 @@ system setting.
   case is listed in PROGRESS.md with its reason. Wrong answers (V09, Q04 /
   Q05 wrong, practice wrong) use `oops`: the head shake and the falling sweat
   drop. Dialogs with a sad companion (V13b, R10, R08 reset) show the cloud.
+- v12: **props are placed by each hero's head, not by the image box's
+  corner** (on the device the giraffe's sweat drop fell from far above and to
+  the right of its head). For every hero × pose image, measure the head's box
+  from the image (top of the head, the temple on the right side, the cheek)
+  and store it in one table. The sweat drop starts at the temple and falls
+  along the cheek; the thought bubble and the cloud sit just above the head's
+  top right; the Zzz rises from just above the head; the sparkle sits beside
+  the head. Mirrored in RTL.
 - Picker order and stage colours: ASSETS.md. Personality chips (user-facing,
   translated): Fox — Curious, Quick learner, Loves a challenge; Panda — Calm,
   Steady, Never gives up; Koala — Relaxed, Thoughtful, Kind; Frog — Cheerful,
@@ -256,6 +285,11 @@ system setting.
   direction; numbers stay Western digits as today.
 - Long translations must not break fixed-size components: text truncates with
   "…" (DailyTestCard) or scales down within the documented limit.
+- v12: **upper case follows the language.** Dart's `toUpperCase()` ignores the
+  locale, so Turkish showed "GERI BILDIRIMIN YOLDA" and "TILKI RÜYASINDA"
+  (right: GERİ, TİLKİ). Every label shown in capitals goes through one
+  helper that upper-cases by locale (tr and az: i → İ, ı → I), or the ARB
+  string is written in capitals. No raw `toUpperCase()` on translated text.
 
 ## 4. First-run flow
 
@@ -550,6 +584,23 @@ visible above the sheet with at least 12 pt to spare. When the sheet needs
 room (so that "Wake …" stays above the nav bar), the scene is cropped from
 the TOP; the image is never scaled up. Dream bubble top left, score capsule
 top right, as on the board.
+One screen (v12; on the device the reminder row needed a scroll and, when
+scrolled, the dream bubble slid under the status bar): the page does not
+scroll at 390 × 844 and larger at the default and the next text size; only
+the 375 × 667 SE and the largest text size may scroll. To make room, as on
+the v12 board: the sheet starts at 312 pt (390 × 844); the header is the
+moon, "All done for today" with the two ticks under it, the countdown on the
+right; the Premium card has the title and the PREMIUM chip on one row (no
+"Not sleepy yet?"), the ticket strip, "Free: 1 ticket a day · Premium: 5 a
+day", the weak-spot line and a 48 pt button; under it a 40 pt reminder row
+(bell, "Remind me tomorrow", the time, the switch). The camp moves up so it
+sits between the dream bubble and the sheet.
+The campfire (v12; on the device a large flat flame on a ring of stones sat
+on the trail in front of the tent): it stands at the companion's front
+right, on the same ground: the logs' base on the companion's foot line, the
+flame about 40 % of the companion's height, two layers (orange outside,
+yellow inside) with a soft warm glow on the ground under it, as on the board.
+V24 (Premium) uses the same scene, header and reminder row.
 Motion: dream dots appear one by one (200 ms apart), the bubble floats
 (3.2 s); the Premium card slides up 300 ms after the scene; locked tickets pop
 60 ms apart; glint every 3.6 s.
@@ -758,6 +809,13 @@ Haptics: Next: light; hint opens: selection.
 its magnifier; a scan window with the clay lens sweeps over the answer
 cards; a checklist ticks; an indeterminate bar. This is the wait between
 "Submit" and the results.
+v12: the content block is centred vertically in the space between the top
+bar and the bottom safe area (on the device it sat at the top with the lower
+half empty); the same rule for every loading screen (V18 too). The checklist
+is honest: the first two items tick on their timers, the last one ("Writing
+your feedback") stays in progress (a pulsing dot) until the result arrives,
+and ticks with it (on the device all three were ticked while the wait went
+on). The lens stays inside the card's bounds.
 Motion: scan window sweeps over the cards (3.2 s); checklist items tick 0.8 s
 apart; indeterminate bar (1.6 s loop); when the result arrives the window
 stops on the last card and the page moves to the results.
@@ -793,6 +851,13 @@ mistake into progress, <name>."), the weak spot card, three benefit rows,
 (shine + pulse) and the full price/renewal line ("7 days free, then <price>
 per year, auto-renews unless cancelled."), Restore · Terms · Privacy. The
 price line and the links stay visible on first view (App Review).
+Footer (v12; on the device it was about 207 pt tall and spread out): 24 pt
+side margins; the button 54 pt high with only its pulse around it (no
+static halo panel); the price line 12 pt, centred, at most 300 pt wide; the
+links on one centred row, 12 pt, separated by "·"; no "Maybe later" (the X
+at the top right closes; V13b once per session). About 150 pt tall at
+390 × 844, so "Compare plans" is on the first view on 6.1"–6.3" phones too
+(closes F3-26). The same footer on V13c, V13a and V13r.
 Behaviour: copy that counts topics must use the real number of available
 topics.
 Motion: companions float, the middle one hops; "Compare plans" arrow nudges
@@ -861,6 +926,13 @@ weak spots); "Medal collection" on the thick shelf (medal_shelf_v2) with 3
 medals standing on its top surface (newest first; a locked slot for the
 current month) and "See all" (→ PF02); the month progress card with the
 thresholds; then the existing settings rows.
+Month progress card (v12: the device still showed the old card, with an
+orange "5 points" box, one bar and the tiers listed underneath): as on the
+V23 board: "<Month> progress" and "<mountain> · N active days" on the left,
+the ScoreCapsule (the ring round the clay star, the points, "N to Bronze")
+at the top right, a bar of 10 segments filled by the month's points, the tier
+marks under it at their positions (Bronze 75 · Silver 150 · Gold 225) and
+"Monthly total: N / 300 points".
 Ribbon size (v11: it looked thick on the device): its width follows the
 screen: tails included, screen width − 60 pt (330 at 390, 368 at 428). The
 name and "Climbing with <Hero> · since <month year>" each stay on one line;
@@ -938,6 +1010,23 @@ built by the widgets task (`TASK-widgets.md`). v11 fixes on these screens:
   when the user comes back to Home from Review after using the free ticket
   (the device build opened it only after switching tabs again).
 - N03: the switch thumbs are white (§3.6).
+v12, W01 widgets (the device: the medium tip widget looked empty, the dark
+variants were system grey):
+- Medium tip widget: an eyebrow with the topic; a short rule with its key
+  words in a green pill; the user's own latest mistake on one line (a red
+  tint, the wrong words struck through) and its correction on the next (a
+  green tint); "Your weak spot · a new one daily". Each line is one line,
+  "…" if long. A new weak spot each day, in turn. With no weak spot yet: the
+  topic hint's rule and two examples from the app's hint data. The right box
+  shows the Daily Test: waiting (orange, the companion, "Start") or done
+  (navy, "Done", the hours to the next test). Taps: the right box → Daily
+  Test or Home; the rest → that weak spot (R03).
+- Dark variants for every widget, designed, not system grey: card #1E1C27,
+  line #2E2C36, text #F2EEE8, secondary #A9A6B2; the small waiting widget
+  stays orange one shade deeper with cream text; the navy box becomes
+  #1B2E6B; green / red / gold tints as SY03. The medium mountain widget is
+  unchanged (its art has a dusk version).
+- No animation (WidgetKit); data from the App Group; no network call.
 
 ### 5.11 System states and theme
 
