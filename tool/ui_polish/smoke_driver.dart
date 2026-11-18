@@ -8,6 +8,9 @@
 // Fix round 4: SMOKE_LANG (the app's SEED_LANGUAGE, default `en`) picks the
 // texts the walk taps from that language's ARB file; the walk also stops
 // on V20 while the stand-in holds the scoring back.
+// Fix round 5: then Profile's progress card and the paywall from the rest
+// scene's Wake, which must stay through an edge swipe made from outside
+// (READY-swipe / SWIPED files in SMOKE_OUT) and a drag down.
 import 'dart:convert';
 import 'dart:io';
 
@@ -165,6 +168,54 @@ Future<void> main() async {
         timeout: _timeout));
     await wait(1200);
     await shot('V24f-after-drag-up');
+
+    // Fix round 5: Profile's month progress card (V23p), then the paywall
+    // from V24f's Wake (V13r), which must stay through an edge swipe from
+    // the left (made from outside: the driver writes READY-swipe and waits
+    // for SWIPED in SMOKE_OUT) and a drag down; X → V13b → the scene.
+    await tap(find.text(t('navProfile')));
+    await wait(1500);
+    await shot('V23-profile');
+    await d.runUnsynchronized(() => d.scrollUntilVisible(
+        find.byType('SingleChildScrollView'),
+        find.byValueKey('medal_progress_card'),
+        dyScroll: -250,
+        timeout: _timeout));
+    await wait(1200);
+    await shot('V23-progress-card');
+    await tap(find.text(t('navHome')));
+    await wait(1500);
+    await shot('V24f-again');
+    await tap(find.byValueKey('rest_wake'));
+    await wait(3000);
+    await shot('V13r-paywall');
+    final ready = File('$out/READY-swipe')..writeAsStringSync('now');
+    final swiped = File('$out/SWIPED');
+    for (var i = 0; i < 240 && !swiped.existsSync(); i++) {
+      await wait(500);
+    }
+    ready.deleteSync();
+    await wait(1500);
+    stdout.writeln('V13r after the edge swipe: '
+        '${await present(find.byValueKey('premium_close'))}');
+    await shot('V13r-after-edge-swipe');
+    await d.runUnsynchronized(() => d.scroll(find.byValueKey('premiumBody'), 0,
+        500, const Duration(milliseconds: 250),
+        timeout: _timeout));
+    await wait(1500);
+    stdout.writeln('V13r after a drag down: '
+        '${await present(find.byValueKey('premium_close'))}');
+    await shot('V13r-after-drag-down');
+    await tap(find.byValueKey('premium_close'));
+    await wait(1500);
+    stdout.writeln('V13b after X: '
+        '${await present(find.byValueKey('premium_exit_continue_free'))}');
+    await shot('V13b-from-rest');
+    if (await present(find.byValueKey('premium_exit_continue_free'))) {
+      await tap(find.byValueKey('premium_exit_continue_free'));
+    }
+    await wait(2000);
+    await shot('V24f-back-asleep');
   } catch (e) {
     stdout.writeln('smoke stopped: $e');
     await shot('stopped-here');
