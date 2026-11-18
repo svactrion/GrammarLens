@@ -85,8 +85,8 @@ void main() {
                 steps: 3,
                 hero: Avatar.fox,
                 name: 'Ada',
-                testLine: tr.restDailyTestDone(4, 5),
-                practiceLine: tr.restFreeTicketUsed,
+                testLine: tr.restTestLine(4, 5, 9),
+                practiceLine: tr.restSessionsLine(1, 5),
                 clock: () => DateTime(2026, 11, 18, 13, 36),
                 offer: RestOffer(
                     weakSpot: 'Missing Article',
@@ -104,9 +104,13 @@ void main() {
       expect(shown, startsWith('TİLKİ'));
       expect(find.text(shown), findsOneWidget);
       expectTurkishCapitals(source, shown);
-      // The chip and the ticket stub are written in capitals in the ARB.
+      // The tag and the ticket's stamp are written in capitals in the ARB;
+      // fix round 5's deck labels go through the helper.
       expect(find.text('PREMIUM'), findsOneWidget);
-      expect(find.text(tr.restTicketUsedStub), findsOneWidget);
+      expect(find.text(tr.ticketStamp), findsOneWidget);
+      expect(find.text(upperCaseIn('tr', tr.restNextUp)), findsOneWidget);
+      expect(find.text('SIRADAKİ'), findsOneWidget);
+      expect(find.text('BUGÜN'), findsOneWidget);
       await fix4Capture(tester, 'tr-capitals-V24f',
           dark: brightness == Brightness.dark);
     });

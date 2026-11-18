@@ -298,6 +298,12 @@ class AppColors extends ThemeExtension<AppColors> {
   /// V24f's Premium card runs from [navy] to this plum (both themes).
   static const premiumPlum = Color(0xFF2A1E5C);
 
+  /// The rest scene's night panel (V24 and V24f v13), the same in both
+  /// themes, its secondary text, and the lip under V24f's Premium card.
+  static const restPanel = Color(0xFF1F1A2E);
+  static const restPanelMuted = Color(0xFFBDB3D6);
+  static const restCardLip = Color(0xFF120E1F);
+
   /// The rest scene's campfire (V24f v12; the same in both themes, the
   /// scene is a night scene): the outer flame's heart, middle and rim, its
   /// soft halo, the pale inner flame, the sparks, and the warm light on the

@@ -68,6 +68,12 @@ Future<void> fix4Capture(WidgetTester tester, String name,
         {bool dark = false}) =>
     _capture(tester, name, dark: dark, round: 4);
 
+/// Fix round 5: the same, with `FIX5_CAPTURE=1`, into
+/// `build/fix5-captures/[dark/]`.
+Future<void> fix5Capture(WidgetTester tester, String name,
+        {bool dark = false}) =>
+    _capture(tester, name, dark: dark, round: 5);
+
 Future<void> _capture(WidgetTester tester, String name,
     {required bool dark, required int round}) async {
   if (Platform.environment['FIX${round}_CAPTURE'] != '1') return;
@@ -94,6 +100,15 @@ Future<void> _capture(WidgetTester tester, String name,
 void recordFix4(String file, String row) {
   if (Platform.environment['FIX4_CAPTURE'] != '1') return;
   final out = File('build/fix4-captures/$file');
+  out.parent.createSync(recursive: true);
+  out.writeAsStringSync('$row\n', mode: FileMode.append);
+}
+
+/// Fix round 5: one table row of measured numbers per render
+/// (`FIX5_CAPTURE=1`: `build/fix5-captures/<file>`).
+void recordFix5(String file, String row) {
+  if (Platform.environment['FIX5_CAPTURE'] != '1') return;
+  final out = File('build/fix5-captures/$file');
   out.parent.createSync(recursive: true);
   out.writeAsStringSync('$row\n', mode: FileMode.append);
 }

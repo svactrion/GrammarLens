@@ -503,32 +503,63 @@ class _Texts extends StatelessWidget {
 
 class _Stamp extends StatelessWidget {
   final Color color;
-  const _Stamp({required this.color});
+
+  /// The stamp's box; null: it wraps its word (the mini ticket, where the
+  /// caller scales it down only if the word is wider than the body).
+  final double? width;
+  final double height;
+  final double border;
+  final double radius;
+  final double fontSize;
+  final double letterSpacing;
+  final double padding;
+  const _Stamp({
+    required this.color,
+    this.width = 72,
+    this.height = 40,
+    this.border = 3,
+    this.radius = 12,
+    this.fontSize = 15,
+    this.letterSpacing = 1.5,
+    this.padding = 6,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final text = Text(
+      context.l10n.ticketStamp,
+      maxLines: 1,
+      style: Theme.of(context)
+          .textTheme
+          .labelLarge!
+          .withWeight(FontWeight.w900)
+          .copyWith(
+              color: color, fontSize: fontSize, letterSpacing: letterSpacing),
+    );
+    final decoration = BoxDecoration(
+      border: Border.all(color: color, width: border),
+      borderRadius: BorderRadius.circular(radius),
+      color: color.withValues(alpha: .08),
+    );
+    if (width == null) {
+      return Container(
+        height: height,
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        decoration: decoration,
+        child: text,
+      );
+    }
     return Container(
-      width: 72,
-      height: 40,
+      width: width,
+      height: height,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border.all(color: color, width: 3),
-        borderRadius: BorderRadius.circular(12),
-        color: color.withValues(alpha: .08),
-      ),
+      decoration: decoration,
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Text(
-            context.l10n.ticketStamp,
-            maxLines: 1,
-            style: Theme.of(context)
-                .textTheme
-                .labelLarge!
-                .withWeight(FontWeight.w900)
-                .copyWith(color: color, fontSize: 15, letterSpacing: 1.5),
-          ),
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: text,
         ),
       ),
     );
@@ -540,9 +571,20 @@ class _NextSlot extends StatelessWidget {
   final Duration? nextIn;
   final Color color;
   final Color muted;
+  final double iconSize;
+  final double timeSize;
+  final double nextSize;
+  final double gap;
 
-  const _NextSlot(
-      {required this.nextIn, required this.color, required this.muted});
+  const _NextSlot({
+    required this.nextIn,
+    required this.color,
+    required this.muted,
+    this.iconSize = 20,
+    this.timeSize = 15,
+    this.nextSize = 10,
+    this.gap = 3,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -555,20 +597,23 @@ class _NextSlot extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule_rounded, size: 20, color: color),
-          const SizedBox(height: 3),
+          Icon(Icons.schedule_rounded, size: iconSize, color: color),
+          SizedBox(height: gap),
           Text('$hh:$mm', // l10n-guard: a time span of numbers
               style: theme.textTheme.titleSmall!
                   .withWeight(FontWeight.w900)
                   .copyWith(
                       color: color,
-                      fontSize: 15,
+                      fontSize: timeSize,
                       fontFeatures: const [FontFeature.tabularFigures()])),
           Text(context.l10n.ticketNext,
               maxLines: 1,
               style: theme.textTheme.labelSmall!
                   .withWeight(FontWeight.w800)
-                  .copyWith(color: muted, fontSize: 10, letterSpacing: .6)),
+                  .copyWith(
+                      color: muted,
+                      fontSize: nextSize,
+                      letterSpacing: .06 * nextSize)),
         ],
       ),
     );
@@ -609,54 +654,68 @@ class _Glint extends StatelessWidget {
 
 enum _Shape { whole, tornBody }
 
+/// X04's outline at any size: the corner and notch radii and the torn
+/// edge's teeth. [full] is the ticket itself; V24f's mini ticket and deck
+/// (v13) draw the same shapes scaled ([scaled]).
+class _Geo {
+  final double r;
+  final double n;
+  final double tooth;
+  final double step;
+  const _Geo(this.r, this.n, this.tooth, this.step);
+
+  static const full = _Geo(Ticket.cornerRadius, Ticket.notchRadius, 7, 8);
+
+  _Geo scaled(double f) => _Geo(r * f, n * f, tooth * f, step * f);
+}
+
 /// The ticket's outline (X04's SVG paths), for a [width] × [height] ticket
 /// whose perforation sits at x = [body].
-Path _wholePath(double width, double body, double h) {
-  const r = Ticket.cornerRadius;
-  const n = Ticket.notchRadius;
+Path _wholePath(double width, double body, double h, [_Geo geo = _Geo.full]) {
+  final r = geo.r;
+  final n = geo.n;
   return Path()
     ..moveTo(r, 0)
     ..lineTo(body - n, 0)
     ..arcToPoint(Offset(body + n, 0),
-        radius: const Radius.circular(n), clockwise: false)
+        radius: Radius.circular(n), clockwise: false)
     ..lineTo(width - r, 0)
-    ..arcToPoint(Offset(width, r), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(width, r), radius: Radius.circular(r))
     ..lineTo(width, h - r)
-    ..arcToPoint(Offset(width - r, h), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(width - r, h), radius: Radius.circular(r))
     ..lineTo(body + n, h)
     ..arcToPoint(Offset(body - n, h),
-        radius: const Radius.circular(n), clockwise: false)
+        radius: Radius.circular(n), clockwise: false)
     ..lineTo(r, h)
-    ..arcToPoint(Offset(0, h - r), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(0, h - r), radius: Radius.circular(r))
     ..lineTo(0, r)
-    ..arcToPoint(const Offset(r, 0), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(r, 0), radius: Radius.circular(r))
     ..close();
 }
 
 /// The body after the tear: its notch halves and a zigzag right edge.
-Path _tornBodyPath(double body, double h) {
-  const r = Ticket.cornerRadius;
-  const n = Ticket.notchRadius;
+Path _tornBodyPath(double body, double h, [_Geo geo = _Geo.full]) {
+  final r = geo.r;
+  final n = geo.n;
   final p = Path()
     ..moveTo(r, 0)
     ..lineTo(body - n, 0)
-    ..arcToPoint(Offset(body, n),
-        radius: const Radius.circular(n), clockwise: false);
+    ..arcToPoint(Offset(body, n), radius: Radius.circular(n), clockwise: false);
   var y = n;
   var left = true;
-  while (y + 8 < h - n) {
-    y += 8;
-    p.lineTo(left ? body - 7 : body, y);
+  while (y + geo.step < h - n) {
+    y += geo.step;
+    p.lineTo(left ? body - geo.tooth : body, y);
     left = !left;
   }
   p
     ..lineTo(body, h - n)
     ..arcToPoint(Offset(body - n, h),
-        radius: const Radius.circular(n), clockwise: false)
+        radius: Radius.circular(n), clockwise: false)
     ..lineTo(r, h)
-    ..arcToPoint(Offset(0, h - r), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(0, h - r), radius: Radius.circular(r))
     ..lineTo(0, r)
-    ..arcToPoint(const Offset(r, 0), radius: const Radius.circular(r))
+    ..arcToPoint(Offset(r, 0), radius: Radius.circular(r))
     ..close();
   return p;
 }
@@ -698,6 +757,16 @@ class _TicketPainter extends CustomPainter {
   final Color lip;
   final Color perforation;
   final _Shape kind;
+  final _Geo geo;
+
+  /// How far the lip shows under the shape.
+  final double lipDepth;
+
+  /// The scale of the perforation's dashes (1 on the ticket itself).
+  final double dashScale;
+
+  /// A hairline around the shape (the mini ticket on the night panel).
+  final Color? outline;
 
   _TicketPainter({
     required this.width,
@@ -707,23 +776,35 @@ class _TicketPainter extends CustomPainter {
     required this.lip,
     required this.perforation,
     required this.kind,
+    this.geo = _Geo.full,
+    this.lipDepth = Ticket.lip,
+    this.dashScale = 1,
+    this.outline,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = kind == _Shape.whole
-        ? _wholePath(width, body, height)
-        : _tornBodyPath(body, height);
-    canvas.drawPath(
-        path.shift(const Offset(0, Ticket.lip)), Paint()..color = lip);
+        ? _wholePath(width, body, height, geo)
+        : _tornBodyPath(body, height, geo);
+    canvas.drawPath(path.shift(Offset(0, lipDepth)), Paint()..color = lip);
     canvas.drawPath(path, Paint()..color = color);
+    if (outline != null) {
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = outline!
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1);
+    }
     if (kind == _Shape.whole && perforation.a > 0) {
       final dash = Paint()
         ..color = perforation
-        ..strokeWidth = 3;
-      for (var y = 16.0; y < height - 16; y += 12) {
-        canvas.drawLine(
-            Offset(body, y), Offset(body, math.min(y + 6, height - 16)), dash);
+        ..strokeWidth = 3 * dashScale;
+      final margin = 16 * dashScale;
+      for (var y = margin; y < height - margin; y += 12 * dashScale) {
+        canvas.drawLine(Offset(body, y),
+            Offset(body, math.min(y + 6 * dashScale, height - margin)), dash);
       }
     }
   }
@@ -734,7 +815,10 @@ class _TicketPainter extends CustomPainter {
       old.lip != lip ||
       old.width != width ||
       old.body != body ||
-      old.kind != kind;
+      old.height != height ||
+      old.kind != kind ||
+      old.outline != outline ||
+      old.perforation != perforation;
 }
 
 class _StubPainter extends CustomPainter {
@@ -756,44 +840,54 @@ class _StubPainter extends CustomPainter {
 class _SlotPainter extends CustomPainter {
   final Color fill;
   final Color stroke;
-  _SlotPainter({required this.fill, required this.stroke});
+  final _Geo geo;
+  final double strokeWidth;
+  final double dash;
+  final double gap;
+  _SlotPainter({
+    required this.fill,
+    required this.stroke,
+    this.geo = _Geo.full,
+    this.strokeWidth = 2.5,
+    this.dash = 7,
+    this.gap = 6,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    const r = Ticket.cornerRadius;
-    const n = Ticket.notchRadius;
+    final r = geo.r;
+    final n = geo.n;
     final w = size.width, h = size.height;
     final path = Path()
       ..moveTo(n, 0)
       ..lineTo(w - r, 0)
-      ..arcToPoint(Offset(w, r), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(w, r), radius: Radius.circular(r))
       ..lineTo(w, h - r)
-      ..arcToPoint(Offset(w - r, h), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(w - r, h), radius: Radius.circular(r))
       ..lineTo(n, h)
       ..arcToPoint(Offset(0, h - n),
-          radius: const Radius.circular(n), clockwise: false)
+          radius: Radius.circular(n), clockwise: false)
       ..lineTo(0, n)
-      ..arcToPoint(const Offset(n, 0),
-          radius: const Radius.circular(n), clockwise: false)
+      ..arcToPoint(Offset(n, 0), radius: Radius.circular(n), clockwise: false)
       ..close();
     canvas.drawPath(path, Paint()..color = fill);
     final paint = Paint()
       ..color = stroke
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = strokeWidth;
     for (final metric in path.computeMetrics()) {
       var d = 0.0;
       while (d < metric.length) {
         canvas.drawPath(
-            metric.extractPath(d, math.min(d + 7, metric.length)), paint);
-        d += 13;
+            metric.extractPath(d, math.min(d + dash, metric.length)), paint);
+        d += dash + gap;
       }
     }
   }
 
   @override
   bool shouldRepaint(_SlotPainter old) =>
-      old.fill != fill || old.stroke != stroke;
+      old.fill != fill || old.stroke != stroke || old.geo != geo;
 }
 
 class _ShapeClipper extends CustomClipper<Path> {
@@ -809,4 +903,456 @@ class _ShapeClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(_ShapeClipper old) =>
       old.width != width || old.body != body || old.height != height;
+}
+
+/// V24f v13 (SPEC V24f "Panel"): today's free ticket, used — X04's compact
+/// used ticket made small (150 × 50): the navy body with its notch halves
+/// and torn edge, the gold USED stamp, and the stub's dashed, light slot
+/// with a clock, the time left until the next free ticket ([nextIn]) and
+/// NEXT. The shapes are X04's own ([_Geo] scaled to the height); the
+/// colours are the light theme's, as the night panel is the same in both
+/// themes, with a hairline around the body on the dark panel.
+class MiniUsedTicket extends StatelessWidget {
+  final Duration nextIn;
+  const MiniUsedTicket({super.key, required this.nextIn});
+
+  static const width = 150.0;
+  static const height = 50.0;
+  static const body = 100.0;
+  static const lip = 3.0;
+
+  /// X04's shapes at this height (the compact ticket is 112 high).
+  static const scale = height / 112;
+
+  /// The slot's place: just right of the torn edge, to the ticket's end.
+  static const slotLeft = body + 4.5;
+
+  @override
+  Widget build(BuildContext context) {
+    const c = AppColors.light;
+    final l10n = context.l10n;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final geo = _Geo.full.scaled(scale);
+    final hours = nextIn.inHours;
+    final minutes = nextIn.inMinutes % 60;
+    Widget ticket = Stack(clipBehavior: Clip.none, children: [
+      Positioned(
+        left: 0,
+        top: 0,
+        width: body,
+        height: height + lip,
+        child: CustomPaint(
+          painter: _TicketPainter(
+            width: width,
+            body: body,
+            height: height,
+            color: c.navy,
+            lip: c.navyDeep,
+            perforation: Colors.transparent,
+            kind: _Shape.tornBody,
+            geo: geo,
+            lipDepth: lip,
+            outline: Colors.white.withValues(alpha: .22),
+          ),
+        ),
+      ),
+      Positioned(
+        left: 0,
+        top: 0,
+        width: body - geo.tooth,
+        height: height,
+        child: _TicketState._flipBack(
+            rtl,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              // The word sets the stamp's width ("USED", "KULLANILDI"); a
+              // word wider than the body is scaled down.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _Stamp(
+                  color: c.gold,
+                  width: null,
+                  height: 22,
+                  border: 2.5,
+                  radius: 6,
+                  fontSize: 10.5,
+                  letterSpacing: .8,
+                  padding: 6,
+                ),
+              ),
+            )),
+      ),
+      Positioned(
+        left: slotLeft,
+        top: .7,
+        width: width - slotLeft - .7,
+        height: height - 1.4,
+        child: CustomPaint(
+          painter: _SlotPainter(
+            fill: c.card.withValues(alpha: .92),
+            stroke: c.line,
+            geo: geo,
+            strokeWidth: 1.4,
+            dash: 4,
+            gap: 3,
+          ),
+          child: _TicketState._flipBack(
+              rtl,
+              // Scaled down rather than wrapped where a font runs wide.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _NextSlot(
+                  nextIn: nextIn,
+                  color: c.navyText,
+                  muted: c.muted,
+                  iconSize: 13,
+                  timeSize: 12.5,
+                  nextSize: 7.5,
+                  gap: 2,
+                ),
+              )),
+        ),
+      ),
+    ]);
+    if (rtl) ticket = Transform.flip(flipX: true, child: ticket);
+    return Semantics(
+      label: '${l10n.ticketUsedTitle}. '
+          '${l10n.ticketNextSemantics(hours, minutes)}',
+      excludeSemantics: true,
+      child: SizedBox(width: width, height: height + lip, child: ticket),
+    );
+  }
+}
+
+/// V24f v13 (SPEC V24f "Panel"): the Premium card's deck — four X04
+/// tickets (notches, perforation, stub) [offset] apart diagonally, the
+/// back ones a shade darker with the stub's sparkle; the front one says
+/// [eyebrow] ("NEXT UP"), [title] (today's weak spot, one line), [line]
+/// and [count] / [countLabel] ("+4 / TODAY") on its stub, and its glint
+/// passes every 3.4 s. On entry the back tickets settle 60 ms apart, the
+/// front one last; [gathered] draws them into the front ticket (150 ms,
+/// on Wake). Under Reduce Motion everything is at once.
+class TicketDeck extends StatefulWidget {
+  final String eyebrow;
+  final String title;
+  final String line;
+  final String count;
+  final String countLabel;
+  final String semantics;
+  final bool gathered;
+
+  const TicketDeck({
+    super.key,
+    required this.eyebrow,
+    required this.title,
+    required this.line,
+    required this.count,
+    required this.countLabel,
+    required this.semantics,
+    this.gathered = false,
+  });
+
+  static const tickets = 4;
+  static const offset = 7.0;
+  static const ticketHeight = 92.0;
+  static const lip = 4.0;
+  static const stubWidth = 70.0;
+  static const height = ticketHeight + lip + offset * (tickets - 1);
+
+  /// X04's shapes at this height (the compact ticket is 112 high).
+  static const scale = ticketHeight / 112;
+
+  /// Each ticket's settle (the board's `gl-pop`), 60 ms apart.
+  static const settle = Duration(milliseconds: 350);
+  static const gather = Duration(milliseconds: 150);
+
+  static ValueKey<String> ticketKey(int i) => ValueKey('deck_ticket_$i');
+
+  @override
+  State<TicketDeck> createState() => _TicketDeckState();
+}
+
+class _TicketDeckState extends State<TicketDeck> with TickerProviderStateMixin {
+  static final _total =
+      TicketDeck.settle + AppMotion.stagger * (TicketDeck.tickets - 1);
+  late final AnimationController _settle =
+      AnimationController(vsync: this, duration: _total);
+  late final AnimationController _gather =
+      AnimationController(vsync: this, duration: TicketDeck.gather);
+  AnimationController? _glint;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.gathered) _gather.value = 1;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      if (AppMotion.reduced(context)) {
+        _settle.value = 1;
+      } else {
+        _settle.forward();
+      }
+    }
+    final loops = AppMotion.loopsOn(context);
+    if (loops && _glint == null) {
+      _glint = AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 3400))
+        ..repeat();
+    } else if (!loops && _glint != null) {
+      _glint!.dispose();
+      _glint = null;
+    }
+  }
+
+  @override
+  void didUpdateWidget(TicketDeck oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.gathered != widget.gathered) {
+      if (AppMotion.reduced(context)) {
+        _gather.value = widget.gathered ? 1 : 0;
+      } else if (widget.gathered) {
+        _gather.forward();
+      } else {
+        _gather.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _settle.dispose();
+    _gather.dispose();
+    _glint?.dispose();
+    super.dispose();
+  }
+
+  /// Ticket [i]'s settle (0 → 1): the back-most first, the front one
+  /// ([i] = 0) last.
+  double _settled(int i) {
+    final total = _total.inMilliseconds;
+    final start =
+        AppMotion.stagger.inMilliseconds * (TicketDeck.tickets - 1 - i);
+    final t =
+        ((_settle.value * total - start) / TicketDeck.settle.inMilliseconds)
+            .clamp(0.0, 1.0);
+    return t;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return Semantics(
+      label: widget.semantics,
+      excludeSemantics: true,
+      child: SizedBox(
+        height: TicketDeck.height,
+        child: LayoutBuilder(builder: (context, box) {
+          final width = box.maxWidth.isFinite ? box.maxWidth : 326.0;
+          final ticketWidth =
+              width - TicketDeck.offset * (TicketDeck.tickets - 1);
+          Widget deck = AnimatedBuilder(
+            animation: Listenable.merge(
+                [_settle, _gather, if (_glint != null) _glint!]),
+            builder: (context, _) => Stack(clipBehavior: Clip.none, children: [
+              for (var i = TicketDeck.tickets - 1; i >= 0; i--)
+                _place(context, i, ticketWidth, rtl),
+            ]),
+          );
+          if (rtl) deck = Transform.flip(flipX: true, child: deck);
+          return deck;
+        }),
+      ),
+    );
+  }
+
+  Widget _place(BuildContext context, int i, double width, bool rtl) {
+    final t = _settled(i);
+    final shown =
+        i == 0 ? Curves.easeOut.transform(t) : AppMotion.pop.transform(t);
+    final d = TicketDeck.offset * i * shown * (1 - _gather.value);
+    final ticket =
+        i == 0 ? _front(context, width, rtl) : _back(context, i, width, rtl);
+    return Positioned(
+      key: TicketDeck.ticketKey(i),
+      left: d,
+      top: d,
+      width: width,
+      height: TicketDeck.ticketHeight + TicketDeck.lip,
+      child: Opacity(
+        opacity: t.clamp(0.0, 1.0),
+        child: i == 0
+            ? Transform.scale(scale: .92 + .08 * shown, child: ticket)
+            : ticket,
+      ),
+    );
+  }
+
+  _TicketPainter _painter(double width, Color color, Color lip) =>
+      _TicketPainter(
+        width: width,
+        body: width - TicketDeck.stubWidth,
+        height: TicketDeck.ticketHeight,
+        color: color,
+        lip: lip,
+        perforation: AppColors.light.onOrange.withValues(alpha: .35),
+        kind: _Shape.whole,
+        geo: _Geo.full.scaled(TicketDeck.scale),
+        lipDepth: TicketDeck.lip,
+        dashScale: TicketDeck.scale,
+      );
+
+  /// A back ticket: a shade darker for each step back, the stub's sparkle.
+  Widget _back(BuildContext context, int i, double width, bool rtl) {
+    const c = AppColors.light;
+    final color = Color.lerp(c.orange, c.orangeDeep, .14 * i)!;
+    final lip = Color.lerp(c.orangeDeep, Colors.black, .08 * i)!;
+    return Stack(clipBehavior: Clip.none, children: [
+      Positioned.fill(child: CustomPaint(painter: _painter(width, color, lip))),
+      Positioned(
+        left: width - TicketDeck.stubWidth,
+        top: 0,
+        width: TicketDeck.stubWidth,
+        height: TicketDeck.ticketHeight,
+        child: _TicketState._flipBack(rtl,
+            Icon(Icons.auto_awesome_outlined, color: c.onOrange, size: 22)),
+      ),
+    ]);
+  }
+
+  Widget _front(BuildContext context, double width, bool rtl) {
+    const c = AppColors.light;
+    final theme = Theme.of(context);
+    final body = width - TicketDeck.stubWidth;
+    final geo = _Geo.full.scaled(TicketDeck.scale);
+    Widget flip(Widget child) =>
+        rtl ? Transform.flip(flipX: true, child: child) : child;
+    final texts = MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.15,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Opacity(
+            opacity: .8,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.auto_awesome_outlined, size: 12, color: c.onOrange),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(widget.eyebrow,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(
+                            color: c.onOrange,
+                            fontSize: 10.5,
+                            letterSpacing: 1.2)),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 2),
+          Text(widget.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium!
+                  .withWeight(FontWeight.w900)
+                  .copyWith(
+                      color: c.onOrange,
+                      fontSize: 18,
+                      height: 1.15,
+                      letterSpacing: -.3)),
+          const SizedBox(height: 2),
+          Opacity(
+            opacity: .85,
+            child: Text(widget.line,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium!
+                    .withWeight(FontWeight.w700)
+                    .copyWith(color: c.onOrange, fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+    final stub = MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.0,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(widget.count, // l10n-guard: a number
+            style: theme.textTheme.headlineSmall!
+                .withWeight(FontWeight.w900)
+                .copyWith(color: c.onOrange, fontSize: 26, height: 1)),
+        const SizedBox(height: 2),
+        Opacity(
+          opacity: .75,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(widget.countLabel,
+                maxLines: 1,
+                style: theme.textTheme.labelSmall!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(
+                        color: c.onOrange, fontSize: 9.5, letterSpacing: 1)),
+          ),
+        ),
+      ]),
+    );
+    final glint = _glint;
+    return Stack(clipBehavior: Clip.none, children: [
+      Positioned.fill(
+          child: CustomPaint(painter: _painter(width, c.orange, c.orangeDeep))),
+      Positioned(
+        left: 0,
+        top: 0,
+        width: body,
+        height: TicketDeck.ticketHeight,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
+          child: Align(alignment: Alignment.centerLeft, child: flip(texts)),
+        ),
+      ),
+      Positioned(
+        left: body,
+        top: 0,
+        width: TicketDeck.stubWidth,
+        height: TicketDeck.ticketHeight,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: flip(stub),
+          ),
+        ),
+      ),
+      if (glint != null)
+        Positioned(
+          left: 0,
+          top: 0,
+          width: width,
+          height: TicketDeck.ticketHeight,
+          child: ClipPath(
+            clipper: _DeckClipper(width: width, body: body, geo: geo),
+            child: _Glint(t: glint.value),
+          ),
+        ),
+    ]);
+  }
+}
+
+class _DeckClipper extends CustomClipper<Path> {
+  final double width;
+  final double body;
+  final _Geo geo;
+  _DeckClipper({required this.width, required this.body, required this.geo});
+
+  @override
+  Path getClip(Size size) =>
+      _wholePath(width, body, TicketDeck.ticketHeight, geo);
+
+  @override
+  bool shouldReclip(_DeckClipper old) => old.width != width || old.body != body;
 }

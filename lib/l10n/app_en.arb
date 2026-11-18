@@ -1487,8 +1487,12 @@
   "@practicePreparingTopic": {
     "description": "V18: shown while a practice set is written; count is the number of questions, topic the topic's title (fix round 3, B7).",
     "placeholders": {
-      "count": {"type": "int"},
-      "topic": {"type": "String"}
+      "count": {
+        "type": "int"
+      },
+      "topic": {
+        "type": "String"
+      }
     }
   },
   "weakSpotLoadFailed": "Could not load your recent mistakes.\n{error}",
@@ -4709,69 +4713,89 @@
   "@restTodaysWeakSpot": {
     "description": "V24f: under the weak spot in the dream bubble."
   },
-  "restDailyTestDone": "Daily Test {correct}/{total}",
-  "@restDailyTestDone": {
-    "description": "V24f: the sheet header's first done tick.",
+  "restBody": "Your buddy is resting until tomorrow.",
+  "@restBody": {
+    "description": "The rest scene (V24): under the panel's title."
+  },
+  "restPracticeTitle": "Practice",
+  "@restPracticeTitle": {
+    "description": "The rest scene (V24): the practice tile's title."
+  },
+  "restTestLine": "{correct}/{total} · +{points} points",
+  "@restTestLine": {
+    "description": "The rest scene (V24): the Daily Test tile's line.",
     "placeholders": {
       "correct": {
-        "type": "int"
+        "type": "int",
+        "example": "4"
       },
       "total": {
-        "type": "int"
-      }
-    }
-  },
-  "restFreeTicketUsed": "Free ticket used",
-  "@restFreeTicketUsed": {
-    "description": "V24f: the sheet header's second done tick."
-  },
-  "restNextFreeTest": "next free test",
-  "@restNextFreeTest": {
-    "description": "V24f: under the countdown to midnight."
-  },
-  "restNextDailyTest": "next Daily Test",
-  "@restNextDailyTest": {
-    "description": "V24 (Premium) rest scene header, under the countdown on the right: the time until the next Daily Test."
-  },
-  "restKeepPractising": "Keep practising today",
-  "@restKeepPractising": {
-    "description": "V24f: the Premium card's title."
-  },
-  "restTicketUsedStub": "USED",
-  "@restTicketUsedStub": {
-    "description": "V24f: on the used mini ticket (capitals)."
-  },
-  "restTicketLocked": "Locked",
-  "@restTicketLocked": {
-    "description": "V24f: VoiceOver for a locked mini ticket."
-  },
-  "restFreeVsPremium": "Free: {free} ticket a day · Premium: {premium} a day",
-  "@restFreeVsPremium": {
-    "description": "V24f: under the ticket strip.",
-    "placeholders": {
-      "free": {
-        "type": "int"
+        "type": "int",
+        "example": "5"
       },
-      "premium": {
-        "type": "int"
+      "points": {
+        "type": "int",
+        "example": "9"
       }
     }
   },
-  "restPractiseSpot": "Practise {spot} now, with AI feedback on every answer.",
-  "@restPractiseSpot": {
-    "description": "V24f: the Premium card's line with today's weak spot (topic names stay English).",
+  "restNextTest": "Next Daily Test · step {step}",
+  "@restNextTest": {
+    "description": "The rest scene (V24): above the countdown (uppercased by the app). 'Daily Test' is the feature name.",
     "placeholders": {
-      "spot": {
-        "type": "String"
+      "step": {
+        "type": "int",
+        "example": "2"
       }
     }
   },
-  "restPickAnyTopic": "Pick any of the {count} topics, with AI feedback on every answer.",
-  "@restPickAnyTopic": {
-    "description": "V24f: the Premium card's line when there is no weak spot today.",
+  "restNotSleepy": "Not sleepy yet?",
+  "@restNotSleepy": {
+    "description": "V24f: beside the PREMIUM chip on the Premium card."
+  },
+  "restTodaysTicketUsed": "Today’s free ticket is used.",
+  "@restTodaysTicketUsed": {
+    "description": "V24f (v13): beside the small used ticket, first line."
+  },
+  "restPracticesADay": "{count, plural, =1{1 practice a day} other{{count} practices a day}}",
+  "@restPracticesADay": {
+    "description": "V24f (v13): the Premium card's top right, beside the PREMIUM tag: the Premium daily practice allowance.",
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "restNextUp": "Next up",
+  "@restNextUp": {
+    "description": "V24f (v13): the front ticket's small label in the Premium card's deck (upper-cased by the app)."
+  },
+  "restAiFeedback": "AI feedback on every answer",
+  "@restAiFeedback": {
+    "description": "V24f (v13): the front ticket's line under today's weak spot."
+  },
+  "restDeckToday": "Today",
+  "@restDeckToday": {
+    "description": "V24f (v13): under \"+4\" on the front ticket's stub (upper-cased by the app)."
+  },
+  "restDeckSemantics": "{count, plural, =1{Premium: 1 more practice today} other{Premium: {count} more practices today}}",
+  "@restDeckSemantics": {
+    "description": "V24f (v13): the screen reader's label for the Premium card's deck of tickets.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "restDeckAnyTopic": "Any of {count} topics",
+  "@restDeckAnyTopic": {
+    "description": "V24f (v13): the front ticket's title when there is no weak spot yet (one line).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "14"
       }
     }
   },

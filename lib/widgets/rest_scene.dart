@@ -14,7 +14,8 @@ import '../services/storage_service.dart';
 import '../theme.dart';
 import 'companion_view.dart';
 import 'floating_nav_shell.dart';
-import 'review_top_card.dart';
+import 'step_bar.dart';
+import 'ticket.dart';
 import 'pressable_button.dart';
 import 'monthly_climb/climb_route.dart';
 import 'monthly_climb/climb_trail_table.dart';
@@ -31,15 +32,18 @@ Duration timeToMidnight(DateTime now) =>
 /// right is used. The camp at the companion's own step — the tent behind,
 /// the companion asleep, the campfire at its front right on the same
 /// ground with a warm glow under it — over the month's mountain, and the
-/// night sheet under it: the "All done for today" header with two done
-/// ticks and the countdown to the next Daily Test (local midnight, updated
-/// every minute), V24f's Premium card for free users ([offer]), and the
-/// "Remind me tomorrow" row ([reminder], TASK-widgets fixed decision 7).
+/// night panel under it, ending with the "Remind me tomorrow" row
+/// ([reminder], TASK-widgets fixed decision 7).
 ///
-/// V24 (Premium) keeps "See you tomorrow, <name>", the speech bubble and the
-/// Zzz; V24f (free) has the dream bubble instead (SPEC §1.15). Fix round 4
-/// (SPEC V24f v12): both use the same scene, header and reminder row, and
-/// the page fits one screen (see [designSheetTop]).
+/// V24 (Premium, its own board again in fix round 5, SPEC V24 v13) keeps
+/// "See you tomorrow, <name>", the speech bubble and the Zzz; its panel has
+/// the title with "Your buddy is resting until tomorrow.", the two done
+/// tiles and the "Next Daily Test · step N" card with its step bar and the
+/// countdown (local midnight, updated every minute). V24f (free, SPEC
+/// §1.15) has the dream bubble, and its panel is the ticket deck (v13):
+/// the title, today's free ticket used (with the time to the next one) and
+/// the Premium card ([offer]). Both panels fit their content and end just
+/// above the nav bar; the scene fills the rest ([designSheetTop]).
 class RestScene extends StatefulWidget {
   final ClimbTheme theme;
   final int days;
@@ -47,8 +51,8 @@ class RestScene extends StatefulWidget {
   final Avatar hero;
   final String name;
 
-  /// The header's two done ticks: "Daily Test 4/5", then "Free ticket used"
-  /// (V24f) or "5/5 sessions" (V24).
+  /// V24's two done tiles: the Daily Test's line ("4/5 · +9 points") and
+  /// the practice's ("5/5 sessions"). V24f does not show them.
   final String testLine;
   final String practiceLine;
 
@@ -89,19 +93,16 @@ class RestScene extends StatefulWidget {
   /// board, so 600 / 390 of the screen width) and is never scaled up.
   static const artWidthShare = 600 / 390;
 
-  /// Fix round 4 (SPEC V24f v12, "One screen"): the sheet's top below the
-  /// safe area, at 390 pt wide (the v12 board: 312 on its 844 pt screen,
-  /// 47 pt of status bar), scaled with the width. The sheet only rises
-  /// above it to keep its last row [anchorClearance] above the nav bar; it
-  /// never moves lower, so any spare room stays under the reminder row, as
-  /// on the board.
-  static const designSheetTop = 265.0;
-
-  /// V24's own board (Premium): the sheet at 466 and the companion's top at
-  /// 254 on its 844 pt screen. V24 shares V24f's camp, header and reminder
-  /// row (SPEC V24f v12); its sheet is shorter (no Premium card), so its
-  /// scene keeps its board's taller frame.
+  /// The boards' sheet top below the safe area at 390 pt wide (V24f v13:
+  /// 314 on its 844 pt screen, 47 pt of status bar; V24: 466), scaled with
+  /// the width: the first frame's guess only. Fix round 5 (SPEC V24f v13
+  /// "Panel", V24 v13): the panel fits its content and ends just above the
+  /// nav bar ([anchorClearance]), so the sheet's top is fitted after layout
+  /// and the scene fills the rest — no empty band under the reminder row.
+  static const designSheetTop = 267.0;
   static const designSheetTopPremium = 419.0;
+
+  /// V24's own board: the companion's top at 254 on its 844 pt screen.
   static const bandAboveCampPremium = 207.0;
 
   /// The boards' band from the safe area's top to the companion's top
@@ -119,6 +120,11 @@ class RestScene extends StatefulWidget {
 
   /// The sheet's top corner radius; the scene runs this far under it.
   static const sheetRadius = 28.0;
+
+  /// The panel's rows: its top padding and the gap between rows (both
+  /// boards).
+  static const panelTop = 16.0;
+  static const rowGap = 12.0;
 
   /// On Home's first view, the reminder row (the sheet's last row) stays
   /// this far above the floating nav bar wherever the camp leaves room for
@@ -159,14 +165,19 @@ class RestScene extends StatefulWidget {
   static const headerKey = ValueKey('rest_header');
   static const campGlowKey = ValueKey('rest_camp_glow');
 
+  static const usedTicketKey = ValueKey('rest_used_ticket');
+  static const deckKey = ValueKey('rest_deck');
+  static const doneTilesKey = ValueKey('rest_done_tiles');
+  static const nextTestKey = ValueKey('rest_next_test');
+
   static const dreamKey = ValueKey('rest_dream');
   static const awakeBubbleKey = ValueKey('rest_awake_bubble');
   static const premiumCardKey = ValueKey('rest_premium_card');
   static const wakeKey = ValueKey('rest_wake');
   static const seeYouKey = ValueKey('rest_see_you');
-  static ValueKey<String> ticketKey(int i) => ValueKey('rest_ticket_$i');
 
-  /// V24s: how long the wake-up plays before the paywall rises.
+  /// V24s: how long the wake-up plays before the paywall rises (after the
+  /// deck has gathered, [TicketDeck.gather]).
   static const wakeLead = Duration(milliseconds: 600);
 
   @override
@@ -187,11 +198,11 @@ class _RestSceneState extends State<RestScene>
   final _sheetBoxKey = GlobalKey();
   final _endKey = GlobalKey();
 
-  /// v12: fits [_sheetTop] so the sheet's last row (the reminder row) ends
+  /// v13: fits [_sheetTop] so the panel's last row (the reminder row) ends
   /// [RestScene.anchorClearance] above the floating nav bar on the first
-  /// view (or the safe area's bottom where there is no bar): the design top
-  /// where it fits, higher where it does not (the scene cropped from the
-  /// top), never so high that the camp would not fit ([_minSheetTop]).
+  /// view (or the safe area's bottom where there is no bar): the panel fits
+  /// its content and the scene fills the rest, never so high that the camp
+  /// would not fit ([_minSheetTop]; the page then scrolls).
   void _fitSheet() {
     if (!mounted) return;
     final sheet = _sheetBoxKey.currentContext?.findRenderObject() as RenderBox?;
@@ -208,7 +219,7 @@ class _RestSceneState extends State<RestScene>
         anchor.localToGlobal(Offset(0, anchor.size.height), ancestor: sheet).dy;
     final barTop = _barTop(MediaQuery.of(context));
     final fits = barTop - RestScene.anchorClearance - anchorBottom;
-    final top = math.max(_minSheetTop, math.min(_designSheetTop, fits));
+    final top = math.max(_minSheetTop, fits);
     if (_sheetTop == null || (top - _sheetTop!).abs() > .5) {
       setState(() => _sheetTop = top);
     }
@@ -226,13 +237,21 @@ class _RestSceneState extends State<RestScene>
   /// paywall is open; it falls asleep again when the paywall closes.
   bool _awake = false;
 
+  /// v13: on Wake the deck first gathers into its front ticket (150 ms).
+  bool _gathered = false;
+
   /// The wake-up hop (one, 500 ms).
   late final AnimationController _hop = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 500));
 
   Future<void> _wake() async {
     final offer = widget.offer;
-    if (offer == null || _awake) return;
+    if (offer == null || _awake || _gathered) return;
+    // v13: the deck gathers into the front ticket, the companion wakes,
+    // then the paywall rises (V13r).
+    setState(() => _gathered = true);
+    await Future<void>.delayed(AppMotion.orInstant(context, TicketDeck.gather));
+    if (!mounted) return;
     setState(() => _awake = true);
     if (!AppMotion.reduced(context)) {
       HapticMap.light();
@@ -242,7 +261,12 @@ class _RestSceneState extends State<RestScene>
         AppMotion.orInstant(context, RestScene.wakeLead));
     if (!mounted) return;
     await offer.onWake();
-    if (mounted) setState(() => _awake = false);
+    if (mounted) {
+      setState(() {
+        _awake = false;
+        _gathered = false;
+      });
+    }
   }
 
   @override
@@ -303,15 +327,22 @@ class _RestSceneState extends State<RestScene>
       // The camp: its top where the board has it, under the bubble band;
       // when the sheet rises, the gap under the camp shrinks to 12 first,
       // then the camp moves up with it (the scene cropped from the top).
+      // v13: the art is never scaled and the sheet never starts below its
+      // lower edge: where the fitted sheet sits lower than the art reaches
+      // under the camp (early in the month on tall screens), the camp and
+      // the art move down together.
+      final artBelowStep = scale / climbImageAspect - step0.dy * scale;
       final campTop = math.max(
-          safeTop + RestScene.topBand,
-          math.min(
-              safeTop +
-                  (premium
-                          ? RestScene.bandAboveCampPremium
-                          : RestScene.bandAboveCamp) *
-                      u,
-              sheetTop - RestScene.minCampGap - campHeight));
+          math.max(
+              safeTop + RestScene.topBand,
+              math.min(
+                  safeTop +
+                      (premium
+                              ? RestScene.bandAboveCampPremium
+                              : RestScene.bandAboveCamp) *
+                          u,
+                  sheetTop - RestScene.minCampGap - campHeight)),
+          sceneHeight - artBelowStep - RestScene.feetShare * s);
       final feetY = campTop + RestScene.feetShare * s;
       // The camera: the camp's centre across the middle, the companion's
       // feet at [feetY]. High on the mountain (late in the month) the art's
@@ -543,56 +574,77 @@ class _RestSceneState extends State<RestScene>
               ),
             ),
           ),
-          // The night sheet, attached under the scene (no gap, rounded top
-          // corners), down to the bottom of the page.
+          // The night panel, attached under the scene (no gap, rounded top
+          // corners), down to the bottom of the page; V24f's slides up
+          // 300 ms after the scene.
           Padding(
             padding: EdgeInsets.only(top: sheetTop),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                   minHeight: math.max(0.0, media.size.height - sheetTop)),
-              child: DecoratedBox(
-                key: RestScene.sheetKey,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [c.nightTop, c.nightBottom],
+              child: _SlideUp(
+                enabled: !premium,
+                child: DecoratedBox(
+                  key: RestScene.sheetKey,
+                  decoration: const BoxDecoration(
+                    color: AppColors.restPanel,
+                    borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(RestScene.sheetRadius)),
                   ),
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(RestScene.sheetRadius)),
-                ),
-                child: Padding(
-                  key: _sheetBoxKey,
-                  padding: EdgeInsets.fromLTRB(
-                      sheetPad, 14, sheetPad, math.max(0.0, bottomPad)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _RestHeader(
-                        key: RestScene.headerKey,
-                        ticks: [widget.testLine, widget.practiceLine],
-                        countdown: '$hh:$mm',
-                        countdownLabel: offer == null
-                            ? l10n.restNextDailyTest
-                            : l10n.restNextFreeTest,
-                        countdownSemantics: l10n.restCountdownSemantics(
-                            left.inHours, left.inMinutes % 60),
-                      ),
-                      if (offer != null) ...[
-                        const SizedBox(height: 10),
-                        _FreePanel(
-                          offer: offer,
-                          hero: widget.hero,
-                          awake: _awake,
-                          onWake: _wake,
-                        ),
+                  child: Padding(
+                    key: _sheetBoxKey,
+                    padding: EdgeInsets.fromLTRB(sheetPad, RestScene.panelTop,
+                        sheetPad, math.max(0.0, bottomPad)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (offer == null) ...[
+                          const _PanelTitle(
+                              key: RestScene.headerKey, premium: true),
+                          const SizedBox(height: RestScene.rowGap),
+                          Row(
+                            key: RestScene.doneTilesKey,
+                            children: [
+                              Expanded(
+                                  child: _DoneTile(
+                                      title: l10n.featureDailyTest,
+                                      line: widget.testLine)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                  child: _DoneTile(
+                                      title: l10n.restPracticeTitle,
+                                      line: widget.practiceLine)),
+                            ],
+                          ),
+                          const SizedBox(height: RestScene.rowGap),
+                          _NextTestCard(
+                            key: RestScene.nextTestKey,
+                            step: step,
+                            countdown: '$hh:$mm',
+                            semantics: l10n.restCountdownSemantics(
+                                left.inHours, left.inMinutes % 60),
+                          ),
+                        ] else ...[
+                          const _PanelTitle(
+                              key: RestScene.headerKey, premium: false),
+                          const SizedBox(height: RestScene.rowGap),
+                          _UsedTicketRow(nextIn: left),
+                          const SizedBox(height: RestScene.rowGap),
+                          _FreePanel(
+                            offer: offer,
+                            hero: widget.hero,
+                            awake: _awake,
+                            gathered: _gathered,
+                            onWake: _wake,
+                          ),
+                        ],
+                        if (widget.reminder != null) ...[
+                          const SizedBox(height: RestScene.rowGap),
+                          widget.reminder!,
+                        ],
+                        SizedBox(key: _endKey, height: 0),
                       ],
-                      if (widget.reminder != null) ...[
-                        const SizedBox(height: 10),
-                        widget.reminder!,
-                      ],
-                      SizedBox(key: _endKey, height: 0),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -601,6 +653,28 @@ class _RestSceneState extends State<RestScene>
         ],
       );
     });
+  }
+}
+
+/// V24f v13: the panel slides up 24 pt as it fades in, 300 ms after the
+/// scene; at once under Reduce Motion (and for V24, [enabled] false).
+class _SlideUp extends StatelessWidget {
+  final bool enabled;
+  final Widget child;
+  const _SlideUp({required this.enabled, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled || AppMotion.reduced(context)) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 300) + AppMotion.slow,
+      curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
+      builder: (context, t, child) => Transform.translate(
+          offset: Offset(0, 24 * (1 - t)),
+          child: Opacity(opacity: .4 + .6 * t, child: child)),
+      child: child,
+    );
   }
 }
 
@@ -639,20 +713,11 @@ class _AboveHead extends SingleChildLayoutDelegate {
       old.rtl != rtl;
 }
 
-/// The sheet's header (V24f v12, also V24): the moon, "All done for today"
-/// with two small done ticks under it, and the countdown on the right.
-class _RestHeader extends StatelessWidget {
-  final List<String> ticks;
-  final String countdown;
-  final String countdownLabel;
-  final String countdownSemantics;
-  const _RestHeader({
-    super.key,
-    required this.ticks,
-    required this.countdown,
-    required this.countdownLabel,
-    required this.countdownSemantics,
-  });
+/// The panel's title: the moon and "All done for today" (V24f v13); V24
+/// adds "Your buddy is resting until tomorrow." under it ([premium]).
+class _PanelTitle extends StatelessWidget {
+  final bool premium;
+  const _PanelTitle({super.key, required this.premium});
 
   @override
   Widget build(BuildContext context) {
@@ -660,73 +725,186 @@ class _RestHeader extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     const onPanel = Colors.white;
-    final muted = onPanel.withValues(alpha: .72);
-    Widget tick(String text) => Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 15,
-            height: 15,
-            decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
-            child: const Icon(Icons.check_rounded, size: 11, color: onPanel),
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium!
-                    .withWeight(FontWeight.w800)
-                    .copyWith(color: muted)),
-          ),
-        ]);
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Icon(Icons.nightlight_round, color: c.gold, size: 20),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.restTitle,
-                style: theme.textTheme.titleMedium!
-                    .withWeight(FontWeight.w900)
-                    .copyWith(color: onPanel, height: 1.1)),
-            const SizedBox(height: 4),
-            Wrap(spacing: 10, runSpacing: 4, children: [
-              for (final t in ticks) tick(t),
-            ]),
-          ],
+    final title = Text(l10n.restTitle,
+        style: (premium
+                ? theme.textTheme.titleLarge!
+                : theme.textTheme.titleMedium!)
+            .withWeight(FontWeight.w900)
+            .copyWith(color: onPanel, height: 1.1));
+    return Row(
+      crossAxisAlignment:
+          premium ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.nightlight_round, color: c.gold, size: premium ? 22 : 20),
+        SizedBox(width: premium ? 10 : 8),
+        Expanded(
+          child: premium
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    title,
+                    const SizedBox(height: 2),
+                    Text(l10n.restBody,
+                        style: theme.textTheme.bodySmall!
+                            .withWeight(FontWeight.w600)
+                            .copyWith(
+                                color: AppColors.restPanelMuted, height: 1.4)),
+                  ],
+                )
+              : title,
         ),
+      ],
+    );
+  }
+}
+
+/// V24: a done tile (a green tick, the title and its line).
+class _DoneTile extends StatelessWidget {
+  final String title;
+  final String line;
+  const _DoneTile({required this.title, required this.line});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .07),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: .12)),
       ),
-      const SizedBox(width: 10),
-      Semantics(
-        label: countdownSemantics,
-        excludeSemantics: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              countdown, // l10n-guard: a time span of numbers
-              textScaler: TextScaler.noScaling,
-              style: theme.textTheme.titleLarge!
-                  .withWeight(FontWeight.w900)
-                  .copyWith(
-                      color: onPanel,
-                      height: 1.1,
-                      fontFeatures: const [FontFeature.tabularFigures()]),
-            ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 120),
-              child: Text(countdownLabel,
-                  textAlign: TextAlign.end,
+      child: Row(children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
+          child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge!
+                      .withWeight(FontWeight.w900)
+                      .copyWith(color: Colors.white)),
+              Text(line,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium!
+                      .withWeight(FontWeight.w600)
+                      .copyWith(color: AppColors.restPanelMuted)),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// V24: "NEXT DAILY TEST · STEP N" over the month's step bar (ten
+/// segments, this round of ten filled in gold) and the countdown to local
+/// midnight on the right.
+class _NextTestCard extends StatelessWidget {
+  final int step;
+  final String countdown;
+  final String semantics;
+  const _NextTestCard({
+    super.key,
+    required this.step,
+    required this.countdown,
+    required this.semantics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final filled = step % 10 == 0 && step > 0 ? 10 : step % 10;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .07),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(upperCaseFor(context, l10n.restNextTest(step + 1)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall!
+                  style: theme.textTheme.labelMedium!
                       .withWeight(FontWeight.w800)
-                      .copyWith(color: muted)),
-            ),
-          ],
+                      .copyWith(
+                          color: AppColors.restPanelMuted, letterSpacing: .6)),
+              const SizedBox(height: 6),
+              StepBar(
+                segments: [
+                  for (var i = 0; i < 10; i++) i < filled ? c.gold : null,
+                ],
+                track: Colors.white.withValues(alpha: .15),
+                height: 6,
+                gap: 4,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Semantics(
+          label: semantics,
+          excludeSemantics: true,
+          child: Text(
+            countdown, // l10n-guard: a time span of numbers
+            textScaler: TextScaler.noScaling,
+            style: theme.textTheme.headlineSmall!
+                .withWeight(FontWeight.w900)
+                .copyWith(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontFeatures: const [FontFeature.tabularFigures()]),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// V24f v13: today's free ticket, used (X04's small used ticket with the
+/// time to the next one), and beside it "Today's free ticket is used." and,
+/// in white, "Not sleepy yet?".
+class _UsedTicketRow extends StatelessWidget {
+  final Duration nextIn;
+  const _UsedTicketRow({required this.nextIn});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Row(children: [
+      MiniUsedTicket(key: RestScene.usedTicketKey, nextIn: nextIn),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Text.rich(
+          TextSpan(children: [
+            TextSpan(text: l10n.restTodaysTicketUsed),
+            const TextSpan(text: '\n'),
+            TextSpan(
+                text: l10n.restNotSleepy,
+                style: theme.textTheme.bodySmall!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(color: Colors.white)),
+          ]),
+          style: theme.textTheme.bodySmall!
+              .withWeight(FontWeight.w700)
+              .copyWith(color: AppColors.restPanelMuted, height: 1.35),
         ),
       ),
     ]);
@@ -1124,27 +1302,29 @@ class _DreamBubbleState extends State<_DreamBubble>
   }
 }
 
-/// V24f's Premium card (v12, compact): navy to plum, a thin gold border and
-/// a slow glint; "Keep practising today" with the PREMIUM chip on one row,
-/// five mini tickets (one used, four locked, popping in 60 ms apart), the
-/// free and Premium allowances, today's weak spot and the 48 pt "Wake <Hero>
-/// up". The card slides up 300 ms after the scene; it glows while the
-/// companion wakes (V24s).
+/// V24f's Premium card (v13): the navy card (140°, navy → plum, a gold
+/// hairline, a dark lip) with the gold ✦ PREMIUM tag and "5 practices a
+/// day" on its top row, the ticket deck ([TicketDeck]: NEXT UP, today's
+/// weak spot, "AI feedback on every answer", "+4 / TODAY"), and "Wake
+/// <Hero> up · 7 days free". It glows while the companion wakes (V24s); on
+/// Wake the deck gathers first ([gathered]).
 class _FreePanel extends StatelessWidget {
   final RestOffer offer;
   final Avatar hero;
   final bool awake;
+  final bool gathered;
   final VoidCallback onWake;
 
-  static const cardPadding = EdgeInsets.fromLTRB(14, 12, 14, 14);
+  static const cardPadding = EdgeInsets.all(14);
 
-  /// The board's button height (v12).
-  static const buttonHeight = 48.0;
+  /// The board's button height (v13).
+  static const buttonHeight = 50.0;
 
   const _FreePanel({
     required this.offer,
     required this.hero,
     required this.awake,
+    required this.gathered,
     required this.onWake,
   });
 
@@ -1153,215 +1333,95 @@ class _FreePanel extends StatelessWidget {
     final c = AppColors.of(context);
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final reduced = AppMotion.reduced(context);
-    const onPanel = Colors.white;
-    final muted = onPanel.withValues(alpha: .72);
     final spot = offer.weakSpot;
     final days = offer.trialDays;
-    final card = AnimatedContainer(
+    const more = StorageService.dailySessionLimit -
+        StorageService.freeDailyPracticeLimit;
+    return AnimatedContainer(
       key: RestScene.premiumCardKey,
       duration: AppMotion.orInstant(context, AppMotion.base),
-      clipBehavior: Clip.antiAlias,
       padding: cardPadding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          // The board's 140°.
+          begin: const Alignment(-.64, -.77),
+          end: const Alignment(.64, .77),
           colors: [c.navy, AppColors.premiumPlum],
         ),
-        border: Border.all(color: c.gold.withValues(alpha: .55)),
+        border: Border.all(color: c.gold.withValues(alpha: .45), width: 1.5),
         boxShadow: [
+          const BoxShadow(color: AppColors.restCardLip, offset: Offset(0, 6)),
           BoxShadow(
               color: c.gold.withValues(alpha: awake ? .55 : 0),
               blurRadius: 18,
               spreadRadius: 4),
         ],
       ),
-      child: Stack(children: [
-        const Positioned.fill(child: IgnorePointer(child: CardGlint())),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Expanded(
-                child: Text(l10n.restKeepPractising,
-                    style: theme.textTheme.titleMedium!
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                  color: c.gold, borderRadius: BorderRadius.circular(999)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 14, color: AppColors.light.onOrange),
+                const SizedBox(width: 6),
+                // The plan's name: English capitals (F4-13).
+                Text(upperCaseIn('en', l10n.featurePremium),
+                    style: theme.textTheme.labelSmall!
                         .withWeight(FontWeight.w900)
-                        .copyWith(color: onPanel, height: 1.1)),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                    color: c.gold, borderRadius: BorderRadius.circular(999)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.auto_awesome_rounded, size: 12, color: c.onOrange),
-                  const SizedBox(width: 4),
-                  // The plan's name: English capitals, as the ARB's "PREMIUM".
-                  Text(upperCaseIn('en', l10n.featurePremium),
-                      style: theme.textTheme.labelSmall!
-                          .withWeight(FontWeight.w900)
-                          .copyWith(color: c.onOrange, letterSpacing: 1)),
-                ]),
-              ),
-            ]),
-            const SizedBox(height: 8),
-            Semantics(
-              label: l10n.restFreeVsPremium(
-                  StorageService.freeDailyPracticeLimit,
-                  StorageService.dailySessionLimit),
-              excludeSemantics: true,
-              child: Wrap(spacing: 6, runSpacing: 6, children: [
-                for (var i = 0; i < StorageService.dailySessionLimit; i++)
-                  TweenAnimationBuilder<double>(
-                    key: RestScene.ticketKey(i),
-                    tween: Tween(begin: reduced ? 1 : 0, end: 1),
-                    duration: reduced
-                        ? Duration.zero
-                        : AppMotion.base + AppMotion.stagger * (i + 5),
-                    curve: Interval(
-                        (AppMotion.stagger * (i + 5)).inMilliseconds /
-                            (AppMotion.base + AppMotion.stagger * (i + 5))
-                                .inMilliseconds,
-                        1,
-                        curve: AppMotion.pop),
-                    builder: (context, t, child) =>
-                        Transform.scale(scale: t, child: child),
-                    child: i < StorageService.freeDailyPracticeLimit
-                        ? _MiniTicket.used(
-                            upperCaseFor(context, l10n.restTicketUsedStub))
-                        : const _MiniTicket.locked(),
-                  ),
+                        .copyWith(
+                            color: AppColors.light.onOrange,
+                            letterSpacing: 1.2)),
               ]),
             ),
-            const SizedBox(height: 6),
-            Text(
-                l10n.restFreeVsPremium(StorageService.freeDailyPracticeLimit,
-                    StorageService.dailySessionLimit),
-                style: theme.textTheme.labelSmall!
-                    .withWeight(FontWeight.w700)
-                    .copyWith(color: muted)),
-            const SizedBox(height: 6),
-            Text.rich(
-              TextSpan(
-                children: spot == null
-                    ? [TextSpan(text: l10n.restPickAnyTopic(offer.topics))]
-                    : emphasizedSpans(l10n.restPractiseSpot(spot),
-                        emphasized: [spot], style: TextStyle(color: c.gold)),
-              ),
-              style: theme.textTheme.bodyMedium!
-                  .withWeight(FontWeight.w800)
-                  .copyWith(color: onPanel, height: 1.3),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                  l10n.restPracticesADay(StorageService.dailySessionLimit),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium!
+                      .withWeight(FontWeight.w800)
+                      .copyWith(color: AppColors.onRibbonMuted)),
             ),
-            const SizedBox(height: 10),
-            // While the companion wakes the button stays orange (V24s) but
-            // takes no second tap.
-            IgnorePointer(
-              ignoring: awake,
-              child: PressableButton(
-                key: RestScene.wakeKey,
-                label: days == null
-                    ? l10n.restWakeUp(hero.name(l10n))
-                    : l10n.restWakeUpTrial(hero.name(l10n), days),
-                height: buttonHeight,
-                tone: ButtonTone.orange,
-                trailingIcon: Icons.arrow_forward_rounded,
-                shine: true,
-                haptic: ButtonHaptic.medium,
-                onPressed: onWake,
-              ),
+          ]),
+          const SizedBox(height: 12),
+          TicketDeck(
+            key: RestScene.deckKey,
+            eyebrow: upperCaseFor(context, l10n.restNextUp),
+            title: spot ?? l10n.restDeckAnyTopic(offer.topics),
+            line: l10n.restAiFeedback,
+            count: '+$more', // l10n-guard: a number
+            countLabel: upperCaseFor(context, l10n.restDeckToday),
+            semantics: l10n.restDeckSemantics(more),
+            gathered: gathered,
+          ),
+          const SizedBox(height: 12),
+          // While the companion wakes the button stays orange (V24s) but
+          // takes no second tap.
+          IgnorePointer(
+            ignoring: awake || gathered,
+            child: PressableButton(
+              key: RestScene.wakeKey,
+              label: days == null
+                  ? l10n.restWakeUp(hero.name(l10n))
+                  : l10n.restWakeUpTrial(hero.name(l10n), days),
+              height: buttonHeight,
+              tone: ButtonTone.orange,
+              trailingIcon: Icons.arrow_forward_rounded,
+              shine: true,
+              haptic: ButtonHaptic.medium,
+              onPressed: onWake,
             ),
-          ],
-        ),
-      ]),
-    );
-    // The card slides up 300 ms after the scene.
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: reduced ? 1 : 0, end: 1),
-      duration: reduced
-          ? Duration.zero
-          : const Duration(milliseconds: 300) + AppMotion.slow,
-      curve: const Interval(.43, 1, curve: Curves.easeOutCubic),
-      builder: (context, t, child) => Opacity(
-        opacity: t,
-        child:
-            Transform.translate(offset: Offset(0, 24 * (1 - t)), child: child),
+          ),
+        ],
       ),
-      child: card,
     );
   }
-}
-
-/// One of V24f's five mini tickets: the used one (dashed, grey, "USED") or
-/// a locked one (orange, a lock).
-class _MiniTicket extends StatelessWidget {
-  final String? usedLabel;
-  const _MiniTicket.used(String label) : usedLabel = label;
-  const _MiniTicket.locked() : usedLabel = null;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final used = usedLabel != null;
-    return SizedBox(
-      width: 50,
-      height: 30,
-      child: used
-          ? CustomPaint(
-              painter:
-                  _DashedBorder(color: Colors.white.withValues(alpha: .45)),
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(usedLabel!,
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall!
-                            .withWeight(FontWeight.w900)
-                            .copyWith(
-                                color: Colors.white.withValues(alpha: .6),
-                                letterSpacing: .6)),
-                  ),
-                ),
-              ),
-            )
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                color: c.orange,
-                borderRadius: BorderRadius.circular(9),
-                boxShadow: [
-                  BoxShadow(color: c.orangeDeep, offset: const Offset(0, 3))
-                ],
-              ),
-              child: Icon(Icons.lock_rounded, size: 15, color: c.onOrange),
-            ),
-    );
-  }
-}
-
-class _DashedBorder extends CustomPainter {
-  final Color color;
-  _DashedBorder({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-          Offset.zero & size, const Radius.circular(9)));
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    for (final metric in path.computeMetrics()) {
-      for (var d = 0.0; d < metric.length; d += 8) {
-        canvas.drawPath(metric.extractPath(d, d + 4), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBorder old) => old.color != color;
 }

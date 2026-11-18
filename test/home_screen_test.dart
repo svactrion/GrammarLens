@@ -52,6 +52,11 @@ import 'package:grammar_lens/widgets/speech_bubble.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
 import 'package:grammar_lens/widgets/home_practice.dart';
 import 'package:grammar_lens/widgets/rest_reminder_row.dart';
+import 'package:grammar_lens/widgets/step_bar.dart';
+import 'package:grammar_lens/widgets/ticket.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart'
+    show climbImageAspect;
+import 'package:grammar_lens/widgets/monthly_climb/mountain_scene.dart';
 
 import 'support/fake_native_bridge.dart';
 import 'support/l10n_support.dart';
@@ -1205,10 +1210,11 @@ void main() {
       expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
       expect(find.byKey(HomeScreen.dailyTestCardKey), findsNothing);
       expect(find.text('All done for today'), findsOneWidget);
-      // Fix round 2: free users get V24f (SPEC §1.15).
-      expect(find.text('Daily Test 4/5'), findsOneWidget);
-      expect(find.text('Free ticket used'), findsOneWidget);
+      // Fix round 2: free users get V24f (SPEC §1.15); v13: the used
+      // ticket and the deck, no done tiles.
+      expect(find.byKey(RestScene.usedTicketKey), findsOneWidget);
       expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
+      expect(find.byKey(RestScene.doneTilesKey), findsNothing);
       expect(find.byKey(HomeScreen.capsuleKey), findsOneWidget);
     });
 
@@ -1224,12 +1230,30 @@ void main() {
           subscriptionService: _FakeSubscriptionService(hasAccess: true));
       expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
       const limit = StorageService.dailySessionLimit;
-      expect(find.text('$limit/$limit sessions'), findsOneWidget);
       // Premium users keep V24: no Premium card, no dream; the Zzz and
-      // "See you tomorrow".
+      // "See you tomorrow". Fix round 5 (SPEC V24 v13): its own board
+      // again — the two done tiles and the next test's card with its step
+      // bar and countdown.
       expect(find.byKey(RestScene.premiumCardKey), findsNothing);
+      expect(find.byKey(RestScene.usedTicketKey), findsNothing);
       expect(find.byKey(RestScene.dreamKey), findsNothing);
       expect(find.byKey(RestScene.seeYouKey), findsOneWidget);
+      expect(
+          find.text('Your buddy is resting until tomorrow.'), findsOneWidget);
+      expect(find.byKey(RestScene.doneTilesKey), findsOneWidget);
+      expect(find.text('Daily Test'), findsOneWidget);
+      expect(find.text('5/5 · +10 points'), findsOneWidget);
+      expect(find.text('Practice'), findsOneWidget);
+      expect(find.text('$limit/$limit sessions'), findsOneWidget);
+      expect(find.byKey(RestScene.nextTestKey), findsOneWidget);
+      expect(find.text('NEXT DAILY TEST · STEP 4'), findsOneWidget);
+      // Clock 9:00: 15 h to the next test.
+      expect(find.text('15:00'), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(RestScene.nextTestKey),
+              matching: find.byType(StepBar)),
+          findsOneWidget);
     });
 
     group(
@@ -1254,34 +1278,82 @@ void main() {
       }
 
       testWidgets(
-          'V24f: the dream bubble names today\'s weak spot; no Zzz and no '
-          '"See you tomorrow"; one used + four locked tickets; the button '
-          'states the store\'s trial; the paywall never opens by itself',
-          (tester) async {
+          'V24f v13: the dream bubble names today\'s weak spot; no Zzz and '
+          'no "See you tomorrow"; the used ticket with the next one\'s '
+          'time; the deck of four with NEXT UP, the weak spot and +4 TODAY; '
+          'the button states the store\'s trial; the paywall never opens '
+          'by itself', (tester) async {
         final (sink, _) = await pumpRest(tester);
         expect(find.byKey(RestScene.dreamKey), findsOneWidget);
         expect(find.textContaining('IS DREAMING OF'), findsOneWidget);
         expect(find.byKey(RestScene.seeYouKey), findsNothing);
-        expect(find.text('Free: 1 ticket a day · Premium: 5 a day'),
+        // The title alone (no done ticks, no countdown in the header).
+        expect(find.text('All done for today'), findsOneWidget);
+        expect(find.text('Daily Test 4/5'), findsNothing);
+        // Today's free ticket, used: USED and the time to the next one
+        // (clock 9:00 → 15:00), and the two lines beside it.
+        final used = find.byKey(RestScene.usedTicketKey);
+        expect(tester.getSize(used), const Size(150, 53));
+        expect(find.descendant(of: used, matching: find.text('USED')),
             findsOneWidget);
-        for (var i = 0; i < StorageService.dailySessionLimit; i++) {
-          expect(find.byKey(RestScene.ticketKey(i)), findsOneWidget);
+        expect(find.descendant(of: used, matching: find.text('15:00')),
+            findsOneWidget);
+        expect(find.descendant(of: used, matching: find.text('NEXT')),
+            findsOneWidget);
+        expect(
+            find.textContaining('Today’s free ticket is used.',
+                findRichText: true),
+            findsOneWidget);
+        expect(find.textContaining('Not sleepy yet?', findRichText: true),
+            findsOneWidget);
+        // The Premium card: the tag, the allowance, the deck.
+        final card = find.byKey(RestScene.premiumCardKey);
+        expect(find.descendant(of: card, matching: find.text('PREMIUM')),
+            findsOneWidget);
+        expect(
+            find.descendant(of: card, matching: find.text('5 practices a day')),
+            findsOneWidget);
+        final deck = find.byKey(RestScene.deckKey);
+        for (var i = 0; i < TicketDeck.tickets; i++) {
+          expect(find.byKey(TicketDeck.ticketKey(i)), findsOneWidget);
         }
-        expect(find.text('USED'), findsOneWidget);
-        expect(find.byIcon(Icons.lock_rounded), findsNWidgets(4));
+        final spot = humanizeSlug(_weakSpot().errorType);
+        for (final text in [
+          'NEXT UP',
+          spot,
+          'AI feedback on every answer',
+          '+4',
+          'TODAY',
+        ]) {
+          expect(find.descendant(of: deck, matching: find.text(text)),
+              findsOneWidget,
+              reason: text);
+        }
+        expect(
+            tester.getSemantics(deck).label, 'Premium: 4 more practices today');
+        // The back tickets 7 pt apart diagonally once settled.
+        final front = tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0)));
+        for (var i = 1; i < TicketDeck.tickets; i++) {
+          expect(tester.getTopLeft(find.byKey(TicketDeck.ticketKey(i))) - front,
+              Offset(7.0 * i, 7.0 * i));
+        }
         final hero = Avatar.values.first.name(en);
         expect(find.text('Wake $hero up · 7 days free'), findsOneWidget);
+        expect(tester.getSize(find.byKey(RestScene.wakeKey)).height,
+            greaterThanOrEqualTo(50));
         expect(find.byType(PremiumScreen), findsNothing);
         expect(sink.named('paywall_viewed'), isEmpty);
       });
 
-      testWidgets('no weak spot: no dream bubble, the card names the topics',
+      testWidgets('no weak spot: no dream bubble, the deck names the topics',
           (tester) async {
         await pumpRest(tester, weakSpot: false);
         expect(find.byKey(RestScene.dreamKey), findsNothing);
         expect(
-            find.text('Pick any of the ${practiceTopics().length} topics, '
-                'with AI feedback on every answer.'),
+            find.descendant(
+                of: find.byKey(RestScene.deckKey),
+                matching:
+                    find.text('Any of ${practiceTopics().length} topics')),
             findsOneWidget);
       });
 
@@ -1295,6 +1367,15 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(RestScene.wakeKey));
         await tester.pump();
+        // v13: the deck gathers into the front ticket first (150 ms) …
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(RestScene.awakeBubbleKey), findsNothing);
+        await tester.pump(const Duration(milliseconds: 60));
+        final front = tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0)));
+        for (var i = 1; i < TicketDeck.tickets; i++) {
+          expect(tester.getTopLeft(find.byKey(TicketDeck.ticketKey(i))), front);
+        }
+        // … then the companion wakes, then the paywall rises.
         await tester.pump(const Duration(milliseconds: 100));
         expect(find.byKey(RestScene.awakeBubbleKey), findsOneWidget);
         expect(find.byType(PremiumScreen), findsNothing);
@@ -1317,6 +1398,11 @@ void main() {
         expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
         expect(find.byKey(RestScene.awakeBubbleKey), findsNothing);
         expect(find.byKey(RestScene.dreamKey), findsOneWidget);
+        // The deck spreads again.
+        expect(
+            tester.getTopLeft(find.byKey(TicketDeck.ticketKey(3))) -
+                tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0))),
+            const Offset(21, 21));
       });
 
       testWidgets(
@@ -1702,15 +1788,18 @@ void main() {
             bridge: FakeNativeBridge()
               ..permission = NotificationPermission.notDetermined);
 
-    // Fix round 4, item 1 (SPEC V24f v12 "One screen", §1.22): the scene
-    // full-bleed from the top, the night sheet attached under it at the
-    // board's place (312 at 390 × 844), the camp whole at least 12 pt above
-    // it; no scroll extent at 390 × 844 and larger at the default and the
-    // next text size, the reminder row (and V24f's Wake) at least 8 pt
-    // above the nav bar there; the SE and the largest text size may scroll,
-    // the row reachable. "Default" is the app's Medium, "next" its Large,
+    // Fix round 5, items 1 and 2 (SPEC V24f v13 "Panel", V24 v13, §1.27,
+    // §1.30): the scene full-bleed from the top, the night panel attached
+    // under it; the panel fits its content and ends just above the nav bar
+    // (the reminder row 8 pt above it: no empty band), the scene fills the
+    // rest, the art never scaled (the sheet never starts below its lower
+    // edge), the camp whole at least 12 pt above the panel; no scroll
+    // extent at 390 × 844 and larger at the default and the next text
+    // size; the SE and the largest text size may scroll, the row
+    // reachable. "Default" is the app's Medium, "next" its Large,
     // "largest" its Large with the system's largest standard size
-    // (xxxLarge, × 1.35) on top (F4-2).
+    // (xxxLarge, × 1.35) on top (F4-2). The five sizes are the phones from
+    // 390 × 844 up; the SE is checked too.
     const textSizes = [
       ('default', AppTextSize.medium, 1.0),
       ('next', AppTextSize.large, 1.0),
@@ -1720,9 +1809,9 @@ void main() {
       for (final (label, textSize, system) in textSizes) {
         for (final (size, top, bottom) in phones) {
           testWidgets(
-              'v12 ${premium ? 'V24' : 'V24f'} ${size.width.toInt()} × '
-              '${size.height.toInt()}, $label text: one screen, the camp '
-              'whole, the row above the bar', (tester) async {
+              'v13 ${premium ? 'V24' : 'V24f'} ${size.width.toInt()} × '
+              '${size.height.toInt()}, $label text: the panel ends just '
+              'above the bar, the scene fills the rest', (tester) async {
             tester.platformDispatcher.textScaleFactorTestValue = system;
             addTearDown(
                 tester.platformDispatcher.clearTextScaleFactorTestValue);
@@ -1743,100 +1832,20 @@ void main() {
                 brightness: brightness);
             await pump(Brightness.light);
             expect(tester.takeException(), isNull);
-            final scene = tester.getRect(find.byKey(RestScene.sceneKey));
-            final sheet = tester.getRect(find.byKey(RestScene.sheetKey));
-            final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
-            // Full-bleed from the top of the screen, edge to edge; the
-            // sheet attached (it starts inside the scene's last 28 pt).
-            expect(scene.top, 0);
-            expect(scene.left, 0);
-            expect(scene.width, size.width);
-            expect(sheet.left, 0);
-            expect(sheet.width, size.width);
-            expect(
-                sheet.top, closeTo(scene.bottom - RestScene.sheetRadius, .5));
-            // The board's sheet top where the page has room for it (V24f
-            // 312, V24 466 on their 390 × 844 boards).
-            if (size == const Size(390, 844) && label != 'largest') {
-              expect(sheet.top, closeTo(premium ? 466 : 312, .5));
-            }
-            // The camp: tent, companion and fire fully visible, at least
-            // 12 pt above the sheet, under the status bar.
-            final companion = tester.getRect(find
-                .descendant(
-                    of: find.byKey(RestScene.sceneKey),
-                    matching: find.byType(CompanionView))
-                .first);
-            final fire = tester.getRect(find.descendant(
-                of: find.byKey(RestScene.sceneKey),
-                matching: find.byType(Campfire)));
-            final tent = tester.getRect(find.descendant(
-                of: find.byKey(RestScene.sceneKey),
-                matching: find.byWidgetPredicate((w) =>
-                    w is Image &&
-                    w.image is AssetImage &&
-                    (w.image as AssetImage).assetName.contains('tent'))));
-            final campTop =
-                [tent.top, companion.top, fire.top].reduce(math.min);
-            final campBottom =
-                [tent.bottom, companion.bottom, fire.bottom].reduce(math.max);
-            expect(campTop, greaterThanOrEqualTo(top), reason: 'camp top');
-            expect(campBottom, lessThanOrEqualTo(sheet.top - 12 + .5),
-                reason: 'camp $campBottom, sheet ${sheet.top}');
-            expect(fire.left, greaterThanOrEqualTo(0));
-            expect(fire.right, lessThanOrEqualTo(size.width));
-            // The fire at the companion's front right, on its ground: the
-            // log pile's base on the companion's feet.
-            final s = companion.height;
-            expect(fire.left, greaterThan(companion.center.dx));
-            expect(
-                fire.bottom -
-                    Campfire.logsHeight /
-                        Campfire.boxHeight *
-                        fire.height *
-                        (1 - Campfire.pileBase),
-                closeTo(companion.top + RestScene.feetShare * s, .5));
-            // The dream bubble never under the status bar.
-            final dream = find.byKey(RestScene.dreamKey);
-            if (!premium) {
-              expect(tester.getRect(dream).top, greaterThanOrEqualTo(top));
-            }
-            final row = find.byType(RestReminderRow);
-            final rowRect = tester.getRect(row);
-            final outer = tester
-                .state<ScrollableState>(find.byType(Scrollable).first)
-                .position;
-            final extent = outer.maxScrollExtent;
-            final oneScreen = size.height >= 800 && label != 'largest';
-            double? wakeClear;
-            if (!premium) {
-              final wake = tester.getRect(find.byKey(RestScene.wakeKey));
-              wakeClear = bar.top - wake.bottom;
-            }
-            final rowClear = bar.top - rowRect.bottom;
-            if (oneScreen) {
-              expect(extent, 0, reason: 'scroll extent');
-              expect(rowClear,
-                  greaterThanOrEqualTo(RestScene.anchorClearance - .5),
-                  reason: 'row ${rowClear}pt above the bar');
-              if (wakeClear != null) {
-                expect(wakeClear, greaterThan(rowClear));
-              }
-            }
-            _recordV24('${premium ? 'V24' : 'V24f'} | ${size.width.toInt()} × '
-                '${size.height.toInt()} | $label | '
-                '${sheet.top.toStringAsFixed(1)} | '
-                '${(sheet.top - campBottom).toStringAsFixed(1)} | '
-                '${rowClear.toStringAsFixed(1)} | '
-                '${wakeClear?.toStringAsFixed(1) ?? '–'} | '
-                '${extent.toStringAsFixed(1)}');
+            _expectRestLayout(tester,
+                size: size,
+                top: top,
+                premium: premium,
+                oneScreen: size.height >= 800 && label != 'largest',
+                record: '${premium ? 'V24' : 'V24f'} | ${size.width.toInt()} × '
+                    '${size.height.toInt()} | $label');
             if (label != 'largest') {
               final name = '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
                   '${size.height.toInt()}-$label';
-              await _captureShell(tester, name, round: 4);
-              if (Platform.environment['FIX4_CAPTURE'] == '1') {
+              await _captureShell(tester, name, round: 5);
+              if (Platform.environment['FIX5_CAPTURE'] == '1') {
                 await pump(Brightness.dark);
-                await _captureShell(tester, name, dark: true, round: 4);
+                await _captureShell(tester, name, dark: true, round: 5);
                 await pump(Brightness.light);
               }
             }
@@ -1849,7 +1858,7 @@ void main() {
             end.jumpTo(end.maxScrollExtent);
             await tester.pumpAndSettle();
             expect(
-                tester.getRect(row).bottom,
+                tester.getRect(find.byType(RestReminderRow)).bottom,
                 lessThanOrEqualTo(
                     tester.getRect(find.byKey(FloatingNavShell.barKey)).top));
             expect(find.byKey(RestReminderRow.switchKey).hitTestable(),
@@ -1860,71 +1869,119 @@ void main() {
       }
     }
 
-    // v12: late in the month the camp stands high on the mountain, where
-    // the art's top edge would come into view: the art starts lower and
-    // its sky is mirrored above it; the camp keeps its place, whole, and
-    // the dream bubble stays under the status bar's edge.
-    for (final steps in [20, 26, 30]) {
+    // Late in the month the camp stands high on the mountain, where the
+    // art's top edge would come into view: the art starts lower and its
+    // sky is mirrored above it; the camp keeps its place, whole, and the
+    // dream bubble stays under the status bar's edge. Early in the month
+    // (step 0, 1) on the tallest phones the camp and the art move down
+    // together so the art still reaches the panel.
+    for (final (steps, size, top, bottom) in [
+      (20, const Size(390, 844), 47.0, 34.0),
+      (26, const Size(390, 844), 47.0, 34.0),
+      (30, const Size(390, 844), 47.0, 34.0),
+      (0, const Size(440, 956), 62.0, 34.0),
+      (1, const Size(428, 926), 47.0, 34.0),
+    ]) {
+      for (final premium in [false, true]) {
+        testWidgets(
+            'v13 ${premium ? 'V24' : 'V24f'} step $steps, '
+            '${size.width.toInt()} × ${size.height.toInt()}: the camp '
+            'whole, the art unscaled, no empty band', (tester) async {
+          final storage = restDay()
+            ..steps = steps
+            ..sessions = premium ? StorageService.dailySessionLimit : 0;
+          final reminders = remindersFor(storage);
+          addTearDown(reminders.dispose);
+          await pumpShell(tester,
+              size: size,
+              top: top,
+              bottom: bottom,
+              storage: storage,
+              subs: premium
+                  ? _FakeSubscriptionService(hasAccess: true)
+                  : _FakeSubscriptionService(offering: _restOffering()),
+              reminders: reminders);
+          expect(tester.takeException(), isNull);
+          _expectRestLayout(tester,
+              size: size,
+              top: top,
+              premium: premium,
+              oneScreen: true,
+              record: '${premium ? 'V24' : 'V24f'} step $steps | '
+                  '${size.width.toInt()} × ${size.height.toInt()} | default');
+          if (steps >= 20) {
+            final companion = tester.getRect(find
+                .descendant(
+                    of: find.byKey(RestScene.sceneKey),
+                    matching: find.byType(CompanionView))
+                .first);
+            // The board's place: the companion's top 127 pt (V24f) or 207
+            // pt (V24) under the safe area.
+            expect(
+                companion.top,
+                closeTo(
+                    top +
+                        (premium
+                            ? RestScene.bandAboveCampPremium
+                            : RestScene.bandAboveCamp),
+                    1));
+          }
+          await _captureShell(
+              tester,
+              '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
+              '${size.height.toInt()}-step$steps',
+              round: 5);
+        });
+      }
+    }
+
+    // v13 in Turkish on the owner's phone (428 × 926, the app's Large
+    // text): one screen, the row just above the bar.
+    for (final premium in [false, true]) {
       testWidgets(
-          'v12 V24f step $steps: the camp at its place, the sky '
-          'continued', (tester) async {
-        final storage = restDay()..steps = steps;
+          'v13 ${premium ? 'V24' : 'V24f'} in Turkish, 428 × 926, next text: '
+          'one screen', (tester) async {
+        final storage = restDay()
+          ..sessions = premium ? StorageService.dailySessionLimit : 0;
         final reminders = remindersFor(storage);
         addTearDown(reminders.dispose);
-        await pumpShell(tester,
-            size: const Size(390, 844),
+        Future<void> pump(Brightness brightness) => pumpShell(tester,
+            size: const Size(428, 926),
             top: 47,
             bottom: 34,
             storage: storage,
-            subs: _FakeSubscriptionService(offering: _restOffering()),
-            reminders: reminders);
+            subs: premium
+                ? _FakeSubscriptionService(hasAccess: true)
+                : _FakeSubscriptionService(offering: _restOffering()),
+            reminders: reminders,
+            textSize: AppTextSize.large,
+            locale: const Locale('tr'),
+            brightness: brightness);
+        await pump(Brightness.light);
         expect(tester.takeException(), isNull);
-        final sheet = tester.getRect(find.byKey(RestScene.sheetKey));
-        expect(sheet.top, closeTo(312, .5));
-        final companion = tester.getRect(find
-            .descendant(
-                of: find.byKey(RestScene.sceneKey),
-                matching: find.byType(CompanionView))
-            .first);
-        // The board's place: the companion's top 127 pt under the safe area.
-        expect(companion.top, closeTo(47 + RestScene.bandAboveCamp, 1));
-        expect(tester.getRect(find.byKey(RestScene.dreamKey)).top,
-            greaterThanOrEqualTo(47));
-        await _captureShell(tester, 'V24f-390x844-step$steps', round: 4);
+        _expectRestLayout(tester,
+            size: const Size(428, 926),
+            top: 47,
+            premium: premium,
+            oneScreen: true,
+            record: '${premium ? 'V24' : 'V24f'} (tr) | 428 × 926 | next');
+        if (!premium) {
+          final deck = find.byKey(RestScene.deckKey);
+          expect(find.descendant(of: deck, matching: find.text('SIRADAKİ')),
+              findsOneWidget);
+          expect(find.descendant(of: deck, matching: find.text('BUGÜN')),
+              findsOneWidget);
+        } else {
+          expect(find.text('SONRAKİ GÜNLÜK TEST · 4. ADIM'), findsOneWidget);
+        }
+        final name = '${premium ? 'V24' : 'V24f'}-428x926-next-tr';
+        await _captureShell(tester, name, round: 5);
+        if (Platform.environment['FIX5_CAPTURE'] == '1') {
+          await pump(Brightness.dark);
+          await _captureShell(tester, name, dark: true, round: 5);
+        }
       });
     }
-
-    // v12 in Turkish on the owner's phone (428 × 926, the app's Large
-    // text): one screen, the row above the bar.
-    testWidgets('v12 V24f in Turkish, 428 × 926, next text: one screen',
-        (tester) async {
-      final storage = restDay();
-      final reminders = remindersFor(storage);
-      addTearDown(reminders.dispose);
-      await pumpShell(tester,
-          size: const Size(428, 926),
-          top: 47,
-          bottom: 34,
-          storage: storage,
-          subs: _FakeSubscriptionService(offering: _restOffering()),
-          reminders: reminders,
-          textSize: AppTextSize.large,
-          locale: const Locale('tr'));
-      expect(tester.takeException(), isNull);
-      final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
-      final row = tester.getRect(find.byType(RestReminderRow));
-      final extent = tester
-          .state<ScrollableState>(find.byType(Scrollable).first)
-          .position
-          .maxScrollExtent;
-      expect(extent, 0);
-      expect(bar.top - row.bottom,
-          greaterThanOrEqualTo(RestScene.anchorClearance - .5));
-      _recordV24('V24f (tr) | 428 × 926 | next | '
-          '${tester.getRect(find.byKey(RestScene.sheetKey)).top.toStringAsFixed(1)} | | '
-          '${(bar.top - row.bottom).toStringAsFixed(1)} | | ${extent.toStringAsFixed(1)}');
-      await _captureShell(tester, 'V24f-428x926-next-tr', round: 4);
-    });
 
     testWidgets(
         'N01 opens over whichever rest scene comes first: V24 (Premium)',
@@ -1999,11 +2056,105 @@ final _shellBoundary = GlobalKey();
 /// `build/fix3-captures/[dark/]<name>.png` (the sizes no simulator has).
 /// Fix round 4, item 1: the measured numbers, one table row per render
 /// (`FIX4_CAPTURE=1`: `build/fix4-captures/v24-numbers.md`).
-void _recordV24(String row) {
-  if (Platform.environment['FIX4_CAPTURE'] != '1') return;
-  final out = File('build/fix4-captures/v24-numbers.md');
+void _recordV24(String row, {int round = 4}) {
+  if (Platform.environment['FIX${round}_CAPTURE'] != '1') return;
+  final out = File('build/fix$round-captures/v24-numbers.md');
   out.parent.createSync(recursive: true);
   out.writeAsStringSync('| $row |\n', mode: FileMode.append);
+}
+
+/// Fix round 5 (SPEC V24f v13 "Panel", V24 v13): the rest scene's layout
+/// on [size]: full-bleed scene, the panel attached under it, the camp
+/// whole at least 12 pt above the panel and the fire at the companion's
+/// front right on its ground, the art never scaled (the scene no taller
+/// than the art below its top), the dream bubble under the status bar;
+/// with [oneScreen], no scroll extent and the reminder row 8 pt above the
+/// nav bar (the panel ends just above the bar: no empty band).
+void _expectRestLayout(WidgetTester tester,
+    {required Size size,
+    required double top,
+    required bool premium,
+    required bool oneScreen,
+    required String record}) {
+  final scene = tester.getRect(find.byKey(RestScene.sceneKey));
+  final sheet = tester.getRect(find.byKey(RestScene.sheetKey));
+  final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+  expect(scene.top, 0);
+  expect(scene.left, 0);
+  expect(scene.width, size.width);
+  expect(sheet.left, 0);
+  expect(sheet.width, size.width);
+  expect(sheet.top, closeTo(scene.bottom - RestScene.sheetRadius, .5));
+  final companion = tester.getRect(find
+      .descendant(
+          of: find.byKey(RestScene.sceneKey),
+          matching: find.byType(CompanionView))
+      .first);
+  final fire = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey), matching: find.byType(Campfire)));
+  final tent = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey),
+      matching: find.byWidgetPredicate((w) =>
+          w is Image &&
+          w.image is AssetImage &&
+          (w.image as AssetImage).assetName.contains('tent'))));
+  final campTop = [tent.top, companion.top, fire.top].reduce(math.min);
+  final campBottom =
+      [tent.bottom, companion.bottom, fire.bottom].reduce(math.max);
+  expect(campTop, greaterThanOrEqualTo(top), reason: 'camp top');
+  expect(campBottom, lessThanOrEqualTo(sheet.top - 12 + .5),
+      reason: 'camp $campBottom, sheet ${sheet.top}');
+  expect(fire.left, greaterThanOrEqualTo(0));
+  expect(fire.right, lessThanOrEqualTo(size.width));
+  final s = companion.height;
+  expect(fire.left, greaterThan(companion.center.dx));
+  expect(
+      fire.bottom -
+          Campfire.logsHeight /
+              Campfire.boxHeight *
+              fire.height *
+              (1 - Campfire.pileBase),
+      closeTo(companion.top + RestScene.feetShare * s, .5));
+  // The art at the boards' scale, never scaled up: the mountain's box is
+  // no taller than the art.
+  final art = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey),
+      matching: find.byType(MountainScene)));
+  final artHeight = size.width * RestScene.artWidthShare / climbImageAspect;
+  expect(art.height, lessThanOrEqualTo(artHeight + .5), reason: 'art scaled');
+  expect(art.bottom, closeTo(scene.bottom, .5));
+  if (!premium) {
+    expect(tester.getRect(find.byKey(RestScene.dreamKey)).top,
+        greaterThanOrEqualTo(top));
+    expect(find.byKey(RestScene.usedTicketKey), findsOneWidget);
+    expect(find.byKey(RestScene.deckKey), findsOneWidget);
+  } else {
+    expect(find.byKey(RestScene.doneTilesKey), findsOneWidget);
+    expect(find.byKey(RestScene.nextTestKey), findsOneWidget);
+  }
+  final row = tester.getRect(find.byType(RestReminderRow));
+  final extent = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position
+      .maxScrollExtent;
+  double? wakeClear;
+  if (!premium) {
+    wakeClear = bar.top - tester.getRect(find.byKey(RestScene.wakeKey)).bottom;
+  }
+  final rowClear = bar.top - row.bottom;
+  if (oneScreen) {
+    expect(extent, 0, reason: 'scroll extent');
+    expect(rowClear, closeTo(RestScene.anchorClearance, .5),
+        reason: 'row ${rowClear}pt above the bar');
+    if (wakeClear != null) expect(wakeClear, greaterThan(rowClear));
+  }
+  _recordV24(
+      '$record | ${sheet.top.toStringAsFixed(1)} | '
+      '${(sheet.top - campBottom).toStringAsFixed(1)} | '
+      '${rowClear.toStringAsFixed(1)} | '
+      '${wakeClear?.toStringAsFixed(1) ?? '–'} | '
+      '${extent.toStringAsFixed(1)}',
+      round: 5);
 }
 
 Future<void> _captureShell(WidgetTester tester, String name,
