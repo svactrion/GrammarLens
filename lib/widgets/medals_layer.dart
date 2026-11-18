@@ -192,6 +192,7 @@ class _MedalsLayer extends StatelessWidget {
       );
     }
 
+    final dark = theme.brightness == Brightness.dark;
     Widget chip(String text, Color fill, Color ink) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
           decoration: BoxDecoration(
@@ -301,14 +302,22 @@ class _MedalsLayer extends StatelessWidget {
                                   l10n.medalsTierCount(
                                       collection.countOf(MedalTier.silver),
                                       MedalTier.silver.label(l10n)),
-                                  AppColors.silverSoft,
-                                  AppColors.onSilverSoft),
+                                  dark
+                                      ? AppColors.silverSoftDark
+                                      : AppColors.silverSoft,
+                                  dark
+                                      ? AppColors.onSilverSoftDark
+                                      : AppColors.onSilverSoft),
                               chip(
                                   l10n.medalsTierCount(
                                       collection.countOf(MedalTier.bronze),
                                       MedalTier.bronze.label(l10n)),
-                                  AppColors.bronzeSoft,
-                                  AppColors.onBronzeSoft),
+                                  dark
+                                      ? AppColors.bronzeSoftDark
+                                      : AppColors.bronzeSoft,
+                                  dark
+                                      ? AppColors.onBronzeSoftDark
+                                      : AppColors.onBronzeSoft),
                               chip(
                                   l10n.medalsTierCount(badge == null ? 0 : 1,
                                       l10n.medalWelcomeSlot),

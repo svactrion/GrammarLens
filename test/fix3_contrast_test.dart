@@ -139,9 +139,35 @@ void main() {
       (c) => c.green
     ),
     ('onToast', 'toast', _Role.text, (c) => c.onToast, (c) => c.toast),
+    // PF02's silver and bronze counters (their own light and dark pairs).
+    (
+      'PF02 silver counter',
+      'its chip',
+      _Role.text,
+      (c) => c == AppColors.dark
+          ? AppColors.onSilverSoftDark
+          : AppColors.onSilverSoft,
+      (c) =>
+          c == AppColors.dark ? AppColors.silverSoftDark : AppColors.silverSoft
+    ),
+    (
+      'PF02 bronze counter',
+      'its chip',
+      _Role.text,
+      (c) => c == AppColors.dark
+          ? AppColors.onBronzeSoftDark
+          : AppColors.onBronzeSoft,
+      (c) =>
+          c == AppColors.dark ? AppColors.bronzeSoftDark : AppColors.bronzeSoft
+    ),
     // A danger text button ("Leave", R10) on a dialog card.
-    ('redText (danger button)', 'card', _Role.text, (c) => c.redText,
-        (c) => c.card),
+    (
+      'redText (danger button)',
+      'card',
+      _Role.text,
+      (c) => c.redText,
+      (c) => c.card
+    ),
     (
       'onOrange (warning "!")',
       'orange (disc)',

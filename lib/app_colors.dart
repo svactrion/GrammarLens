@@ -290,8 +290,9 @@ class AppColors extends ThemeExtension<AppColors> {
   static const ribbonLip = Color(0xFF082A6B);
   static const onRibbonMuted = Color(0xFFC9D6FF);
 
-  /// PF02's silver and bronze counters (the gold one is [goldSoft] /
-  /// [goldDeep], the Welcome one [sky] / [onSky]); the same in both themes.
+  /// PF02's silver and bronze counters in light (the gold one is
+  /// [goldSoft] / [goldText], the Welcome one [sky] / [onSky]); dark ones
+  /// below.
   static const silverSoft = Color(0xFFECEFF3);
 
   /// V24f's Premium card runs from [navy] to this plum (both themes).
@@ -299,6 +300,13 @@ class AppColors extends ThemeExtension<AppColors> {
   static const onSilverSoft = Color(0xFF4B5563);
   static const bronzeSoft = Color(0xFFF6E7D8);
   static const onBronzeSoft = Color(0xFF8A5A2B);
+
+  /// The same counters on dark surfaces (SY03, v11: soft fills become dark
+  /// tints of their hue with light text; fix round 3, D).
+  static const silverSoftDark = Color(0xFF2E323A);
+  static const onSilverSoftDark = Color(0xFFC9D1DC);
+  static const bronzeSoftDark = Color(0xFF3A2A1E);
+  static const onBronzeSoftDark = Color(0xFFE8B48A);
 
   static const List<Color> wheelSlices = [
     Color(0xFFFF7A1A),
