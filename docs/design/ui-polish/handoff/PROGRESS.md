@@ -758,6 +758,43 @@ a still shows them; differences are listed.
 | A wrong answer with oops | `V09-oops`, gallery `V09-Wrong` | same | match per SPEC v11 (the board draws the base pose; v11 says oops) |
 | V13b with the cloud | `V13b-cloud`, gallery `V13b-ExitReminder` | same | match per SPEC v11 (the cloud over the sad companion) |
 
+### Checks: the smoke walk
+
+Driven by `tool/ui_polish/smoke_driver.dart` (Flutter Driver, simulator
+screenshots after each step) on the seeded app with no seeding, with a
+local stand-in for the practice proxy (canned items and feedback on
+localhost; no AI call). The full walk: `build/fix3-captures/smoke3/`, a first install on
+the iPhone Air simulator (420 × 912), the app in English (`SEED_LANGUAGE`).
+Earlier attempts, kept: `smoke/` (iPhone 18 Pro, no profile or test in its
+data, stopped at the last step, see below) and `smoke2/` (the iPhone 18 Pro
+Max, which runs in Turkish; stopped after onboarding because the driver's
+later steps tap English labels).
+
+What was seen, in order: Welcome; the name screen asking ("Hi! What should
+I call you?", wave, Continue disabled, 0/40), then greeting after "Ada"
+(cheer, sparkles, the name in orange, the green tick, 3/40); the goals with
+Work picked (its frame, tilt and reaction line); getting ready (the striped
+bar, ticks, the pole on the last stop); the mountain intro with the flag on
+Ember Peak's summit; the Day 0 test's first answer wrong ("eat": oops with
+the sweat drop, the red-tinted "Almost!" sheet); **the results first** ("Day
+1 complete!", 4/5, "Climb my first step"), **then the Welcome badge**, then
+the first climb with "First step done! 29 to the summit." right above the
+companion; the paywall (first view) and the exit pop-up with the cloud;
+Home; Review with the new weak spot and the ticket; the AI consent; the
+practice (3 questions from the stand-in); the practice results.
+Then **the A2 path**: on Review the ticket read "Used today"; a tap
+on the Climb tab showed the free rest scene (V24f, "Fox is dreaming of…
+Gerund vs. Infinitive") with N01 ("When do you have 2 minutes?") already
+open in the first screenshot, 1.2 s after the tap, without another tab
+switch.
+
+The first walk's last step tapped the Climb tab while the practice results
+(a route over the tabs) were open, and stopped there; the driver now goes
+back through "Back to topics" first. The iPhone Air was shut down twice
+under the first attempts (three simulators and two builds at once); with
+one other simulator booted it ran the whole walk. The stand-in answers at once, so V18's loading screen is gone before
+a screenshot; it is checked by its renders (B7).
+
 ### Not verified
 
 - **Anything on a device**: haptics (V04's greeting, the buttons), the real
@@ -765,8 +802,8 @@ a still shows them; differences are listed.
   the phone's own screen, the widgets' "before the test" state. The second
   pass is the first section of `DEVICE-CHECKS.md`.
 - **A2's exact moment on the phone**: the two causes found are fixed and the
-  owner's path passes in the app-level tests and the simulator walk; which
-  refresh brought the rest scene on the phone could not be replayed.
+  owner's path passes in the app-level tests and in the simulator walk;
+  which refresh brought the rest scene on the phone could not be replayed.
 - **375 × 667 and 428 × 926**: no such simulator; checked as widget-test
   renders at those sizes (B1, C3, C5).
 - **The practice in the smoke walk** used a local stand-in for the proxy
