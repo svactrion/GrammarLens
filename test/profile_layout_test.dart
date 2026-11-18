@@ -499,8 +499,13 @@ void main() {
       DebugTools.enabledForTesting = false;
       await pump(tester, width: width);
       final scrollable = find.byType(Scrollable).first;
-      await tester.drag(scrollable, const Offset(0, -6000));
-      await tester.pumpAndSettle();
+      // The page is a lazy list: its extent is an estimate until the rows
+      // below are built, so one long drag can stop short of the true end
+      // (fix round 4: the shorter V23 card changed the estimate).
+      for (var i = 0; i < 3; i++) {
+        await tester.drag(scrollable, const Offset(0, -6000));
+        await tester.pumpAndSettle();
+      }
       final credits = tester.getRect(find
           .ancestor(of: find.text('Credits'), matching: find.byType(InkWell))
           .first);
