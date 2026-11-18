@@ -5,10 +5,17 @@ import 'package:flutter/widgets.dart';
 /// instead of "GERİ". Every label shown in capitals goes through here (or
 /// its ARB string is written in capitals): Turkish and Azerbaijani map the
 /// dotted i to İ (and the dotless ı to I, as the default mapping already
-/// does); every other language keeps the default mapping.
-String upperCaseIn(String languageCode, String text) {
-  final dotted = languageCode == 'tr' || languageCode == 'az';
-  return (dotted ? text.replaceAll('i', 'İ') : text).toUpperCase();
+/// does); "ß" becomes "SS" (German); every other language keeps the
+/// default mapping. A brand or plan name ("Premium", the ARB's own
+/// "PREMIUM") and the English topic names take the English rules:
+/// `upperCaseIn('en', …)`.
+///
+/// [language] is a language code or a locale name (`tr`, `tr_TR`, `tr-TR`).
+String upperCaseIn(String language, String text) {
+  final code = language.split(RegExp('[_-]')).first.toLowerCase();
+  final dotted = code == 'tr' || code == 'az';
+  final mapped = dotted ? text.replaceAll('i', 'İ') : text;
+  return mapped.replaceAll('ß', 'SS').toUpperCase();
 }
 
 /// [upperCaseIn] for the app's current language.

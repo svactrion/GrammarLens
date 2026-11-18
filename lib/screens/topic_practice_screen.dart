@@ -19,6 +19,7 @@ import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/page_header.dart';
 import 'practice_launch.dart';
+import '../utils/upper_case.dart';
 
 /// The MVP's original core loop, now one mode reached from the v2 Home
 /// mode-selection screen rather than the app's top level (PRD v2 §4) — per-
@@ -275,7 +276,7 @@ class _PickedCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.homePickedForYou.toUpperCase(),
+                Text(upperCaseFor(context, l10n.homePickedForYou),
                     style: theme.textTheme.labelSmall!
                         .withWeight(FontWeight.w900)
                         .copyWith(color: c.gold, letterSpacing: 1.1)),

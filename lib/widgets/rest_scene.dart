@@ -1058,7 +1058,7 @@ class _DreamBubbleState extends State<_DreamBubble>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.restDreamingOf(widget.hero).toUpperCase(),
+          Text(upperCaseFor(context, l10n.restDreamingOf(widget.hero)),
               style: theme.textTheme.labelSmall!
                   .withWeight(FontWeight.w900)
                   .copyWith(color: c.muted, letterSpacing: 1)),
@@ -1198,7 +1198,8 @@ class _FreePanel extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.auto_awesome_rounded, size: 12, color: c.onOrange),
                   const SizedBox(width: 4),
-                  Text(upperCaseFor(context, l10n.featurePremium),
+                  // The plan's name: English capitals, as the ARB's "PREMIUM".
+                  Text(upperCaseIn('en', l10n.featurePremium),
                       style: theme.textTheme.labelSmall!
                           .withWeight(FontWeight.w900)
                           .copyWith(color: c.onOrange, letterSpacing: 1)),

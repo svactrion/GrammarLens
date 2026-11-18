@@ -18,6 +18,7 @@ import 'monthly_climb/climb_route.dart';
 import 'monthly_climb/climb_trail_table.dart' show climbImageAspect;
 import 'monthly_climb/mountain_scene.dart';
 import 'pressable_button.dart';
+import '../utils/upper_case.dart';
 
 /// How the month card was closed (Batch 6, M6). The names are
 /// `month_card_dismissed`'s `method` values (M19).
@@ -331,7 +332,8 @@ class _RecapState extends State<_Recap> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l10n.monthCardTitle(month).toUpperCase(),
+                          Text(
+                              upperCaseFor(context, l10n.monthCardTitle(month)),
                               style: theme.textTheme.labelMedium!
                                   .withWeight(FontWeight.w900)
                                   .copyWith(color: c.gold, letterSpacing: 1.2)),
@@ -794,10 +796,10 @@ class _NewMountainState extends State<_NewMountain>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    l10n
-                        .monthNewEyebrow(
-                            monthName(data.month, l10n), data.theme.title(l10n))
-                        .toUpperCase(),
+                    upperCaseFor(
+                        context,
+                        l10n.monthNewEyebrow(monthName(data.month, l10n),
+                            data.theme.title(l10n))),
                     style: theme.textTheme.labelMedium!
                         .withWeight(FontWeight.w900)
                         .copyWith(color: c.orangeText, letterSpacing: 1.2),

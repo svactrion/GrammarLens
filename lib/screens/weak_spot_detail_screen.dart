@@ -24,6 +24,7 @@ import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 import 'premium_screen.dart';
 import '../theme.dart';
+import '../utils/upper_case.dart';
 
 /// Shown before targeted practice starts (Iteration 1 P0, from user testing:
 /// tapping a weak spot used to jump straight into fresh questions with no
@@ -205,7 +206,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       children: [
         if (!ruleRepeatsTopic) ...[
           Text(
-            widget.topic.title(l10n).toUpperCase(),
+            // Topic names stay English (SPEC §3.7).
+            upperCaseIn('en', widget.topic.title(l10n)),
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w900)
                 .copyWith(color: c.orangeText, letterSpacing: 1),

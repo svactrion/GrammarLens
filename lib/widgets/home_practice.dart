@@ -10,6 +10,7 @@ import '../motion.dart';
 import '../theme.dart';
 import 'pressable_button.dart';
 import 'step_bar.dart';
+import '../utils/upper_case.dart';
 
 /// A topic's tile colours (V14, H04, R01), by topic.
 (Color, Color) topicTileColors(AppColors c, TopicId id) => switch (id) {
@@ -90,7 +91,7 @@ class TopicShowcase extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l10n.homePickedForYou.toUpperCase(),
+                      Text(upperCaseFor(context, l10n.homePickedForYou),
                           style: theme.textTheme.labelSmall!
                               .withWeight(FontWeight.w900)
                               .copyWith(color: c.gold, letterSpacing: 1.1)),
@@ -278,7 +279,7 @@ class PremiumChip extends StatelessWidget {
         Text(
           check
               ? context.l10n.featurePremium
-              : context.l10n.featurePremium.toUpperCase(),
+              : upperCaseIn('en', context.l10n.featurePremium),
           style: Theme.of(context)
               .textTheme
               .labelMedium!

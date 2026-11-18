@@ -13,6 +13,7 @@ import 'centered_scroll.dart';
 import 'companion_view.dart';
 import 'skeleton.dart';
 import 'thinking_dots.dart';
+import '../utils/upper_case.dart';
 
 /// V18: practice questions being prepared, the one loading screen of topic
 /// and weak-spot practice (SPEC V18, v11). As on the board: the companion
@@ -180,7 +181,7 @@ class _PracticePreparingState extends State<PracticePreparing>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.practiceDidYouKnow.toUpperCase(),
+        Text(upperCaseFor(context, context.l10n.practiceDidYouKnow),
             style: theme.textTheme.labelSmall!
                 .withWeight(FontWeight.w900)
                 .copyWith(color: c.navyText, fontSize: 12, letterSpacing: 1.2)),

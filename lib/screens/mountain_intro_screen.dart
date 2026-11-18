@@ -11,6 +11,7 @@ import '../theme.dart';
 import '../widgets/buddy_picker.dart';
 import '../widgets/monthly_climb/mountain_scene.dart';
 import '../widgets/pressable_button.dart';
+import '../utils/upper_case.dart';
 
 /// This month's mountain (V06): the month's whole mountain with the summit
 /// flag (v2) on the summit and the avatar at the start; below,
@@ -178,8 +179,9 @@ class _MountainIntroScreenState extends State<MountainIntroScreen>
                         children: [
                           Text(
                             l10n.mountainIntroEyebrow(
-                                widget.monthName.toUpperCase(),
-                                widget.theme.title(l10n).toUpperCase()),
+                                upperCaseFor(context, widget.monthName),
+                                upperCaseFor(
+                                    context, widget.theme.title(l10n))),
                             style: text.labelMedium!
                                 .withWeight(FontWeight.w900)
                                 .copyWith(

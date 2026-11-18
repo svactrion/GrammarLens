@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../utils/haptics.dart';
 import 'centered_scroll.dart';
 import 'companion_view.dart';
+import '../utils/upper_case.dart';
 
 /// V20: the wait between Submit and the results. The companion inspects
 /// through its magnifier; a scan window with the clay lens sweeps over the
@@ -254,7 +255,7 @@ class _PracticeReviewingState extends State<PracticeReviewing>
                   );
                 }),
               const SizedBox(height: 14),
-              Text(l10n.practiceReviewingOnItsWay.toUpperCase(),
+              Text(upperCaseFor(context, l10n.practiceReviewingOnItsWay),
                   style: theme.textTheme.labelSmall!
                       .withWeight(FontWeight.w900)
                       .copyWith(color: c.navyText, letterSpacing: 1.1)),

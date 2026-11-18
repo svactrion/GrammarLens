@@ -13,6 +13,7 @@ import '../utils/text_format.dart';
 import 'app_sheet.dart';
 import 'companion_view.dart';
 import 'pressable_button.dart';
+import '../utils/upper_case.dart';
 
 /// A mistake inline in one sentence (V16, R03): the learner's wrong words
 /// struck through in red, the right ones in green, the rest plain. Built
@@ -161,7 +162,8 @@ class ReviewSpotCard extends StatelessWidget {
           children: [
             Row(children: [
               Expanded(
-                child: Text(topic.title(l10n).toUpperCase(),
+                // Topic names stay English (SPEC §3.7).
+                child: Text(upperCaseIn('en', topic.title(l10n)),
                     style: theme.textTheme.labelSmall!
                         .withWeight(FontWeight.w900)
                         .copyWith(color: c.orangeText, letterSpacing: 1)),

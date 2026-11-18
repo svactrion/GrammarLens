@@ -15,6 +15,7 @@ import 'confetti_burst.dart';
 import 'medal_badge.dart';
 import '../theme.dart';
 import '../l10n/l10n.dart';
+import '../utils/upper_case.dart';
 
 /// The medal celebration (Batch 5, N15, N28): a layer over the Daily Test
 /// result screen, opened the moment the test is saved, for a tier just
@@ -117,7 +118,8 @@ class MedalCelebration extends StatefulWidget {
         key: key,
         medal: MedalBadge.monthly(themeId: theme.id, tier: tier, disc: disc),
         glow: glowFor(tier),
-        eyebrow: l10n.medalEyebrow(tier.label(l10n)).toUpperCase(),
+        eyebrow:
+            upperCaseIn(l10n.localeName, l10n.medalEyebrow(tier.label(l10n))),
         title: points == null
             ? l10n.medalEarnedTitle(tier.label(l10n))
             : l10n.medalPointsTitle(points, monthName(month, l10n)),
