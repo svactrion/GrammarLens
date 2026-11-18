@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
@@ -21,6 +22,7 @@ import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
+import '../services/app_link.dart' show WeakSpotLink;
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
@@ -59,6 +61,9 @@ class ReviewScreen extends StatefulWidget {
   /// The clock for the used ticket's countdown; tests pin it.
   final DateTime Function() clock;
 
+  /// W01 v12: the tip widget's weak spot was tapped; Review opens it (R03).
+  final ValueListenable<WeakSpotLink?>? weakSpotLinks;
+
   const ReviewScreen({
     super.key,
     required this.claudeService,
@@ -70,6 +75,7 @@ class ReviewScreen extends StatefulWidget {
     this.userName = '',
     this.hero,
     this.clock = DateTime.now,
+    this.weakSpotLinks,
   });
 
   static const ticketKey = ValueKey('review_ticket');
@@ -132,6 +138,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     _loadSortOrder();
     _loadStatus();
     widget.subscriptionService.addAccessListener(_onAccessChanged);
+    widget.weakSpotLinks?.addListener(_onWeakSpotLink);
+    // A link that arrived before this tab was built.
+    if (widget.weakSpotLinks?.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onWeakSpotLink());
+    }
     _minute = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted && _statusLoaded && !_hasFullAccess && _ticketUsed) {
         setState(() {});
@@ -143,7 +154,24 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void dispose() {
     _minute?.cancel();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
+    widget.weakSpotLinks?.removeListener(_onWeakSpotLink);
     super.dispose();
+  }
+
+  /// W01 v12: opens the weak spot the tip widget showed, if it is still
+  /// saved (else Review stays as it is).
+  Future<void> _onWeakSpotLink() async {
+    final link = widget.weakSpotLinks?.value;
+    if (link == null || !mounted) return;
+    final spots = await widget.storageService
+        .getWeakSpots(limit: StorageService.allWeakSpots);
+    if (!mounted) return;
+    for (final spot in spots) {
+      if (spot.topicId == link.topicId && spot.errorType == link.errorType) {
+        await _openWeakSpot(spot);
+        return;
+      }
+    }
   }
 
   bool get _ticketUsed =>

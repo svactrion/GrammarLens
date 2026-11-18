@@ -7,6 +7,7 @@ import 'package:grammar_lens/data/topic_hints.dart';
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/models/topic.dart';
+import 'package:grammar_lens/services/app_link.dart';
 import 'package:grammar_lens/services/widget_payload.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart';
@@ -34,12 +35,44 @@ WidgetMonth _month({
       avatarPoint: const Offset(0.36, 0.72),
     );
 
+/// W01 v12's sample: a practice mistake with the scorer's rule (the
+/// board's "I'm interested to learn French").
+const _gerund = WidgetMistake(
+  topicId: 'gerundVsInfinitive',
+  errorType: 'gerund_after_preposition',
+  prompt: 'Fill in the blank.\nI’m interested ___ French.',
+  userAnswer: 'to learn',
+  correctedAnswer: 'in learning',
+  rule: 'After a preposition, use -ing',
+);
+
+/// A Daily Test mistake: no rule stored.
+const _article = WidgetMistake(
+  topicId: 'articles',
+  errorType: 'articles',
+  prompt: 'She is ___ best teacher in our school.',
+  userAnswer: 'a',
+  correctedAnswer: 'the',
+);
+
+/// An error correction with a long sentence.
+const _long = WidgetMistake(
+  topicId: 'tenseSelection',
+  errorType: 'present_perfect_vs_past_simple',
+  prompt: 'Correct the sentence.',
+  userAnswer: 'Last summer my sister and I have visited our grandparents in '
+      'the small village by the lake.',
+  correctedAnswer: 'Last summer my sister and I visited our grandparents in '
+      'the small village by the lake.',
+  rule: 'Past simple with a finished time',
+);
+
 WidgetInput _input({
   DateTime? now,
   bool done = false,
   int steps = 1,
   int points = 18,
-  String? weak = 'articles',
+  List<WidgetMistake> mistakes = const [_gerund],
   WidgetMonth? month,
   WidgetMonth? nextMonth,
   bool rtl = false,
@@ -49,15 +82,21 @@ WidgetInput _input({
     now: now ?? DateTime(2026, 11, 18, 14, 30),
     userName: 'Ada',
     avatarImage: 'avatar_14.png',
+    sleepImage: 'fox_sleep.png',
     dailyTestDone: done,
     stepsDone: steps,
     monthPoints: points,
     month: m,
     nextMonth: nextMonth ?? m,
-    weakTopicId: weak,
+    mistakes: mistakes,
     rtl: rtl,
   );
 }
+
+String _runs(Object? runs) => [
+      for (final r in runs as List)
+        (r as Map)['m'] == true ? '[${r['t']}]' : r['t'] as String
+    ].join();
 
 Object? _withoutTimes(Object? json) => switch (json) {
       Map() => {
@@ -179,58 +218,129 @@ void main() {
     });
   });
 
-  group('tip (W01 medium B)', () {
-    test('from the weak spot\'s topic, one hint line a day', () {
-      final day = localDayNumber(DateTime(2026, 11, 18));
-      final tip = widgetTipFor('articles', day);
-      expect(tip.personal, isTrue);
-      expect(tip.topic.id, TopicId.articles);
-      final line = kTopicHints[TopicId.articles]![
-          day % kTopicHints[TopicId.articles]!.length];
-      expect('${tip.rule}: ${tip.example}', line);
+  group('tip (W01 medium B, v12): the user\'s own mistake', () {
+    test(
+        'the latest mistake: the sentence with the wrong words struck and '
+        'its correction, the rule with the corrected words in the pill', () {
+      final tip = _tip(buildWidgetPayload(_input(), _l10n()), 0);
+      final mistake = tip['mistake'] as Map;
+      expect(_runs(mistake['wrong']), 'I’m interested [to learn] French.');
+      expect(_runs(mistake['right']), 'I’m interested [in learning] French.');
+      expect(tip['lead'], 'After a preposition, use -ing');
+      expect(tip['rule'], 'in learning');
+      expect(tip['example'], '');
+      expect(tip['label'], 'GERUND VS. INFINITIVE');
+      expect(tip['footer'], 'Your weak spot · a new one daily');
+      expect(tip.containsKey('examples'), isFalse);
     });
 
-    test('a different line the next day', () {
-      final day = localDayNumber(DateTime(2026, 11, 18));
-      expect(widgetTipFor('articles', day).rule,
-          isNot(widgetTipFor('articles', day + 1).rule));
+    test('a new weak spot each day, in turn', () {
+      final input = _input(mistakes: const [_gerund, _article, _long]);
+      final day = localDayNumber(input.now);
+      final labels = [
+        for (var d = 0; d < 4; d++)
+          _tip(
+              buildWidgetPayload(
+                  _input(
+                      now: input.now.add(Duration(days: d)),
+                      mistakes: const [_gerund, _article, _long]),
+                  _l10n()),
+              0)['label'],
+      ];
+      expect(labels.toSet(), hasLength(3));
+      expect(labels[3], labels[0]);
+      // The midnight entry is tomorrow's weak spot.
+      final payload = buildWidgetPayload(input, _l10n());
+      expect(_tip(payload, 1)['label'], isNot(_tip(payload, 0)['label']));
+      expect(day, isPositive);
     });
 
-    test('a line without ": " stays whole', () {
-      final lines = kTopicHints[TopicId.modalVerbs]!;
-      final index = lines.indexWhere((l) => !l.contains(': '));
-      expect(index, isNonNegative);
-      final tip = widgetTipFor('modalVerbs', index);
-      expect(tip.rule, lines[index]);
-      expect(tip.example, isEmpty);
+    test(
+        'the Daily Test stores no rule: the matching hint line, its key in '
+        'the pill', () {
+      final tip = _tip(
+          buildWidgetPayload(_input(mistakes: const [_article]), _l10n()), 0);
+      expect(tip['lead'], '');
+      expect(tip['rule'], 'the');
+      expect(tip['example'], 'specific, known, or the only one');
+      expect(_runs((tip['mistake'] as Map)['wrong']),
+          'She is [a] best teacher in our school.');
+      expect(
+          matchingHint(
+              kTopics.firstWhere((t) => t.id == TopicId.gerundVsInfinitive),
+              'in learning'),
+          startsWith('+ -ing'));
     });
 
-    test('no weak spot (or an unknown topic): a general Daily Test topic', () {
-      for (final weak in [null, 'notATopic']) {
-        final tip = widgetTipFor(weak, 7);
-        expect(tip.personal, isFalse);
-        expect(kTopics, contains(tip.topic));
+    test('a long sentence starts with "…" so its mistake stays in view', () {
+      final tip =
+          _tip(buildWidgetPayload(_input(mistakes: const [_long]), _l10n()), 0);
+      final wrong = _runs((tip['mistake'] as Map)['wrong']);
+      expect(wrong, startsWith('…'));
+      expect(wrong, contains('I [have] visited'));
+      expect(wrong.indexOf('['), lessThan(30));
+      // Nothing changed in the correction but the word left out: no pill,
+      // the scorer's rule alone.
+      expect(_runs((tip['mistake'] as Map)['right']), isNot(contains('[')));
+      expect(tip['rule'], '');
+      expect(tip['lead'], 'Past simple with a finished time');
+    });
+
+    test('no weak spot yet: a topic hint\'s rule and two more lines', () {
+      final tip =
+          _tip(buildWidgetPayload(_input(mistakes: const []), _l10n()), 0);
+      expect(tip['label'], startsWith('TIP OF THE DAY · '));
+      expect(tip['footer'], 'A new tip every day');
+      expect(tip['examples'], hasLength(2));
+      expect(tip.containsKey('mistake'), isFalse);
+      expect(tip['url'], 'grammarlens://daily-test');
+      final all = kTopicHints.values.expand((l) => l).toSet();
+      for (final line in tip['examples'] as List) {
+        expect(all, contains(line));
       }
     });
 
-    test('labels and copy, personal and general', () {
-      final payload = buildWidgetPayload(_input(), _l10n());
-      final tip = _tip(payload, 0);
-      expect(tip['label'], 'TIP FOR YOU · ARTICLES');
-      expect(tip['footer'], 'From your weak spots · new tip daily');
-      expect(tip['boxLabel'], 'DAILY TEST');
-      expect(tip['button'], 'Start');
-      expect(tip['url'], 'grammarlens://daily-test');
-      final general = _tip(buildWidgetPayload(_input(weak: null), _l10n()), 0);
-      expect(general['label'], startsWith('TIP OF THE DAY · '));
-      expect(general['footer'], 'A new tip every day');
+    test(
+        'taps: the weak spot (R03) and the box (Daily Test, or Home once '
+        'done)', () {
+      final waiting = _tip(buildWidgetPayload(_input(), _l10n()), 0);
+      expect(
+          waiting['url'],
+          AppLink.weakSpotUrl(
+              'gerundVsInfinitive', 'gerund_after_preposition'));
+      expect(AppLink.weakSpotOf(waiting['url'] as String),
+          const WeakSpotLink('gerundVsInfinitive', 'gerund_after_preposition'));
+      expect(waiting['boxUrl'], 'grammarlens://daily-test');
+      final done = _tip(buildWidgetPayload(_input(done: true), _l10n()), 0);
+      expect(done['boxUrl'], 'grammarlens://home');
     });
 
-    test('done: the box says so and the tip opens Home', () {
+    test('done: "Done", the hours to the next test and the companion asleep',
+        () {
       final tip = _tip(buildWidgetPayload(_input(done: true), _l10n()), 0);
       expect(tip['done'], isTrue);
-      expect(tip['button'], 'Done today');
-      expect(tip['url'], 'grammarlens://home');
+      expect(tip['doneLabel'], 'Done');
+      expect((tip['next'] as Map)['10'], 'next in 10 h');
+      expect((tip['next'] as Map), hasLength(24));
+      expect(tip['boxImage'], 'fox_sleep.png');
+      final waiting = _tip(buildWidgetPayload(_input(), _l10n()), 0);
+      expect(waiting['boxImage'], 'avatar_14.png');
+      expect(waiting['button'], 'Start');
+    });
+
+    test('general tips: one hint line a day, a line without ": " whole', () {
+      final day = localDayNumber(DateTime(2026, 11, 18));
+      final tip = widgetTipFor('articles', day);
+      expect(tip.personal, isTrue);
+      final lines = kTopicHints[TopicId.articles]!;
+      expect('${tip.rule}: ${tip.example}', lines[day % lines.length]);
+      expect(widgetTipFor('articles', day + 1).rule, isNot(tip.rule));
+      final modal = kTopicHints[TopicId.modalVerbs]!;
+      final index = modal.indexWhere((l) => !l.contains(': '));
+      expect(widgetTipFor('modalVerbs', index).example, isEmpty);
+      for (final weak in [null, 'notATopic']) {
+        expect(widgetTipFor(weak, 7).personal, isFalse);
+      }
     });
   });
 
@@ -238,11 +348,14 @@ void main() {
     test('Turkish: translated copy, topic names stay English', () {
       final payload = buildWidgetPayload(_input(), _l10n('tr'));
       expect(_climb(payload, 0)['title'], '2. adım seni bekliyor');
-      expect(_tip(payload, 0)['label'], 'SANA ÖZEL İPUCU · ARTICLES');
+      // The topic stays English in capitals: "I", not "İ" (SPEC §3.7).
+      expect(_tip(payload, 0)['label'], 'GERUND VS. INFINITIVE');
+      expect(_tip(payload, 0)['footer'], 'Zayıf noktan · her gün bir yenisi');
       // The hint lines are English in every language (SPEC §3.7).
-      final tip = _tip(payload, 0);
-      expect(kTopicHints[TopicId.articles]!.join('\n'),
-          contains(tip['rule'] as String));
+      final general =
+          _tip(buildWidgetPayload(_input(mistakes: const []), _l10n('tr')), 0);
+      expect(kTopicHints.values.expand((l) => l).join('\n'),
+          contains(general['rule'] as String));
     });
 
     test('Arabic: right to left, Western digits', () {
@@ -301,7 +414,11 @@ void main() {
     final cases = <String, Map<String, Object?>>{
       'en_waiting': buildWidgetPayload(_input(), _l10n()),
       'en_done': buildWidgetPayload(_input(done: true, steps: 2), _l10n()),
-      'tr_waiting': buildWidgetPayload(_input(weak: null), _l10n('tr')),
+      'tr_waiting': buildWidgetPayload(_input(mistakes: const []), _l10n('tr')),
+      'en_daily_test':
+          buildWidgetPayload(_input(mistakes: const [_article]), _l10n()),
+      'en_long': buildWidgetPayload(
+          _input(done: true, steps: 2, mistakes: const [_long]), _l10n()),
       'ar_done': buildWidgetPayload(
           _input(done: true, steps: 2, rtl: true), _l10n('ar')),
       'ar_done_late': buildWidgetPayload(

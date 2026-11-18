@@ -34,11 +34,20 @@
       "tip": {
         "url": "grammarlens://daily-test",
         "label": "GÜNÜN İPUCU · GERUND VS. INFINITIVE",
+        "lead": "",
         "rule": "After a preposition",
         "example": "always -ing",
+        "examples": [
+          "+ -ing: enjoy, avoid, finish, keep",
+          "+ to: want, decide, hope, plan"
+        ],
         "footer": "Her gün yeni bir ipucu",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "GÜNLÜK TEST",
         "button": "Başla",
+        "doneLabel": "Tamam",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     },
@@ -73,11 +82,20 @@
       "tip": {
         "url": "grammarlens://daily-test",
         "label": "GÜNÜN İPUCU · MODAL VERBS",
+        "lead": "",
         "rule": "modal + base verb",
         "example": "no \"to\", no \"-s\"",
+        "examples": [
+          "must: obligation · should: advice",
+          "may / might / could: possibility"
+        ],
         "footer": "Her gün yeni bir ipucu",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "GÜNLÜK TEST",
         "button": "Başla",
+        "doneLabel": "Tamam",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     }

@@ -82,13 +82,73 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://home",
-        "label": "نصيحة لك · ARTICLES",
-        "rule": "No article",
-        "example": "general plural or uncountable",
-        "footer": "من نقاط ضعفك · نصيحة جديدة كل يوم",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "نقطة ضعفك · واحدة جديدة كل يوم",
+        "boxUrl": "grammarlens://home",
         "boxLabel": "الاختبار اليومي",
         "button": "تم اليوم",
+        "doneLabel": "تم",
+        "next": {
+          "1": "التالي بعد 1 س",
+          "2": "التالي بعد 2 س",
+          "3": "التالي بعد 3 س",
+          "4": "التالي بعد 4 س",
+          "5": "التالي بعد 5 س",
+          "6": "التالي بعد 6 س",
+          "7": "التالي بعد 7 س",
+          "8": "التالي بعد 8 س",
+          "9": "التالي بعد 9 س",
+          "10": "التالي بعد 10 س",
+          "11": "التالي بعد 11 س",
+          "12": "التالي بعد 12 س",
+          "13": "التالي بعد 13 س",
+          "14": "التالي بعد 14 س",
+          "15": "التالي بعد 15 س",
+          "16": "التالي بعد 16 س",
+          "17": "التالي بعد 17 س",
+          "18": "التالي بعد 18 س",
+          "19": "التالي بعد 19 س",
+          "20": "التالي بعد 20 س",
+          "21": "التالي بعد 21 س",
+          "22": "التالي بعد 22 س",
+          "23": "التالي بعد 23 س",
+          "24": "التالي بعد 24 س"
+        },
+        "boxImage": "fox_sleep.png",
         "done": true
       }
     },
@@ -121,13 +181,48 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://daily-test",
-        "label": "نصيحة لك · ARTICLES",
-        "rule": "a / an",
-        "example": "one of many, or first mention",
-        "footer": "من نقاط ضعفك · نصيحة جديدة كل يوم",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "نقطة ضعفك · واحدة جديدة كل يوم",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "الاختبار اليومي",
         "button": "ابدأ",
+        "doneLabel": "تم",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     }

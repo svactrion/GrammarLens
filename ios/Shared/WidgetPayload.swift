@@ -69,21 +69,51 @@ struct WidgetPayload: Codable, Equatable {
     var mountainDark: String
   }
 
+  /// W01 (v12: the user's own latest mistake under a short rule). The
+  /// fields added in v12 are optional, so an older payload still decodes.
   struct Tip: Codable, Equatable {
+    /// The widget's left side: that weak spot (R03), or the box's link.
     var url: String
-    /// "TIP FOR YOU · ARTICLES".
+    /// The topic ("GERUND VS. INFINITIVE"), or "TIP OF THE DAY · ARTICLES".
     var label: String
-    /// The rule's first part, bold ("the").
+    /// The key words in the green pill ("in learning", "the"); may be empty.
     var rule: String
-    /// The rest ("specific, known, or the only one"); may be empty.
+    /// After the pill ("specific, known, or the only one"); may be empty.
     var example: String
-    /// "From your weak spots · new tip daily".
+    /// "Your weak spot · a new one daily" / "A new tip every day".
     var footer: String
     /// The Daily Test box: "DAILY TEST".
     var boxLabel: String
     /// "Start" or, when done, "Done today".
     var button: String
     var done: Bool
+    /// v12: the rule before the pill (the scorer's, practice).
+    var lead: String? = nil
+    /// v12: the user's sentence and its correction.
+    var mistake: Mistake? = nil
+    /// v12, no weak spot yet: two more hint lines.
+    var examples: [String]? = nil
+    /// v12: the box's own link (Daily Test, or Home once done).
+    var boxUrl: String? = nil
+    /// v12, done: "Done" and the hours to the next test ("next in 10 h").
+    var doneLabel: String? = nil
+    var next: [String: String]? = nil
+    /// v12: the box's companion (asleep once done).
+    var boxImage: String? = nil
+
+    func nextLine(hours: Int) -> String { next?[String(hours)] ?? "" }
+  }
+
+  /// One run of a sentence: `m` marks the wrong words (struck through) or
+  /// the corrected ones (bold).
+  struct Run: Codable, Equatable {
+    var t: String
+    var m: Bool
+  }
+
+  struct Mistake: Codable, Equatable {
+    var wrong: [Run]
+    var right: [Run]
   }
 
   static func decode(_ data: Data) -> WidgetPayload? {

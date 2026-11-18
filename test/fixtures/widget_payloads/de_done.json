@@ -82,13 +82,73 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://home",
-        "label": "TIPP FÜR DICH · ARTICLES",
-        "rule": "No article",
-        "example": "general plural or uncountable",
-        "footer": "Aus deinen Schwachstellen · täglich ein neuer Tipp",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Deine Schwachstelle · täglich eine neue",
+        "boxUrl": "grammarlens://home",
         "boxLabel": "TAGESTEST",
         "button": "Heute erledigt",
+        "doneLabel": "Erledigt",
+        "next": {
+          "1": "nächster in 1 Std.",
+          "2": "nächster in 2 Std.",
+          "3": "nächster in 3 Std.",
+          "4": "nächster in 4 Std.",
+          "5": "nächster in 5 Std.",
+          "6": "nächster in 6 Std.",
+          "7": "nächster in 7 Std.",
+          "8": "nächster in 8 Std.",
+          "9": "nächster in 9 Std.",
+          "10": "nächster in 10 Std.",
+          "11": "nächster in 11 Std.",
+          "12": "nächster in 12 Std.",
+          "13": "nächster in 13 Std.",
+          "14": "nächster in 14 Std.",
+          "15": "nächster in 15 Std.",
+          "16": "nächster in 16 Std.",
+          "17": "nächster in 17 Std.",
+          "18": "nächster in 18 Std.",
+          "19": "nächster in 19 Std.",
+          "20": "nächster in 20 Std.",
+          "21": "nächster in 21 Std.",
+          "22": "nächster in 22 Std.",
+          "23": "nächster in 23 Std.",
+          "24": "nächster in 24 Std."
+        },
+        "boxImage": "fox_sleep.png",
         "done": true
       }
     },
@@ -121,13 +181,48 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://daily-test",
-        "label": "TIPP FÜR DICH · ARTICLES",
-        "rule": "a / an",
-        "example": "one of many, or first mention",
-        "footer": "Aus deinen Schwachstellen · täglich ein neuer Tipp",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Deine Schwachstelle · täglich eine neue",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "TAGESTEST",
         "button": "Los",
+        "doneLabel": "Erledigt",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     }

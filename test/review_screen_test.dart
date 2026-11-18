@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/services/app_link.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -116,6 +118,7 @@ void main() {
     Size size = const Size(390, 844),
     Brightness brightness = Brightness.light,
     AppTextSize textSize = AppTextSize.medium,
+    ValueListenable<WeakSpotLink?>? weakSpotLinks,
   }) async {
     tester.view.physicalSize = size * 3;
     tester.view.devicePixelRatio = 3;
@@ -131,10 +134,54 @@ void main() {
         onGoToPractice: onGoToPractice ?? () {},
         userName: 'Ada',
         clock: () => DateTime(2026, 11, 17, 3, 19),
+        weakSpotLinks: weakSpotLinks,
       ),
     ));
     await tester.pumpAndSettle();
   }
+
+  // Fix round 4, item 3 (W01 v12): the tip widget's weak spot opens R03.
+  group('the tip widget\'s weak spot link', () {
+    testWidgets('opens that weak spot (R03)', (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(null);
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      expect(find.byType(WeakSpotDetailScreen), findsNothing);
+      links.value = const WeakSpotLink('articles', 'a_vs_an');
+      await tester.pumpAndSettle();
+      final detail = tester
+          .widget<WeakSpotDetailScreen>(find.byType(WeakSpotDetailScreen));
+      expect(detail.spot.errorType, 'a_vs_an');
+    });
+
+    testWidgets('a link that came before the tab was built opens it too',
+        (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(
+          const WeakSpotLink('articles', 'missing_article'));
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      expect(
+          tester
+              .widget<WeakSpotDetailScreen>(find.byType(WeakSpotDetailScreen))
+              .spot
+              .errorType,
+          'missing_article');
+    });
+
+    testWidgets('a weak spot no longer saved leaves Review as it is',
+        (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(null);
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      links.value = const WeakSpotLink('articles', 'gone');
+      await tester.pumpAndSettle();
+      expect(find.byType(WeakSpotDetailScreen), findsNothing);
+      expect(find.text('Review'), findsOneWidget);
+    });
+  });
 
   final ticket = find.byKey(ReviewScreen.ticketKey);
   TicketState ticketState(WidgetTester tester) =>

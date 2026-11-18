@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "writtenAt": 1795001400,
+  "rtl": false,
+  "entries": [
+    {
+      "validFrom": 1795001400,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "DAILY TEST",
+        "title": "Step 2 is waiting",
+        "subtitle": "5 questions · 2 min",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "Step 2 is one test away",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test waiting",
+        "button": "Start",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://weak-spot?topic=articles&type=articles",
+        "label": "ARTICLES",
+        "lead": "",
+        "rule": "the",
+        "example": "specific, known, or the only one",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "She is ",
+              "m": false
+            },
+            {
+              "t": "a",
+              "m": true
+            },
+            {
+              "t": " best teacher in our school.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "She is ",
+              "m": false
+            },
+            {
+              "t": "the",
+              "m": true
+            },
+            {
+              "t": " best teacher in our school.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
+        "boxLabel": "DAILY TEST",
+        "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
+        "done": false
+      }
+    },
+    {
+      "validFrom": 1795035600,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "DAILY TEST",
+        "title": "Step 2 is waiting",
+        "subtitle": "5 questions · 2 min",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "Step 2 is one test away",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test waiting",
+        "button": "Start",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://weak-spot?topic=articles&type=articles",
+        "label": "ARTICLES",
+        "lead": "",
+        "rule": "the",
+        "example": "specific, known, or the only one",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "She is ",
+              "m": false
+            },
+            {
+              "t": "a",
+              "m": true
+            },
+            {
+              "t": " best teacher in our school.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "She is ",
+              "m": false
+            },
+            {
+              "t": "the",
+              "m": true
+            },
+            {
+              "t": " best teacher in our school.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
+        "boxLabel": "DAILY TEST",
+        "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
+        "done": false
+      }
+    }
+  ]
+}

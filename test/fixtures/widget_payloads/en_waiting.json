@@ -32,13 +32,48 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://daily-test",
-        "label": "TIP FOR YOU · ARTICLES",
-        "rule": "No article",
-        "example": "general plural or uncountable",
-        "footer": "From your weak spots · new tip daily",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "DAILY TEST",
         "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     },
@@ -71,13 +106,48 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://daily-test",
-        "label": "TIP FOR YOU · ARTICLES",
-        "rule": "a / an",
-        "example": "one of many, or first mention",
-        "footer": "From your weak spots · new tip daily",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "DAILY TEST",
         "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     }

@@ -29,6 +29,16 @@ void main() {
       expect(AppLink.parse('grammarlens://'), isNull);
     });
 
+    test('W01 v12: a weak spot\'s link names its topic and type', () {
+      final url = AppLink.weakSpotUrl('gerundVsInfinitive', 'gerund_after_x');
+      expect(url, startsWith('grammarlens://weak-spot?'));
+      expect(AppLink.parse(url), AppLink.weakSpot);
+      expect(AppLink.weakSpotOf(url),
+          const WeakSpotLink('gerundVsInfinitive', 'gerund_after_x'));
+      expect(AppLink.weakSpotOf('grammarlens://weak-spot'), isNull);
+      expect(AppLink.weakSpotOf('grammarlens://review?topic=a&type=b'), isNull);
+    });
+
     test('url round-trips', () {
       for (final link in AppLink.values) {
         expect(AppLink.parse(link.url), link);
@@ -37,6 +47,22 @@ void main() {
   });
 
   group('AppLinkRouter', () {
+    test('W01 v12: a weak spot\'s link carries it; without one, Review',
+        () async {
+      final bridge = FakeNativeBridge();
+      final router = AppLinkRouter(bridge);
+      await router.start();
+      final got = <AppLink>[];
+      router.attach(got.add);
+      bridge.pushLink(AppLink.weakSpotUrl('articles', 'a_vs_an'));
+      await Future<void>.delayed(Duration.zero);
+      expect(got, [AppLink.weakSpot]);
+      expect(router.weakSpot, const WeakSpotLink('articles', 'a_vs_an'));
+      bridge.pushLink('grammarlens://weak-spot');
+      await Future<void>.delayed(Duration.zero);
+      expect(got, [AppLink.weakSpot, AppLink.review]);
+    });
+
     test('a cold-start link waits for the shell, then arrives once', () async {
       final bridge = FakeNativeBridge(initial: 'grammarlens://daily-test');
       final router = AppLinkRouter(bridge);

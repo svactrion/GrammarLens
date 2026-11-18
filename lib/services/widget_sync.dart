@@ -53,8 +53,6 @@ class WidgetSync {
     final progress = await storage.getClimbProgress(now.year, now.month);
     final medal = await storage.getMonthlyMedalProgress(now.year, now.month);
     final themeId = await storage.resolveClimbMonthTheme(now.year, now.month);
-    final weak = await storage.getWeakSpots(
-        limit: 1, sortOrder: ReviewSortOrder.frequent);
     final avatar = profile.avatar ?? Avatar.fox;
 
     final month = await _month(
@@ -80,6 +78,8 @@ class WidgetSync {
     }
 
     final avatarFile = await _avatar(avatar);
+    final sleepFile = await _avatar(avatar, pose: 'sleep');
+    final mistakes = await _mistakes();
     final payload = buildWidgetPayload(
       WidgetInput(
         now: now,
@@ -90,7 +90,8 @@ class WidgetSync {
         monthPoints: medal.score,
         month: month,
         nextMonth: nextMonth,
-        weakTopicId: weak.isEmpty ? null : weak.first.topicId,
+        mistakes: mistakes,
+        sleepImage: sleepFile,
         rtl: appLocale.languageCode == 'ar',
       ),
       l10n,
@@ -100,6 +101,7 @@ class WidgetSync {
     await _deleteUnused({
       payloadFile,
       avatarFile,
+      sleepFile,
       month.lightImage,
       month.darkImage,
       nextMonth.lightImage,
@@ -150,13 +152,41 @@ class WidgetSync {
     );
   }
 
-  Future<String> _avatar(Avatar avatar) async {
-    final name = avatar.assetPath
-        .split('/')
-        .last
-        .replaceFirst(RegExp(r'\.webp$'), '.png');
+  /// W01 v12: the user's weak spots (the most recent first, at most
+  /// [widgetMistakeLimit]), each with its latest mistake that has both the
+  /// user's answer and its correction. Read from Review's own records.
+  Future<List<WidgetMistake>> _mistakes() async {
+    final spots = await storage.getWeakSpots(
+        limit: widgetMistakeLimit, sortOrder: ReviewSortOrder.recent);
+    final out = <WidgetMistake>[];
+    for (final spot in spots) {
+      final latest =
+          await storage.getRecentMistakes(spot.topicId, spot.errorType);
+      for (final entry in latest) {
+        final user = entry.userAnswer?.trim() ?? '';
+        final corrected = entry.correctedAnswer?.trim() ?? '';
+        if (user.isEmpty || corrected.isEmpty) continue;
+        out.add(WidgetMistake(
+          topicId: spot.topicId,
+          errorType: spot.errorType,
+          userAnswer: user,
+          correctedAnswer: corrected,
+          prompt: entry.prompt,
+          rule: entry.rule,
+        ));
+        break;
+      }
+    }
+    return out;
+  }
+
+  /// The avatar (or, with [pose], that pose of it: the tip widget's sleeping
+  /// companion) as a PNG in the App Group.
+  Future<String> _avatar(Avatar avatar, {String? pose}) async {
+    final path = pose == null ? avatar.assetPath : avatar.posePath(pose);
+    final name = path.split('/').last.replaceFirst(RegExp(r'\.webp$'), '.png');
     await _ensure(name, () async {
-      final image = await loadAssetImage(avatar.assetPath, bundle: bundle);
+      final image = await loadAssetImage(path, bundle: bundle);
       return renderSquare(image, widgetAvatarSize);
     });
     return name;

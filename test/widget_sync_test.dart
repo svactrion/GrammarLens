@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/services/widget_payload.dart';
+import 'package:grammar_lens/services/app_link.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
@@ -66,9 +68,37 @@ class _Storage extends StorageService {
   Future<List<WeakSpot>> getWeakSpots({
     int limit = 10,
     ReviewSortOrder sortOrder = ReviewSortOrder.recent,
-  }) async =>
-      weak;
+  }) async {
+    weakReads.add((limit, sortOrder));
+    return weak.take(limit).toList();
+  }
+
+  final weakReads = <(int, ReviewSortOrder)>[];
+
+  /// Each weak spot's mistakes, newest first ('topic/type').
+  Map<String, List<ErrorEntry>> mistakes = const {};
+
+  @override
+  Future<List<ErrorEntry>> getRecentMistakes(String topicId, String errorType,
+          {int limit = 3}) async =>
+      (mistakes['$topicId/$errorType'] ?? const []).take(limit).toList();
 }
+
+WeakSpot _spot(String topic, String type) => WeakSpot(
+    topicId: topic, errorType: type, frequency: 1, lastSeen: DateTime(2026));
+
+ErrorEntry _mistake(String topic, String type,
+        {String? user, String? corrected, String? prompt, String? rule}) =>
+    ErrorEntry(
+      topicId: topic,
+      errorType: type,
+      timestamp: DateTime(2026, 11, 17),
+      prompt: prompt,
+      userAnswer: user,
+      correctedAnswer: corrected,
+      rule: rule,
+      source: ErrorSource.topicPractice,
+    );
 
 DailyTestSet _done() => DailyTestSet(
       day: '2026-11-18',
@@ -121,6 +151,7 @@ void main() {
     expect(bridge.files.keys.toSet(), {
       'payload.json',
       'avatar_14.png',
+      'fox_sleep.png',
       'mountain_ember_peak_d30_s1_light.png',
       'mountain_ember_peak_d30_s1_dark.png',
     });
@@ -139,6 +170,52 @@ void main() {
     expect([images[1].width, images[1].height], [1092, 510]);
   });
 
+  // Fix round 4, item 3 (W01 v12): the tip widget's weak spots, the most
+  // recent first, each with its latest mistake that has an answer and a
+  // correction; read from Review's records, nothing new collected.
+  testWidgets('W01 v12: the tip takes the weak spots\' latest mistakes',
+      (tester) async {
+    storage
+      ..weak = [
+        _spot('gerundVsInfinitive', 'gerund_after_preposition'),
+        _spot('articles', 'articles'),
+        _spot('modalVerbs', 'modal_to'),
+      ]
+      ..mistakes = {
+        'gerundVsInfinitive/gerund_after_preposition': [
+          _mistake('gerundVsInfinitive', 'gerund_after_preposition',
+              prompt: 'I’m interested ___ French.',
+              user: 'to learn',
+              corrected: 'in learning',
+              rule: 'After a preposition, use -ing'),
+        ],
+        // Skipped: no answer to show.
+        'articles/articles': [_mistake('articles', 'articles', user: '')],
+        'modalVerbs/modal_to': [
+          _mistake('modalVerbs', 'modal_to',
+              user: 'You must to go.', corrected: 'You must go.'),
+        ],
+      };
+    await tester.runAsync(() => sync().run());
+    expect(
+        storage.weakReads.single, (widgetMistakeLimit, ReviewSortOrder.recent));
+    final entries = _payload(bridge)['entries'] as List;
+    final tips = [for (final e in entries) e['tip'] as Map];
+    final urls = tips.map((t) => t['url']).toSet();
+    // Two weak spots with something to show, one per day, in turn.
+    expect(urls, {
+      AppLink.weakSpotUrl('gerundVsInfinitive', 'gerund_after_preposition'),
+      AppLink.weakSpotUrl('modalVerbs', 'modal_to'),
+    });
+    final gerund = tips
+        .firstWhere((t) => (t['url'] as String).contains('gerundVsInfinitive'));
+    expect((gerund['mistake'] as Map)['wrong'], [
+      {'t': 'I’m interested ', 'm': false},
+      {'t': 'to learn', 'm': true},
+      {'t': ' French.', 'm': false},
+    ]);
+  });
+
   testWidgets(
       'a second run renders nothing again; a new step replaces the '
       'old crops', (tester) async {
@@ -155,6 +232,7 @@ void main() {
     expect(bridge.files.keys.toSet(), {
       'payload.json',
       'avatar_14.png',
+      'fox_sleep.png',
       'mountain_ember_peak_d30_s2_light.png',
       'mountain_ember_peak_d30_s2_dark.png',
     });

@@ -17,9 +17,13 @@ enum WidgetPalette {
   static let goldDeep = Color(hex: 0x8A5C00)
   static let cream = Color(hex: 0xFFF1E2)
 
+  // W01 v12: every widget has a designed dark variant (no system grey).
   static func card(_ scheme: ColorScheme) -> Color {
-    scheme == .dark ? Color(hex: 0x252528) : Color(hex: 0xFFFDF8)
+    scheme == .dark ? Color(hex: 0x1E1C27) : Color(hex: 0xFFFDF8)
   }
+
+  /// The dark card's edge.
+  static let darkLine = Color(hex: 0x2E2C36)
 
   static func text(_ scheme: ColorScheme) -> Color {
     scheme == .dark ? Color(hex: 0xF2EEE8) : Color(hex: 0x1B1B1F)
@@ -27,6 +31,89 @@ enum WidgetPalette {
 
   static func muted(_ scheme: ColorScheme) -> Color {
     scheme == .dark ? Color(hex: 0xA9A6B2) : Color(hex: 0x55555E)
+  }
+
+  /// The small waiting widget: orange, one shade deeper in dark, with cream
+  /// text there.
+  static func waitingFill(_ scheme: ColorScheme) -> LinearGradient {
+    scheme == .dark
+      ? LinearGradient(
+        colors: [Color(hex: 0xD9620E), Color(hex: 0xB84E08)], startPoint: .topLeading,
+        endPoint: .bottomTrailing)
+      : LinearGradient(colors: [orange, orange], startPoint: .top, endPoint: .bottom)
+  }
+
+  static func onWaiting(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0xFFF3E6) : onOrange
+  }
+
+  static func waitingBadge(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color.black.opacity(0.22) : Color.white.opacity(0.55)
+  }
+
+  /// "Done today" and the check's green, on the card.
+  static func doneText(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0x7FD6A6) : greenDeep
+  }
+
+  /// The points chip.
+  static func pointsFill(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0x3A2F12) : goldSoft
+  }
+
+  static func pointsText(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0xFFD45C) : goldDeep
+  }
+
+  /// The tip's topic eyebrow.
+  static func eyebrow(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0xFFB27A) : Color(hex: 0xA14805)
+  }
+
+  /// The rule's pill and the corrected row (green), the wrong row (red).
+  static func greenTint(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0x173A2A) : greenSoft
+  }
+
+  static func onGreenTint(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0x7FD6A6) : greenDeep
+  }
+
+  static func redTint(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0x42201F) : Color(hex: 0xFDE6E3)
+  }
+
+  static func onRedTint(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? Color(hex: 0xFF9C92) : Color(hex: 0xB3261E)
+  }
+
+  /// No weak spot yet: the example lines' tint.
+  static func plainTint(_ scheme: ColorScheme) -> Color {
+    scheme == .dark ? darkLine : Color(hex: 0xF3EFE6)
+  }
+
+  /// The tip's Daily Test box: orange waiting (deeper in dark), navy done
+  /// (#1B2E6B in dark).
+  static func boxFill(done: Bool, _ scheme: ColorScheme) -> Color {
+    if done { return scheme == .dark ? Color(hex: 0x1B2E6B) : navy }
+    return scheme == .dark ? Color(hex: 0xD9620E) : orange
+  }
+
+  static func onBox(done: Bool, _ scheme: ColorScheme) -> Color {
+    if done { return Color(hex: 0xC9D6FF) }
+    return scheme == .dark ? Color(hex: 0xFFF3E6) : onOrange
+  }
+}
+
+extension View {
+  /// W01 v12: the dark variants' 1 pt edge (#2E2C36); none in light.
+  @ViewBuilder
+  func darkEdge(_ scheme: ColorScheme) -> some View {
+    if scheme == .dark {
+      self.overlay(ContainerRelativeShape().strokeBorder(WidgetPalette.darkLine, lineWidth: 1))
+    } else {
+      self
+    }
   }
 }
 

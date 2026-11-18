@@ -82,13 +82,73 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://home",
-        "label": "TIP FOR YOU · ARTICLES",
-        "rule": "No article",
-        "example": "general plural or uncountable",
-        "footer": "From your weak spots · new tip daily",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://home",
         "boxLabel": "DAILY TEST",
         "button": "Done today",
+        "doneLabel": "Done",
+        "next": {
+          "1": "next in 1 h",
+          "2": "next in 2 h",
+          "3": "next in 3 h",
+          "4": "next in 4 h",
+          "5": "next in 5 h",
+          "6": "next in 6 h",
+          "7": "next in 7 h",
+          "8": "next in 8 h",
+          "9": "next in 9 h",
+          "10": "next in 10 h",
+          "11": "next in 11 h",
+          "12": "next in 12 h",
+          "13": "next in 13 h",
+          "14": "next in 14 h",
+          "15": "next in 15 h",
+          "16": "next in 16 h",
+          "17": "next in 17 h",
+          "18": "next in 18 h",
+          "19": "next in 19 h",
+          "20": "next in 20 h",
+          "21": "next in 21 h",
+          "22": "next in 22 h",
+          "23": "next in 23 h",
+          "24": "next in 24 h"
+        },
+        "boxImage": "fox_sleep.png",
         "done": true
       }
     },
@@ -121,13 +181,48 @@
         ]
       },
       "tip": {
-        "url": "grammarlens://daily-test",
-        "label": "TIP FOR YOU · ARTICLES",
-        "rule": "a / an",
-        "example": "one of many, or first mention",
-        "footer": "From your weak spots · new tip daily",
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
         "boxLabel": "DAILY TEST",
         "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
         "done": false
       }
     }

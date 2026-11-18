@@ -73,8 +73,8 @@ final class WidgetSnapshotTests: XCTestCase {
         ClimbMediumView(climb: now.climb, hoursLeft: hours), size: Self.medium, scheme: scheme,
         rtl: payload.rtl, name: "climb-medium-\(state)-\(tag)")
       try render(
-        TipMediumView(tip: now.tip, avatar: now.climb.images.avatar), size: Self.medium,
-        scheme: scheme, rtl: payload.rtl, name: "tip-medium-\(state)-\(tag)")
+        TipMediumView(tip: now.tip, avatar: now.climb.images.avatar, hoursLeft: hours),
+        size: Self.medium, scheme: scheme, rtl: payload.rtl, name: "tip-medium-\(state)-\(tag)")
     }
   }
 
@@ -86,13 +86,31 @@ final class WidgetSnapshotTests: XCTestCase {
     try renderAll(payload: WidgetSamples.payload(done: true), suffix: "sample")
   }
 
+  /// W01 v12: no weak spot yet: the topic hint's rule and two examples.
   func testGeneralTip() throws {
     var payload = WidgetSamples.payload(done: false)
     payload.entries[0].tip = WidgetSamples.generalTip
     let now = payload.entries[0]
+    for scheme in [ColorScheme.light, .dark] {
+      try render(
+        TipMediumView(tip: now.tip, avatar: now.climb.images.avatar), size: Self.medium,
+        scheme: scheme, name: "tip-medium-general-sample-\(scheme == .dark ? "dark" : "light")")
+    }
+  }
+
+  /// W01 v12: an older payload (before v12's tip fields) still decodes and
+  /// draws.
+  func testOlderTipStillDecodes() throws {
+    let json = """
+      {"url":"grammarlens://daily-test","label":"TIP","rule":"the","example":"specific",
+       "footer":"A new tip every day","boxLabel":"DAILY TEST","button":"Start","done":false}
+      """
+    let tip = try JSONDecoder().decode(WidgetPayload.Tip.self, from: Data(json.utf8))
+    XCTAssertNil(tip.mistake)
+    XCTAssertNil(tip.boxUrl)
     try render(
-      TipMediumView(tip: now.tip, avatar: now.climb.images.avatar), size: Self.medium,
-      scheme: .light, name: "tip-medium-general-sample-light")
+      TipMediumView(tip: tip, avatar: WidgetSamples.avatar), size: Self.medium, scheme: .light,
+      name: "tip-medium-older-payload-light")
   }
 
   /// INTEGRATE 3c: the widgets' text is the app's Nunito Sans at the
@@ -139,7 +157,7 @@ final class WidgetSnapshotTests: XCTestCase {
       let payload = try XCTUnwrap(WidgetPayload.decode(data), name)
       // The app writes these files (W3); here the sample images stand in.
       for entry in payload.entries {
-        try WidgetSamples.copyImages(to: entry.climb.images)
+        try WidgetSamples.copyImages(to: entry.climb.images, box: entry.tip.boxImage)
       }
       try renderAll(payload: payload, suffix: (name as NSString).deletingPathExtension)
     }
@@ -150,6 +168,7 @@ final class WidgetSnapshotTests: XCTestCase {
 /// November on Ember Peak, step 2 of 30).
 enum WidgetSamples {
   static let avatar = "avatar.png"
+  static let sleep = "avatar_sleep.png"
   static let light = "mountain_sample_light.png"
   static let dark = "mountain_sample_dark.png"
   /// Where the crop puts step 1 (fractions of the medium widget).
@@ -158,7 +177,9 @@ enum WidgetSamples {
   static let generalTip = WidgetPayload.Tip(
     url: "grammarlens://daily-test", label: "TIP OF THE DAY · ARTICLES", rule: "an",
     example: "before a vowel sound: an hour", footer: "A new tip every day",
-    boxLabel: "DAILY TEST", button: "Start", done: false)
+    boxLabel: "DAILY TEST", button: "Start", done: false, lead: "",
+    examples: ["the: specific, known, or the only one", "No article: general plural or uncountable"],
+    boxUrl: "grammarlens://daily-test", doneLabel: "Done", next: [:], boxImage: avatar)
 
   static func payload(done: Bool) -> WidgetPayload {
     let countdown = Dictionary(uniqueKeysWithValues: (1...24).map { ("\($0)", "Next test in \($0) h") })
@@ -177,12 +198,21 @@ enum WidgetSamples {
       countdown: done ? countdown : [:], countdownMedium: done ? countdownMedium : [:],
       images: .init(avatar: avatar, mountainLight: light, mountainDark: dark),
       avatarPoint: point)
+    // W01 v12's sample: "I'm interested to learn French."
+    let next = Dictionary(uniqueKeysWithValues: (1...24).map { ("\($0)", "next in \($0) h") })
     let tip = WidgetPayload.Tip(
-      url: done ? "grammarlens://home" : "grammarlens://daily-test",
-      label: "TIP FOR YOU · ARTICLES", rule: "the",
-      example: "specific, known, or the only one",
-      footer: "From your weak spots · new tip daily", boxLabel: "DAILY TEST",
-      button: done ? "Done today" : "Start", done: done)
+      url: "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+      label: "GERUND VS. INFINITIVE", rule: "in + -ing", example: "",
+      footer: "Your weak spot · a new one daily", boxLabel: "DAILY TEST",
+      button: done ? "Done today" : "Start", done: done,
+      lead: "After interested, use",
+      mistake: .init(
+        wrong: [.init(t: "I’m interested ", m: false), .init(t: "to learn", m: true),
+          .init(t: " French.", m: false)],
+        right: [.init(t: "I’m interested ", m: false), .init(t: "in learning", m: true),
+          .init(t: " French.", m: false)]),
+      boxUrl: done ? "grammarlens://home" : "grammarlens://daily-test",
+      doneLabel: "Done", next: done ? next : [:], boxImage: done ? sleep : avatar)
     let now = Date().timeIntervalSince1970
     return WidgetPayload(
       schema: 1, writtenAt: now, rtl: false,
@@ -199,6 +229,9 @@ enum WidgetSamples {
     let avatarImage =
       source("assets/avatars/avatar_14.webp") ?? solid(.orange, CGSize(width: 240, height: 240))
     AppGroupStore.write(try XCTUnwrap(avatarImage.pngData()), name: avatar)
+    let sleepImage =
+      source("assets/companions/fox_sleep.webp") ?? solid(.orange, CGSize(width: 240, height: 240))
+    AppGroupStore.write(try XCTUnwrap(sleepImage.pngData()), name: sleep)
     for (name, path) in [
       (light, "assets/climb/ember_peak/background_light.webp"),
       (dark, "assets/climb/ember_peak/background_dark.webp"),
@@ -209,9 +242,10 @@ enum WidgetSamples {
   }
 
   /// The sample images under the names a payload gives.
-  static func copyImages(to images: WidgetPayload.Images) throws {
-    for (from, to) in [(avatar, images.avatar), (light, images.mountainLight), (dark, images.mountainDark)]
-    where from != to {
+  static func copyImages(to images: WidgetPayload.Images, box: String? = nil) throws {
+    var pairs = [(avatar, images.avatar), (light, images.mountainLight), (dark, images.mountainDark)]
+    if let box, box != images.avatar { pairs.append((sleep, box)) }
+    for (from, to) in pairs where from != to {
       AppGroupStore.write(try XCTUnwrap(AppGroupStore.read(from)), name: to)
     }
   }

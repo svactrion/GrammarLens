@@ -91,6 +91,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// Bumped by a `grammarlens://daily-test` link; Home opens the Daily Test.
   final ValueNotifier<int> _dailyTestLinks = ValueNotifier(0);
 
+  /// W01 v12: the tip widget's weak spot, for Review to open (R03).
+  final ValueNotifier<WeakSpotLink?> _weakSpotLinks = ValueNotifier(null);
+
   /// The widgets' payload (W3) and the reminder plan (W4), kept in step
   /// with the app: at launch, on resume, and after every storage write that
   /// changes them (`StorageService.onChanged`).
@@ -183,6 +186,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     WidgetsBinding.instance.removeObserver(this);
     _linkRouter.dispose();
     _dailyTestLinks.dispose();
+    _weakSpotLinks.dispose();
     _subscriptionService.removeAccessListener(_onAccessChanged);
     _reminders.dispose();
     if (identical(DeviceSync.current, _deviceSync)) {
@@ -225,6 +229,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       case AppLink.dailyTest:
         _switchTab(0);
         _dailyTestLinks.value++;
+      case AppLink.weakSpot:
+        _switchTab(1);
+        // Null first, so the same weak spot twice still notifies.
+        _weakSpotLinks.value = null;
+        _weakSpotLinks.value = _linkRouter.weakSpot;
     }
   }
 
@@ -557,6 +566,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               userName: _profile!.name,
               hero: _profile!.avatar,
               clock: widget.clock ?? DateTime.now,
+              weakSpotLinks: _weakSpotLinks,
             ),
             SettingsScreen(
               active: _tabIndex == 2,
