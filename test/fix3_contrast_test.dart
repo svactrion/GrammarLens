@@ -139,6 +139,9 @@ void main() {
       (c) => c.green
     ),
     ('onToast', 'toast', _Role.text, (c) => c.onToast, (c) => c.toast),
+    // A danger text button ("Leave", R10) on a dialog card.
+    ('redText (danger button)', 'card', _Role.text, (c) => c.redText,
+        (c) => c.card),
     (
       'onOrange (warning "!")',
       'orange (disc)',

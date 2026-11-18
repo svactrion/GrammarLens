@@ -313,10 +313,11 @@ class _PressableButtonState extends State<PressableButton>
           theme.colorScheme.secondary,
           null
         ),
+      // Red text on the page or a card: the text token (SY03, v11).
       ButtonTone.danger => (
           Colors.transparent,
           Colors.transparent,
-          c.red,
+          c.redText,
           null
         ),
     };
