@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../motion.dart';
+import 'companion_head_table.dart';
 
 /// A companion's state (SPEC §3.5). Screens pass a mood; [CompanionView]
 /// picks the image, the motion and the prop.
@@ -269,6 +270,70 @@ class CompanionView extends StatefulWidget {
         _ => null,
       };
 
+  /// The head box of [asset] (left, top, right, bottom in fractions of
+  /// the image), measured from its pixels (`companion_head_table.dart`,
+  /// `tool/scene_art/companion_heads.py`), or null for an image without one.
+  static Rect? headBoxOf(String asset) {
+    final box = companionHeadBox[asset];
+    return box == null ? null : Rect.fromLTRB(box.$1, box.$2, box.$3, box.$4);
+  }
+
+  /// SPEC §3.5 v12: where a mood's prop sits in a [size] × [size] box,
+  /// placed by the head of [asset] (on the device the giraffe's sweat drop
+  /// fell from far above and to the right of its head when every prop sat
+  /// at the box's corner). The sweat drop starts at the temple on the
+  /// right and falls along the cheek; the thought bubble and the cloud sit
+  /// just above the head's top right; the Zzz rises from just above the
+  /// head; the sparkle sits beside it. In RTL the place is mirrored about
+  /// the head's middle (the left temple). The props keep their X01 sizes
+  /// (at 110: sparkle 40, bubble and cloud 64, Zzz 48, drop 28). Without a
+  /// head box: X01's fixed places.
+  static Rect? propRectFor(String asset, CompanionMood mood,
+      {required double size, bool rtl = false}) {
+    final k = size / 110;
+    final head = headBoxOf(asset);
+    if (head == null) {
+      final fixed = switch (mood) {
+        CompanionMood.cheer => Rect.fromLTWH(92 * k, -6 * k, 40 * k, 40 * k),
+        CompanionMood.think => Rect.fromLTWH(84 * k, -26 * k, 64 * k, 64 * k),
+        CompanionMood.sad => Rect.fromLTWH(26 * k, -34 * k, 64 * k, 64 * k),
+        CompanionMood.sleep => Rect.fromLTWH(86 * k, -24 * k, 48 * k, 48 * k),
+        CompanionMood.oops => Rect.fromLTWH(92 * k, 4 * k, 28 * k, 28 * k),
+        _ => null,
+      };
+      if (fixed == null || !rtl) return fixed;
+      return Rect.fromLTWH(
+          size - fixed.right, fixed.top, fixed.width, fixed.height);
+    }
+    final h = Rect.fromLTRB(head.left * size, head.top * size,
+        head.right * size, head.bottom * size);
+    final Rect? rect = switch (mood) {
+      // At the temple, on the head's right edge a third of the way down.
+      CompanionMood.oops => Rect.fromCenter(
+          center: Offset(h.right - .1 * h.width, h.top + .38 * h.height),
+          width: 28 * k,
+          height: 28 * k),
+      // Just above the head's top right, over its corner.
+      CompanionMood.think || CompanionMood.sad => Rect.fromLTWH(
+          h.right - .3 * h.width,
+          h.top - 64 * k + .14 * h.height,
+          64 * k,
+          64 * k),
+      // From just above the head (it then rises and drifts away).
+      CompanionMood.sleep => Rect.fromLTWH(h.right - .4 * h.width,
+          h.top - 48 * k + .12 * h.height, 48 * k, 48 * k),
+      // Beside the head, at its upper right.
+      CompanionMood.cheer => Rect.fromLTWH(
+          h.right - .08 * h.width, h.top + .02 * h.height, 40 * k, 40 * k),
+      _ => null,
+    };
+    if (rect == null || !rtl) return rect;
+    // Mirrored about the head's middle.
+    final mid = h.center.dx;
+    return Rect.fromLTWH(
+        2 * mid - rect.right, rect.top, rect.width, rect.height);
+  }
+
   @override
   State<CompanionView> createState() => _CompanionViewState();
 }
@@ -370,20 +435,13 @@ class _CompanionViewState extends State<CompanionView>
 
   static double _deg(double d) => d * math.pi / 180;
 
-  /// The prop's placement in a 110 × 110 box (X01), scaled to [size].
-  Rect? _propRect() {
-    final k = widget.size / 110;
-    return switch (widget.mood) {
-      CompanionMood.cheer => Rect.fromLTWH(92 * k, -6 * k, 40 * k, 40 * k),
-      CompanionMood.think => Rect.fromLTWH(84 * k, -26 * k, 64 * k, 64 * k),
-      CompanionMood.sad => Rect.fromLTWH(26 * k, -34 * k, 64 * k, 64 * k),
-      CompanionMood.sleep => Rect.fromLTWH(86 * k, -24 * k, 48 * k, 48 * k),
-      CompanionMood.oops => Rect.fromLTWH(92 * k, 4 * k, 28 * k, 28 * k),
-      _ => null,
-    };
-  }
+  /// The prop's placement in the [size] box: by the head of the image it
+  /// draws (SPEC §3.5 v12, [CompanionView.propRectFor]); mirrored in RTL.
+  Rect? _propRect(bool rtl) => CompanionView.propRectFor(
+      CompanionView.assetFor(widget.hero, widget.mood), widget.mood,
+      size: widget.size, rtl: rtl);
 
-  Widget _prop(double t, Rect rect, String asset) {
+  Widget _prop(double t, Rect rect, String asset, bool rtl) {
     final k = widget.size / 110;
     final wave = (1 - math.cos(2 * math.pi * t)) / 2;
     final moving = _loop != null;
@@ -412,7 +470,8 @@ class _CompanionViewState extends State<CompanionView>
           // gl-zz2: rises 30 and drifts 14 (at 110 pt), grows .6 → 1.1,
           // fades in by 30 % and out by the end; every 2.4 s.
           final z = (t * 3) % 1.0;
-          dx = 14 * z * k;
+          // It drifts away from the head (to the left in RTL).
+          dx = (rtl ? -14 : 14) * z * k;
           dy = -30 * z * k;
           scale = .6 + .5 * z;
           opacity = z < .3 ? z / .3 : 1 - (z - .3) / .7;
@@ -514,7 +573,8 @@ class _CompanionViewState extends State<CompanionView>
     final listenable = Listenable.merge([if (_loop != null) _loop!, _once]);
     final propAsset =
         widget.showProp ? CompanionView.propFor(widget.mood) : null;
-    final propRect = _propRect();
+    final rtl = Directionality.maybeOf(context) == TextDirection.rtl;
+    final propRect = _propRect(rtl);
 
     final body = AnimatedBuilder(
       animation: listenable,
@@ -534,7 +594,7 @@ class _CompanionViewState extends State<CompanionView>
               ),
             ),
             if (propAsset != null && propRect != null)
-              _prop(t, propRect, propAsset),
+              _prop(t, propRect, propAsset, rtl),
           ],
         );
       },
