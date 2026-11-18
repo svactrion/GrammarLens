@@ -4,6 +4,11 @@
 // the A2 path: Review, the free ticket on a practice, back to Home, where
 // the rest scene and N01 must be on screen at once. Each step saves the
 // simulator's screen (`xcrun simctl io <udid> screenshot`) to SMOKE_OUT.
+//
+// Fix round 4: SMOKE_LANG (the app's SEED_LANGUAGE, default `en`) picks the
+// texts the walk taps from that language's ARB file; the walk also stops
+// on V20 while the stand-in holds the scoring back.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_driver/flutter_driver.dart';
@@ -14,6 +19,10 @@ Future<void> main() async {
   late FlutterDriver d;
   final udid = Platform.environment['SMOKE_UDID']!;
   final out = Platform.environment['SMOKE_OUT']!;
+  final lang = Platform.environment['SMOKE_LANG'] ?? 'en';
+  final arb = jsonDecode(File('lib/l10n/app_$lang.arb').readAsStringSync())
+      as Map<String, dynamic>;
+  String t(String key) => arb[key] as String;
   var n = 0;
 
   Future<void> shot(String name) async {
@@ -108,14 +117,14 @@ Future<void> main() async {
     await shot('home-after-day0');
 
     // A2: Review, the free ticket on a practice, back to Home.
-    await tap(find.text('Review'));
+    await tap(find.text(t('featureReview')));
     await wait(1500);
     await shot('review');
     await tap(find.byValueKey('review_practice_ticket'));
     await wait(1500);
-    if (await present(find.text('Agree and continue'))) {
+    if (await present(find.text(t('aiConsentAgree')))) {
       await shot('consent');
-      await tap(find.text('Agree and continue'));
+      await tap(find.text(t('aiConsentAgree')));
     }
     await wait(800);
     await shot('V18-preparing');
@@ -125,16 +134,18 @@ Future<void> main() async {
       await type(find.byValueKey('question_answer_field'), 'a');
       await wait(300);
       await tap(find.byValueKey('practice_step_primary'));
-      await wait(1200);
+      await wait(i == 2 ? 3000 : 1200);
     }
-    await wait(3500);
+    // V20 while the stand-in holds the scoring back (SCORE_DELAY).
+    await shot('V20-waiting');
+    await wait(6000);
     await shot('V21-results');
     // The results are a route over the tabs: back to Review, then Home
     // through the nav bar.
-    await tap(find.text('Back to topics'));
+    await tap(find.text(t('resultsBackToTopics')));
     await wait(1500);
     await shot('back-on-review');
-    await tap(find.text('Climb'));
+    await tap(find.text(t('navHome')));
     await wait(1200);
     await shot('A2-home-rest-and-N01');
     await wait(1500);

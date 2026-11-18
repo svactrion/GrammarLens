@@ -909,7 +909,7 @@ final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
 );
 
-/// "GrammarLens" and Close (44 × 44).
+/// Close (44 × 44) and the GRAMMARLENS PREMIUM chip (V13).
 class _TopBar extends StatelessWidget {
   final double horizontalPadding;
   final VoidCallback onClose;
@@ -1431,7 +1431,7 @@ class _FooterLinks extends StatelessWidget {
     Widget dot() => ExcludeSemantics(
           child: Text('·', // l10n-guard: a separator
               style:
-                  style.copyWith(color: c.muted, fontWeight: FontWeight.w400)),
+                  style.withWeight(FontWeight.w400).copyWith(color: c.muted)),
         );
     final row = Wrap(
       alignment: WrapAlignment.center,

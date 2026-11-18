@@ -155,11 +155,11 @@ void main() {
     }
     expect(offenders, isEmpty);
     // UI polish: the onboarding steps (V03–V05) carry no wordmark; Welcome
-    // (V02) does.
+    // (V02) does. Fix round 4 (V13 v12, F4-7): the paywall's top row is the
+    // board's, Close and the GRAMMARLENS PREMIUM chip, with no wordmark.
     for (final file in [
       'lib/screens/home_screen.dart',
       'lib/screens/welcome_screen.dart',
-      'lib/screens/premium_screen.dart',
       'lib/widgets/launch_splash.dart',
     ]) {
       expect(File(file).readAsStringSync(), contains('BrandWordmark('),
