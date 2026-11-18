@@ -77,27 +77,86 @@ measurement task"; push.
 
 ## Phase B — after the owner's run (a new prompt will start it)
 
-1. `analyze`: `docs/1.5.0-topics-report.md` with, per topic and for the
-   control: sets and items generated, the gate's pass rate, each automatic
-   check's flags, the scoring results on the built answers (agreement, false
-   "correct" among wrong answers, false "needs work" among right answers),
-   measured spend and time. State the limitation up front (the answers are
-   built, not real learners'; labels come in phase C).
-2. A blind label sheet in `proxy/eval/data/` (gitignored if it holds
-   generated content, as in 1.4.0): 10 questions per new topic (50), mixed
-   order, each with its key, accepted variants and the model's explanation,
-   and a column for the owner's verdict (ok / defect + why / also accept).
-3. Commit, push, **stop.** The owner labels the sheet with Claude in his
-   Cowork chat.
+The owner's run is `proxy/eval/out/topics-2026-11-18T16-35-34-632Z` (last
+line: "topics run done: 189 calls ok; spent $0.76 of $15.00"). **No API call
+in this phase**, and no change to the run folder's records.
+
+Owner decisions of 2026-11-18, made after phase A (record them in
+`docs/1.5.0-topics-progress.md` as T-12, T-13, …):
+
+- **Every question is labelled, not a sample.** All 150 questions of the
+  five new topics, and the control's 15, go on the sheet. Why: with 10 per
+  topic a topic passes "at most 5 % defective" only at 0 defects, and 0 of
+  10 still leaves a true rate of up to 26 % open (95 %); with 30, one defect
+  passes and two fail.
+- **The built answers are labelled too.** By T-2 the key, the second answer
+  and the mistakes are model-written, so "right / wrong by construction" is
+  a claim, not the truth: a "mistake" that is in fact acceptable would be
+  counted against the scorer. Phase C's scoring metrics use the labelled
+  truth.
+- **The sheet is blind.** It shows what a learner sees and the built
+  answers, nothing else: no automatic flag, no gate result, no scorer
+  verdict or explanation, and not which built answer is the key, the second
+  answer or a mistake.
+
+1. `topics analyze --out DIR` writes `docs/1.5.0-topics-report.md` with, per
+   topic and for the control: sets and items generated, the gate's pass
+   rate, each automatic check's flags, the scoring results on the built
+   answers (agreement, false "correct" among wrong answers, false "needs
+   work" among right answers), measured spend and time. State the
+   limitations up front: the answers are built, not real learners'; their
+   truth is by construction until phase C; the automatic checks are flags,
+   not verdicts. Counts and rates only: no question text, no answer text and
+   no sheet key in the report (generated content stays out of the repo, and
+   the labellers read the report).
+2. Duplicates, because the run flagged 15 of 30 conditionals questions and
+   11 of 30 prepositions questions against 0 of the control's 15: in the
+   report, per topic, the flags split into the same words / near-duplicate
+   and inside a set / across sets, and the sizes of the groups of questions
+   that resemble each other. Also say, from the code and with no change to
+   it, what makes two Topic Practice sets of one topic differ on the live
+   path today (what the app and the Worker send: anything about earlier
+   questions, a seed, a list to avoid, or nothing). The resembling questions
+   side by side go to the details file (step 4), not into the report.
+3. The blind label sheet (in the gitignored place 1.4.0 used for generated
+   content; no generated content in a commit):
+   - one file to read, plain text or Markdown: the app's hint card of each
+     topic once at the top; then per question, under an opaque key and in
+     mixed order across topics, the topic's title, the question as the app
+     shows it (context, instruction, hint), and its built answers under
+     letters in a shuffled order;
+   - one file to fill, which `topics analyze` reads back in phase C and
+     checks (it names every row that is unlabelled or has a value outside
+     the vocabulary): per question `verdict` (`ok` | `defect`), `why` when
+     it is a defect (`several_answers` | `off_topic` | `bad_english` |
+     `hint_wrong` | `level` | `other`, and a free note), `also_accept`
+     (answers that must count as right and are not among the built ones),
+     and per built answer `right` | `wrong` | `unsure`;
+   - the mapping from the keys and letters to the run's ids, in a third
+     file the labellers do not open.
+   A question that failed the gate or has no built answers is on the sheet
+   like any other.
+4. A details file in the run folder for after the labels (per question: the
+   flags, the gate, the scorer's verdicts and explanations; the resembling
+   questions side by side). The labellers do not open it before the sheet is
+   filled; say so at its top.
+5. Unit tests for the new code (no network), `npm run typecheck` clean.
+   Commit, push, **stop**, and name the sheet's three files in the last
+   message. The sheet is labelled in the owner's Cowork chat: Claude labels
+   first, the owner spot-checks.
 
 ## Phase C — after the labels (later prompt)
 
-Fold the labels into the report: per topic defect rate and scoring metrics
-against the owner's labels. Pass criteria (owner): at most 5 % defective
-questions after the gate, scoring agreement at least 95 %, false "correct"
-at most 2 %. For a topic that fails: the cause and a proposed prompt or
-hint-data fix; a re-measurement of that topic only, after the owner's OK
-(new spend, same cap rules).
+Fold the labels into the report: per topic (30 labelled questions; the
+control 15) the defect rate with the defects by `why`, and the scoring
+metrics against the labelled truth of the built answers (`unsure` answers
+counted apart, in neither rate). Every answer where the scorer and the
+labelled truth differ goes, with the scorer's explanation, into a
+second-look file for the owner (as 1.4.0's `second-look-C8.md`). Pass
+criteria (owner): at most 5 % defective questions after the gate, scoring
+agreement at least 95 %, false "correct" at most 2 %. For a topic that
+fails: the cause and a proposed prompt or hint-data fix; a re-measurement
+of that topic only, after the owner's OK (new spend, same cap rules).
 
 ## Phase D — release prep (only on the owner's go, later prompt)
 
