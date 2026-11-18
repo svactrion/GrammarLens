@@ -14454,3 +14454,53 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Disk]** 8.5 GiB free before, 19 GiB after the allowed cleanup
   (`flutter clean`, this project's DerivedData folders); the disk filled
   once mid-run and was freed the same way.
+
+## 2026-11-18 (UI polish fix round 4 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 4 (`docs/design/ui-polish/handoff/FIX4.md`,
+  SPEC v12), after the owner's second device pass (iPhone 14 Plus, release,
+  Turkish, a larger text size). Record: `PROGRESS.md` "Fix round 4" (each
+  item's cause, fix and tests; decisions F4-1 to F4-13).
+- **[Engineering]** V24f fits one screen at 390 × 844 and up at the default
+  and the next text size (no scroll extent; the reminder row 8 pt above the
+  nav bar; measured at six sizes and three text sizes): the sheet starts at
+  the board's place, a compact header and Premium card, a 44 pt reminder
+  row. The campfire stands at the companion's front right on its foot line
+  (40 % flame in two layers, a warm ground glow); late in the month the
+  art's sky continues above its edge so the camp keeps its place. V24
+  (Premium) shares the camp, header and row.
+- **[Engineering]** The paywall footer is the board's compact one (about
+  150 pt; "Restore · Terms · Privacy" on one row, the full price line, the
+  button with only its pulse) and "Maybe later" is gone everywhere (the
+  close button is the way out); the board's top row (Close and the chip)
+  puts "Compare plans" on the first view of every phone.
+- **[Engineering]** Widgets v12: the tip widget shows the user's own latest
+  mistake (the sentence struck through and corrected, under a rule with
+  its key words in a pill), a different weak spot each day; tapping it
+  opens that weak spot in Review (a new `grammarlens://weak-spot` link);
+  every widget has a designed dark variant. The data is Review's own,
+  written to the App Group on the device; nothing new is collected.
+- **[Engineering]** Profile's month progress card as on V23 (score capsule,
+  ten segments, tier marks at their places). Props placed by each hero's
+  head, measured from the images (`tool/scene_art/companion_heads.py`).
+  Forward buttons give a light haptic, never two (Check keeps only its
+  right / wrong feedback). V20 and V18 centred; V20's last checklist item
+  waits for the result. Upper case by language (Turkish İ).
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2807 passed; Swift RunnerTests 23 passed, 0 failed (64
+  widget snapshots, light and dark); the Runner + widget extension
+  simulator build succeeded (`xcodebuild`; the `flutter build ios
+  --simulator` wrapper stops on Xcode's "Could not compute dependency
+  graph" for its generic destination, recorded in PROGRESS); `flutter build
+  ios --release --no-codesign` built Runner.app (50.3 MB, arm64, 1.4.0 (7))
+  with the extension. A driven smoke walk of a fresh install in Turkish on
+  the iPhone 18 Pro simulator (a local stand-in for the practice proxy, no
+  AI call): the sweat drop by the head, results before the badge, the
+  paywall without "Belki sonra" and its X opening V13b, V20 centred with
+  the last item waiting and "GERİ BİLDİRİMİN YOLDA", N01 at once over the
+  rest scene ("TİLKİ RÜYASINDA…"), then V24f on one screen (a drag does not
+  move it). The iPad paywall's first view captured.
+- **[Not verified]** Anything on a device. The owner's third pass, in
+  order, is the first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 16 GiB free before, 17 GiB after the allowed cleanup (`flutter
+  clean`, this project's DerivedData folder).

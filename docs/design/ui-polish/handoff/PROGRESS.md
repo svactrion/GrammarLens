@@ -6,6 +6,585 @@ its fix rounds, and the integration with the widgets and reminders
 and how, decisions, open items. The final summary is below the Integration
 section.
 
+## Fix round 4 (owner's second device pass, 2026-11-18)
+
+`FIX4.md`, SPEC v12. The owner ran fix round 3's second pass on his iPhone
+14 Plus (428 × 926, release build, Turkish interface, a larger text size)
+and confirmed results → badge → first climb, V12's bubble, the switches,
+the ribbon, the paywall order, N01 after a practice, the name screen, the
+goal tilt, the shine, V05b, the flag and dark mode in the app. This round
+fixes what he found, on `ui-polish-widgets`. **Status: done** (items
+1–8, steps 0, Checks and Docs below; the checks ran after the last code
+change, `aea0f92`). Not on `main`, not shipped, not checked on a device;
+the third pass is the first section of `DEVICE-CHECKS.md`.
+
+| Step | Status | Commits |
+|---|---|---|
+| 0 Start | done | `d823d2d` |
+| 1 V24f on one screen, the campfire | done | `7f6dc7e` |
+| 2 The paywall footer | done | `c1df10c` |
+| 3 Widgets v12 | done | `6fe1060` |
+| 4 Profile's month progress card | done | `0af1e60`, `78f8692` |
+| 5 Props by the head | done | `8949e42` |
+| 6 Haptics on forward buttons | done | `37c36a8` |
+| 7 Loading screens | done | `59caa2f` |
+| 8 Upper case by language | done | `df9d9a6` |
+| Checks | done | `8f12f80`, `8ad3761`, `aea0f92` (what the checks found) |
+| Docs | done | this commit |
+
+### 0. Start
+
+`df -h ~`: **16 GiB** free at the start (228 GiB disk); nothing needed
+deleting then. On `ui-polish-widgets`, `git pull --ff-only` (up to date);
+`FIX4.md`, SPEC v12 and the six changed boards and screens committed as
+"docs: fix round 4 task and SPEC v12" (`d823d2d`). The end-of-run figure is
+under "Checks: builds, tests, disk".
+
+### 1. V24f on one screen, and the campfire
+
+**What was wrong (device):** the "Remind me tomorrow" row was below the nav
+bar and needed a scroll; scrolled, the dream bubble slid under the status
+bar; the campfire was a large flat flame on a ring of stones on the trail
+in front of the tent.
+
+**Cause.** Round 3 fitted the sheet so *Wake* ended 8 pt above the bar, so
+the row under the card was always below it. The sheet held a "PREMIUM ·
+Not sleepy yet?" row above the title, 34 pt tickets, a 56 pt button and a
+48 pt row. The camp used a 73 pt companion (110 image units) and put the
+fire in its own 76 × 96 unit box on the trail below the tent; the flame
+was two flat shapes (solid orange and gold).
+
+**Fix (`7f6dc7e`).** `widgets/rest_scene.dart` rewritten:
+- **One screen.** The sheet starts at the board's place (V24f: 265 pt
+  under the safe area at 390 pt wide, scaled with the width: **312 at
+  390 × 844**; V24: its own board's 466) and only rises when the reminder
+  row would not end 8 pt above the bar (the scene then crops from the top,
+  never below the camp plus a 100 pt band for the bubble). The sheet's
+  bottom padding is the bar's height plus 8, so a fitted page has no
+  scroll extent at all. Spare room on taller phones stays under the row,
+  as on the board (F4-4).
+- **Compact sheet (board v12).** One header for both scenes: the moon,
+  "All done for today" with two small ticks under it, the countdown and
+  its label on the right. V24f's card: the title and the PREMIUM chip on
+  one row, five 50 × 30 tickets, the allowance line, the weak-spot line,
+  the 48 pt Wake button. The reminder row is 44 pt (the board's 40 at the
+  app's touch targets, F4-3), its time chip drawn 30 pt inside a 44 pt tap
+  area.
+- **The camp at the board's scale** (84 pt companion at 390 wide, the tent
+  80 × 65, the fire box 56 × 66 at the companion's front right). **The
+  fire:** the log pile's base (measured: the pile's lowest saturated pixel
+  is row 270 of the 384-pixel logs image) stands on the companion's foot
+  line (fox_sleep's lowest pixel is at 0.897 of its box, F4-5); the flame
+  is 40 % of the companion's height in two layers (a radial gradient
+  #FFE07A → #FF9A2A → #FF5A1F with a soft orange halo, a pale #FFF1B0
+  heart) flickering in opposite phase (`gl-flame`, 0.5 s and 0.38 s), three
+  sparks (1.4 s), and a warm glow on the ground under the camp (`CampGlow`,
+  `gl-glowpulse` 1.6 s). A soft shade under the status bar (the board's
+  120 pt gradient).
+- **The bubble** is laid out by its foot at the companion's head, its top
+  never above the safe area (V24: never over the "See you" chip).
+- **Late in the month** the camp is high on the mountain and the art's top
+  edge would show: the art then starts lower and a mirrored copy continues
+  its sky, so the camp keeps its place under the bubble (F4-6).
+- **V24 (Premium)** uses the same camp, header and reminder row (F4-1).
+- Strings: `restNextDailyTest` added (8 languages); `restBody`,
+  `restPracticeTitle`, `restTestLine`, `restNextTest`, `restTicketUsed`,
+  `restNotSleepy` removed (no longer used).
+
+**Tests.** `home_screen_test` "v12 V24/V24f <size>, <text> text": both
+scenes × 375 × 667, 390 × 844, 393 × 852, 402 × 874, 428 × 926, 440 × 956
+× default, next and largest text (F4-2): full-bleed scene, attached sheet,
+the board's sheet top at 390 × 844, the camp whole ≥ 12 pt above the sheet
+and under the status bar, the logs' base on the feet, the dream bubble
+under the status bar's edge, **no scroll extent and the row (and Wake)
+≥ 8 pt above the bar at 390 × 844 and up at default and next**, the row
+reachable everywhere. Also "v12 V24f step 20/26/30" (late month: the camp
+in its place, the sky continued) and "v12 V24f in Turkish, 428 × 926, next
+text" (one screen). `b5_home_mountain_test`'s countdown test follows the
+new header.
+
+Measured (points; "row" and "Wake" are their clearance above the nav bar;
+"extent" is the page's scroll extent):
+
+| Scene | Size | Text | Sheet top | Camp gap above the sheet | Row above the bar | Wake above the bar | Scroll extent |
+|---|---|---|---|---|---|---|---|
+| V24f | 375 × 667 | default | 215.8 | 12.0 | -1.8 | 67.2 | 9.8 |
+| V24f | 375 × 667 | next | 215.8 | 12.0 | -34.8 | 34.2 | 42.8 |
+| V24f | 375 × 667 | largest | 215.8 | 12.0 | -214.8 | -145.8 | 222.8 |
+| V24f | 390 × 844 | default | 312.0 | 50.8 | 67.0 | 136.0 | 0.0 |
+| V24f | 390 × 844 | next | 312.0 | 50.8 | 32.0 | 101.0 | 0.0 |
+| V24f | 390 × 844 | largest | 246.2 | 12.0 | -77.2 | -8.2 | 85.2 |
+| V24f | 393 × 852 | default | 326.0 | 51.2 | 61.0 | 130.0 | 0.0 |
+| V24f | 393 × 852 | next | 326.0 | 51.2 | 26.0 | 95.0 | 0.0 |
+| V24f | 393 × 852 | largest | 258.8 | 12.0 | -81.8 | -12.8 | 89.8 |
+| V24f | 402 × 874 | default | 335.2 | 52.4 | 73.8 | 142.8 | 0.0 |
+| V24f | 402 × 874 | next | 335.2 | 52.4 | 38.8 | 107.8 | 0.0 |
+| V24f | 402 × 874 | largest | 263.9 | 12.0 | -34.9 | 34.1 | 42.9 |
+| V24f | 428 × 926 | default | 337.8 | 55.8 | 123.2 | 192.2 | 0.0 |
+| V24f | 428 × 926 | next | 337.8 | 55.8 | 112.2 | 181.2 | 0.0 |
+| V24f | 428 × 926 | largest | 303.0 | 21.0 | 8.0 | 77.0 | 0.0 |
+| V24f | 440 × 956 | default | 361.0 | 57.3 | 130.0 | 199.0 | 0.0 |
+| V24f | 440 × 956 | next | 361.0 | 57.3 | 119.0 | 188.0 | 0.0 |
+| V24f | 440 × 956 | largest | 361.0 | 57.3 | 9.0 | 78.0 | 0.0 |
+| V24f (Turkish) | 428 × 926 | next | 337.8 | | 66.2 | | 0.0 |
+| V24 | 375 × 667 | default | 422.9 | 106.4 | 44.1 | – | 0.0 |
+| V24 | 375 × 667 | next | 422.9 | 106.4 | 15.1 | – | 0.0 |
+| V24 | 375 × 667 | largest | 371.0 | 68.1 | 8.0 | – | 0.0 |
+| V24 | 390 × 844 | default | 466.0 | 111.8 | 144.0 | – | 0.0 |
+| V24 | 390 × 844 | next | 466.0 | 111.8 | 115.0 | – | 0.0 |
+| V24 | 390 × 844 | largest | 466.0 | 111.8 | 56.0 | – | 0.0 |
+| V24 | 393 × 852 | default | 481.2 | 112.9 | 136.8 | – | 0.0 |
+| V24 | 393 × 852 | next | 481.2 | 112.9 | 131.8 | – | 0.0 |
+| V24 | 393 × 852 | largest | 481.2 | 112.9 | 48.8 | – | 0.0 |
+| V24 | 402 × 874 | default | 493.9 | 116.1 | 146.1 | – | 0.0 |
+| V24 | 402 × 874 | next | 493.9 | 116.1 | 141.1 | – | 0.0 |
+| V24 | 402 × 874 | largest | 493.9 | 116.1 | 58.1 | – | 0.0 |
+| V24 | 428 × 926 | default | 506.8 | 125.4 | 185.2 | – | 0.0 |
+| V24 | 428 × 926 | next | 506.8 | 125.4 | 180.2 | – | 0.0 |
+| V24 | 428 × 926 | largest | 506.8 | 125.4 | 97.2 | – | 0.0 |
+| V24 | 440 × 956 | default | 534.7 | 129.7 | 187.3 | – | 0.0 |
+| V24 | 440 × 956 | next | 534.7 | 129.7 | 182.3 | – | 0.0 |
+| V24 | 440 × 956 | largest | 534.7 | 129.7 | 129.3 | – | 0.0 |
+
+The SE scrolls a little at the default and next text, and every size but 428 and 440 pt wide at the largest (allowed: SPEC V24f v12); the row is reachable everywhere (tested). V24's row is the sheet's last row (no Wake button).
+
+### 2. The paywall footer
+
+**What was wrong (device):** the pinned footer was about 207 pt tall and
+spread out: a halo panel round the button, wide links, "Maybe later" under
+them.
+
+**Cause.** The footer stacked a 52 pt button inside `CtaGlow`, whose pulse
+ring scaled 8 % wide and 45 % tall (mid-pulse it reads as a flat panel
+round the button), the price line at a 1.6 line height, the three long
+links ("Restore Purchases", "Terms of Service", "Privacy Policy") in 30 pt
+rows that wrap at a large text size, a "Maybe later" row and the inset plus
+4 under it.
+
+**Fix (`c1df10c`).** The board's footer on V13, V13c, V13a and V13r: the
+card colour under a 2 pt line, 24 pt side margins, the 54 pt button with
+only its pulse (the ring now grows 10 pt evenly round it and fades, F4-8),
+the full price line at 12 pt, centred, at most 300 pt wide, and **Restore ·
+Terms · Privacy** on one centred row at 12 pt (new short labels
+`paywallRestoreShort`, `paywallTermsShort`, `paywallPrivacyShort`;
+VoiceOver reads the full names; each target still 44 pt, reaching 12 pt
+over the price line and into the bottom margin), the board's 26 pt under
+them. **No "Maybe later" anywhere** (the onboarding paywall is the same
+screen): the close button is the way out, V13b once per session as before;
+`paywallMaybeLater` is removed from the eight ARB files (the analytics
+method constant `maybe_later` stays, documented as retired, so older data
+reads). The first view takes the board's top row: Close at the start and
+the GRAMMARLENS PREMIUM chip at the end, instead of a wordmark row plus a
+chip row under the companions (F4-7): with the compact footer this puts
+"Compare plans" and its arrow on the first view at every phone size
+(closes F3-26).
+
+**Tests.** `premium_screen_test`: the "Maybe later" tests now use the close
+button (and assert there is no "Maybe later"); the footer measurements
+follow the compact footer (the large-text SE footer is 144 pt, 0.216 of the
+screen, and 243 pt at a 1.6× system scale, down from 0.349 and 0.462); the
+rhythm and 44 pt reach above and below the links; a new group "V13 v12:
+the compact footer" at the five sizes. `home_day0_paywall_test` and
+`first_launch_climb_test` close the Day 0 paywall with the close button
+(method `close_button`).
+
+Measured (default text, the app's font; "Compare plans" clearance is the
+label's and the whole hint's, arrow included, above the footer's top):
+
+| Size | Footer height | "Compare plans" label clear | Hint with arrow clear |
+|---|---|---|---|
+| 375 × 667 | 140.0 | 32.0 | 8.0 |
+| 390 × 844 | 154.0 | 35.0 | 11.0 |
+| 402 × 874 | 154.0 | 50.0 | 26.0 |
+| 428 × 926 | 154.0 | 117.0 | 93.0 |
+| 440 × 956 | 154.0 | 132.0 | 108.0 |
+
+The iPad first view is under "Checks".
+
+### 3. Widgets v12
+
+**What was wrong (device):** the medium tip widget showed one short rule
+and was mostly empty; in dark mode every widget turned system grey and the
+small one looked poor.
+
+**Cause.** The tip payload held one hint line of the most frequent weak
+spot's topic; the dark card was #252528 and the small waiting widget kept
+its light orange with dark text.
+
+**Fix (`6fe1060`).** The tip widget now shows the user's own latest
+mistake:
+- **Content.** The topic as the eyebrow; a short rule with its key words in
+  a green pill (the scorer's stored rule, with the corrected words in the
+  pill; the Daily Test stores no rule, so its topic's hint line whose key
+  matches the correction, the key in the pill, F4-9); the user's sentence on
+  one line, the wrong words struck through (red tint), and the corrected
+  sentence (green tint, the corrected words bold), each one line with "…".
+  A one-word answer to a one-blank question is put back into its sentence;
+  otherwise the stored texts are compared word by word (1.4.0 B10's diff);
+  a long sentence starts with "…" a few words before the mistake so it
+  stays in view. "Your weak spot · a new one daily". A different weak spot
+  each day, in turn (the ten most recent; the midnight entry is tomorrow's).
+  With none yet: a topic's hint rule and two more hint lines.
+- **Taps.** The left side opens that weak spot (R03) through a new link,
+  `grammarlens://weak-spot?topic=…&type=…`, which switches to Review and
+  opens it there (F4-10); the right box opens the Daily Test, or Home once
+  done, where it shows "✓ Done", the hours to the next test and the
+  companion asleep (its sleep pose written to the App Group like the
+  avatar).
+- **Data.** Read from Review's own records on the device and written to the
+  App Group with the existing payload: nothing new leaves the device or is
+  collected (`product.yaml` `legal` unchanged).
+- **Dark variants** for the small widgets and the tip widget: card #1E1C27
+  with a 1 pt #2E2C36 edge, text #F2EEE8, secondary #A9A6B2; the small
+  waiting widget orange one shade deeper (#D9620E → #B84E08) with cream
+  text; the done box #1B2E6B; green and red tints as SY03. The medium
+  mountain widget is unchanged.
+- Swift: the v12 tip fields are optional, so an older payload still decodes
+  (until the app writes a new one at launch).
+- Strings: `widgetWeakSpotFooter`, `widgetDoneShort`, `widgetNextInShort`
+  added; `widgetTipLabel`, `widgetTipFooter` removed (no longer used).
+
+**Tests.** Dart: `widget_payload_test` (the mistake's runs, the rotation,
+the Daily Test's hint, the long sentence, no weak spot, the taps, done;
+Turkish keeps the English topic name in capitals); the fixtures regenerated
+plus `en_daily_test` and `en_long`; `widget_sync_test` (the sleep image,
+the ten most recent weak spots, an entry without an answer skipped);
+`app_link_test` (the weak-spot link and its router); `review_screen_test`
+(the link opens R03, a link that came first, a weak spot no longer saved).
+Swift (`WidgetSnapshotTests`): every widget × state × light and dark, the
+sample (the board's "I'm interested to learn French"), the general tip in
+both, an older payload, and the Dart fixtures (English waiting and done,
+the Daily Test case, the long sentence, Turkish with no weak spot, German,
+Arabic) in light and dark: 64 snapshots.
+
+### 4. Profile's month progress card
+
+**What was wrong (device):** the old card: an orange "5 points" box, one
+bar and the tiers listed underneath.
+
+**Cause.** Round 3 changed V23's ribbon only; `MonthlyProgressCard` was
+never rebuilt to the V23 card.
+
+**Fix (`0af1e60`).** As on the V23 board: "<Month> progress" and
+"<mountain> · N active days" on the left, the score capsule (the ring round
+the clay star, the points, "N to Bronze") at the top right, a bar of ten
+12 pt segments filled by the month's points (the last one partly), the tier
+marks under it centred on their thresholds' places (`medalTierMark`
+"Bronze 75"; moved in at the card's edges, never over one another; bronze
+#9A6A3A and silver #6F7782 in light, their dark tints in dark, gold
+`goldText`), and "Monthly total: N / 300 points". Every number from
+`MonthlyMedalRules`; VoiceOver reads the same summary as before.
+`medalNextLabel`, `medalTopLabel` and `medalGoalPoints` are no longer used
+and removed. The title may wrap to two lines beside the capsule at 390 pt
+(F4-12).
+
+**Tests.** `monthly_medal_collection_test` "N9 / V23 v12" (in the app's
+font): two months (November 2026, February 2027) at 0, a sixth, Bronze,
+Silver + 1, Gold and the maximum: each segment's fill, the capsule's
+points, the total, the marks' text and places; the head and the capsule's
+place; light and dark colours. `fix4_profile_card_test`: light and dark at
+the default and the next text size, 0 to 300 points, the marks inside the
+card. `profile_layout_test`'s end-of-page test now scrolls to the lazy
+page's true end (`78f8692`: with the shorter card one long drag stopped
+76 pt short; the requirement is unchanged).
+
+### 5. Props by the head
+
+**What was wrong (device):** on a wrong answer the giraffe's sweat drop fell
+from far above and to the right of its head.
+
+**Cause.** Every prop sat at a fixed place in the image box (the drop at the
+box's top right corner, X01), the same for every hero; the giraffe's head
+is in the middle of the top.
+
+**Fix (`8949e42`).** `tool/scene_art/companion_heads.py` (ImageMagick, no
+packages) measures each hero × pose image's head box from its pixels: the
+silhouette's top; the neck as the narrowest row between 30 % and 70 % of
+its height that the body widens again from (else half the silhouette); the
+sides as medians of the rows' extents over the head's lower two thirds. 12
+of the 63 images take a hand correction read off a grid, each with its
+reason in the tool: the six lying sleep poses (fox, panda, koala, bird,
+cat, sloth: the head is at one side), five crab images (the face is on the
+body, the raised claws widen the top) and the fox's wave (the raised paw
+read as a neck). It writes `lib/widgets/companion_head_table.dart`.
+`CompanionView.propRectFor` places each prop from the table: the sweat
+drop at the temple on the right, falling along the cheek; the thought
+bubble and the cloud just above the head's top right; the Zzz rising from
+just above the head; the sparkle beside it; mirrored about the head's
+middle in RTL (the Zzz drifts left there). Sizes stay X01's.
+
+**Tests.** `fix4_props_test`: every hero × pose image (63) has a head box
+inside its image; every hero × prop sits by its head and mirrors in RTL;
+the giraffe case (the old corner was outside the head, the new drop is
+inside it); a contact sheet of the nine heroes × five props in light, dark
+and Arabic.
+
+### 6. Haptics on forward buttons
+
+**What was wrong:** SPEC §3.4 v12, §1.25: moving on should be felt.
+
+**Cause.** The practice's Next / Submit (a `FilledButton` in
+`PracticeStepFooter`) had no haptic; the Daily Test's Check had a light
+one (Finish a medium one) on top of its own right / wrong feedback.
+
+**Fix (`37c36a8`).** Next / Submit give light; Check and Finish give none
+of their own (the feedback, success / two light taps / warning, is their
+haptic). Every forward button in onboarding, the Daily Test, practice and
+the results:
+
+| Flow | Button | Where | Haptic on tap |
+|---|---|---|---|
+| Onboarding | V02 "Get started" | `welcome_screen.dart` | light |
+| Onboarding | V03 "Choose <Buddy>" | `buddy_picker.dart` | light |
+| Onboarding | V03b "<Buddy> it is" | `lucky_wheel_screen.dart` | medium (primary CTA) |
+| Onboarding | V04 "Continue" | `onboarding_screen.dart` (name) | light |
+| Onboarding | V05 "Continue" | `onboarding_screen.dart` (goal) | medium (primary CTA) |
+| Onboarding | V06 "Let's climb" | `mountain_intro_screen.dart` | medium (primary CTA) |
+| Daily Test | Check / Finish | `daily_test_screen.dart` | none of its own: the right / wrong feedback (**changed**: was light / medium on top) |
+| Daily Test | the sheet's "Continue" / "Got it" / "See results" | `daily_test_screen.dart` | light |
+| Results | V10 "Climb my first step", "Continue" | `daily_test_result_screen.dart` | medium |
+| Results | V11 "Continue" | `medal_celebration.dart` | light |
+| Results | V12 "Continue" | `first_climb_screen.dart` | medium |
+| Practice | V17 "Start N questions" | `practice_length_picker.dart` | medium |
+| Practice | V19 "Next" / "Submit" | `practice_step_footer.dart` | light (**new**) |
+| Results | V21 "Back to topics" | `results_screen.dart` | light |
+| Results | V21 "See Premium" | `results_screen.dart` | medium |
+
+(Skip is not a forward button: the Daily Test's keeps its light, the
+practice's none.)
+
+**Tests (through `HapticMap.log`).** `daily_test_check_test` "v12: one
+haptic per Check, then light for Continue"; `fix4_haptics_test`: Next /
+Submit light once, nothing when disabled, nothing for Skip.
+
+### 7. Loading screens
+
+**What was wrong (device):** V20's content sat at the top with the lower
+half empty, all three checklist items were ticked while the wait went on,
+and the lens poked out of the answer card.
+
+**Cause.** V20 and V18 were top-aligned scroll views; V20's checklist ticked
+all three items over 2.4 s whatever the result did; the lens stood 14 pt
+above the scan window (out of the cards at the top of the sweep).
+
+**Fix (`59caa2f`).** Both screens centre their content in the space under
+the header (`widgets/centered_scroll.dart`: it scrolls only when it does not
+fit). V20's first two items tick on their timers (0.8 s apart, light each);
+the last, "Writing your feedback", stays in progress (a pulsing dot) until
+the result arrives and ticks with it (the result's success haptic); the
+results follow 400 ms later (at once under Reduce Motion). The lens sits
+inside the scan window.
+
+**Tests.** `fix4_loading_test`: before the result two items ticked and the
+last in progress, still after 20 s; after it all three; the same under
+Reduce Motion; V20 and V18 centred (±8 pt) in light and dark; the lens
+inside the window through two sweeps.
+
+### 8. Upper case by language
+
+**What was wrong (device, Turkish):** "GERI BILDIRIMIN YOLDA", "TILKI
+RÜYASINDA" (right: GERİ, TİLKİ).
+
+**Cause.** Raw `toUpperCase()` on translated text; Dart's ignores the
+locale.
+
+**Fix (`df9d9a6`).** One helper, `utils/upper_case.dart`: `upperCaseIn`
+(a language code or locale name) and `upperCaseFor` (the app's language):
+Turkish and Azerbaijani map i to İ (and ı to I), ß becomes SS, every other
+language the default. Every `toUpperCase()` in `lib/`:
+
+| Where | Text | Now |
+|---|---|---|
+| V06 `mountain_intro_screen.dart` | the month and the mountain (translated) | `upperCaseFor` |
+| R01 `topic_practice_screen.dart`, Home `home_practice.dart` | "Picked for you" | `upperCaseFor` |
+| V24f `rest_scene.dart` | "<Hero> is dreaming of…" | `upperCaseFor` |
+| V24f `rest_scene.dart` | "USED" (the ARB string, already capitals) | `upperCaseFor` |
+| V24f `rest_scene.dart`, Home `home_practice.dart` | "Premium" (the plan's name) | `upperCaseIn('en')`, as the ARB's own "PREMIUM" (F4-13) |
+| V20 `practice_reviewing.dart` | "Your feedback is on its way" | `upperCaseFor` |
+| V18 `practice_preparing.dart` | "Did you know?" | `upperCaseFor` |
+| R04 `month_card_sheet.dart` | the month card's title and eyebrow | `upperCaseFor` |
+| R05 `medal_celebration.dart` | "<Tier> medal" | `upperCaseIn(l10n.localeName)` |
+| R03 `weak_spot_detail_screen.dart`, V16 `review_parts.dart`, W01 `widget_payload.dart` | topic names (English in every language) | `upperCaseIn('en')` |
+| left as they are (English content or codes) | `text_format.dart` (slugs), `feedback_format.dart` (a case test on English feedback), `blank_assembly.dart` (English question sentences), `weak_spot_detail_screen.dart` `_sentence` (the scorer's English rule), `monthly_equivalent.dart` (a currency code), `theme_preview_screen.dart` (a debug colour) | — |
+
+The Turkish ARB strings written in capitals were checked one by one (SENİN
+YAZDIĞIN, DÜZELTİLMİŞ HALİ, GÜNLÜK PRATİĞİN, ÖNERİLEN ODAK, BUGÜNÜN BİLETİ,
+SONRAKİ, İZLE, GÜNÜN İPUCU, ŞİMDİ ÇALIŞ, KULLANILDI, TIRMANIŞIN, ROZET
+KAZANILDI, …): all correct.
+
+**Tests.** `fix4_upper_case_test`: the helper (tr, az, locale names,
+German, English topic names); V20, V24f, V18 and R05 rendered in Turkish
+with no dotless I where the source has a dotted i.
+
+### Decisions
+
+- **F4-1. V24 (Premium) "uses the same scene, header and reminder row".**
+  Options: (a) V24f's frame (the sheet at 312: about 300 pt empty under the
+  short V24 sheet); (b) the sheet as low as its content allows (a 600 pt
+  scene); (c) V24's own board frame (the sheet at 466 on 390 × 844, the
+  companion's top at 254) with V24f's camp, header and row. Choice: (c).
+  Why: rule 3 (V24's board) and the smallest change. V24's two done tiles,
+  its body line and its step-bar card are gone (their content is in the
+  header's ticks); the header's countdown label is the new "next Daily
+  Test".
+- **F4-2. "The default, the next and the largest text size".** The app has
+  three sizes (Small, Medium = default, Large) and the system's Dynamic
+  Type applies on top. Choice: default = the app's Medium; next = its
+  Large; largest = its Large with the system's largest standard size
+  (xxxLarge, × 1.35). Why: "next" is the step up a user takes in the app;
+  the largest standard system size is the most a user reaches without the
+  accessibility sizes.
+- **F4-3. The reminder row is 44 pt, not the board's 40.** TASK §4's 44 pt
+  touch targets; the time chip is drawn 30 pt as on the board.
+- **F4-4. The sheet never moves below the board's top.** Options: fill the
+  spare room with scene; keep it under the row. Choice: keep it under the
+  row, as the board does (67 pt at 390 × 844, 130 at 440 × 956).
+- **F4-5. "The logs' base on the companion's foot line"** is read as the log
+  pile's base (its lowest saturated pixel), not the stones' ring in front;
+  the board's own fire sits about 10 pt lower. Why: rule 2 (SPEC's text)
+  over rule 3 (the board).
+- **F4-6. Late in the month** the art's sky is continued above its top edge
+  by a mirrored copy, instead of letting the camp slide up under the
+  bubble. Why: the camp and the bubble keep the board's places all month.
+- **F4-7. The paywall's top row** takes the board's form (Close at the
+  start, the chip at the end; no wordmark, no chip row under the
+  companions). Options: keep round 3's first view (F3-26 stays open:
+  "Compare plans" 28 pt under the footer at 390 × 844) or take the board's
+  row. Choice: the board's (rule 3), which SPEC v12 expects to close F3-26.
+- **F4-8. "No static halo panel".** The only thing round the button was
+  `CtaGlow`'s pulse ring, scaled 8 % wide and 45 % tall, which reads as a
+  flat panel mid-pulse; it now grows 10 pt evenly and fades.
+- **F4-9. The tip's rule line.** The stored rule (practice) is a short name
+  with no marked key words, and the Daily Test stores none. Choice: the
+  scorer's rule with the corrected words in the pill; for the Daily Test
+  the topic's hint line whose key matches the correction (its key in the
+  pill). Why: SPEC's "a short rule with its key words in a green pill" from
+  data the app already has.
+- **F4-10. The tip's weak-spot tap** opens R03 through the Review tab (a new
+  `grammarlens://weak-spot` link handled like the other widget links);
+  a weak spot no longer saved leaves Review open.
+- **F4-11. The struck words** are drawn in the wrong row's red (the board
+  draws them in the text colour with a line), so the mistake reads at a
+  glance.
+- **F4-12. V23's title may wrap** to two lines beside the capsule at 390 pt
+  (a long translation needs it); the board's English fits one.
+- **F4-13. "Premium" in capitals** takes the English rules (PREMIUM, as the
+  ARB's own capitalised strings in every language), not Turkish PREMİUM:
+  it is the plan's name.
+
+### Checks: the listed captures against their boards
+
+Light renders in `build/fix4-captures/`, dark in `build/fix4-captures/dark/`
+(widget-test renders at a phone's size in the app's font, `FIX4_CAPTURE=1`;
+the widgets from the Swift snapshot tests, copied to
+`build/fix4-captures/widgets/`; the iPad from the simulator gallery). Each
+was looked at next to its board.
+
+| Board | Light | Dark | Match / what differs |
+|---|---|---|---|
+| V24f, five sizes (and 393 × 852), default and next text | `V24f-<w>x<h>-default/next` | same in `dark/` | match: the sheet at the board's 312 (390 × 844), the compact header and card, the row above the bar with no scroll extent from 390 × 844 up, the fire at the companion's front right on its foot line, the dream bubble top left, the capsule top right. Differs: the row is 44 pt (F4-3); on taller phones more room under the row (F4-4); the SE scrolls a little (allowed) |
+| V24f late in the month | `V24f-390x844-step20/26/30` | — | the camp in its place, the art's sky continued above its edge (F4-6) |
+| V24f in Turkish, 428 × 926, next text | `V24f-428x926-next-tr` | — | one screen; "TİLKİ RÜYASINDA…" |
+| V24, five sizes, default and next | `V24-<w>x<h>-default/next` | same | V24's own frame (sheet at 466) with V24f's camp, header and row (F4-1); differs from V24's board: no done tiles and no step-bar card, so more room under the row |
+| V13 first view, 390 × 844 and 428 × 926 | `V13-Paywall-390x844`, `-428x926` | same | match: the board's top row (Close, the chip at the end), the compact footer (154 pt; the board about 150), "Compare plans" with its arrow on the first view. The headline and the line under it follow the app's own copy for a weak-spot source (unchanged this round) |
+| V13c | `V13c-PaywallCompare-<size>` | same | match: the comparison, the compact footer |
+| V13a | `V13a-PaywallPlans-<size>` | same | match: "Choose your plan", the plans, the compact footer |
+| V13r | `V13r-PaywallRest-<size>` | same | match apart from the close button, which sits in the top row above the scene (the board puts it inside the scene; unchanged this round) |
+| V13 on the iPad (iPad Pro 13" simulator) | `iPad-V13-Paywall` | `dark/iPad-V13-Paywall` | match: the column held to the iPad's width, the top row, the compact footer with the links on one row |
+| W01, every widget × state (sample, Dart fixtures: English, Turkish, German, Arabic, the Daily Test case, the long sentence, the general tip, an older payload) | `widgets/*-light` | `widgets/*-dark` | match the v12 board: the topic, the rule with its pill, the struck and corrected rows, the box waiting and done (asleep, "next in 10 h"), the dark variants. Differs: the struck words are red (F4-11) |
+| V23 progress card, 0 to 300 points | `V23-progress-<score>` | same | match: the capsule at the top right, ten segments, the marks at their places, the total. The title may take two lines (F4-12) |
+| Props by the head (X01, nine heroes × five props) | `props-contact-sheet`, `-ar` | `props-contact-sheet` | every prop by its hero's head; mirrored in Arabic |
+| V20 (waiting; after two ticks) | `V20-reviewing`, `V20-reviewing-waiting` | `V20-reviewing` | match the v12 changes: centred, the last item in progress, the lens inside the window. Differs, as since B7: the page is the app's light page, not the board's navy page with a grid; the companion above the title (the board: beside it); no checklist card, no feedback skeleton card, no tip (not part of FIX4) |
+| V18 | `V18-preparing` | same | match: centred |
+| Turkish capitals | `tr-capitals-V20`, `-V24f`, `-V18`, `-R05` | `tr-capitals-V20`, `-V24f` | match: GERİ BİLDİRİMİN YOLDA, TİLKİ RÜYASINDA…, BİLİYOR MUYDUN?, the medal eyebrow; PREMIUM in English capitals (F4-13) |
+
+### Checks: the smoke walk (Turkish, a fresh install)
+
+Driven by `tool/ui_polish/smoke_driver.dart` (Flutter Driver; a simulator
+screenshot after each step) on the iPhone 18 Pro simulator (402 × 874,
+`49ECC1F0…`) **after removing the app, so a fresh install**, with
+`SEED_LANGUAGE=tr` and `SMOKE_LANG=tr` (the driver now reads the texts it
+taps from that language's ARB file). The practice used a local stand-in
+for the proxy (canned items and feedback on localhost, no AI call), holding
+the scoring back 9 s so V20 could be seen. Run twice:
+`build/fix4-captures/smoke-tr/` (24 screenshots) and `smoke-tr2/` (26: the
+same walk plus the rest scene alone after N01).
+
+What was seen, in order, in Turkish: Welcome ("İZLE"); the name screen; the
+goals; getting ready; the mountain intro; the Day 0 test with the first
+answer wrong: **the sweat drop at the fox's temple, by its head**, "Az
+kaldı!"; **the results first** ("1. gün tamam!"), **then the Welcome badge**
+("ROZET KAZANILDI"), then the first climb; **the paywall with the compact
+footer** ("Geri yükle · Koşullar · Gizlilik" on one row, the full price
+line, "Planları karşılaştır" on the first view) and **no "Belki sonra"**;
+**the X opened V13b** (the cloud over the sad companion), "Ücretsiz devam
+et" closed it; Home; Review; the AI consent; the practice (three questions
+from the stand-in); **V20 centred, two items ticked and "Geri bildirimin
+yazılıyor" with its dot while the scoring was held back, "GERİ BİLDİRİMİN
+YOLDA", the lens inside the third card**; the results; back to Home: **the
+rest scene and N01 at once** ("TİLKİ RÜYASINDA…"). After "Şimdi değil",
+**V24f on one screen**: the header, the card and "Yarın hatırlat" above the
+nav bar, the fire at the fox's front right; a drag up left the page where it
+was (the two screenshots differ only in the fire's and the shine's frames,
+0.2 % of the pixels).
+
+### Checks: builds, tests, disk
+
+After the last code change (`aea0f92`):
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | no issues |
+| `flutter test` (with `FIX4_CAPTURE=1`) | **2807 passed**, 0 failed |
+| Swift `RunnerTests` (with the widget snapshots, iPhone 18 Pro simulator) | **23 tests, 0 failures**; 64 snapshots |
+| Simulator build of Runner + widget extension (`xcodebuild … -destination "platform=iOS Simulator,id=49ECC1F0…" build`, as in round 3) | **BUILD SUCCEEDED**, `GrammarLensWidgets.appex` embedded and validated |
+| `flutter build ios --release --no-codesign` | **built** `Runner.app` (50.3 MB reported; arm64; 1.4.0 (7)) with `GrammarLensWidgets.appex` |
+
+`flutter build ios --simulator --debug` (the Flutter wrapper, tried twice)
+stopped after 4 s with Xcode's "Could not compute dependency graph: Failed to
+receive dependency graph response" (exit status 255) for its generic
+simulator destination; the same Xcode built the same scheme for a
+simulator device with `xcodebuild` (above), and both smoke walks built and
+ran the app on the simulator with `flutter drive`. Recorded, not chased:
+it is Xcode's build service, not the code, and round 3's check is the
+`xcodebuild` one.
+
+What the checks found and fixed: the font-weight and wordmark guard tests
+after the paywall change (`8f12f80`: the separator's weight through
+`withWeight`; the paywall no longer carries a wordmark, F4-7), and the
+iPad capture showed the top row's chip drifting toward the middle
+(`aea0f92`: at the row's end as on the board; the phone renders and the
+iPad capture were redone).
+
+**Disk.** 16 GiB free at the start; 14 GiB before the cleanup; after the
+allowed cleanup (`flutter clean` in `~/GrammarLens`, the captures moved
+aside and back; this project's DerivedData folder `Runner-gqpsqce…`,
+WorkspacePath `~/GrammarLens/ios/Runner.xcworkspace`) **17 GiB free**. The
+two DerivedData folders without an `info.plist` were left, as in round 3.
+
+### Not verified
+
+- **Anything on a device**: the haptics (forward buttons, Check's one
+  haptic), the widgets on a real Home Screen (iOS keeps the old layouts
+  until a widget is removed and added again), the widgets' links on the
+  phone (the weak-spot link opening R03), the fire and the rest scene at the
+  owner's own text size, performance. The third pass is the first section
+  of `DEVICE-CHECKS.md`.
+- **The owner's text size**: "the next text size" is the app's Large
+  (F4-2); the phone's own Dynamic Type setting was not known. V24f was
+  checked in Turkish at 428 × 926 with the app's Large (one screen, 66 pt
+  to spare) and up to the app's Large × the system's xxxLarge (a short
+  scroll at 390–402 pt wide, allowed).
+- **375 × 667, 393 × 852, 428 × 926 and 440 × 956**: no such simulator
+  here; checked as widget-test renders at those sizes (items 1 and 2).
+- **The practice in the smoke walk** used a local stand-in for the proxy
+  (canned items and feedback on localhost): no real generation or scoring,
+  no paid call; the walk's V20 waited 9 s because the stand-in held the
+  result back.
+- **The widget extension's dark edge** uses `ContainerRelativeShape`, which
+  the snapshot tests draw as the test's own rounded frame; the real widget
+  corner is the system's.
+
 ## Fix round 3 (owner's device test of the integrated build, 2026-11-18)
 
 `FIX3.md`, SPEC v11. The owner tested `ui-polish-widgets` on his iPhone 14
@@ -1244,14 +1823,15 @@ not open the app there). All of it is in `DEVICE-CHECKS.md`.
 
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
 `ui-polish` (pushed), **integrated with the widgets and reminders on
-branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix round
-3 done there** (pushed; "Fix round 3" at the top: the owner's device test
-of the integrated build, SPEC v11). Not merged into `main`, not shipped.
-The owner tested `ui-polish` and then `ui-polish-widgets` on his iPhone 14
-Plus; fix round 3 was built and checked **on the simulator and in tests
-only**. What only the phone can confirm is in
-[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its first section, "Fix round 3 —
-second pass", in order.
+branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix rounds
+3 and 4 done there** (pushed; "Fix round 4" at the top: the owner's second
+device pass, SPEC v12; "Fix round 3" under it). Not merged into `main`, not
+shipped. The owner tested `ui-polish` and then `ui-polish-widgets` on his
+iPhone 14 Plus twice; fix rounds 3 and 4 were built and checked **on the
+simulator and in tests only**. What only the phone can confirm is in
+[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its first section, "Fix round 4 —
+third pass", in order. Decisions for the owner to review: F4-1 to F4-13
+("Fix round 4", "Decisions").
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -1270,7 +1850,8 @@ second pass", in order.
 | Fix round 1 (owner, 2026-11-17) | done | see "Fix round 1" below |
 | Fix round 2 (owner device test, 2026-11-17) | done | see "Fix round 2" below |
 | Integration with the widgets (2026-11-17) | done | see "Integration" above |
-| Fix round 3 (owner device test of the integration, 2026-11-18) | done | see "Fix round 3" at the top |
+| Fix round 3 (owner device test of the integration, 2026-11-18) | done | see "Fix round 3" above |
+| Fix round 4 (owner's second device pass, 2026-11-18) | done | see "Fix round 4" at the top |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery

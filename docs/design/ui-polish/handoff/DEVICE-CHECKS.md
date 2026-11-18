@@ -2,8 +2,8 @@
 
 One ordered checklist for the owner's phone. It covers the UI polish
 (SPEC v10, fix rounds 1 and 2), the widgets and reminders, the
-integration of the two (`INTEGRATE.md`), and fix round 3 (`FIX3.md`, SPEC
-v11), whose second pass comes first. It merges fix round 2's "Owner
+integration of the two (`INTEGRATE.md`), fix round 3 (`FIX3.md`, SPEC v11)
+and fix round 4 (`FIX4.md`, SPEC v12), whose third pass comes first. It merges fix round 2's "Owner
 device checks" (`PROGRESS.md`) and the widgets run's "Owner steps"
 (`PROGRESS-widgets.md`). Nothing on this list was checked on a device; the
 simulator results are in `PROGRESS.md` ("Integration").
@@ -12,7 +12,109 @@ Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
 
-## Fix round 3 — second pass (start here)
+## Fix round 4 — third pass (start here)
+
+Fix round 4 (`FIX4.md`, SPEC v12) changed what you found on the second
+pass. This section is the third pass, in order; the second pass (FR3) and
+the first pass (sections 1–4) below stay for reference. Nothing here was
+checked on a device: the simulator and test results are in `PROGRESS.md`
+("Fix round 4"). Write down anything that differs (the item number and what
+you saw).
+
+### FR4-1. Build and install
+
+The same commands as FR3-1; **no Xcode step**. Install over the current test
+build; do not delete it.
+
+```bash
+cd ~/GrammarLens
+```
+
+```bash
+git switch ui-polish-widgets
+```
+
+```bash
+git pull --ff-only
+```
+
+```bash
+flutter pub get
+```
+
+```bash
+flutter devices
+```
+
+```bash
+flutter run --release -d <iPhone ID> --dart-define-from-file=config/prod.json
+```
+
+When it says the app is running, press `q`; the app stays on the phone.
+Keep the interface in Turkish and your larger text size, as on the second
+pass.
+
+### FR4-2. On this install
+
+Do them in this order: the first one needs **today's Daily Test not yet
+done**; the rest need it done.
+
+1. **A wrong answer's sweat drop by the head** (needs today's test not done,
+   or a fresh install). In the Daily Test, answer one question wrong: the
+   companion shakes its head and the sweat drop starts at its temple and
+   falls along its cheek, not above and to the right of it. Check it on the
+   giraffe if you can (Profile → change your buddy). — SPEC §3.5, X01, V09
+2. **Forward buttons are felt.** In the Daily Test: "Kontrol et" gives only
+   its right or wrong feedback (one haptic); "Devam et" on the sheet gives a
+   light tap. In a practice: "İleri" and "Gönder" give a light tap. —
+   SPEC §3.4
+3. **V20 centred, the last item waiting** (needs the free ticket on a
+   practice: Review → a weak spot → use today's ticket, answer, submit).
+   While the AI checks: the content is centred on the screen (not at the
+   top with the lower half empty); "Cevapların okunuyor" and the second
+   item tick, "Geri bildirimin yazılıyor" keeps a pulsing dot until the results are
+   ready, then ticks just before the results open; the lens stays inside
+   its window over the answers. — V20
+4. **V24f on one screen with the fire by the companion** (the practice from
+   item 3 done; back on Home). The rest scene and its sheet fit the screen
+   without scrolling: the header ("Bugünlük her şey tamam", two small
+   ticks, the countdown on the right), the Premium card (the title and the
+   PREMIUM chip on one row, the tickets, "Tilki uyansın · …"), then
+   "Yarın hatırlat" with the time and the switch, all above the floating
+   bar. The camp sits under the dream bubble; the campfire stands at the
+   companion's front right on the same ground: small logs, a two-coloured
+   flame about 40 % of the companion's height, a warm glow on the ground.
+   Scrolling does nothing (or only bounces back). — V24f
+5. **The paywall footer** ("Tilki uyansın" opens it, or Profile →
+   Premium). The pinned footer is compact: the orange button, the full
+   price line under it, "Geri yükle · Koşullar · Gizlilik" on one row, and
+   **no "Belki sonra"**. "Compare plans" ("Planları karşılaştır") with its
+   arrow is visible above the footer on the first view. The X at the top
+   left closes; the first time this session it shows the reminder pop-up
+   (V13b). — V13, V13c, V13a, V13r
+6. **The Turkish capitals.** "TİLKİ RÜYASINDA…" in the dream bubble (item 4,
+   when a weak spot is saved) and "GERİ BİLDİRİMİN YOLDA" on V20 (item 3):
+   a dotted İ, never "GERI" or "TILKI". — SPEC §3.7
+7. **Profile's progress card.** Profile → under the medal shelf: "Kasım
+   ilerlemesi" and "<mountain> · N aktif gün" on the left, the score capsule
+   (ring, star, points, "Bronz için N") at the top right, a bar of ten
+   segments filled by this month's points, "Bronz 75 · Gümüş 150 · Altın
+   225" under the bar at their places, and the monthly total. Check it in
+   dark mode too. — V23
+8. **The widgets in light and dark.** Remove the GrammarLens widgets from
+   the Home Screen and add them again once (iOS keeps the old layouts until
+   then). The medium tip widget shows your latest weak spot: its topic, a
+   short rule with a green pill, your own sentence with the wrong words
+   struck through (red) and the corrected one (green), "Zayıf noktan · her
+   gün bir yenisi"; tap the sentences → that weak spot opens in Review; tap
+   the right box → the Daily Test (or Home once done, where it says
+   "Tamam" and the hours to the next test with the companion asleep). Switch
+   the phone to dark mode: every widget has its own dark look (a dark plum
+   card, the small waiting widget a deeper orange with cream text, the done
+   box dark navy), none of them system grey; the medium mountain widget is
+   unchanged. — W01
+
+## Fix round 3 — second pass
 
 Fix round 3 (`FIX3.md`, SPEC v11) changed what you found on the first
 device test. This section is the second pass, in order; sections 1–4 below

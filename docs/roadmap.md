@@ -323,9 +323,15 @@ reminders on branch `ui-polish-widgets`** (`INTEGRATE.md`), **and fix round
 the integrated build: the Day 0 order, N01 on the first rest scene, the
 full-bleed rest scenes, the new name screen, the paywall order, the summit
 flag, one practice loading screen, the expression kit everywhere, dark
-mode); **not on `main`, not shipped, waiting for the owner's second device
-pass.** Fix round 3 was built and checked on the simulator and in tests
-only; the second pass, in order, is the first section of
+mode), **and fix round 4 is done there** (`FIX4.md`, SPEC v12, after the
+owner's second device pass: V24f on one screen with the campfire by the
+companion, the compact paywall footer without "Maybe later", widgets v12
+with the user's own mistake and designed dark variants, Profile's month
+progress card, props by each hero's head, forward-button haptics, centred
+loading screens with an honest checklist, Turkish capitals); **not on
+`main`, not shipped, waiting for the owner's third device pass.** Fix
+rounds 3 and 4 were built and checked on the simulator and in tests only;
+the third pass, in order, is the first section of
 [`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
 record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
