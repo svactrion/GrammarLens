@@ -587,6 +587,21 @@ and rings, e.g. the wrong answer's soft orange border and segment
 (`wrong`, #E38B5A: 2.5:1 on the light card; the boards' colour, unchanged),
 the orange bars and the empty tracks.
 
+**4. Dark captures.** Every gallery board (72, with their extra frames: 99
+images) captured in dark on the iPhone 18 Pro simulator into
+`build/fix3-captures/dark/` (`<board>-dark*.png`), plus the widget-test
+renders of the boards the gallery does not cover (V04's states, V06 for
+four months, V09's oops, V13b's cloud, V18 from both entry points, V23's
+ribbon, V24 / V24f at six sizes, V01, V05, N03). Looked at each. Hard to
+read and fixed: R10's red "Leave" on the dialog card (the danger button
+used the red fill colour, 3.0:1 → `redText`, `6d3f83d`); PF02's Silver and
+Bronze counters (light fills with dark text on the dark layer → dark tints,
+`71cd9c7`). Found on the way: the gallery's V13a and V13c shots were
+swapped by C4's new order (`85fab62`). Everything else reads: navy text,
+links and eyebrows are light blue, the right/wrong chips and the "Almost!"
+panel are dark tints with light text, soft cards are dark tints, the art is
+unchanged. Those three boards were captured again after the fixes.
+
 ### Decisions (F3-n)
 
 - **F3-1. R05's order.** Question: should a later day's tier medal also
@@ -1086,13 +1101,15 @@ not open the app there). All of it is in `DEVICE-CHECKS.md`.
 ## Final summary
 
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
-`ui-polish` (pushed), **and integrated with the widgets and reminders on
-branch `ui-polish-widgets`** (pushed; "Integration" above). Not merged into
-`main`, not shipped. The owner tested `ui-polish` once on his iPhone 14
-Plus; fix round 2 and the integration were built and checked **on the
-simulator only**. What only the phone can confirm is in
-[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md), in order (it includes the list
-"Owner device checks" below).
+`ui-polish` (pushed), **integrated with the widgets and reminders on
+branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix round
+3 done there** (pushed; "Fix round 3" at the top: the owner's device test
+of the integrated build, SPEC v11). Not merged into `main`, not shipped.
+The owner tested `ui-polish` and then `ui-polish-widgets` on his iPhone 14
+Plus; fix round 3 was built and checked **on the simulator and in tests
+only**. What only the phone can confirm is in
+[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its first section, "Fix round 3 —
+second pass", in order.
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -1110,6 +1127,8 @@ simulator only**. What only the phone can confirm is in
 | B11 Final sweep and docs | done | `a4228b3`, `cd3c33d`, `2c6ddaf` |
 | Fix round 1 (owner, 2026-11-17) | done | see "Fix round 1" below |
 | Fix round 2 (owner device test, 2026-11-17) | done | see "Fix round 2" below |
+| Integration with the widgets (2026-11-17) | done | see "Integration" above |
+| Fix round 3 (owner device test of the integration, 2026-11-18) | done | see "Fix round 3" at the top |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery
