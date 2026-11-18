@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../app_colors.dart';
@@ -47,6 +49,10 @@ class ProfileStage extends StatefulWidget {
   static const ribbonKey = ValueKey('profile_ribbon');
   static const tailStartKey = ValueKey('profile_ribbon_tail_start');
   static const tailEndKey = ValueKey('profile_ribbon_tail_end');
+
+  /// V23 (v11): a ribbon line shrinks to this share of its size at most,
+  /// then ends with "…".
+  static const double ribbonMinTextScale = _Ribbon.minTextScale;
 
   /// The companion's stage.
   static const double stageHeight = 210;
@@ -167,13 +173,18 @@ class _ProfileStageState extends State<ProfileStage> {
   }
 }
 
-/// V23's navy ribbon (fix round 2, item 4, the board's values): 286 × 62,
-/// radius 16, a #1B4FB0 → navy fill on a 5 pt lip; two 46 × 46 tails with
-/// V-cut ends, 26 pt outside each end and 14 pt down; the name (23/900,
-/// white), "Climbing with <Hero> · since <Mon YYYY>" (12/700) and a 40 × 40
-/// pencil (radius 12, white at 14 %). It settles from 12 pt below
-/// (300 ms, easeOutBack). On a narrow screen it narrows so the tails stay
-/// on screen; a long line wraps and the ribbon grows.
+/// V23's navy ribbon (the board's values): 62 pt tall at the default text
+/// size, radius 16, a #1B4FB0 → navy fill on a 5 pt lip; two 46 × 46 tails
+/// with V-cut ends, 26 pt outside each end and 14 pt down; the name
+/// (23/900, white), "Climbing with <Hero> · since <Mon YYYY>" (12/700) and
+/// a 40 × 40 pencil (radius 12, white at 14 %). It settles from 12 pt below
+/// (300 ms, easeOutBack).
+///
+/// Fix round 3, C5 (SPEC V23, v11; it looked thick on the device): its
+/// width follows the screen, tails included: the screen's width − 60 pt
+/// (330 at 390, 368 at 428), held to the page's column on a tablet. The
+/// name and the "Climbing with" line each stay on one line: a line that
+/// does not fit shrinks, to 85 % at most, then ends with "…".
 class _Ribbon extends StatelessWidget {
   final String name;
   final String line;
@@ -182,7 +193,12 @@ class _Ribbon extends StatelessWidget {
   const _Ribbon(
       {required this.name, required this.line, required this.onEditName});
 
-  static const double width = 286;
+  /// The whole ribbon, tails included, is this much narrower than the
+  /// screen (V23, v11).
+  static const double screenInset = 60;
+
+  /// A line shrinks to this share of its size at most, then ends with "…".
+  static const double minTextScale = .85;
   static const double height = 62;
   static const double lip = 5;
   static const double overlap = 40;
@@ -198,9 +214,12 @@ class _Ribbon extends StatelessWidget {
     final theme = Theme.of(context);
     final reduced = AppMotion.reduced(context);
     return LayoutBuilder(builder: (context, constraints) {
-      final w = constraints.maxWidth.isFinite
-          ? (constraints.maxWidth - 2 * tailOut - 8).clamp(180.0, width)
-          : width;
+      // Tails included: the screen's width − 60, never wider than the
+      // column the stage sits in (a tablet).
+      final screen = MediaQuery.sizeOf(context).width;
+      final total = math.min(screen - screenInset,
+          constraints.maxWidth.isFinite ? constraints.maxWidth : screen);
+      final w = math.max(120.0, total - 2 * tailOut);
       Widget tailOf(bool start) => PositionedDirectional(
             key: start ? ProfileStage.tailStartKey : ProfileStage.tailEndKey,
             start: start ? -tailOut : null,
@@ -237,26 +256,23 @@ class _Ribbon extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // One line: a long name scales down instead of wrapping.
+                // One line each: shrinks to 85 %, then "…".
                 AnimatedSwitcher(
                   duration: AppMotion.orInstant(context, AppMotion.fast),
-                  child: FittedBox(
+                  child: OneLineText(
+                    name,
                     key: ValueKey(name),
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      name,
-                      key: ProfileStage.nameKey,
-                      maxLines: 1,
-                      style: theme.textTheme.titleLarge!
-                          .withWeight(FontWeight.w900)
-                          .copyWith(fontSize: 23, height: 1.1, color: c.onNavy),
-                    ),
+                    textKey: ProfileStage.nameKey,
+                    minScale: minTextScale,
+                    style: theme.textTheme.titleLarge!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(fontSize: 23, height: 1.1, color: c.onNavy),
                   ),
                 ),
-                Text(
+                OneLineText(
                   line,
-                  key: ProfileStage.climbingKey,
+                  textKey: ProfileStage.climbingKey,
+                  minScale: minTextScale,
                   style: theme.textTheme.labelMedium!
                       .withWeight(FontWeight.w700)
                       .copyWith(
@@ -348,4 +364,56 @@ class _TailClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(_TailClipper oldClipper) =>
       oldClipper.outerLeft != outerLeft;
+}
+
+/// [text] on one line in [style]: when it does not fit, it shrinks (to
+/// [minScale] of its size at most) and then ends with "…" (V23's ribbon,
+/// fix round 3, C5).
+class OneLineText extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final double minScale;
+
+  /// The key of the [Text] itself (tests read its style).
+  final Key? textKey;
+
+  const OneLineText(
+    this.text, {
+    super.key,
+    required this.style,
+    this.minScale = .85,
+    this.textKey,
+  });
+
+  /// The scale [text] needs to fit [maxWidth], held to [minScale] .. 1.
+  static double scaleFor(String text, TextStyle style, double maxWidth,
+      TextScaler scaler, TextDirection direction) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: direction,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    if (width <= maxWidth || width == 0) return 1;
+    return (maxWidth / width).clamp(0.0, 1.0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final fit = scaleFor(text, style, box.maxWidth,
+          MediaQuery.textScalerOf(context), Directionality.of(context));
+      final scale = fit < minScale ? minScale : fit;
+      return Text(
+        text,
+        key: textKey,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: style.copyWith(fontSize: (style.fontSize ?? 14) * scale),
+      );
+    });
+  }
 }

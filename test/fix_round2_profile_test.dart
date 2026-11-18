@@ -55,10 +55,11 @@ void main() {
   final ribbon = find.byKey(ProfileStage.ribbonKey);
 
   testWidgets(
-      'the board\'s body: 286 × 62, radius 16, #1B4FB0 → navy, a '
+      'the board\'s body: 62 tall (fix round 3, C5: 390 − 60 − the two '
+      '26 pt tails = 278 wide; was 286), radius 16, #1B4FB0 → navy, a '
       '5 pt #082A6B lip', (tester) async {
     await pumpStage(tester);
-    expect(tester.getSize(ribbon), const Size(286, 62));
+    expect(tester.getSize(ribbon), const Size(278, 62));
     final box = tester.widget<Container>(ribbon).decoration! as BoxDecoration;
     expect(box.borderRadius, BorderRadius.circular(16));
     expect((box.gradient! as LinearGradient).colors,
@@ -79,7 +80,8 @@ void main() {
     expect(name.style!.color, AppColors.light.onNavy);
     final line = tester.widget<Text>(find.byKey(ProfileStage.climbingKey));
     expect(line.data, 'Climbing with Fox · since Nov 2026');
-    expect(line.style!.fontSize, 12);
+    // C5: a line that just fits keeps (nearly) its 12 pt.
+    expect(line.style!.fontSize, closeTo(12, .1));
     expect(line.style!.color, AppColors.onRibbonMuted);
     final pencil = find.descendant(
         of: find.byKey(ProfileStage.pencilKey),
@@ -155,6 +157,6 @@ void main() {
     }
     await pumpStage(tester, direction: TextDirection.rtl);
     expect(tester.takeException(), isNull);
-    expect(tester.getSize(ribbon), const Size(286, 62));
+    expect(tester.getSize(ribbon), const Size(278, 62));
   });
 }
