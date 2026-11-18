@@ -59,11 +59,22 @@ class LaunchSplashLayout {
 class LaunchTiming {
   LaunchTiming._();
 
-  /// The first launch: the icon assembles from its parts and the wordmark
-  /// rises (V01: at most 1.4 s).
-  static const Duration intro = Duration(milliseconds: 1400);
+  /// The first launch: the icon assembles from its parts, the wordmark
+  /// rises and the small lens scans it (V01, v11: about 2.2 s; 1.4 s felt
+  /// rushed on the device).
+  static const Duration intro = Duration(milliseconds: 2200);
 
-  /// Later launches: only the square and the wordmark (at most 600 ms).
+  /// When the wordmark starts rising on the first launch (250 ms).
+  static const Duration wordStart = Duration(milliseconds: 1000);
+
+  /// When the small lens starts scanning the word on the first launch.
+  static const Duration scanStart = Duration(milliseconds: 1150);
+
+  /// The scan across the word (V01, v11: 900 ms).
+  static const Duration scan = Duration(milliseconds: 900);
+
+  /// Later launches: only the square and the wordmark (V01: at most
+  /// 800 ms; daily users open the app every day).
   static const Duration introShort = Duration(milliseconds: 600);
 
   /// The splash's fade to the app.
@@ -217,8 +228,8 @@ class LaunchSplashScope extends InheritedWidget {
 /// into place from the bottom right (from 280 ms, 360 ms), its two lines
 /// draw left to right (160 ms, 120 ms apart), a glint crosses the glass
 /// (300 ms); then the wordmark rises 12 px with a fade (250 ms) and a small
-/// lens scans the word. The first launch takes 1.4 s; later launches only
-/// the square and the wordmark (600 ms). Reduce Motion: one fade. A light
+/// lens scans the word (900 ms). The first launch takes 2.2 s; later
+/// launches only the square and the wordmark (600 ms). Reduce Motion: one fade. A light
 /// haptic when the square lands, once.
 ///
 /// Its first frame is the square alone at [LaunchSplashLayout.
@@ -324,12 +335,17 @@ class _LaunchSplashState extends State<LaunchSplash>
                 animation: Listenable.merge([_intro, _fade]),
                 builder: (context, _) {
                   final ms = _reduceMotion ? 100000.0 : _elapsedMs;
-                  final wordStart = _short ? 250.0 : 1000.0;
+                  final wordStart = _short
+                      ? 250.0
+                      : LaunchTiming.wordStart.inMilliseconds.toDouble();
                   final word = _reduceMotion
                       ? _fade.value
                       : ((ms - wordStart) / 250).clamp(0.0, 1.0);
-                  final scan =
-                      _short ? 0.0 : ((ms - 1100) / 300).clamp(0.0, 1.0);
+                  final scan = _short
+                      ? 0.0
+                      : ((ms - LaunchTiming.scanStart.inMilliseconds) /
+                              LaunchTiming.scan.inMilliseconds)
+                          .clamp(0.0, 1.0);
                   return Stack(
                     textDirection: TextDirection.ltr,
                     children: [

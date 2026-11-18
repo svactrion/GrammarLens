@@ -314,7 +314,7 @@ wave; the boards draw the base pose). The Daily Test's wrong answers
 already used `oops` (V09, Q04, Q05 share its feedback panel); practice
 has no per-answer moment (F3-10).
 
-**Fix (B8 commit).** Every `CompanionView` use was compared with its board
+**Fix (`2a668a0`).** Every `CompanionView` use was compared with its board
 (the board's image: `<hero>_<mood>.webp`, or `avatar_NN.webp` for the base
 pose) and SPEC's screen text. The five hidden props show again; R03, N01
 and V21's upsell use the base pose. The Daily Test footer's

@@ -59,12 +59,18 @@ void main() {
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
   }
 
-  // V01 (UI polish): the first launch takes at most 1.4 s, later launches
-  // at most 600 ms (was: 1.2 s with the fade).
-  test('the first launch stays within 1.4 s, later launches within 600 ms', () {
-    expect(intro, lessThanOrEqualTo(const Duration(milliseconds: 1400)));
+  // V01 (fix round 3, C1; SPEC v11): the first launch takes about 2.2 s
+  // with the small lens scanning the word in 900 ms (1.4 s felt rushed on
+  // the device); later launches at most 800 ms.
+  test(
+      'the first launch takes about 2.2 s with a 900 ms scan that ends '
+      'inside it; later launches within 800 ms', () {
+    expect(intro, const Duration(milliseconds: 2200));
+    expect(LaunchTiming.scan, const Duration(milliseconds: 900));
+    expect(LaunchTiming.scanStart, greaterThan(LaunchTiming.wordStart));
+    expect(LaunchTiming.scanStart + LaunchTiming.scan, lessThan(intro));
     expect(LaunchTiming.introShort,
-        lessThanOrEqualTo(const Duration(milliseconds: 600)));
+        lessThanOrEqualTo(const Duration(milliseconds: 800)));
   });
 
   testWidgets(
