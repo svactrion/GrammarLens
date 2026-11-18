@@ -15,20 +15,20 @@ import 'package:grammar_lens/widgets/monthly_climb/mountain_scene.dart';
 
 /// Fix round 2, item 9: on the owner's iPhone 14 Plus the V06 flag was not
 /// on the summit. The flag stood on the climb's flag point on the trail,
-/// short of the peak, which cover-scaling magnifies on a tall phone. Now
-/// its foot is the summit (the trail table's last point) in image
-/// coordinates, on every screen size and every scene (V06, V12, R04, R04b,
-/// the rest scene share [MountainScene]).
+/// short of the peak, which cover-scaling magnifies on a tall phone. Fix
+/// round 2 moved its foot to the trail's last point; fix round 3 (B6) moved
+/// it on to each art's own apex (`test/fix3_summit_apex_test.dart`). These
+/// renders check that the foot lands on that point on every screen size
+/// (V06, V12, R04, R04b and the rest scene share [MountainScene]).
 ///
 /// Set `CAPTURE_FLAG=1` to also write the renders to
 /// `build/ui-polish-captures/V06-flag-<w>x<h>.png` (fix round 2 evidence).
 void main() {
-  test(
-      'the flag stands on the trail\'s last point, not the climb\'s flag '
-      'point', () {
-    expect(MountainScene.flagPoint, ClimbRoute.summit);
-    expect(ClimbRoute.summit, ClimbRoute.trail.last);
-    // The trail table's last point is its highest.
+  test('the flag stands above the trail\'s last point (fix round 3, B6)', () {
+    final foot =
+        MountainScene.flagPointFor(ClimbThemes.greenSlope, Brightness.light);
+    expect(foot.dy, lessThan(ClimbRoute.summit.dy - .05));
+    // The trail table's last point is still its highest.
     final highest = ClimbRoute.trail.reduce((a, b) => a.dy <= b.dy ? a : b);
     expect(ClimbRoute.summit, highest);
   });
@@ -41,7 +41,7 @@ void main() {
   ]) {
     testWidgets(
         'V06 at ${size.width.toInt()} × ${size.height.toInt()}: the '
-        'pole\'s foot on the summit of the art', (tester) async {
+        'pole\'s foot on the art\'s apex', (tester) async {
       tester.view.physicalSize = size * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -73,7 +73,9 @@ void main() {
       final poleW = flag.height / 4;
       final foot = Offset(flag.left + poleW / 2,
           flag.top + flag.height * MountainScene.poleFoot);
-      final summit = art.topLeft + ClimbRoute.summit * art.width;
+      final summit = art.topLeft +
+          MountainScene.flagPointFor(ClimbThemes.greenSlope, Brightness.light) *
+              art.width;
       expect(foot.dx, closeTo(summit.dx, .5), reason: 'x at $size');
       expect(foot.dy, closeTo(summit.dy, .5), reason: 'y at $size');
       // The summit is on screen, inside the scene.

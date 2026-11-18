@@ -118,7 +118,8 @@ class _MountainIntroScreenState extends State<MountainIntroScreen>
                     flagPop: flag,
                     alignment: Alignment.topCenter,
                     overlay: (context, map) {
-                      final p = map.toBox(MountainScene.flagPoint);
+                      final p = map.toBox(MountainScene.flagPointFor(
+                          widget.theme, Theme.of(context).brightness));
                       return Stack(children: [
                         Positioned(
                           left: p.dx + 22,

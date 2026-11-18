@@ -8,6 +8,7 @@ import '../../models/climb_theme.dart';
 import '../../motion.dart';
 import '../companion_view.dart';
 import 'climb_route.dart';
+import 'climb_summit_table.dart';
 import 'climb_trail_table.dart';
 
 /// Maps the scene's image units ([ClimbRoute]: image widths) to a box the
@@ -58,7 +59,7 @@ class SceneMap {
 
 /// A month's whole mountain (V06, V12, R04, R04b, V24): the theme's
 /// illustration covering the box (no empty band at any edge), the summit
-/// flag (v2 pole and pennant) on the flag's point, and the avatar standing
+/// flag (v2 pole and pennant) on the art's apex, and the avatar standing
 /// on the trail at [avatarDay] (fractional while walking). [overlay] draws
 /// more on top with the same mapping (the camp, labels).
 ///
@@ -108,12 +109,30 @@ class MountainScene extends StatefulWidget {
     this.overlay,
   });
 
-  /// The summit flag's foot: the summit, the trail table's last point, in
-  /// image coordinates (fix round 2, item 9). It used to be the climb's
-  /// flag point on the trail ([ClimbRoute.climbLength], N32), about 0.05
-  /// image widths left of and 0.06 below the peak: under cover-scaling on
-  /// a tall phone that put the flag some 35 × 40 pt off the summit.
-  static Offset get flagPoint => ClimbRoute.summit;
+  /// The summit flag's foot on [theme]'s art in [brightness]: the image's
+  /// own apex (fix round 3, B6), [poleSink] into the rock or snow so the
+  /// pole stands in it rather than on its outline. Fix round 2 stood it on
+  /// the trail's last point, which is under the peak (some 0.02 image
+  /// widths left of it and 0.07 below): the owner's device showed the pole
+  /// where the trail ends. Art without a measured apex falls back to the
+  /// trail's last point.
+  static Offset flagPointFor(ClimbTheme theme, Brightness brightness) {
+    final apex = apexFor(theme, brightness);
+    return apex == null ? ClimbRoute.summit : apex + const Offset(0, poleSink);
+  }
+
+  /// The highest point of [theme]'s art in [brightness], in image widths
+  /// ([ClimbRoute]'s units), or null when the art was not measured
+  /// (`climb_summit_table.dart`, `tool/scene_art/summit_apex.py`).
+  static Offset? apexFor(ClimbTheme theme, Brightness brightness) {
+    final a = climbSummitApex[theme.backgroundFor(brightness)];
+    return a == null ? null : Offset(a.$1, a.$2 / climbImageAspect);
+  }
+
+  /// How far the pole's foot stands below the measured apex (the first
+  /// non-sky pixel), in image widths: 6 px of the 1536 px art, about 1.6 pt
+  /// on V06.
+  static const double poleSink = 6 / 1536;
 
   /// The summit flag (tests read where it stands).
   static const flagKey = ValueKey('mountain_scene_flag');
@@ -160,7 +179,8 @@ class _MountainSceneState extends State<MountainScene>
       final origin = map.origin;
       final route = ClimbRoute(widget.days.clamp(28, 31));
       final avatarAt = map.toBox(route.pointAt(widget.avatarDay));
-      final flag = map.toBox(MountainScene.flagPoint);
+      final flag =
+          map.toBox(MountainScene.flagPointFor(widget.theme, brightness));
       // The flag's size follows the image's scale (about a fifteenth of
       // its width on V06).
       final poleH = img.width * .14;
@@ -198,7 +218,7 @@ class _MountainSceneState extends State<MountainScene>
         children.add(Positioned(
           key: MountainScene.flagKey,
           left: flag.dx - poleW / 2,
-          // The pole's opaque foot on the summit.
+          // The pole's opaque foot on the art's apex.
           top: flag.dy - poleH * MountainScene.poleFoot,
           width: poleW + pennantW,
           height: poleH,
