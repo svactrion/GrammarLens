@@ -1935,38 +1935,6 @@
       }
     }
   },
-  "medalTopReached": "Gold earned. That's this month's top medal.",
-  "@medalTopReached": {
-    "description": "The progress card's line once Gold is reached."
-  },
-  "medalToFirst": "{points} to your first monthly medal",
-  "@medalToFirst": {
-    "description": "The progress card's line before any medal; {points} is medalPoints.",
-    "placeholders": {
-      "points": {
-        "type": "String",
-        "example": "12 points"
-      }
-    }
-  },
-  "medalToNext": "{reached} earned · {points} to {next}",
-  "@medalToNext": {
-    "description": "The progress card's line between medals.",
-    "placeholders": {
-      "reached": {
-        "type": "String",
-        "example": "Bronze"
-      },
-      "points": {
-        "type": "String",
-        "example": "12 points"
-      },
-      "next": {
-        "type": "String",
-        "example": "Silver"
-      }
-    }
-  },
   "medalActiveDays": "{count, plural, =1{1 active day} other{{count} active days}}",
   "@medalActiveDays": {
     "description": "The progress card: days with a step this month.",
@@ -1974,90 +1942,6 @@
       "count": {
         "type": "int",
         "example": "12"
-      }
-    }
-  },
-  "medalGoldReachedSemantics": "Gold reached, {score} of {max} points",
-  "@medalGoldReachedSemantics": {
-    "description": "VoiceOver: the progress card past Gold.",
-    "placeholders": {
-      "score": {
-        "type": "int",
-        "example": "280"
-      },
-      "max": {
-        "type": "int",
-        "example": "300"
-      }
-    }
-  },
-  "medalNextSemantics": "Next medal {tier}, {score} of {goal} points",
-  "@medalNextSemantics": {
-    "description": "VoiceOver: the progress card's goal.",
-    "placeholders": {
-      "tier": {
-        "type": "String",
-        "example": "Silver"
-      },
-      "score": {
-        "type": "int",
-        "example": "120"
-      },
-      "goal": {
-        "type": "int",
-        "example": "180"
-      }
-    }
-  },
-  "medalThresholdSemantics": "{tier} at {points} points",
-  "@medalThresholdSemantics": {
-    "description": "VoiceOver: one medal's threshold on the progress card.",
-    "placeholders": {
-      "tier": {
-        "type": "String",
-        "example": "Bronze"
-      },
-      "points": {
-        "type": "int",
-        "example": "90"
-      }
-    }
-  },
-  "medalProgressSemantics": "{month} progress, {theme}, {days}. {goal}. {toGo}. {thresholds}. Monthly total {score} of {max} points.",
-  "@medalProgressSemantics": {
-    "description": "VoiceOver: the whole progress card.",
-    "placeholders": {
-      "month": {
-        "type": "String",
-        "example": "November"
-      },
-      "theme": {
-        "type": "String",
-        "example": "Red Canyon"
-      },
-      "days": {
-        "type": "String",
-        "example": "12 active days"
-      },
-      "goal": {
-        "type": "String",
-        "example": "Next medal Silver, 120 of 180 points"
-      },
-      "toGo": {
-        "type": "String",
-        "example": "Bronze earned · 60 points to Silver"
-      },
-      "thresholds": {
-        "type": "String",
-        "example": "Bronze at 90 points, Silver at 180 points, Gold at 270 points"
-      },
-      "score": {
-        "type": "int",
-        "example": "120"
-      },
-      "max": {
-        "type": "int",
-        "example": "300"
       }
     }
   },
@@ -2085,33 +1969,27 @@
       }
     }
   },
-  "medalThresholdPoints": "{points} pts",
-  "@medalThresholdPoints": {
-    "description": "A medal's threshold on the progress card.",
-    "placeholders": {
-      "points": {
-        "type": "int",
-        "example": "90"
-      }
-    }
-  },
-  "medalMonthlyTotal": "Monthly total: {score} / {max} points",
-  "@medalMonthlyTotal": {
-    "description": "The progress card's last line.",
+  "medalBarSemantics": "{score} of {max} points; {thresholds}",
+  "@medalBarSemantics": {
+    "description": "V23 (v13): the screen reader's label for the month progress card's bar: the points of the month's top score, then every medal's threshold (medalBarThreshold, joined by listSeparator).",
     "placeholders": {
       "score": {
         "type": "int",
-        "example": "120"
+        "example": "9"
       },
       "max": {
         "type": "int",
         "example": "300"
+      },
+      "thresholds": {
+        "type": "String",
+        "example": "Bronze at 75, Silver at 150, Gold at 225"
       }
     }
   },
-  "medalTierMark": "{tier} {points}",
-  "@medalTierMark": {
-    "description": "Profile's month progress card (V23 v12): a tier's mark under the 10-segment bar, at its place: the tier's name and its points threshold, e.g. 'Bronze 75'.",
+  "medalBarThreshold": "{tier} at {points}",
+  "@medalBarThreshold": {
+    "description": "V23 (v13): one medal's threshold in the bar's screen-reader label, e.g. \"Bronze at 75\".",
     "placeholders": {
       "tier": {
         "type": "String",
@@ -2120,6 +1998,16 @@
       "points": {
         "type": "int",
         "example": "75"
+      }
+    }
+  },
+  "medalThresholdPoints": "{points} pts",
+  "@medalThresholdPoints": {
+    "description": "A medal's threshold on the progress card.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "90"
       }
     }
   },

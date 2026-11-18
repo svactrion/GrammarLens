@@ -350,7 +350,7 @@ void main() {
     storage.resultsCompleters[0].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 10 / 300 points'), findsOneWidget);
+    expect(find.text('10 / 300', findRichText: true), findsOneWidget);
 
     // Tab re-entry #1 (`false` -> `true`, the only transition that
     // triggers another load per `didUpdateWidget`): the older of the two
@@ -370,7 +370,7 @@ void main() {
     storage.resultsCompleters[2].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 90 / 300 points'), findsOneWidget);
+    expect(find.text('90 / 300', findRichText: true), findsOneWidget);
 
     // ...then the older, now-stale read (#1) resolves after it. Without
     // the generation token, this stale result would win simply by
@@ -381,12 +381,12 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Monthly total: 90 / 300 points'),
+      find.text('90 / 300', findRichText: true),
       findsOneWidget,
       reason: 'the more-recently-started read must still win',
     );
     expect(
-      find.text('Monthly total: 40 / 300 points'),
+      find.text('40 / 300', findRichText: true),
       findsNothing,
       reason: 'a stale read finishing later must not overwrite a newer one',
     );

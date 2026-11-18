@@ -304,6 +304,19 @@ class AppColors extends ThemeExtension<AppColors> {
   static const restPanelMuted = Color(0xFFBDB3D6);
   static const restCardLip = Color(0xFF120E1F);
 
+  /// V23's month progress card (v13, board V23p): the bar's unfilled parts,
+  /// tinted toward their medal (the last neutral), light and dark, and the
+  /// fill's light end (it runs from orange).
+  static const tintBronze = Color(0xFFE9D2BC);
+  static const tintSilver = Color(0xFFE3E1DD);
+  static const tintGold = Color(0xFFF2E2B3);
+  static const tintRest = Color(0xFFEFE8DA);
+  static const tintBronzeDark = Color(0xFF3A2E2A);
+  static const tintSilverDark = Color(0xFF34343A);
+  static const tintGoldDark = Color(0xFF3A3424);
+  static const tintRestDark = Color(0xFF2E2C36);
+  static const fillLight = Color(0xFFFFB15C);
+
   /// The rest scene's campfire (V24f v12; the same in both themes, the
   /// scene is a night scene): the outer flame's heart, middle and rim, its
   /// soft halo, the pale inner flame, the sparks, and the warm light on the
