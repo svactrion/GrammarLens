@@ -2609,6 +2609,18 @@
   "@paywallRestore": {
     "description": "The paywall's restore button."
   },
+  "paywallRestoreShort": "Restore",
+  "@paywallRestoreShort": {
+    "description": "Paywall footer (V13 v12), one short link on the 'Restore · Terms · Privacy' row: restores earlier purchases. VoiceOver reads paywallRestore."
+  },
+  "paywallTermsShort": "Terms",
+  "@paywallTermsShort": {
+    "description": "Paywall footer (V13 v12), the short link to the Terms of Service on the 'Restore · Terms · Privacy' row. VoiceOver reads commonTermsOfService."
+  },
+  "paywallPrivacyShort": "Privacy",
+  "@paywallPrivacyShort": {
+    "description": "Paywall footer (V13 v12), the short link to the Privacy Policy on the 'Restore · Terms · Privacy' row. VoiceOver reads commonPrivacyPolicy."
+  },
   "paywallRestored": "Purchases restored — full access is active.",
   "@paywallRestored": {
     "description": "After a successful restore."
@@ -2616,10 +2628,6 @@
   "paywallNothingToRestore": "No previous purchases found to restore.",
   "@paywallNothingToRestore": {
     "description": "After a restore that found nothing."
-  },
-  "paywallMaybeLater": "Maybe later",
-  "@paywallMaybeLater": {
-    "description": "The paywall's dismiss button."
   },
   "paywallTrialStarted": "Trial started — Topic Practice is unlocked.",
   "@paywallTrialStarted": {

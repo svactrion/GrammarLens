@@ -417,6 +417,11 @@ class CtaGlow extends StatefulWidget {
   static const shineKey = ValueKey('cta_glow_shine');
   static const pulseKey = ValueKey('cta_glow_pulse');
 
+  /// V13 v12 (on the device the ring read as a static panel round the
+  /// button): the ring grows this many points beyond every edge while it
+  /// fades, the same on all sides, so it reads as a pulse.
+  static const pulseGrow = 10.0;
+
   @override
   State<CtaGlow> createState() => _CtaGlowState();
 }
@@ -475,7 +480,8 @@ class _CtaGlowState extends State<CtaGlow> with TickerProviderStateMixin {
               animation: pulse,
               color: widget.color,
               radius: widget.radius,
-              lip: 0),
+              lip: 0,
+              grow: CtaGlow.pulseGrow),
         ),
         widget.child,
         Positioned.fill(
@@ -495,21 +501,39 @@ class _PulseRing extends StatelessWidget {
   final Color color;
   final double radius;
   final double lip;
+
+  /// When set, the ring grows this many points beyond each edge (the same
+  /// on every side) instead of scaling with the button's size.
+  final double? grow;
   const _PulseRing({
     super.key,
     required this.animation,
     required this.color,
     this.radius = PressableButton.radius,
     this.lip = PressableButton.lip,
+    this.grow,
   });
 
   @override
   Widget build(BuildContext context) {
+    final grow = this.grow;
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: animation,
         builder: (context, _) {
           final t = animation.value;
+          if (grow != null) {
+            // Drawn past the box's edges (a painter is not clipped).
+            return Padding(
+              padding: EdgeInsets.only(bottom: lip),
+              child: CustomPaint(
+                painter: _GrowRingPainter(
+                    grow: grow * t,
+                    radius: radius,
+                    color: color.withValues(alpha: .5 * (1 - t))),
+              ),
+            );
+          }
           return Transform.scale(
             scaleX: 1 + .08 * t,
             scaleY: 1 + .45 * t,
@@ -527,6 +551,27 @@ class _PulseRing extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The pulse that grows evenly round a button ([_PulseRing.grow]).
+class _GrowRingPainter extends CustomPainter {
+  final double grow;
+  final double radius;
+  final Color color;
+  _GrowRingPainter(
+      {required this.grow, required this.radius, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            (Offset.zero & size).inflate(grow), Radius.circular(radius + grow)),
+        Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_GrowRingPainter old) =>
+      old.grow != grow || old.radius != radius || old.color != color;
 }
 
 /// Three dots that blink in turn (`gl-dots`), the busy state.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart' show HitTestResult;
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 
+import 'support/fix3_render.dart';
 import 'support/l10n_support.dart';
 
 /// Records every call instead of the real (best-effort, silently
@@ -271,7 +273,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // "Maybe later"/post-success "Continue" both pop this screen — that's
+  // The close button / post-success "Continue" both pop this screen — that's
   // only observable by actually pushing it onto a real stack first, unlike
   // [pumpPremium] above which plants it as the app's sole route.
   Future<void> pumpPremiumPushed(
@@ -543,11 +545,12 @@ void main() {
     });
   });
 
-  testWidgets('Restore Purchases is always reachable and never crashes',
+  testWidgets(
+      'Restore (V13 v12: the short label) is always reachable and never crashes',
       (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
-    await scrollAndTap(tester, find.text('Restore Purchases'));
+    await scrollAndTap(tester, find.text('Restore'));
 
     expect(
       find.textContaining('No previous purchases found'),
@@ -557,19 +560,20 @@ void main() {
 
   group('legal links (App Store required)', () {
     testWidgets(
-        'Privacy Policy / Terms are present and enabled now that '
-        "AppLinks' URLs are real", (tester) async {
+        'Privacy / Terms (V13 v12: the short labels; VoiceOver reads the '
+        "full names) are present and enabled now that AppLinks' URLs are "
+        'real', (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
       await scrollToEnd(tester);
 
-      expect(find.text('Privacy Policy'), findsOneWidget);
-      expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Privacy'), findsOneWidget);
+      expect(find.text('Terms'), findsOneWidget);
 
       final privacyButton = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Privacy Policy'),
+        find.widgetWithText(TextButton, 'Privacy'),
       );
       final termsButton = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Terms of Service'),
+        find.widgetWithText(TextButton, 'Terms'),
       );
       // AppLinks.privacyPolicyUrl / termsUrl are real, permanent URLs as
       // of the custom-domain batch (see app_links.dart) — the buttons
@@ -583,17 +587,26 @@ void main() {
     });
   });
 
+  // V13 v12 (SPEC §1.23): no "Maybe later" anywhere; the close button is
+  // the way out (V13b once per session).
   testWidgets(
-      '"Maybe later" is always present, calls onDone, and returns to '
+      'no "Maybe later": the close button calls onDone and returns to '
       'whatever pushed this screen', (tester) async {
+    PremiumScreen.resetExitReminder();
     var doneCalled = false;
     await pumpPremiumPushed(
       tester,
       _FakeSubscriptionService(offering: null),
       onDone: () => doneCalled = true,
     );
+    expect(find.text('Maybe later'), findsNothing);
+    await scrollToEnd(tester);
+    expect(find.text('Maybe later'), findsNothing);
 
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    // Without prices there is nothing to remind of: no V13b.
+    expect(find.byKey(PremiumScreen.exitContinueFreeKey), findsNothing);
 
     expect(doneCalled, isTrue);
     expect(find.byType(PremiumScreen), findsNothing);
@@ -601,11 +614,13 @@ void main() {
   });
 
   testWidgets(
-      'with no onDone provided (Home-reached), "Maybe later" just pops '
+      'with no onDone provided (Home-reached), the close button just pops '
       'without crashing', (tester) async {
+    PremiumScreen.resetExitReminder();
     await pumpPremiumPushed(tester, _FakeSubscriptionService(offering: null));
 
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsNothing);
     expect(find.text('open premium'), findsOneWidget);
@@ -955,9 +970,9 @@ void main() {
     }
 
     testWidgets(
-        'pricing-unavailable: the footer shows only "Maybe later" — no CTA, '
-        'no disclosure (the retry card stays in the scrollable body, not '
-        'duplicated here)', (tester) async {
+        'pricing-unavailable: the footer shows only the links (V13 v12: no '
+        '"Maybe later") — no CTA, no disclosure (the retry card stays in the '
+        'scrollable body, not duplicated here)', (tester) async {
       await pumpAt(
         tester,
         size: const Size(375, 667),
@@ -966,8 +981,9 @@ void main() {
       );
 
       final footer = find.byKey(const Key('premiumFooter'));
+      expect(find.text('Maybe later'), findsNothing);
       expect(
-        find.descendant(of: footer, matching: find.text('Maybe later')),
+        find.descendant(of: footer, matching: find.text('Privacy')),
         findsOneWidget,
       );
       expect(
@@ -986,8 +1002,8 @@ void main() {
     });
 
     testWidgets(
-        'loading: the footer shows a disabled spinner CTA and "Maybe '
-        'later", no disclosure yet', (tester) async {
+        'loading: the footer shows a disabled spinner CTA and the links, '
+        'no disclosure yet', (tester) async {
       final completer = Completer<Offering?>();
       // Not the pumpAt helper: it pumpAndSettle()s internally, which would
       // hang forever against a completer that's deliberately never
@@ -1024,9 +1040,10 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: footer, matching: find.text('Maybe later')),
+        find.descendant(of: footer, matching: find.text('Restore')),
         findsOneWidget,
       );
+      expect(find.text('Maybe later'), findsNothing);
 
       completer.complete(null);
       await tester.pumpAndSettle();
@@ -1455,25 +1472,6 @@ void main() {
     });
 
     testWidgets(
-        'tapping "Maybe later" logs paywall_dismissed with method '
-        'maybe_later', (tester) async {
-      final analytics = _FakeAnalyticsService();
-      await pumpPremiumPushed(
-        tester,
-        _FakeSubscriptionService(offering: null),
-        analyticsService: analytics,
-      );
-
-      await scrollAndTap(tester, find.text('Maybe later'));
-
-      final dismissed =
-          analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
-      expect(dismissed, hasLength(1));
-      expect(dismissed.single.parameters['method'],
-          AnalyticsService.paywallDismissMaybeLater);
-    });
-
-    testWidgets(
         'a system back gesture (no button tapped) logs paywall_dismissed '
         'with method system_back, via PopScope observing the pop rather '
         'than a specific onPressed', (tester) async {
@@ -1638,9 +1636,9 @@ void main() {
   });
 
   group(
-      'the footer keeps its top border in every state: the legal links now sit '
-      'above "Maybe later", so the rule separates them from the body', () {
-    testWidgets('pricing unavailable: links and "Maybe later" under a border',
+      'the footer keeps its top border in every state, so the rule separates '
+      'it from the body', () {
+    testWidgets('pricing unavailable: the links under a border',
         (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
@@ -1657,7 +1655,7 @@ void main() {
       expect(
           find.descendant(
               of: find.byKey(const Key('premiumFooter')),
-              matching: find.text('Privacy Policy')),
+              matching: find.text('Privacy')),
           findsOneWidget);
     });
 
@@ -1868,10 +1866,10 @@ void main() {
           Rect disclosure,
           Rect privacy,
           Rect terms,
-          Rect maybeLater,
+          Rect restore,
           Rect privacyTarget,
           Rect termsTarget,
-          Rect maybeLaterTarget,
+          Rect restoreTarget,
           bool disclosureTruncated,
         })> measure(WidgetTester tester) async {
       final disclosureFinder = find.textContaining('auto-renews');
@@ -1908,12 +1906,12 @@ void main() {
             matching: find.byType(SingleChildScrollView))),
         cta: tester.getRect(find.byKey(PremiumScreen.ctaKey)),
         disclosure: tester.getRect(disclosureFinder),
-        privacy: tester.getRect(find.text('Privacy Policy')),
-        terms: tester.getRect(find.text('Terms of Service')),
-        maybeLater: tester.getRect(find.text('Maybe later')),
-        privacyTarget: target('Privacy Policy'),
-        termsTarget: target('Terms of Service'),
-        maybeLaterTarget: target('Maybe later'),
+        privacy: tester.getRect(find.text('Privacy')),
+        terms: tester.getRect(find.text('Terms')),
+        restore: tester.getRect(find.text('Restore')),
+        privacyTarget: target('Privacy'),
+        termsTarget: target('Terms'),
+        restoreTarget: target('Restore'),
         disclosureTruncated: tester
             .renderObject<RenderParagraph>(disclosureFinder)
             .didExceedMaxLines,
@@ -1926,7 +1924,7 @@ void main() {
         'the disclosure sentence': m.disclosure as Rect,
         'the Privacy Policy link': m.privacy as Rect,
         'the Terms of Service link': m.terms as Rect,
-        'Maybe later': m.maybeLater as Rect,
+        'Restore': m.restore as Rect,
       }.entries) {
         expect(entry.value.top, greaterThanOrEqualTo(m.scrollRegion.top),
             reason: '${entry.key} starts inside the screen');
@@ -1938,20 +1936,25 @@ void main() {
       expect(m.terms.top, greaterThanOrEqualTo(m.footer.top));
       expect(m.disclosureTruncated, isFalse,
           reason: 'the disclosure sentence is never cut off');
-      // The footer was tightened without shrinking any target: the legal links
-      // and "Maybe later" are at least 44 pt tall, and the purchase button
-      // keeps the app's button height (48 since 1.2.0, 52 before).
+      // The footer was tightened without shrinking any target: Restore and
+      // the legal links are at least 44 pt tall, and the purchase button
+      // keeps its height (V13 v12: 54).
       for (final entry in {
         'the Privacy Policy link': m.privacyTarget as Rect,
         'the Terms of Service link': m.termsTarget as Rect,
-        'Maybe later': m.maybeLaterTarget as Rect,
+        'Restore': m.restoreTarget as Rect,
       }.entries) {
         expect(entry.value.height, greaterThanOrEqualTo(44),
             reason: '${entry.key} keeps a 44 pt target');
         expect(entry.value.width, greaterThanOrEqualTo(44),
             reason: '${entry.key} is at least 44 pt wide');
       }
-      expect((m.cta as Rect).height, greaterThanOrEqualTo(48));
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(54));
+      // V13 v12: the three on one row.
+      expect((m.privacy as Rect).center.dy,
+          closeTo((m.restore as Rect).center.dy, 1));
+      expect((m.terms as Rect).center.dy,
+          closeTo((m.restore as Rect).center.dy, 1));
     }
 
     // The two sizes the owner asked for, at the sizes the app offers: on an
@@ -1999,9 +2002,9 @@ void main() {
         expect(
             find.descendant(
                 of: find.byKey(const Key('premiumFooter')),
-                matching: find.text('Restore Purchases')),
+                matching: find.text('Restore')),
             findsOneWidget);
-        expect(tester.getRect(find.text('Restore Purchases')).bottom,
+        expect(tester.getRect(find.text('Restore')).bottom,
             lessThanOrEqualTo(667));
       });
 
@@ -2020,12 +2023,10 @@ void main() {
       });
     }
 
-    // The new Large (1.31, final pass): everything above still holds except
-    // the footer's share. Measured: 233 pt of 667 (0.349, over a third) at
-    // 1x and 308 pt (0.462) at a 1.6x system scale; the text area above it
-    // is 362 pt at 1x. Keeping the links in
-    // the footer on the first screen and the footer under a third cannot
-    // both hold at this size without smaller text; reported to the owner.
+    // The new Large (1.31, final pass). Measured before fix round 4: 233 pt
+    // of 667 (0.349, over a third) at 1x and 308 pt (0.462) at a 1.6x
+    // system scale. With V13 v12's compact footer (no "Maybe later", the
+    // links on one row): 144 pt (0.216) and 243 pt (0.364).
     for (final systemScale in [1.0, 1.6]) {
       testWidgets(
           '375x667, large (the new Large), system text ${systemScale}x: the '
@@ -2039,7 +2040,7 @@ void main() {
 
         expectOnFirstScreen(m, 667);
         expect(m.footer.height / 667,
-            closeTo(systemScale == 1 ? 0.349 : 0.462, 0.01));
+            closeTo(systemScale == 1 ? 0.216 : 0.364, 0.01));
         // The text area above: 362 pt at 1x (385+ at Small and Medium).
         expect(
             m.scrollRegion.height, greaterThan(systemScale == 1 ? 355 : 285));
@@ -2047,30 +2048,25 @@ void main() {
     }
 
     testWidgets(
-        '375x667 Medium: the footer stack is tight: the disclosure sits close '
-        'under the button, the links directly under the disclosure, and '
-        '"Maybe later" directly under the links, each a 44 pt target',
-        (tester) async {
+        '375x667 Medium (V13 v12): the footer stack is tight: the price line '
+        '6 pt under the button, the links 6 pt under it on one row, each a '
+        '44 pt target', (tester) async {
       await pumpMeasured(tester,
           size: const Size(375, 667), textSize: AppTextSize.medium);
       final m = await measure(tester);
 
-      // Button to disclosure: a small gap, never more than 6 pt.
+      // Button to the price line: 6 pt (the lip's 5 pt included in the
+      // button's box).
       expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
-      // Disclosure to the links row, and the links row to "Maybe later":
-      // the targets are stacked with no space between them. Since Batch 13
-      // the links' targets reach up over the (non-interactive) disclosure's
-      // lower edge, so they may start above its bottom: still no dead gap.
+      // The price line to the links' drawn row; the links' targets reach up
+      // over the (non-interactive) price line's lower edge.
       final linksTop = m.privacyTarget.top;
-      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-14, 1));
-      expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
-          inInclusiveRange(0, 1));
-      // Padding above the button and under "Maybe later".
-      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
-      expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
-      // The whole footer, 375x667 Medium: 165 pt since Batch 13 (176 in
-      // Batch 12, 196 before 1.2.0, 218 before that).
-      expect(m.footer.height, lessThanOrEqualTo(196));
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-12, 7));
+      // Padding above the button and under the links.
+      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(12));
+      expect(m.footer.bottom - m.privacyTarget.bottom, lessThanOrEqualTo(1));
+      // The whole footer, 375x667 Medium (no home indicator inset).
+      expect(m.footer.height, lessThanOrEqualTo(150));
     });
 
     testWidgets(
@@ -2083,14 +2079,14 @@ void main() {
           systemScale: 3);
       final footer = find.byKey(const Key('premiumFooter'));
 
-      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+      expect(find.descendant(of: footer, matching: find.text('Privacy')),
           findsNothing);
       expect(tester.takeException(), isNull);
       // Still there, at the end of the body.
-      await tester.scrollUntilVisible(find.text('Privacy Policy'), 300,
+      await tester.scrollUntilVisible(find.text('Privacy'), 300,
           scrollable: bodyScrollable);
-      expect(find.text('Privacy Policy'), findsOneWidget);
-      expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Privacy'), findsOneWidget);
+      expect(find.text('Terms'), findsOneWidget);
     });
 
     testWidgets(
@@ -2116,13 +2112,11 @@ void main() {
           pricingLoaded: false);
       final footer = find.byKey(const Key('premiumFooter'));
 
-      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+      expect(find.descendant(of: footer, matching: find.text('Privacy')),
           findsOneWidget);
-      expect(
-          find.descendant(of: footer, matching: find.text('Terms of Service')),
+      expect(find.descendant(of: footer, matching: find.text('Terms')),
           findsOneWidget);
-      expect(tester.getRect(find.text('Terms of Service')).bottom,
-          lessThanOrEqualTo(667));
+      expect(tester.getRect(find.text('Terms')).bottom, lessThanOrEqualTo(667));
     });
 
     testWidgets(
@@ -2246,11 +2240,10 @@ void main() {
     });
 
     testWidgets(
-        'footer rhythm (Batch 13): the terms, the links and "Maybe later" '
-        'sit about 14 pt apart, while a tap up to 44 pt still reaches each '
-        'button: above Restore (over the terms) and below "Maybe later"',
+        'footer rhythm (V13 v12): the price line and the links 6 pt apart, '
+        'while a tap up to 44 pt still reaches each link: above Restore '
+        '(over the price line) and below it (the bottom margin)',
         (tester) async {
-      var done = false;
       final service = _FakeSubscriptionService(
           offering: _offeringWithBothPlans(), restoreResult: true);
       tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -2259,49 +2252,49 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(
         theme: buildAppTheme(Brightness.light),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => PremiumScreen(
-                    storageService: _FakeStorageServiceForAvatar(),
-                    analyticsService: _FakeAnalyticsService(),
-                    analyticsSource: AnalyticsService.paywallSourceHome,
-                    subscriptionService: service,
-                    onDone: () => done = true,
-                  ),
-                )),
-                child: const Text('open premium'),
-              ),
-            ),
-          ),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService: service,
         ),
       ));
-      await tester.tap(find.text('open premium'));
       await tester.pumpAndSettle();
       final terms = tester.getRect(find.textContaining('auto-renews'));
-      final links = tester.getRect(find.text('Terms of Service'));
-      final later = tester.getRect(find.text('Maybe later'));
-      expect(links.top - terms.bottom, inInclusiveRange(12, 16));
-      expect(later.top - links.bottom, inInclusiveRange(10, 16));
-
-      // 13 pt above Restore's drawn button: over the terms' lower edge.
       final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
-      await tester.tapAt(Offset(restore.center.dx, restore.top - 13));
+      expect(restore.top - terms.bottom, inInclusiveRange(5, 7));
+      expect(restore.height, lessThan(44));
+
+      // 11 pt above Restore's drawn button: over the price line's edge.
+      await tester.tapAt(Offset(restore.center.dx, restore.top - 11));
       await tester.pumpAndSettle();
       expect(find.text('Purchases restored — full access is active.'),
           findsOneWidget);
+    });
 
-      // 13 pt below "Maybe later"'s drawn button: the empty margin.
-      final laterButton = tester.getRect(find.ancestor(
-          of: find.text('Maybe later'), matching: find.byType(TextButton)));
-      expect(laterButton.height, lessThan(44));
-      await tester
-          .tapAt(Offset(laterButton.center.dx, laterButton.bottom + 13));
+    testWidgets('a tap just below a link (the bottom margin) still reaches it',
+        (tester) async {
+      final service = _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(), restoreResult: true);
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      tester.view.padding = const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService: service,
+        ),
+      ));
       await tester.pumpAndSettle();
-      expect(done, isTrue);
-      expect(find.byType(PremiumScreen), findsNothing);
+      final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
+      await tester.tapAt(Offset(restore.center.dx, restore.bottom + 11));
+      await tester.pumpAndSettle();
+      expect(find.text('Purchases restored — full access is active.'),
+          findsOneWidget);
     });
 
     testWidgets('a second tap while purchasing sends no second request',
@@ -2346,7 +2339,8 @@ void main() {
       expect(results, hasLength(1));
       expect(results.single.parameters,
           {'plan': AnalyticsService.planAnnual, 'outcome': 'pending'});
-      expect(find.text('Maybe later'), findsOneWidget);
+      // The way out stays: the close button (no "Maybe later", V13 v12).
+      expect(find.byTooltip('Close'), findsOneWidget);
     });
 
     testWidgets(
@@ -3082,6 +3076,127 @@ void main() {
       expect(top(tester, find.byKey(const ValueKey('planCard_Annual'))),
           greaterThan(compare));
     });
+  });
+
+  // Fix round 4, item 2 (SPEC V13 v12, §1.23): the compact footer at the
+  // five phone sizes, in the app's font at the default text size: about
+  // 150 pt at 390 × 844 (it was about 207 on the owner's phone), no "Maybe
+  // later", the full price line and the three links on one row on the
+  // first view, and "Compare plans" on the first view at 390 × 844 and
+  // 402 × 874 too (closes F3-26). FIX4_CAPTURE=1 records the heights in
+  // build/fix4-captures/v13-footer.md and renders V13, V13c, V13a and V13r
+  // at 390 × 844 and 428 × 926, light and dark.
+  group('V13 v12: the compact footer', () {
+    const phones = [
+      (Size(375, 667), 20.0, 0.0),
+      (Size(390, 844), 47.0, 34.0),
+      (Size(402, 874), 62.0, 34.0),
+      (Size(428, 926), 47.0, 34.0),
+      (Size(440, 956), 62.0, 34.0),
+    ];
+    Widget paywall({PaywallRest? rest}) => PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          sourceContext: rest == null ? 'The With Superlatives' : null,
+          rest: rest,
+        );
+    for (final (size, top, bottom) in phones) {
+      testWidgets(
+          '${size.width.toInt()} × ${size.height.toInt()}: compact, the '
+          'price line and the links on the first view, no "Maybe later"',
+          (tester) async {
+        await pumpFix3(tester, paywall(), size: size, top: top, bottom: bottom);
+        final footer = tester.getRect(find.byKey(const Key('premiumFooter')));
+        final cta = tester.getRect(find.byKey(PremiumScreen.ctaKey));
+        final price = tester.getRect(find.byKey(PremiumScreen.priceLineKey));
+        final restore = tester.getRect(find.text('Restore'));
+        final terms = tester.getRect(find.text('Terms'));
+        final privacy = tester.getRect(find.text('Privacy'));
+        expect(find.text('Maybe later'), findsNothing);
+        // 24 pt side margins, the 54 pt button.
+        expect(cta.left, closeTo(24, .5));
+        expect(cta.right, closeTo(size.width - 24, .5));
+        expect(cta.height, closeTo(54, .5));
+        // The price line: centred, at most 300 pt wide, on the first view.
+        expect(price.width, lessThanOrEqualTo(300));
+        expect(price.center.dx, closeTo(size.width / 2, 1));
+        expect(price.bottom, lessThanOrEqualTo(size.height));
+        // The links on one centred row, on the first view.
+        expect(terms.center.dy, closeTo(restore.center.dy, 1));
+        expect(privacy.center.dy, closeTo(restore.center.dy, 1));
+        expect((restore.left + privacy.right) / 2, closeTo(size.width / 2, 2));
+        // The board's 26 pt under the links over the home indicator (its
+        // 34 pt inset less 8).
+        expect(privacy.bottom,
+            lessThanOrEqualTo(size.height - math.max(bottom - 8, 12)));
+        // "Compare plans" on the first view wherever there is room for
+        // the companions (6.1" and up).
+        final hint = find.byKey(PremiumScreen.comparePlansKey);
+        final hintBottom = tester.getRect(hint).bottom;
+        final label = tester.getRect(
+            find.descendant(of: hint, matching: find.text('Compare plans')));
+        recordFix4(
+            'v13-footer.md',
+            '| ${size.width.toInt()} × ${size.height.toInt()} | '
+                '${footer.height.toStringAsFixed(1)} | '
+                '${(footer.top - label.bottom).toStringAsFixed(1)} | '
+                '${(footer.top - hintBottom).toStringAsFixed(1)} |');
+        if (size.height >= 800) {
+          expect(hintBottom, lessThanOrEqualTo(footer.top),
+              reason: '"Compare plans" and its arrow above the footer');
+        }
+        if (size.height >= 844) {
+          expect(footer.height, lessThanOrEqualTo(160),
+              reason: 'about 150 pt at 390 × 844');
+        }
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final size in const [Size(390, 844), Size(428, 926)]) {
+      for (final brightness in Brightness.values) {
+        testWidgets(
+            'renders V13, V13c, V13a, V13r at ${size.width.toInt()} × '
+            '${size.height.toInt()}, ${brightness.name}', (tester) async {
+          final dark = brightness == Brightness.dark;
+          final tag = '${size.width.toInt()}x${size.height.toInt()}';
+          await pumpFix3(tester, paywall(), size: size, brightness: brightness);
+          await fix4Capture(tester, 'V13-Paywall-$tag', dark: dark);
+          // V13c: the comparison at the top of the page.
+          await tester.ensureVisible(find.byKey(PremiumScreen.compareKey));
+          await tester.pumpAndSettle();
+          Scrollable.ensureVisible(
+              tester.element(find.byKey(PremiumScreen.compareKey)),
+              alignment: .08);
+          await tester.pumpAndSettle();
+          await fix4Capture(tester, 'V13c-PaywallCompare-$tag', dark: dark);
+          // V13a: "Choose your plan" and the plans.
+          Scrollable.ensureVisible(
+              tester.element(find.byKey(PremiumScreen.choosePlanHintKey)),
+              alignment: .02);
+          await tester.pumpAndSettle();
+          await fix4Capture(tester, 'V13a-PaywallPlans-$tag', dark: dark);
+          // A new page (not the scrolled one).
+          await tester.pumpWidget(const SizedBox());
+          await pumpFix3(
+              tester,
+              paywall(
+                  rest: const PaywallRest(
+                      theme: ClimbThemes.emberPeak,
+                      weakSpot: 'The With Superlatives',
+                      hero: Avatar.fox,
+                      name: 'Ada')),
+              size: size,
+              brightness: brightness);
+          await fix4Capture(tester, 'V13r-PaywallRest-$tag', dark: dark);
+          expect(find.text('Maybe later'), findsNothing);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 }
 

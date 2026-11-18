@@ -285,7 +285,8 @@ class AnalyticsService {
   static const String paywallSourceRestScene = 'rest_scene';
 
   /// `PremiumScreen`'s dismissal methods (`paywall_dismissed`) — the X in
-  /// the band, the footer's "Maybe later", or a system back gesture/
+  /// the band, the footer's "Maybe later" (gone since fix round 4, V13
+  /// v12: kept so older data stays readable), or a system back gesture/
   /// hardware back button (the one path not triggered by this app's own
   /// code, so `PremiumScreen` has to observe it via `PopScope` rather than
   /// tag it at a specific `onPressed`). Never logged for the post-success

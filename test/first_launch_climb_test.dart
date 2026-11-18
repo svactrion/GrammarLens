@@ -128,6 +128,19 @@ class _Day0Storage extends StorageService {
   Future<String> getOrCreateDeviceId() async => 'test-device';
 }
 
+/// V13 v12: the paywall has no "Maybe later"; the close button is the way
+/// out, and the first close of a session asks once (V13b): "Continue with
+/// free" then closes it.
+Future<void> closePaywall(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Close'));
+  await tester.pumpAndSettle();
+  final free = find.byKey(PremiumScreen.exitContinueFreeKey);
+  if (free.evaluate().isNotEmpty) {
+    await tester.tap(free);
+    await tester.pumpAndSettle();
+  }
+}
+
 void main() {
   late _Day0Storage storage;
   late RecordingAnalyticsSink sink;
@@ -472,8 +485,7 @@ void main() {
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
       expect(premium, findsNothing);
       // Home may already be under the first-day paywall.
       expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
@@ -485,7 +497,7 @@ void main() {
       }
       expect(sink.named('paywall_viewed'), hasLength(1));
       expect(sink.named('paywall_dismissed').single.parameters,
-          {'source': 'day0_after_climb', 'method': 'maybe_later'});
+          {'source': 'day0_after_climb', 'method': 'close_button'});
     });
 
     testWidgets(

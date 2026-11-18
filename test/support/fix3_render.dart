@@ -88,3 +88,12 @@ Future<void> _capture(WidgetTester tester, String name,
     out.writeAsBytesSync(bytes!.buffer.asUint8List());
   });
 }
+
+/// Fix round 4: one table row of measured numbers per render
+/// (`FIX4_CAPTURE=1`: `build/fix4-captures/<file>`).
+void recordFix4(String file, String row) {
+  if (Platform.environment['FIX4_CAPTURE'] != '1') return;
+  final out = File('build/fix4-captures/$file');
+  out.parent.createSync(recursive: true);
+  out.writeAsStringSync('$row\n', mode: FileMode.append);
+}

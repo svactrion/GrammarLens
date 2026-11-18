@@ -24,7 +24,6 @@ import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
 import '../utils/monthly_equivalent.dart';
@@ -39,7 +38,8 @@ enum _PlanPeriod { monthly, annual }
 /// "Turn your mistakes into progress.", three benefits in one card, the
 /// Free/Premium comparison behind "Compare Free & Premium", the two plans
 /// stacked as radio cards, and a fixed footer with the purchase button, the
-/// renewal terms, Restore Purchases, Terms, Privacy and "Maybe later".
+/// renewal terms, Restore, Terms and Privacy (V13 v12: no "Maybe later";
+/// the close button at the top is the way out).
 ///
 /// **Prices and trials come only from the store.** Every price, currency,
 /// period and introductory offer is read from RevenueCat's current offering
@@ -68,8 +68,8 @@ class PremiumScreen extends StatefulWidget {
   /// came from — required: every call site is a known entry point.
   final String analyticsSource;
 
-  /// Called when the user is done here — "Maybe later", the close button,
-  /// or "Continue" after a purchase — right before this screen pops itself.
+  /// Called when the user is done here — the close button or "Continue"
+  /// after a purchase — right before this screen pops itself.
   /// Null at every call site today: they only want the pop.
   final VoidCallback? onDone;
 
@@ -111,6 +111,9 @@ class PremiumScreen extends StatefulWidget {
   static const exitStartKey = ValueKey('premium_exit_start');
   static const exitContinueFreeKey = ValueKey('premium_exit_continue_free');
   static const selectedPlanKey = ValueKey('premium_selected_plan');
+
+  /// V13 v12: the full price line in the footer.
+  static const priceLineKey = ValueKey('premium_price_line');
   static const timelineKey = ValueKey('premium_trial_timeline');
   static const compareKey = ValueKey('premium_compare');
 
@@ -413,9 +416,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
     });
   }
 
-  /// "Maybe later", the close button and the post-purchase "Continue": the
-  /// first two log `paywall_dismissed` with their method, "Continue" does
-  /// not (a purchase is not an abandonment). Runs [PremiumScreen.onDone],
+  /// The close button and the post-purchase "Continue": the close logs
+  /// `paywall_dismissed` with its method, "Continue" does not (a purchase
+  /// is not an abandonment). Runs [PremiumScreen.onDone],
   /// then pops.
   void _dismiss({String? dismissMethod}) {
     _exitHandled = true;
@@ -485,6 +488,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             _TopBar(
               horizontalPadding: ContentWidth.sidePaddingOf(context, base: 17),
               onClose: _onClose,
+              // V13r has its chip under its own scene.
+              badge: widget.rest == null,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -510,8 +515,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         _AvatarHero(centerAvatar: _userAvatar),
                         const SizedBox(height: 9),
                       ],
-                      const Center(child: _PremiumLabel()),
-                      const SizedBox(height: 12),
                       Semantics(
                         header: true,
                         child: Text(
@@ -639,10 +642,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               onRestore: _restore,
               onPurchase: _startPurchase,
               onContinue: _dismiss,
-              onMaybeLater: () => _dismiss(
-                dismissMethod: AnalyticsService.paywallDismissMaybeLater,
-              ),
-              horizontalPadding: hPad,
               maxHeight: (size.height - MediaQuery.paddingOf(context).top) * .5,
             ),
           ],
@@ -915,31 +914,37 @@ class _TopBar extends StatelessWidget {
   final double horizontalPadding;
   final VoidCallback onClose;
 
-  const _TopBar({required this.horizontalPadding, required this.onClose});
+  /// The GRAMMARLENS PREMIUM chip at the row's end (not on V13r, which has
+  /// it under its scene).
+  final bool badge;
 
+  const _TopBar(
+      {required this.horizontalPadding,
+      required this.onClose,
+      this.badge = true});
+
+  /// V13 (the board's top row; fix round 4, F4-7): Close (44 × 44) at the
+  /// start and the GRAMMARLENS PREMIUM chip at the end, in one row. The
+  /// chip used to have a row of its own under the companions, under a
+  /// "GrammarLens" wordmark here: 40 pt the first view needed for "Compare
+  /// plans" (F3-26).
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 0),
       child: Row(
         children: [
-          Expanded(
-            child: BrandWordmark(
-              style: theme.textTheme.titleMedium
-                  ?.withWeight(FontWeight.w900)
-                  .copyWith(color: colorScheme.onSurface, letterSpacing: -.5),
-            ),
-          ),
           IconButton(
             key: PremiumScreen.closeKey,
             icon: const Icon(Icons.close_rounded, size: 22),
             tooltip: context.l10n.paywallClose,
-            color: colorScheme.onSurface,
+            color: colorScheme.onSurfaceVariant,
             style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
             onPressed: onClose,
           ),
+          const Spacer(),
+          if (badge) const Flexible(flex: 4, child: _PremiumLabel()),
         ],
       ),
     );
@@ -1395,8 +1400,8 @@ class _FooterLinks extends StatelessWidget {
   final bool restoring;
   final VoidCallback onRestore;
 
-  /// In the footer: the row is only [_footerRowHeight] tall and each
-  /// target reaches 44 pt upward, into the terms above (see [_TapArea]).
+  /// In the footer (v12): one row only [_footerRowHeight] tall, each
+  /// target reaching up and down to 44 pt (see [_TapArea]).
   final bool compact;
 
   const _FooterLinks({
@@ -1408,100 +1413,100 @@ class _FooterLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    // The three at the mockup's 11 / 700, so they share one row on a phone.
-    final row = TextButtonTheme(
-      data: TextButtonThemeData(
-        style: _footerTextButtonStyle.copyWith(
-          textStyle: WidgetStatePropertyAll(
-              theme.textTheme.labelSmall?.withWeight(FontWeight.w700)),
-          minimumSize: compact
-              ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
-              : null,
-        ),
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        // When the three wrap (narrow or large text), a second row's
-        // targets reach up into this gap (see below).
-        runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
-        children: [
-          _link(TextButton(
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    // V13 v12: 12 pt, one centred row, "·" between (the board's
+    // "Restore · Terms · Privacy"); VoiceOver reads the full names.
+    final style = theme.textTheme.labelSmall!.withWeight(FontWeight.w800);
+    final buttonStyle = _footerTextButtonStyle.copyWith(
+      foregroundColor: WidgetStatePropertyAll(c.navyText),
+      textStyle: WidgetStatePropertyAll(
+          style.copyWith(decoration: TextDecoration.underline)),
+      padding:
+          const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 4)),
+      minimumSize: compact
+          ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
+          : null,
+    );
+    Widget dot() => ExcludeSemantics(
+          child: Text('·', // l10n-guard: a separator
+              style:
+                  style.copyWith(color: c.muted, fontWeight: FontWeight.w400)),
+        );
+    final row = Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      // When the three wrap (narrow or large text), two rows' targets meet
+      // in the gap between them.
+      runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
+      children: [
+        _link(Semantics(
+          button: true,
+          label: restoring ? l10n.paywallRestoring : l10n.paywallRestore,
+          excludeSemantics: true,
+          child: TextButton(
             key: PremiumScreen.restoreKey,
             // Required wherever a subscription is sold (App Store), in
             // every state, whether or not prices loaded.
             onPressed: restoring ? null : onRestore,
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.secondary,
-            ),
-            child: Text(restoring
-                ? context.l10n.paywallRestoring
-                : context.l10n.paywallRestore),
-          )),
-          _link(LegalLink(
-              label: context.l10n.commonTermsOfService,
-              url: AppLinks.termsUrl)),
-          _link(LegalLink(
-              label: context.l10n.commonPrivacyPolicy,
-              url: AppLinks.privacyPolicyUrl)),
-        ],
-      ),
+            style: buttonStyle,
+            child: Text(
+                restoring ? l10n.paywallRestoring : l10n.paywallRestoreShort),
+          ),
+        )),
+        dot(),
+        _link(LegalLink(
+            label: l10n.commonTermsOfService,
+            shortLabel: l10n.paywallTermsShort,
+            style: buttonStyle,
+            url: AppLinks.termsUrl)),
+        dot(),
+        _link(LegalLink(
+            label: l10n.commonPrivacyPolicy,
+            shortLabel: l10n.paywallPrivacyShort,
+            style: buttonStyle,
+            url: AppLinks.privacyPolicyUrl)),
+      ],
     );
-    // The whole row reaches up over the terms (for the first row); each
-    // link reaches up into the run gap (for a second row, if any).
+    // The row passes taps above and below itself on to the links.
     return compact ? _RowTapArea(child: row) : row;
   }
 
-  Widget _link(Widget button) =>
-      compact ? _TapArea(extendUp: true, child: button) : button;
+  Widget _link(Widget button) => compact ? _TapArea(child: button) : button;
 }
 
-/// The footer's text rows (the links, "Maybe later") are drawn this tall,
-/// so the gaps between them match the gap above them (owner, after
-/// Batch 12); [_TapArea] keeps each target 44 pt.
-const double _footerRowHeight = 30;
+/// The footer's links row is drawn this tall (V13 v12: 12 pt text, the
+/// board's 6 pt rhythm); [_TapArea] keeps each target 44 pt.
+const double _footerRowHeight = 20;
 
-/// Keeps a short footer button's target [_footerTargetHeight] tall by
-/// taking taps in the empty or non-interactive space right above
-/// ([extendUp]) or below it: the links take the renewal terms' lower edge
-/// and the small gap above them (or the gap between two rows when they
-/// wrap); "Maybe later" takes the empty margin under it. A tap there is
-/// handed on as if it landed on the nearest edge, so the button under that
-/// point gets it; the drawn size, and so the visible rhythm, does not
-/// change. A tap is only seen where every ancestor contains it: the links'
-/// row passes the space above itself through with [_RowTapArea], and the
-/// bottom margin is a spacer inside the footer's column.
+/// How far a link's target reaches above and below its drawn row.
+const double _footerReach = (_footerTargetHeight - _footerRowHeight) / 2;
+
+/// Keeps a short footer link's target [_footerTargetHeight] tall by taking
+/// taps in the non-interactive space right above (the price line's lower
+/// edge, or the gap between two rows) and below it (the bottom margin). A
+/// tap there is handed on as if it landed on the nearest edge, so the link
+/// under that point gets it; the drawn size, and so the visible rhythm,
+/// does not change. A tap is only seen where every ancestor contains it:
+/// the row passes the space round itself through with [_RowTapArea], and
+/// the bottom margin is a spacer inside the footer's column.
 class _TapArea extends SingleChildRenderObjectWidget {
-  final bool extendUp;
-
-  const _TapArea({required this.extendUp, required super.child});
+  const _TapArea({required super.child});
 
   @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderTapArea(extendUp);
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderTapArea renderObject) {
-    renderObject.extendUp = extendUp;
-  }
+  RenderObject createRenderObject(BuildContext context) => _RenderTapArea();
 }
 
 class _RenderTapArea extends RenderProxyBox {
-  _RenderTapArea(this.extendUp);
-
-  bool extendUp;
-
   double get _extension =>
-      (_footerTargetHeight - size.height).clamp(0, _footerTargetHeight);
+      ((_footerTargetHeight - size.height) / 2).clamp(0, _footerReach);
 
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    final top = extendUp ? -_extension : 0.0;
-    final bottom = size.height + (extendUp ? 0 : _extension);
     if (position.dx < 0 ||
         position.dx >= size.width ||
-        position.dy < top ||
-        position.dy >= bottom) {
+        position.dy < -_extension ||
+        position.dy >= size.height + _extension) {
       return false;
     }
     final inside = Offset(
@@ -1514,9 +1519,9 @@ class _RenderTapArea extends RenderProxyBox {
   }
 }
 
-/// Lets taps in the [_footerTargetHeight] − [_footerRowHeight] points above
-/// the links' row reach the links themselves (their own [_TapArea]s decide
-/// which one); a [Wrap] alone ignores any point outside its box.
+/// Lets taps in the [_footerReach] points above and below the links' row
+/// reach the links themselves (their own [_TapArea]s decide which one); a
+/// [Wrap] alone ignores any point outside its box.
 class _RowTapArea extends SingleChildRenderObjectWidget {
   const _RowTapArea({required super.child});
 
@@ -1525,12 +1530,13 @@ class _RowTapArea extends SingleChildRenderObjectWidget {
 }
 
 class _RenderRowTapArea extends RenderProxyBox {
-  static const double _reach = _footerTargetHeight - _footerRowHeight;
-
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    if (position.dy >= 0) return super.hitTest(result, position: position);
-    if (position.dy < -_reach ||
+    if (position.dy >= 0 && position.dy < size.height) {
+      return super.hitTest(result, position: position);
+    }
+    if (position.dy < -_footerReach ||
+        position.dy >= size.height + _footerReach ||
         position.dx < 0 ||
         position.dx >= size.width ||
         child == null) {
@@ -1544,17 +1550,20 @@ class _RenderRowTapArea extends RenderProxyBox {
   }
 }
 
-/// The fixed bottom area: never scrolls away.
+/// The fixed bottom area: never scrolls away. V13 v12 (on the device it
+/// was about 207 pt tall and spread out): 24 pt side margins, the 54 pt
+/// button with only its pulse round it, the full price line (12 pt,
+/// centred, at most 300 pt wide), and Restore · Terms · Privacy on one
+/// centred row; no "Maybe later" (the close button at the top is the way
+/// out).
+/// About 150 pt tall at 390 × 844.
 ///
-/// - **loading**: a disabled button with a spinner, then the links and
-///   "Maybe later".
+/// - **loading**: a disabled button with a spinner, then the links.
 /// - **prices ready**: the last purchase's or restore's result, the button
-///   (its label from the selected plan's [_PlanTerms]), the renewal terms,
-///   the links, and "Maybe later" (gone once a purchase succeeded: the
-///   button becomes "Continue").
-/// - **prices unavailable**: no button and no terms, which mean nothing
-///   without a price; the links and "Maybe later". The retry is in the
-///   body.
+///   (its label from the selected plan's [_PlanTerms]), the price line and
+///   the links (the button becomes "Continue" once a purchase succeeded).
+/// - **prices unavailable**: no button and no price line, which mean
+///   nothing without a price; the links. The retry is in the body.
 class _PremiumFooter extends StatelessWidget {
   /// V13c: the selected plan's name above the button once the plans have
   /// scrolled away.
@@ -1570,14 +1579,19 @@ class _PremiumFooter extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onPurchase;
   final VoidCallback onContinue;
-  final VoidCallback onMaybeLater;
-  final double horizontalPadding;
 
   /// Half the screen, applied only when the text is large enough that the
   /// links have moved to the body (screen height / text scale under 400;
   /// e.g. 375 × 667 at 2x and 3x). Past it the footer scrolls inside
   /// itself, the button first, so the body above still has room to scroll.
   final double maxHeight;
+
+  /// V13 v12: the side margins, the gap between the rows, the price line's
+  /// width, the button's height.
+  static const sideMargin = 24.0;
+  static const gap = 6.0;
+  static const priceLineWidth = 300.0;
+  static const buttonHeight = 54.0;
 
   Widget _capped(Widget content) => showLinks
       ? content
@@ -1600,134 +1614,110 @@ class _PremiumFooter extends StatelessWidget {
     required this.onRestore,
     required this.onPurchase,
     required this.onContinue,
-    required this.onMaybeLater,
-    required this.horizontalPadding,
     required this.maxHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final showMaybeLater = purchaseState != _PurchaseState.success;
+    final c = AppColors.of(context);
+    final side = ContentWidth.sidePaddingOf(context, base: sideMargin);
+    final inset = MediaQuery.paddingOf(context).bottom;
     return DecoratedBox(
-      // A permanent edge between the scrolling body and this fixed area.
+      // The board's footer: the card colour under a 2 pt line.
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        color: c.card,
+        border: Border(top: BorderSide(color: c.line, width: 2)),
       ),
-      child: SafeArea(
-        top: false,
-        // The bottom inset is a spacer inside the column instead, so
-        // "Maybe later"'s target can reach into it.
-        bottom: false,
-        child: _capped(
-          Padding(
-            padding:
-                EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _StatusMessage(
-                  state: purchaseState,
-                  purchasedTrial: purchasedTrial,
-                  restoreMessage: restoreMessage,
-                ),
-                if (loading) ...[
-                  const _Cta(
-                    onPressed: null,
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+      child: _capped(
+        Padding(
+          padding: EdgeInsets.fromLTRB(side, 10, side, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _StatusMessage(
+                state: purchaseState,
+                purchasedTrial: purchasedTrial,
+                restoreMessage: restoreMessage,
+              ),
+              if (loading)
+                const _Cta(
+                  onPressed: null,
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(height: 6),
-                ] else if (offeringsReady && terms != null) ...[
-                  if (planLabel != null &&
-                      purchaseState != _PurchaseState.success) ...[
-                    Center(
-                      child: Text(
-                        planLabel!,
-                        key: PremiumScreen.selectedPlanKey,
-                        style: theme.textTheme.labelMedium
-                            ?.withWeight(FontWeight.w900)
-                            .copyWith(color: colorScheme.secondary),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  _Cta(
-                    onPressed: switch (purchaseState) {
-                      _PurchaseState.purchasing => null,
-                      _PurchaseState.success => onContinue,
-                      _ => onPurchase,
-                    },
-                    arrow: purchaseState != _PurchaseState.purchasing,
-                    child: purchaseState == _PurchaseState.purchasing
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            purchaseState == _PurchaseState.success
-                                ? context.l10n.commonContinue
-                                : terms!.cta,
-                            textAlign: TextAlign.center,
-                          ),
-                  ),
-                  const SizedBox(height: 6),
-                  Semantics(
-                    liveRegion: true,
+                )
+              else if (offeringsReady && terms != null) ...[
+                if (planLabel != null &&
+                    purchaseState != _PurchaseState.success) ...[
+                  Center(
                     child: Text(
-                      // Never cut: at large text it wraps and the footer grows.
-                      terms!.disclosure,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall
-                          ?.withWeight(FontWeight.w400)
-                          .copyWith(
-                              color: colorScheme.onSurfaceVariant, height: 1.6),
+                      planLabel!,
+                      key: PremiumScreen.selectedPlanKey,
+                      style: theme.textTheme.labelMedium
+                          ?.withWeight(FontWeight.w900)
+                          .copyWith(color: c.navyText),
                     ),
                   ),
+                  const SizedBox(height: 4),
                 ],
-                // One rhythm under the button: the terms, the links and
-                // "Maybe later" each about 14 pt apart (owner, after Batch
-                // 12; "Maybe later" used to sit 27.5 pt under the links).
-                if (showLinks) ...[
-                  const SizedBox(height: 7),
-                  _FooterLinks(
-                      restoring: restoring,
-                      onRestore: onRestore,
-                      compact: true),
-                ],
-                if (showMaybeLater)
-                  _TapArea(
-                    extendUp: false,
-                    child: Center(
-                      child: TextButton(
-                        style: _footerTextButtonStyle.copyWith(
-                          minimumSize: const WidgetStatePropertyAll(
-                              Size(44, _footerRowHeight)),
-                          foregroundColor: WidgetStatePropertyAll(
-                              colorScheme.onSurfaceVariant),
+                _Cta(
+                  onPressed: switch (purchaseState) {
+                    _PurchaseState.purchasing => null,
+                    _PurchaseState.success => onContinue,
+                    _ => onPurchase,
+                  },
+                  arrow: purchaseState != _PurchaseState.purchasing,
+                  child: purchaseState == _PurchaseState.purchasing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          purchaseState == _PurchaseState.success
+                              ? context.l10n.commonContinue
+                              : terms!.cta,
+                          textAlign: TextAlign.center,
                         ),
-                        onPressed: onMaybeLater,
-                        child: Text(context.l10n.paywallMaybeLater),
+                ),
+                const SizedBox(height: gap),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: priceLineWidth),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        // Never cut: at large text it wraps and the footer
+                        // grows.
+                        terms!.disclosure,
+                        key: PremiumScreen.priceLineKey,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w600)
+                            .copyWith(color: c.muted, height: 1.35),
                       ),
                     ),
                   ),
-                // The bottom margin: the home indicator's inset plus 4, and
-                // never less than "Maybe later"'s target needs below it.
-                SizedBox(
-                  height: (MediaQuery.paddingOf(context).bottom + 4)
-                      .clamp(_footerTargetHeight - _footerRowHeight,
-                          double.infinity)
-                      .toDouble(),
                 ),
               ],
-            ),
+              if (showLinks) ...[
+                const SizedBox(height: gap),
+                // Full width (no Center: a tap above or below the row must
+                // reach it, and an ancestor only passes on what it holds).
+                _FooterLinks(
+                    restoring: restoring, onRestore: onRestore, compact: true),
+              ],
+              // The bottom margin: the board's 26 over the home indicator
+              // (its inset less 8), never less than the links' targets
+              // need below them.
+              SizedBox(
+                height: math.max(inset - 8, _footerReach),
+              ),
+            ],
           ),
         ),
       ),
@@ -1736,7 +1726,7 @@ class _PremiumFooter extends StatelessWidget {
 }
 
 /// The purchase button: brandOrange with the onOrange text (the mockup's
-/// colour), at least 52 tall, radius 17, an arrow after the label; the
+/// colour), at least 54 tall (V13 v12), radius 18, an arrow after the label; the
 /// app's opaque disabled pairing; no navy edge (Batch 8).
 class _Cta extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -1754,7 +1744,7 @@ class _Cta extends StatelessWidget {
     return CtaGlow(
       enabled: onPressed != null,
       color: theme.colorScheme.primary,
-      radius: 17,
+      radius: 18,
       child: _button(theme, palette),
     );
   }
@@ -1768,9 +1758,10 @@ class _Cta extends StatelessWidget {
         foregroundColor: theme.colorScheme.onPrimary,
         disabledBackgroundColor: palette.disabledFill,
         disabledForegroundColor: palette.disabledLabel,
-        minimumSize: const Size.fromHeight(52),
+        // V13 v12: 54 pt, radius 18.
+        minimumSize: const Size.fromHeight(_PremiumFooter.buttonHeight),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         textStyle: theme.textTheme.bodyLarge
             ?.withWeight(FontWeight.w900)
             .copyWith(height: 1.3),

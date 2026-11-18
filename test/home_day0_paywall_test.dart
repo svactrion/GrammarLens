@@ -77,6 +77,19 @@ class _FakeStorageService extends StorageService {
   }
 }
 
+/// V13 v12: the paywall has no "Maybe later"; the close button is the way
+/// out, and the first close of a session asks once (V13b): "Continue with
+/// free" then closes it.
+Future<void> closePaywall(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Close'));
+  await tester.pumpAndSettle();
+  final free = find.byKey(PremiumScreen.exitContinueFreeKey);
+  if (free.evaluate().isNotEmpty) {
+    await tester.tap(free);
+    await tester.pumpAndSettle();
+  }
+}
+
 void main() {
   late _FakeStorageService storage;
   late _FakeSubscriptionService subscription;
@@ -309,14 +322,13 @@ void main() {
     });
 
     testWidgets(
-        'dismissed with Maybe later: Home is back, and nothing brings it '
+        'dismissed with the close button: Home is back, and nothing brings it '
         'back (a resume, more time)', (tester) async {
       await pumpHome(tester);
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
       expect(premiumShown(), isFalse);
       expect(find.byType(HomeScreen), findsOneWidget);
 
@@ -331,8 +343,7 @@ void main() {
       await pumpHome(tester);
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
 
       await tester.pumpWidget(const SizedBox());
       await pumpHome(tester);
@@ -360,11 +371,10 @@ void main() {
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
 
       expect(sink.named('paywall_dismissed').single.parameters,
-          {'source': 'day0_after_climb', 'method': 'maybe_later'});
+          {'source': 'day0_after_climb', 'method': 'close_button'});
     });
 
     testWidgets(
