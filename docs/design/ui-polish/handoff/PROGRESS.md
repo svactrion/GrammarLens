@@ -829,6 +829,26 @@ under the first attempts (three simulators and two builds at once); with
 one other simulator booted it ran the whole walk. The stand-in answers at once, so V18's loading screen is gone before
 a screenshot; it is checked by its renders (B7).
 
+### 5. Docs
+
+Done: this section (each item's cause, fix and tests; decisions F3-1 to
+F3-26; the checks; what is not verified) and the final summary's status;
+`docs/build-log.md` (an entry for 2026-11-18); `docs/roadmap.md` (the UI
+polish status: fix round 3 done on `ui-polish-widgets`, waiting for the
+owner's second device pass, not on `main`, not shipped); `product.yaml`
+(fix round 3 on top of `recent`, the oldest of the five dropped; the UI
+polish `planned` line; `updated_at` 2026-11-18). No `legal`, `status` or
+`versions` change: no package, service or data collected changed, so the
+legal pages need no review for this round.
+
+### 6. DEVICE-CHECKS.md
+
+Done: a new first section, "Fix round 3 — second pass": FR3-1 build and
+install (section 1's commands; no Xcode step now the team is set; over the
+current test build), FR3-2 on this install (each item says whether today's
+Daily Test must be done), FR3-3 before the next day's test, FR3-4 after a
+delete and reinstall, in FIX3 §6's order and with every item it lists.
+
 ### Not verified
 
 - **Anything on a device**: haptics (V04's greeting, the buttons), the real
