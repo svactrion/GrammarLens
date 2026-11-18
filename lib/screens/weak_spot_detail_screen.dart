@@ -269,7 +269,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                     children: [
                       CompanionView(
                           hero: widget.hero ?? Avatar.fox,
-                          mood: CompanionMood.think,
+                          // R03's board: the base pose (fix round 3, B8).
+                          mood: CompanionMood.idle,
                           size: 64,
                           decorative: true),
                       const SizedBox(width: 8),

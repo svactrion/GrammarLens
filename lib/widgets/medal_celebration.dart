@@ -301,7 +301,6 @@ class _MedalCelebrationState extends State<MedalCelebration>
                                     hero: widget.hero!,
                                     mood: CompanionMood.cheer,
                                     size: 132,
-                                    showProp: false,
                                   ),
                                   Container(
                                     width: 150,

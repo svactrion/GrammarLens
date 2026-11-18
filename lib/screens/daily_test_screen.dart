@@ -565,7 +565,6 @@ class _CheckFooter extends StatelessWidget {
                     hero: hero,
                     mood: hasAnswer ? CompanionMood.cheer : CompanionMood.idle,
                     size: 72,
-                    showProp: hasAnswer,
                   ),
                   const SizedBox(width: 10),
                   if (hasAnswer)

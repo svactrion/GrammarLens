@@ -287,7 +287,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 Row(children: [
                   CompanionView(
                       hero: _hero ?? Avatar.fox,
-                      mood: CompanionMood.wave,
+                      // V21's board: the base pose (fix round 3, B8).
+                      mood: CompanionMood.idle,
                       size: 48,
                       decorative: true),
                   const SizedBox(width: 10),

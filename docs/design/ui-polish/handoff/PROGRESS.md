@@ -304,6 +304,74 @@ open) in light and dark: no text above the companion, the cards one width
 header passed with a topic (Review's ticket) is not drawn. Captures:
 `V18-topic`, `V18-weakspot` (light and dark).
 
+### B8. The expression kit everywhere
+
+**What was wrong:** five uses hid their prop (`companion_dialog`,
+`error_state`, `medal_celebration`, `lucky_wheel_screen`,
+`daily_test_card`'s loading state), so the sad dialogs had no cloud, and
+three moods differed from their boards (R03 think, N01 wave, V21's upsell
+wave; the boards draw the base pose). The Daily Test's wrong answers
+already used `oops` (V09, Q04, Q05 share its feedback panel); practice
+has no per-answer moment (F3-10).
+
+**Fix (B8 commit).** Every `CompanionView` use was compared with its board
+(the board's image: `<hero>_<mood>.webp`, or `avatar_NN.webp` for the base
+pose) and SPEC's screen text. The five hidden props show again; R03, N01
+and V21's upsell use the base pose. The Daily Test footer's
+`showProp: hasAnswer` went (idle has no prop, so it did nothing).
+`prop_tear.webp` stays unused: X01's kit has five props (sparkle, thought,
+cloud, Zzz, sweat) and no board uses a tear; it is not deleted.
+
+| Screen | Board | Mood | Prop |
+|---|---|---|---|
+| V02 Welcome trio (`welcome_screen`) | V02: fox, frog, panda wave | wave (Fox sways; sides float) | — (wave has none) |
+| V03 Meet turntable (`buddy_picker`) | V03: fox wave | wave | — |
+| V03b wheel, landed (`lucky_wheel_screen`) | V03b: frog cheer | cheer | sparkle ✱ (was hidden) |
+| V04 Name (`onboarding_screen`) | V04/V04s (v11): wave → inspect → cheer | see C2 | see C2 |
+| V05 goal pop-out (`onboarding_screen` `_PopOut`) | V05: fox cheer | cheer | sparkle |
+| V05b Getting ready (`getting_ready_screen`) | V05b: fox inspect, fox cheer | inspect → cheer | sparkle at cheer |
+| V06, V12 pawn (`mountain_scene`) | base pose | idle; cheer on V12's arrival | sparkle on arrival |
+| V07, V08 footer (`daily_test_screen` `_CheckFooter`) | V07 base, V08 fox cheer | idle → cheer once answered | sparkle at cheer |
+| V08 right / V09, Q04, Q05 wrong (`_FeedbackPanel`) | V08 fox cheer; V09 base (SPEC v11: oops) | cheer / oops | sparkle / sweat, head shake |
+| V10 Results (`daily_test_result_screen`) | V10: fox cheer | cheer | sparkle |
+| V11 badge, R05 medal (`medal_celebration`) | V11, R05: fox cheer | cheer | sparkle ✱ (was hidden) |
+| V13 paywall trio (`premium_screen` `_AvatarHero`) | V13: base poses | idle (sides float, middle hops) | — |
+| V13c comparison (`premium_screen`) | V13c: fox cheer | cheer (hop) | sparkle |
+| V13r rest paywall (`premium_screen` `_RestTop`) | V13r: fox wave | wave | — |
+| V13b, R10, R08 reset (`companion_dialog`) | V13b, R10: fox sad | sad | cloud ✱ (was hidden) |
+| X05, H03 card loading (`daily_test_card`) | X05: fox think | think | thought bubble ✱ (was hidden) |
+| V14, V15 card to do (`daily_test_card`) | V14: base pose | idle, hopping | — |
+| PW05, PW05r (`premium_on_screen`) | fox cheer | cheer (hop) | sparkle |
+| V16 / RV05 Review empty (`review_parts`) | RV05: fox cheer | cheer (hop) | sparkle |
+| R03 weak spot (`weak_spot_detail_screen`) | R03: base pose | idle ✱ (was think) | — |
+| V18 Preparing (`practice_preparing`) | V18: fox think | think | thought bubble (F3-11) |
+| V20 Reviewing (`practice_reviewing`) | V20: fox inspect | inspect | — |
+| V21 Results (`results_screen`) | V21: fox cheer; upsell base pose | cheer; idle ✱ (was wave) | sparkle; — |
+| V23 Profile stage (`profile_stage`) | V23: base pose | idle, wave on tap | — |
+| PF04 Edit name (`settings_screen`) | PF04: fox wave | wave | — |
+| V24 rest (`rest_scene`) | V24: fox sleep | sleep | Zzz |
+| V24f rest, free (`rest_scene`) | V24f: fox sleep, dream bubble | sleep | **hidden**: the dream bubble replaces the Zzz (SPEC §3.5) |
+| V24s waking (`rest_scene`) | V24s: fox wave, fox cheer | wave → cheer | sparkle at cheer |
+| P08 daily limit (`practice_launch`) | P08: fox sleep | sleep | Zzz |
+| R04, R04b month card (`month_card_sheet`) | fox cheer | cheer | sparkle |
+| R09 Credits (`credits_screen`) | base poses; SPEC: the middle one waves | idle, wave, idle | — |
+| R11 error (`error_state`) | R11: fox sad | sad | cloud ✱ (was hidden) |
+| N01 soft ask (`reminder_soft_ask`) | N01: base pose | idle ✱ (was wave) | — |
+| N03 notifications (`notification_settings_screen`) | N03: base pose | idle | — |
+
+✱ = changed by B8. The only prop still hidden is V24f's Zzz (the board's
+dream bubble takes its place). Checked on renders that no newly shown prop
+covers text: the dialog's cloud sits above the card; R11's cloud above the
+head; the card's thought bubble beside the slot, above no text; the medal's
+sparkle beside the head, under the medal.
+
+**Tests:** `test/fix3_expression_kit_test.dart`: a wrong answer on V09 (fill
+in the blank), Q05 (error correction) and Q04 (two blanks) shows `oops`
+with the sweat drop and a head shake, and no cheer; the companion dialog
+(V13b, R10, R08 reset share it) shows the sad companion's cloud over no
+text (fails before B8); R11's error state shows its cloud. Captures:
+`V09-oops`, `V13b-cloud`, `R11-cloud`.
+
 ### Decisions (F3-n)
 
 - **F3-1. R05's order.** Question: should a later day's tier medal also
@@ -356,6 +424,19 @@ header passed with a topic (Review's ticket) is not drawn. Captures:
   Choice: (b). Why: rule 4, the app's current behaviour; generation can
   take several seconds and the button is the only way out. Topic Practice
   and Review had none and still have none.
+- **F3-10. "Practice wrong" (SPEC §3.5).** Practice answers are evaluated
+  together at the end (V19), so no companion reacts to a single wrong
+  practice answer; V21's board draws the companion cheering beside "2/3
+  correct". Options: (a) leave V21's cheer; (b) switch V21 to oops when
+  anything was wrong. Choice: (a). Why: rule 3, V21's board and SPEC V21
+  ("Companion cheers"); the wrong-answer `oops` covers every place that
+  reacts to one answer (V09, Q04, Q05).
+- **F3-11. V18's thought bubble.** The V18 board draws the thinking pose
+  without a bubble (with three dots under it). Options: (a) hide the
+  bubble; (b) show it. Choice: (b). Why: SPEC §3.5 v11 shows each mood's
+  prop unless the board replaces it or it covers text; the boards were
+  drawn before the kit, and the dots sit under the companion, not where
+  the bubble goes.
 
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 

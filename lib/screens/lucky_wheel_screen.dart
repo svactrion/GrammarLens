@@ -585,7 +585,6 @@ class _Wheel extends StatelessWidget {
                         hero: landed!,
                         mood: CompanionMood.cheer,
                         size: 92 * k,
-                        showProp: false,
                       ),
                     ),
             ),

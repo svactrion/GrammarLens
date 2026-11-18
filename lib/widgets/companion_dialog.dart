@@ -210,7 +210,6 @@ class _CompanionDialogState extends State<_CompanionDialog> {
                         hero: widget.hero,
                         mood: widget.mood,
                         size: 112,
-                        showProp: false,
                       ),
                     ],
                   ),

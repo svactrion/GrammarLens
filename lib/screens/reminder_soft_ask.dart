@@ -120,7 +120,8 @@ class _ReminderSoftAskState extends State<ReminderSoftAsk> {
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             CompanionView(
                 hero: widget.hero,
-                mood: CompanionMood.wave,
+                // N01's board: the base pose (fix round 3, B8).
+                mood: CompanionMood.idle,
                 size: 76,
                 decorative: true),
             const SizedBox(width: 8),

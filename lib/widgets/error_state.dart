@@ -109,10 +109,7 @@ class _ErrorStateState extends State<ErrorState> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: CompanionView(
-                        hero: widget.hero,
-                        mood: CompanionMood.sad,
-                        size: 132,
-                        showProp: false),
+                        hero: widget.hero, mood: CompanionMood.sad, size: 132),
                   ),
                 ],
               ),

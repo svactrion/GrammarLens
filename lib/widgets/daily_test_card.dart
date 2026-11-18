@@ -268,8 +268,8 @@ class DailyTestCard extends StatelessWidget {
 
   Widget _slot(BuildContext context, AppColors c) {
     return switch (state) {
-      DailyTestCardState.loading => CompanionView(
-          hero: hero, mood: CompanionMood.think, size: slot, showProp: false),
+      DailyTestCardState.loading =>
+        CompanionView(hero: hero, mood: CompanionMood.think, size: slot),
       DailyTestCardState.todo => CompanionView(
           hero: hero, mood: CompanionMood.idle, size: slot, hopping: true),
       DailyTestCardState.done => Center(
