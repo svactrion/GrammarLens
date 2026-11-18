@@ -14677,7 +14677,9 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   no new data, under 1 % more per set, all ten topics).
 - **[Verified]** `npm run typecheck` clean; `npm test` 647 passed (27 new,
   no network); the sheet and the run's own files byte for byte unchanged; no
-  generated content in the commits.
+  question, no built answer and no sheet key in the commits (one labeller's
+  note of 34 characters stood as an example string in a test in `f911919`
+  and was replaced in `a7ccf77`).
 - **[Not verified]** Any proposed fix. The owner decides which topics go on
   to release prep, which fixes are made, and the set-variety option.
 - Record and decisions T-23 to T-33: `docs/1.5.0-topics-progress.md`.
