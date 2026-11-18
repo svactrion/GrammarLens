@@ -445,8 +445,11 @@ view (the hint above the footer, no plan box above the footer, "Start my
 7-day free trial" and the yearly price line); the order down the page; the
 button and the price line still on screen at the page's end; the billed
 amount larger than every other text in each plan row (live prices); V13r's
-order. The two older tests that encoded 13 → 13a → 13c follow v11. iPad:
-see "Checks".
+order. The two older tests that encoded 13 → 13a → 13c follow v11. iPad
+(App Review uses one): the first view on the iPad Pro 13" simulator, light
+and dark (`build/fix3-captures/iPad-V13-Paywall*.png`): the page in its
+640 pt column, "Compare plans" and the start of Free vs Premium on the
+first view, the pinned button, its price line and the links in view.
 
 ### C5. Profile ribbon (V23)
 
@@ -749,7 +752,7 @@ a still shows them; differences are listed.
 | V06 (this month and two others) | `V06-ember_peak-november`, `-glacier_peak-december`, `-red_canyon-january`, `-green_slope-october` | same | match: the flag on each summit's apex |
 | V10 → V11 (two frames) | gallery `V10-Results`, `V11-Badge`; the order: the A1 flow test and the smoke walk | same | match (the gallery's V10 is a later day: "Today's test complete!", "See your climb") |
 | V12 (end frame) | `V12-end-<size>` (six sizes), gallery `V12-Climb` | `V12-end-390x844`, gallery | the bubble: match (C3). Differences outside C3: Continue is orange (board: white), the step chip gold with a flag (board: orange with an arrow), the mountain's name chip, the walked trail painted solid (board: white dots) |
-| V13 | gallery `V13-Paywall(-t2)` | same | match apart from the hint: at 390–402 pt wide the first view ends with the benefits card and "Compare plans" sits just under the pinned footer (it shows from 6.7" up: 8 pt clear at 428 × 926); the footer is taller than the board's ("Maybe later", the links row). Kept (F3-26) |
+| V13 | gallery `V13-Paywall(-t2)`; iPad Pro 13" `iPad-V13-Paywall` | same; `iPad-V13-Paywall-dark` | match apart from the hint: at 390–402 pt wide the first view ends with the benefits card and "Compare plans" sits just under the pinned footer (it shows from 6.7" up: 8 pt clear at 428 × 926); the footer is taller than the board's ("Maybe later", the links row). Kept (F3-26) |
 | V13c, V13a | gallery `V13c-PaywallCompare`, `V13a-PaywallPlans` (light captured after the offset fix) | gallery (before the fix the two names were swapped; see D) | match: 13c then 13a, the billed price largest, the pinned button and price line |
 | V18 (both entry points) | `V18-topic`, `V18-weakspot` | same | match, with the thought bubble on the companion (F3-11) and the count in the message |
 | V23 | `V23-ribbon-<size>-<text>`, gallery `V23-Profile(-420)` | `V23-ribbon-428x926`, gallery | match (C5) |
