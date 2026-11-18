@@ -723,6 +723,40 @@ unchanged. Those three boards were captured again after the fixes.
 - **F3-25. Dark lip and line.** SY03: "a lighter line (#2E2C36 or so)
   instead of the light shadow colour". The lip becomes #2E2C36; the border
   line keeps #45454D (already lighter than the card).
+- **F3-26. "Compare plans" on 6.1"–6.3" phones.** The app's first view is
+  taller than the board's (the GRAMMARLENS PREMIUM label over the
+  headline, the supporting line, and a pinned footer with "Maybe later"),
+  so at 390–402 pt wide the hint sits just under the footer, as "See plans"
+  did since fix round 2; from 6.7" up it is on the first view. Options: (a)
+  reshape the first view to fit it; (b) keep it. Choice: (b) for this
+  round. Why: C4 asked for the order, the hint's text and the pinned button;
+  reshaping the first view is outside it (rule 5); recorded for the owner.
+
+### Checks: the listed captures against their boards
+
+Light renders in `build/fix3-captures/`, dark in `build/fix3-captures/dark/`
+(widget-test renders at a phone's size with the app's font, `FIX3_CAPTURE=1`,
+and the gallery on the iPhone 18 Pro simulator, `<board>[-dark].png`).
+"Match" means the board's layout, colours, copy and motion state as far as
+a still shows them; differences are listed.
+
+| Board | Light | Dark | Result |
+|---|---|---|---|
+| V01 (two frames) | `V01-frame1-icon`, `V01-frame2-scan`; gallery `V01-Splash(-mid)` | same names | match: the square, the lens, then the wordmark with the small lens crossing it (C1's timing) |
+| V04 (three states) | `V04-asks`, `V04-listens`, `V04-greets` | same | match (the glow, the disc, the bubble above, the dots, the tick, n/40) |
+| V05 (each card selected) | `V05-examPrep`, `-work`, `-school`, `-general` | same | match: the frame, the lift, the tilt by position, the reaction line, the pop-out companion. Differences kept from earlier rounds: "3 of 4" (the app's four onboarding steps), the subline, the privacy note |
+| V05b | gallery `V05b-GettingReady(-100)` | same | match (B2's bar); at a stop the companion thinks (SPEC §1.16's waiting state), as designed |
+| V06 (this month and two others) | `V06-ember_peak-november`, `-glacier_peak-december`, `-red_canyon-january`, `-green_slope-october` | same | match: the flag on each summit's apex |
+| V10 → V11 (two frames) | gallery `V10-Results`, `V11-Badge`; the order: the A1 flow test and the smoke walk | same | match (the gallery's V10 is a later day: "Today's test complete!", "See your climb") |
+| V12 (end frame) | `V12-end-<size>` (six sizes), gallery `V12-Climb` | `V12-end-390x844`, gallery | the bubble: match (C3). Differences outside C3: Continue is orange (board: white), the step chip gold with a flag (board: orange with an arrow), the mountain's name chip, the walked trail painted solid (board: white dots) |
+| V13 | gallery `V13-Paywall(-t2)` | same | match apart from the hint: at 390–402 pt wide the first view ends with the benefits card and "Compare plans" sits just under the pinned footer (it shows from 6.7" up: 8 pt clear at 428 × 926); the footer is taller than the board's ("Maybe later", the links row). Kept (F3-26) |
+| V13c, V13a | gallery `V13c-PaywallCompare`, `V13a-PaywallPlans` (light captured after the offset fix) | gallery (before the fix the two names were swapped; see D) | match: 13c then 13a, the billed price largest, the pinned button and price line |
+| V18 (both entry points) | `V18-topic`, `V18-weakspot` | same | match, with the thought bubble on the companion (F3-11) and the count in the message |
+| V23 | `V23-ribbon-<size>-<text>`, gallery `V23-Profile(-420)` | `V23-ribbon-428x926`, gallery | match (C5) |
+| V24f, V24 (five sizes) | `V24f-<size>-medium/large`, `V24-<size>-medium/large` | `V24f-<size>-medium`, `V24-<size>-medium` | match (B1); on the 375 × 667 SE Wake is a short scroll (F3-3) |
+| N03 | `N03` | `N03` | match: white thumbs, the navy track when on (B5) |
+| A wrong answer with oops | `V09-oops`, gallery `V09-Wrong` | same | match per SPEC v11 (the board draws the base pose; v11 says oops) |
+| V13b with the cloud | `V13b-cloud`, gallery `V13b-ExitReminder` | same | match per SPEC v11 (the cloud over the sad companion) |
 
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
