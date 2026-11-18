@@ -37,11 +37,18 @@
  *                                      runs it (or resumes DIR): generation, the answer writer,
  *                                      scoring, the automatic checks; at most $15 of measured
  *                                      spend; the key from ANTHROPIC_API_KEY in the environment only
+ *   npm run eval -- topics --dry-run --only TOPIC | topics run --only TOPIC [--out DIR]
+ *                                      a re-measurement of one topic in a run folder of its own
+ *                                      (topics-TOPIC-…); the $15 cap counts what the measurement's
+ *                                      earlier runs spent
  *   npm run eval -- topics analyze --out DIR
  *                                      phase B, no API call: docs/1.5.0-topics-report.md, and in the
  *                                      run folder the blind label sheet and the details file; a
  *                                      sheet that exists is read back and checked, never rewritten
- *                                      (--rebuild-sheet replaces one nobody has written in yet)
+ *                                      (--rebuild-sheet replaces one nobody has written in yet);
+ *                                      on a re-measurement's folder it writes that run's sheet and
+ *                                      its own section of the report, after the first run's part;
+ *                                      --report FILE writes the report elsewhere (for a rehearsal)
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -153,6 +160,7 @@ import {
 import { renderMeasurementReport, renderSecondLook, type AnalysisData } from './lib/analysis_measurement';
 import {
   TOPICS_CAP_MARGIN,
+  TOPICS_FIRST_RUN,
   TOPICS_SPEND_CAP_USD,
   answerWriterCall,
   builtAnswersFrom,
@@ -161,6 +169,7 @@ import {
   generationId,
   measuredTopics,
   planTopicsDryRun,
+  priorTopicsSpend,
   renderTopicsDryRun,
   scoringCalls,
   type AnswerProblem,
@@ -170,7 +179,8 @@ import {
 import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemCheckRecord, type SetGate } from './lib/topics_checks';
 import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
 import { phaseCParts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
-import { buildTopicSheet, readTopicLabels, renderDetails, renderSheetStatus, sheetHeaderProblem, type ReadSheet, type SheetMapping } from './lib/topics_sheet';
+import { carryRemeasurements, renderRemeasurement, withRemeasurement, type RunForSection } from './lib/topics_remeasure';
+import { SHEET_SEED, buildTopicSheet, readTopicLabels, renderDetails, renderSheetStatus, sheetHeaderProblem, type ReadSheet, type SheetMapping } from './lib/topics_sheet';
 import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
 const API = 'https://api.anthropic.com/v1';
@@ -1393,13 +1403,48 @@ async function runDtMore(outDir: string | undefined): Promise<void> {
 
 /** The calls per stage and the estimated spend. No API call and no key
  * needed; says whether the key is in the environment, never what it is. */
-async function topicsDryRun(): Promise<void> {
+async function topicsDryRun(only: string | undefined): Promise<void> {
   const ratio = charactersPerToken();
-  const summary = renderTopicsDryRun(planTopicsDryRun(ratio), ratio);
+  // A re-measurement counts the earlier runs against the same cap.
+  const scope = only === undefined ? {} : { only, priorSpendUsd: priorTopicsSpend(await topicsFolderSpends()) };
+  const summary = renderTopicsDryRun(planTopicsDryRun(ratio, only), ratio, scope);
   console.log(summary.text);
   console.log('');
   console.log(process.env.ANTHROPIC_API_KEY?.trim() ? 'API key: found in the environment (not shown)' : 'API key: not in the environment (the dry run does not need it; the run does)');
   if (!summary.withinLimit) process.exitCode = 1;
+}
+
+/** The measured spend of every `topics-…` run folder under `eval/out/`,
+ * [except] the one named (the current run's own). */
+async function topicsFolderSpends(except?: string): Promise<{ name: string; spendUsd: number }[]> {
+  const out = path.join(ROOT, 'eval/out');
+  const names: string[] = [];
+  try {
+    names.push(...(await readdir(out)).filter((n) => n.startsWith('topics-')));
+  } catch {
+    // no eval/out yet
+  }
+  const spends: { name: string; spendUsd: number }[] = [];
+  for (const name of names.sort()) {
+    if (except !== undefined && path.resolve(out, name) === path.resolve(except)) continue;
+    const file = path.join(out, name, 'records.json');
+    if (!(await exists(file))) continue;
+    const records = await readJsonFile<MeasureRecord[]>(file);
+    spends.push({ name, spendUsd: records.reduce((n, r) => n + r.costUsd, 0) });
+  }
+  return spends;
+}
+
+/** What a topics run folder says about itself (`run.json`): the one topic it
+ * measures when it is a re-measurement, so a resume or an analysis of the
+ * folder needs no flag and cannot pick the wrong plan. */
+interface TopicsRunInfo {
+  only?: string;
+}
+
+async function readTopicsRunInfo(dir: string): Promise<TopicsRunInfo | null> {
+  const file = path.join(dir, 'run.json');
+  return (await exists(file)) ? readJsonFile<TopicsRunInfo>(file) : null;
 }
 
 /**
@@ -1409,17 +1454,37 @@ async function topicsDryRun(): Promise<void> {
  * folder that stopped half way is resumed with `--out`: calls that are ok are
  * not repeated, and the cap counts what the folder has already spent.
  */
-async function runTopics(outDir: string | undefined): Promise<void> {
-  const run = await MeasureRun.open(outDir, measureKey(), { prefix: 'topics', capUsd: TOPICS_SPEND_CAP_USD, fits: (spent, estimate) => fitsTopicsCap(spent, estimate) });
+async function runTopics(outDir: string | undefined, onlyFlag: string | undefined): Promise<void> {
+  const key = measureKey();
+  // A folder that exists says what it measures; a flag that says otherwise
+  // is a mistake, not a choice.
+  const stored = outDir === undefined ? null : await readTopicsRunInfo(path.resolve(ROOT, outDir));
+  const hasRecords = outDir !== undefined && (await exists(path.join(path.resolve(ROOT, outDir), 'records.json')));
+  if (hasRecords && onlyFlag !== undefined && stored?.only !== onlyFlag) {
+    throw new Error(`${outDir} is ${stored?.only ? `a run of ${stored.only} only` : 'a run of every topic'}; it cannot be continued with --only ${onlyFlag}.`);
+  }
+  const only = hasRecords ? stored?.only : onlyFlag;
+  measuredTopics(only); // refuses an unknown topic before a folder is made
+  // The cap is on the measurement as a whole: a re-measurement starts with
+  // what the earlier runs spent.
+  const prior = only === undefined ? 0 : priorTopicsSpend(await topicsFolderSpends(outDir === undefined ? undefined : path.resolve(ROOT, outDir)));
+  const run = await MeasureRun.open(outDir, key, {
+    prefix: only === undefined ? 'topics' : `topics-${only}`,
+    capUsd: TOPICS_SPEND_CAP_USD,
+    fits: (spent, estimate) => fitsTopicsCap(prior + spent, estimate),
+  });
+  await run.writeSafe(path.join(run.dir, 'run.json'), `${JSON.stringify(only === undefined ? {} : { only }, null, 2)}\n`);
   const ratio = charactersPerToken();
   const rel = path.relative(ROOT, run.dir);
-  await run.log(`topics run in ${rel}; cap ${money(run.capUsd)} of measured spend (a call is made while spent + estimate × ${TOPICS_CAP_MARGIN} stays within it); ${run.records.length} records already there; spent so far ${money(run.spent())}`);
+  await run.log(
+    `topics run${only === undefined ? '' : ` of ${only} only`} in ${rel}; cap ${money(run.capUsd)} of measured spend${only === undefined ? '' : ` on the measurement as a whole, of which earlier runs spent ${money(prior)}`} (a call is made while spent + estimate × ${TOPICS_CAP_MARGIN} stays within it); ${run.records.length} records already there; spent so far in this folder ${money(run.spent())}`,
+  );
 
   // 1. Generation.
-  const generation = generationCalls(ratio);
+  const generation = generationCalls(ratio, only);
   await run.runPlanned(generation, 'generation');
   const gates: SetGate[] = [];
-  for (const { topic, sets } of measuredTopics()) {
+  for (const { topic, sets } of measuredTopics(only)) {
     for (let set = 1; set <= sets; set++) {
       const record = run.record(generationId(topic.id, set));
       if (record?.status === 'ok') gates.push(gateSet(topic.id, set, record.content));
@@ -1475,8 +1540,8 @@ async function runTopics(outDir: string | undefined): Promise<void> {
   const complete = failed === 0 && skipped === 0 && gates.length === generation.length && writerCalls.every((w) => run.record(w.call.customId)?.status === 'ok');
   await run.log(
     complete
-      ? `topics run done: ${mine.length} calls ok; spent ${money(run.spent())} of ${money(run.capUsd)}; folder ${rel}`
-      : `topics run incomplete: ${failed} calls failed, ${skipped} skipped for the cap, ${generation.length - gates.length} sets not generated; spent ${money(run.spent())} of ${money(run.capUsd)}; run again with --out ${rel} to retry what failed`,
+      ? `topics run done: ${mine.length} calls ok; spent ${money(run.spent())}${only === undefined ? '' : ` in this run, ${money(prior + run.spent())} with the earlier runs,`} of ${money(run.capUsd)}; folder ${rel}`
+      : `topics run incomplete: ${failed} calls failed, ${skipped} skipped for the cap, ${generation.length - gates.length} sets not generated; spent ${money(run.spent())}${only === undefined ? '' : ` in this run, ${money(prior + run.spent())} with the earlier runs,`} of ${money(run.capUsd)}; run again with --out ${rel} to retry what failed`,
   );
   if (!complete) process.exitCode = 1;
 }
@@ -1497,11 +1562,9 @@ const TOPICS_FINDINGS = 'eval/data/topics/phase-c-findings.md';
  * exists is never rewritten (someone may have started it): it is read back
  * and every unlabelled row and every value outside the vocabulary is named.
  */
-async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): Promise<void> {
-  if (!outDir) throw new Error('topics analyze needs --out DIR (the run folder, e.g. eval/out/topics-…).');
-  const dir = path.resolve(ROOT, outDir);
+async function loadTopicsRun(dir: string): Promise<TopicsRunData> {
   const read = <T>(name: string) => readJsonFile<T>(path.join(dir, name));
-  const data: TopicsRunData = {
+  return {
     records: await read<MeasureRecord[]>('records.json'),
     sets: await read<SetSummary[]>('sets.json'),
     items: await read<TopicItem[]>('items.json'),
@@ -1510,6 +1573,50 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): 
     scoringCalls: await read<{ customId: string; answerIds: string[] }[]>('scoring-calls.json'),
     checks: await read<ItemCheckRecord[]>('checks.json'),
   };
+}
+
+/** A run folder as a report section needs it, its labels only when its
+ * sheet is complete; null when the folder is not there. Read-only. */
+async function loadRunForSection(dir: string): Promise<RunForSection | null> {
+  if (!(await exists(path.join(dir, 'records.json')))) return null;
+  const data = await loadTopicsRun(dir);
+  const labelsFile = path.join(dir, 'sheet/labels.csv');
+  const mappingFile = path.join(dir, 'private/sheet-mapping.json');
+  let labels: RunForSection['labels'] = null;
+  if ((await exists(labelsFile)) && (await exists(mappingFile))) {
+    const mapping = await readJsonFile<SheetMapping>(mappingFile);
+    const state = readTopicLabels(parseCsv(await readFile(labelsFile, 'utf8')), mapping);
+    if (state.labels.length === mapping.rows.length && state.unlabelled.length === 0 && state.problems.length === 0) labels = state.labels;
+  }
+  return { data, verdicts: scoredAnswers(data).verdicts, labels, runDir: path.relative(path.join(ROOT, '..'), dir) };
+}
+
+/** The sheet keys of every other topics run folder: a new sheet's keys must
+ * not repeat one of them. */
+async function otherSheetKeys(dir: string): Promise<Set<string>> {
+  const keys = new Set<string>();
+  const out = path.join(ROOT, 'eval/out');
+  let names: string[] = [];
+  try {
+    names = (await readdir(out)).filter((n) => n.startsWith('topics-'));
+  } catch {
+    // no eval/out
+  }
+  for (const name of names) {
+    const file = path.join(out, name, 'private/sheet-mapping.json');
+    if (path.resolve(out, name) === dir || !(await exists(file))) continue;
+    for (const row of (await readJsonFile<SheetMapping>(file)).rows) keys.add(row.key);
+  }
+  return keys;
+}
+
+async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, reportArg?: string): Promise<void> {
+  if (!outDir) throw new Error('topics analyze needs --out DIR (the run folder, e.g. eval/out/topics-…).');
+  const dir = path.resolve(ROOT, outDir);
+  const data = await loadTopicsRun(dir);
+  // A re-measurement folder says so itself (`run.json`).
+  const only = (await readTopicsRunInfo(dir))?.only;
+  const reportFile = reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT);
   // Nothing written here may hold a key, should one be in the environment.
   const envKey = process.env.ANTHROPIC_API_KEY?.trim();
   const write = async (file: string, text: string) => {
@@ -1543,7 +1650,14 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): 
     sheetState = existing.state;
     console.log('The label sheet exists: not rewritten.');
   } else {
-    const sheet = buildTopicSheet(data.items, data.answers);
+    // A re-measurement's sheet gets keys of its own: no key of another run's
+    // sheet may come back on it.
+    let seed = only === undefined ? SHEET_SEED : SHEET_SEED + 1;
+    let sheet = buildTopicSheet(data.items, data.answers, seed);
+    if (only !== undefined) {
+      const taken = await otherSheetKeys(dir);
+      while (sheet.mapping.rows.some((r) => taken.has(r.key))) sheet = buildTopicSheet(data.items, data.answers, ++seed);
+    }
     mapping = sheet.mapping;
     sheetAnswers = sheet.answers;
     await write(questionsFile, sheet.questionsText);
@@ -1562,11 +1676,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): 
   // labels go into the report, and the second-look file into the run folder.
   const runDir = path.relative(path.join(ROOT, '..'), dir);
   const complete = sheetState.labels.length === mapping.rows.length && sheetState.unlabelled.length === 0 && sheetState.problems.length === 0;
-  let phaseC: PhaseCParts | undefined;
   if (complete) {
-    const findingsFile = path.join(ROOT, TOPICS_FINDINGS);
-    const findings = (await exists(findingsFile)) ? (await readFile(findingsFile, 'utf8')).replace(/^<!--[\s\S]*?-->\s*/, '') : null;
-    phaseC = phaseCParts({ data, labels: sheetState.labels, verdicts: scored.verdicts, findings });
     const secondLookFile = path.join(dir, 'second-look.md');
     if ((await exists(secondLookFile)) && secondLookHasVerdicts(await readFile(secondLookFile, 'utf8'))) {
       console.log("second-look.md has the owner's verdicts in it: not rewritten.");
@@ -1575,25 +1685,51 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): 
       console.log('Written in the run folder: second-look.md.');
     }
   } else {
-    console.log('The sheet is not complete: the report is the phase B report, without the labels.');
+    console.log(`The sheet is not complete: the report ${only === undefined ? 'is the phase B report' : 'section is'} without the labels.`);
+  }
+  const log = (await exists(path.join(dir, 'progress.log'))) ? await readFile(path.join(dir, 'progress.log'), 'utf8') : '';
+  const generatedAt = `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+  const sheetMeta = { questions: mapping.rows.length, answers: sheetAnswers, labelled: sheetState.labels.length, withProblems: new Set(sheetState.problems.map((p) => p.key)).size };
+  const findingsOf = async (file: string) => ((await exists(file)) ? (await readFile(file, 'utf8')).replace(/^<!--[\s\S]*?-->\s*/, '') : null);
+  const oldReport = (await exists(reportFile)) ? await readFile(reportFile, 'utf8') : null;
+
+  // A re-measurement: its own section after the first run's part of the
+  // report, which is left as it is.
+  if (only !== undefined) {
+    if (oldReport === null) throw new Error(`${path.relative(ROOT, reportFile)} is not there: analyse the first run first (topics analyze --out eval/out/${TOPICS_FIRST_RUN.folder}).`);
+    const firstDir = path.join(ROOT, 'eval/out', TOPICS_FIRST_RUN.folder);
+    const first = firstDir === dir ? null : await loadRunForSection(firstDir);
+    if (first === null) console.log(`The first run's folder (eval/out/${TOPICS_FIRST_RUN.folder}) is not there: the section has no comparison columns.`);
+    const section = renderRemeasurement({
+      topicId: only,
+      run: { data, verdicts: scored.verdicts, labels: complete ? sheetState.labels : null, runDir },
+      first,
+      generatedAt,
+      wallSeconds: wallSeconds(log),
+      priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+      sheet: sheetMeta,
+      findings: await findingsOf(path.join(ROOT, `eval/data/topics/remeasure-${only}-findings.md`)),
+    });
+    const leaks = [
+      ...contentLeaks(section, data.items, data.answers, mapping.rows.map((r) => r.key)),
+      ...(first ? contentLeaks(section, first.data.items, first.data.answers) : []),
+    ];
+    if (leaks.length > 0) throw new Error(`The section would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
+    await write(reportFile, withRemeasurement(oldReport, only, section));
+    console.log(`Written: the "Re-measurement" section of ${path.relative(path.join(ROOT, '..'), reportFile)} (${section.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
+    return;
   }
 
-  // The report: counts and rates only.
-  const log = (await exists(path.join(dir, 'progress.log'))) ? await readFile(path.join(dir, 'progress.log'), 'utf8') : '';
-  const report = renderTopicsReport(
-    data,
-    {
-      runDir,
-      generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
-      wallSeconds: wallSeconds(log),
-      sheet: { questions: mapping.rows.length, answers: sheetAnswers, labelled: sheetState.labels.length, withProblems: new Set(sheetState.problems.map((p) => p.key)).size },
-    },
-    phaseC,
-  );
+  let phaseC: PhaseCParts | undefined;
+  if (complete) phaseC = phaseCParts({ data, labels: sheetState.labels, verdicts: scored.verdicts, findings: await findingsOf(path.join(ROOT, TOPICS_FINDINGS)) });
+
+  // The report: counts and rates only. Re-measurement sections the report
+  // already holds are kept after it.
+  const report = renderTopicsReport(data, { runDir, generatedAt, wallSeconds: wallSeconds(log), sheet: sheetMeta }, phaseC);
   const leaks = contentLeaks(report, data.items, data.answers, mapping.rows.map((r) => r.key));
   if (leaks.length > 0) throw new Error(`The report would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
-  await write(path.join(ROOT, '..', TOPICS_REPORT), report);
-  console.log(`Written: ${TOPICS_REPORT} (${report.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
+  await write(reportFile, oldReport === null ? report : carryRemeasurements(oldReport, report));
+  console.log(`Written: ${path.relative(path.join(ROOT, '..'), reportFile)} (${report.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
 }
 
 async function main(): Promise<void> {
@@ -1609,9 +1745,13 @@ async function main(): Promise<void> {
   if (command === 'analyze') return analyzeRun(out);
   if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
   if (command === 'sets') return buildSets();
-  if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun();
-  if (command === 'topics' && rest.includes('analyze')) return topicsAnalyze(out, rest.includes('--rebuild-sheet'));
-  if (command === 'topics' && rest.includes('run')) return runTopics(out);
+  const onlyIndex = rest.indexOf('--only');
+  const only = onlyIndex >= 0 ? rest[onlyIndex + 1] : undefined;
+  if (onlyIndex >= 0 && (only === undefined || only.startsWith('--'))) throw new Error('--only needs a topic id, e.g. --only conditionals.');
+  if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun(only);
+  const reportIndex = rest.indexOf('--report');
+  if (command === 'topics' && rest.includes('analyze')) return topicsAnalyze(out, rest.includes('--rebuild-sheet'), reportIndex >= 0 ? rest[reportIndex + 1] : undefined);
+  if (command === 'topics' && rest.includes('run')) return runTopics(out, only);
   if (command === 'measure' && rest.includes('score')) return runMeasureScoring(out, rest.includes('--dry-run'));
   if (command === 'measure' && rest.includes('--dry-run')) return measureDryRun();
   if (command === 'measure' && rest.includes('probe')) return measureProbe();
@@ -1620,7 +1760,7 @@ async function main(): Promise<void> {
   if (command === 'measure' && rest.includes('analyze')) return analyzeMeasurement(out);
   if (command === 'measure' && rest.includes('dt-more')) return runDtMore(out);
   console.log(
-    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run | topics run [--out DIR] | topics analyze --out DIR',
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run [--only TOPIC] | topics run [--only TOPIC] [--out DIR] | topics analyze --out DIR',
   );
   process.exitCode = 1;
 }

@@ -67,11 +67,39 @@ export interface MeasuredTopic {
   control: boolean;
 }
 
-/** The five first-wave topics, six sets each, then the control, three. */
-export function measuredTopics(): MeasuredTopic[] {
+/**
+ * The five first-wave topics, six sets each, then the control, three. With
+ * [only] (a re-measurement, `--only <topicId>`): that one topic alone, with
+ * the sets it has in the full measurement.
+ */
+export function measuredTopics(only?: string): MeasuredTopic[] {
   const control = topicById(CONTROL_TOPIC_ID);
   if (!control) throw new Error(`The control topic ${CONTROL_TOPIC_ID} is not a live topic.`);
-  return [...FIRST_WAVE_TOPICS.map((topic) => ({ topic, sets: SETS_PER_NEW_TOPIC, control: false })), { topic: control, sets: SETS_FOR_CONTROL, control: true }];
+  const all = [...FIRST_WAVE_TOPICS.map((topic) => ({ topic, sets: SETS_PER_NEW_TOPIC, control: false })), { topic: control, sets: SETS_FOR_CONTROL, control: true }];
+  if (only === undefined) return all;
+  const one = all.filter((t) => t.topic.id === only);
+  if (one.length === 0) throw new Error(`--only ${only}: not a measured topic (${all.map((t) => t.topic.id).join(', ')}).`);
+  return one;
+}
+
+/**
+ * The first run of the measurement (the owner's, 2026-11-18): its folder
+ * under `eval/out/` and what it spent ($0.7636 measured, "$0.76" in its log;
+ * rounded up here). The $15.00 cap is on the measurement as a whole, so a
+ * later run counts this as already spent; the figure stands in only when the
+ * folder itself is not there to be read.
+ */
+export const TOPICS_FIRST_RUN = { folder: 'topics-2026-11-18T16-35-34-632Z', spendUsd: 0.77 } as const;
+
+/**
+ * What the measurement's other runs have spent: the measured spend of every
+ * other `topics-…` folder under `eval/out/` ([folders], the current run's
+ * own left out by the caller), with the first run's known spend when its
+ * folder is not among them. Never less than what is known to be spent.
+ */
+export function priorTopicsSpend(folders: readonly { name: string; spendUsd: number }[]): number {
+  const read = folders.reduce((n, f) => n + f.spendUsd, 0);
+  return folders.some((f) => f.name === TOPICS_FIRST_RUN.folder) ? read : read + TOPICS_FIRST_RUN.spendUsd;
 }
 
 /** A model the harness has a price for; a production model without one
@@ -97,13 +125,13 @@ function planned(customId: string, stage: PlannedCall['stage'], group: string, m
   return { customId, stage, group, model, body, estimate: { inputTokens: estimateInputTokens(body, ratio), outputTokens }, dropPriority: 1 };
 }
 
-/** 33 calls: every set of a topic sends the same body, as every user's
- * request for that topic does. */
-export function generationCalls(ratio?: number): PlannedCall[] {
+/** 33 calls (6 with [only] a new topic): every set of a topic sends the same
+ * body, as every user's request for that topic does. */
+export function generationCalls(ratio?: number, only?: string): PlannedCall[] {
   const model = pricedModel(PRODUCTION_PRACTICE.model);
   const outputTokens = generationOutputTokens({ ...PRODUCTION_PRACTICE, id: 'G-D', model });
   const calls: PlannedCall[] = [];
-  for (const { topic, sets } of measuredTopics()) {
+  for (const { topic, sets } of measuredTopics(only)) {
     for (let set = 1; set <= sets; set++) calls.push(planned(generationId(topic.id, set), 'generation', topic.id, model, generationBody(topic.id), outputTokens, ratio));
   }
   return calls;
@@ -588,11 +616,11 @@ export interface TopicsPlan {
 
 /** Every call the measurement makes if nothing fails, the later stages on
  * placeholders: an upper bound, since not every item gets a variant. */
-export function planTopicsDryRun(ratio?: number): TopicsPlan {
-  const generation = generationCalls(ratio);
+export function planTopicsDryRun(ratio?: number, only?: string): TopicsPlan {
+  const generation = generationCalls(ratio, only);
   const answers: PlannedCall[] = [];
   const built: TopicAnswer[] = [];
-  for (const { topic, sets } of measuredTopics()) {
+  for (const { topic, sets } of measuredTopics(only)) {
     for (let set = 1; set <= sets; set++) {
       const items = placeholderItems(topic.id, set);
       answers.push(answerWriterCall(topic.id, set, items, ratio));
@@ -621,12 +649,22 @@ export interface DryRunSummary {
   totalCalls: number;
   totalUsd: number;
   worstCaseUsd: number;
+  /** The estimate is within the dry-run limit and, with what earlier runs
+   * spent, within the cap. */
   withinLimit: boolean;
 }
 
+/** A re-measurement: the one topic measured, and what the measurement's
+ * earlier runs have spent (it counts against the same cap). */
+export interface DryRunScope {
+  only?: string;
+  priorSpendUsd?: number;
+}
+
 /** The dry run's printout: the calls per stage and the estimated spend. */
-export function renderTopicsDryRun(plan: TopicsPlan, ratio: number): DryRunSummary {
-  const topics = measuredTopics();
+export function renderTopicsDryRun(plan: TopicsPlan, ratio: number, scope: DryRunScope = {}): DryRunSummary {
+  const topics = measuredTopics(scope.only);
+  const prior = scope.priorSpendUsd ?? 0;
   const sets = topics.reduce((n, t) => n + t.sets, 0);
   const stages: { name: string; what: string; calls: PlannedCall[] }[] = [
     { name: 'generation', what: 'Topic Practice sets, the live practice path', calls: plan.generation },
@@ -637,9 +675,9 @@ export function renderTopicsDryRun(plan: TopicsPlan, ratio: number): DryRunSumma
   const all = stages.flatMap((s) => s.calls);
   const totalUsd = planCost(all);
   const worstCaseUsd = planWorstCase(all);
-  const withinLimit = totalUsd <= TOPICS_DRY_RUN_LIMIT_USD;
+  const withinLimit = totalUsd <= TOPICS_DRY_RUN_LIMIT_USD && prior + totalUsd * TOPICS_CAP_MARGIN <= TOPICS_SPEND_CAP_USD;
   const lines = [
-    'First-wave topics measurement — dry run (no API call)',
+    scope.only === undefined ? 'First-wave topics measurement — dry run (no API call)' : `First-wave topics measurement, ${scope.only} only (a re-measurement) — dry run (no API call)`,
     '',
     `Topics: ${topics.map((t) => `${t.topic.id} × ${t.sets}${t.control ? ' (control)' : ''}`).join(', ')}.`,
     `${sets} sets of ${ITEMS_PER_SET} = ${sets * ITEMS_PER_SET} questions; at most ${plan.answerCount} built answers to score.`,
@@ -653,8 +691,13 @@ export function renderTopicsDryRun(plan: TopicsPlan, ratio: number): DryRunSumma
     }),
     `| **Total** | | | **${all.length}** | | | | **${usd(totalUsd)}** |`,
     '',
-    `Estimated spend ${usd(totalUsd)}: ${withinLimit ? 'within' : 'OVER'} the dry-run limit of ${usd(TOPICS_DRY_RUN_LIMIT_USD)}. Hard cap on measured spend: ${usd(TOPICS_SPEND_CAP_USD)}; a call is made only while spent + its estimate × ${TOPICS_CAP_MARGIN} stays within it, else it is skipped and recorded.`,
-    `Worst case, every call writing all its max_tokens allows: ${usd(worstCaseUsd)} (${worstCaseUsd <= TOPICS_SPEND_CAP_USD ? 'under' : 'over'} the cap).`,
+    `Estimated spend ${usd(totalUsd)}: ${totalUsd <= TOPICS_DRY_RUN_LIMIT_USD ? 'within' : 'OVER'} the dry-run limit of ${usd(TOPICS_DRY_RUN_LIMIT_USD)}. Hard cap on measured spend: ${usd(TOPICS_SPEND_CAP_USD)}; a call is made only while spent + its estimate × ${TOPICS_CAP_MARGIN} stays within it, else it is skipped and recorded.`,
+    ...(prior > 0
+      ? [
+          `The cap is on the measurement as a whole: earlier runs spent ${usd(prior)}, so this run starts at ${usd(prior)} spent and may add ${usd(TOPICS_SPEND_CAP_USD - prior)}. With this estimate the measurement comes to ${usd(prior + totalUsd)} of ${usd(TOPICS_SPEND_CAP_USD)}${prior + totalUsd * TOPICS_CAP_MARGIN <= TOPICS_SPEND_CAP_USD ? '' : ': OVER the cap with the margin'}.`,
+        ]
+      : []),
+    `Worst case, every call writing all its max_tokens allows: ${usd(worstCaseUsd)}${prior > 0 ? `, with the earlier runs ${usd(prior + worstCaseUsd)}` : ''} (${prior + worstCaseUsd <= TOPICS_SPEND_CAP_USD ? 'under' : 'over'} the cap).`,
     'The scoring row is an upper bound: it assumes a second correct answer for every item that can have one.',
   ];
   return { text: lines.join('\n'), totalCalls: all.length, totalUsd, worstCaseUsd, withinLimit };
