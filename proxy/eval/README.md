@@ -438,3 +438,26 @@ exists is never rewritten. It prints how many rows are labelled, names every
 row not started, and names every value to fix. When it prints `165 of 165
 rows labelled, 0 not started, 0 with something to fix`, the sheet is done:
 tell Claude Code to start Phase C of `docs/TOPICS.md`.
+
+## Phase C — the labels in the report (no API call)
+
+The same command. Once the sheet is complete (`165 of 165 rows labelled, 0
+not started, 0 with something to fix`) it writes the phase C report:
+
+```bash
+npm run eval -- topics analyze --out eval/out/topics-2026-11-18T16-35-34-632Z
+```
+
+- `docs/1.5.0-topics-report.md`: the owner's three pass criteria per topic
+  with the counts behind each, the defects after the gate, the scorer
+  against the labelled truth, what the automatic checks were worth, and the
+  findings and proposals. The findings are hand-written in
+  `eval/data/topics/phase-c-findings.md` and put into the report as they
+  are: edit that file, not the report.
+- `second-look.md` in the run folder (not in the repository): every answer
+  where the scorer and the labelled truth differ, the answers labelled
+  `unsure`, and the defect questions. Write your verdict after "Owner:"; once
+  one is filled the file is no longer rewritten.
+
+It reads `sheet/labels.csv` and never changes it. The `private` folder and
+the run's own files may be opened now.

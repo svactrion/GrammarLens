@@ -14619,3 +14619,65 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   sheet is labelled in the owner's Cowork chat (Claude first, the owner
   spot-checks); phase C follows.
 - Record and decisions T-12 to T-22: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics: the labels and phase C, the pass criteria per topic; no API call)
+
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, phase C rewritten): a
+  question with more than one right answer is not a defect for that reason
+  (the scorer is a model and matches no key); the labels mark such questions
+  with a note starting `multi:` and lesser blemishes with `minor:`. The risk
+  moves to the scorer and is shown per topic.
+- **[Measured]** The sheet is filled: 165 of 165 questions and their 464
+  built answers, labelled by Claude in the owner's Cowork chat and checked
+  by the owner. 4 questions are defects (1 of them had failed the gate), 18
+  are noted `multi:`, 6 `minor:`; 6 built answers are `unsure`.
+- **[Result]** The owner's three criteria per topic (at most 5 % defective
+  questions after the gate; scoring agreement at least 95 %; false "correct"
+  at most 2 %):
+  - Passive Voice: 0 of 30; 82 of 82; 0 of 51. **Passes.**
+  - Prepositions: 0 of 30; 81 of 83 (97.6 %); 0 of 48. **Passes.**
+  - Relative Clauses: 0 of 30; 89 of 90 (98.9 %); 0 of 51. **Passes.**
+  - Conditionals: 1 of 29 (3.4 %); 75 of 80 (93.8 %); 2 of 46 (4.3 %).
+    **Fails** on agreement and on false "correct".
+  - Comparatives & Superlatives: 1 of 30 (3.3 %); 80 of 81 (98.8 %); 1 of 47
+    (2.1 %). **Fails** on false "correct", by one answer.
+  - The control, Articles (live), for reference: 1 of 15 (6.7 %); 40 of 42
+    (95.2 %); 2 of 22 (9.1 %). Fails two.
+  - The five new topics together: agreement 407 of 416 (97.8 %), false
+    "correct" 3 of 243 (1.2 %), false "needs work" 6 of 173 (3.5 %).
+- **[Finding]** Conditionals fails on one structure: 5 of its 30 questions
+  are about mixed conditionals, which the topic's description and hint card
+  do not name; both false "correct" verdicts, the defect after the gate and
+  the question without a blank are among them. Comparatives & Superlatives
+  fails by a misspelt superlative the scorer accepted while giving the right
+  spelling; with 47 answers labelled wrong the 2 % line allows none. In 3 of
+  the run's 5 false "correct" verdicts the scorer's own explanation or
+  corrected answer contradicts its verdict. Of the 34 second answers the
+  writer built for the new topics, 9 are labelled wrong.
+- **[Finding]** More than one right answer: on the right answers of the 18
+  `multi:` questions the scorer said "needs work" 2 times of 28, against 4
+  of 145 on the other questions of the new topics. The answers to accept
+  that nobody built (10 questions) were never scored.
+- **[Engineering]** `topics analyze` does phase C when the sheet is complete
+  (`proxy/eval/lib/topics_labels.ts`): the report's label sections, the
+  pass criteria in whole numbers, and `second-look.md` in the run folder
+  (every answer where the scorer and the labelled truth differ, the unsure
+  answers, the defect questions; an "Owner:" line per entry). The causes and
+  proposed fixes are hand-written in
+  `proxy/eval/data/topics/phase-c-findings.md` and put into the report as
+  they are. No prompt, no hint card, no flag and no record of the run was
+  changed; `sheet/labels.csv` is only read.
+- **[Proposal]** Not built: a generation-only note that keeps mixed
+  conditionals out of Conditionals, with a re-measurement of that topic
+  alone (this run: $0.14, 30 questions to label); one sentence in the
+  scoring prompt (a misspelling in the tested form is a mistake; the verdict
+  follows the scorer's own correction), checked against the 464 labelled
+  answers (about $0.17, no new labels); set variety by a scenario theme the
+  Worker gives each set (`docs/1.5.0-topics-set-variety.md`: no app change,
+  no new data, under 1 % more per set, all ten topics).
+- **[Verified]** `npm run typecheck` clean; `npm test` 647 passed (27 new,
+  no network); the sheet and the run's own files byte for byte unchanged; no
+  generated content in the commits.
+- **[Not verified]** Any proposed fix. The owner decides which topics go on
+  to release prep, which fixes are made, and the set-variety option.
+- Record and decisions T-23 to T-33: `docs/1.5.0-topics-progress.md`.

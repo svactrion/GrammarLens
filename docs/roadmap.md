@@ -420,10 +420,28 @@ Owner decisions so far:
   control 0), and on the live path two Topic Practice requests for one
   topic are the same request byte for byte (no seed, no earlier question,
   no list to avoid); the scorer agreed with the built answers on 96.4 % in
-  the new topics. **Next: the labels** (in the owner's Cowork chat, Claude
-  first, the owner spot-checks), then phase C. The topics stay switched
-  off. Record and decisions:
-  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
+  the new topics. *(Superseded, kept as written:* **Next: the labels** (in
+  the owner's Cowork chat, Claude first, the owner spot-checks), then phase
+  C.*)* **Labels done and phase C done (2026-11-18, no API call):** all 165
+  questions and 464 built answers labelled by Claude in the owner's Cowork
+  chat and checked by the owner; owner decision: a question with more than
+  one right answer is not a defect for that reason. **Against the owner's
+  three criteria (at most 5 % defective questions after the gate, scoring
+  agreement at least 95 %, false "correct" at most 2 %): Passive Voice,
+  Prepositions and Relative Clauses pass all three; Conditionals fails two
+  (agreement 75 of 80, false "correct" 2 of 46; its one cause is the mixed
+  conditional, which the topic's description and hint card do not cover);
+  Comparatives & Superlatives fails one by a single answer (false "correct"
+  1 of 47, a misspelt superlative the scorer accepted).** The control
+  (Articles, live) fails two of the three in the same sample. Proposed, not
+  built: a generation note that keeps mixed conditionals out and a
+  re-measurement of Conditionals alone; one sentence in the scoring prompt,
+  checked against the labelled answers; and for set variety a scenario theme
+  the Worker gives each set
+  ([`1.5.0-topics-set-variety.md`](1.5.0-topics-set-variety.md)). **Next:
+  the owner's decisions** (which topics go on to release prep, the fixes,
+  the set-variety option). The topics stay switched off. Record and
+  decisions: [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
     as `school`, a new value of the `learning_goal` user property). It is
