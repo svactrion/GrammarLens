@@ -37,6 +37,11 @@
  *                                      runs it (or resumes DIR): generation, the answer writer,
  *                                      scoring, the automatic checks; at most $15 of measured
  *                                      spend; the key from ANTHROPIC_API_KEY in the environment only
+ *   npm run eval -- topics analyze --out DIR
+ *                                      phase B, no API call: docs/1.5.0-topics-report.md, and in the
+ *                                      run folder the blind label sheet and the details file; a
+ *                                      sheet that exists is read back and checked, never rewritten
+ *                                      (--rebuild-sheet replaces one nobody has written in yet)
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -162,7 +167,9 @@ import {
   type TopicAnswer,
   type TopicItem,
 } from './lib/topics_measurement';
-import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type SetGate } from './lib/topics_checks';
+import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemCheckRecord, type SetGate } from './lib/topics_checks';
+import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
+import { buildTopicSheet, readTopicLabels, renderDetails, renderSheetStatus, sheetHeaderProblem, type ReadSheet, type SheetMapping } from './lib/topics_sheet';
 import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
 const API = 'https://api.anthropic.com/v1';
@@ -1473,6 +1480,93 @@ async function runTopics(outDir: string | undefined): Promise<void> {
   if (!complete) process.exitCode = 1;
 }
 
+/** Where phase B's report goes (in the repository: counts and rates only). */
+const TOPICS_REPORT = 'docs/1.5.0-topics-report.md';
+
+/**
+ * Phase B (docs/TOPICS.md): from a finished run folder, the report into
+ * `docs/`, and into the run folder (never the repository) the blind label
+ * sheet (`sheet/questions.txt`, `sheet/labels.csv`,
+ * `private/sheet-mapping.json`) and the details file (`private/details.txt`).
+ * No API call and no key. The run's own files are only read. A sheet that
+ * exists is never rewritten (someone may have started it): it is read back
+ * and every unlabelled row and every value outside the vocabulary is named.
+ */
+async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): Promise<void> {
+  if (!outDir) throw new Error('topics analyze needs --out DIR (the run folder, e.g. eval/out/topics-…).');
+  const dir = path.resolve(ROOT, outDir);
+  const read = <T>(name: string) => readJsonFile<T>(path.join(dir, name));
+  const data: TopicsRunData = {
+    records: await read<MeasureRecord[]>('records.json'),
+    sets: await read<SetSummary[]>('sets.json'),
+    items: await read<TopicItem[]>('items.json'),
+    answers: await read<TopicAnswer[]>('answers.json'),
+    answerProblems: await read<AnswerProblem[]>('answer-problems.json'),
+    scoringCalls: await read<{ customId: string; answerIds: string[] }[]>('scoring-calls.json'),
+    checks: await read<ItemCheckRecord[]>('checks.json'),
+  };
+  // Nothing written here may hold a key, should one be in the environment.
+  const envKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const write = async (file: string, text: string) => {
+    if (envKey && text.includes(envKey)) throw new Error('refusing to write a file that contains the API key');
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, text);
+  };
+
+  // The sheet: built once, then only read.
+  const questionsFile = path.join(dir, 'sheet/questions.txt');
+  const labelsFile = path.join(dir, 'sheet/labels.csv');
+  const mappingFile = path.join(dir, 'private/sheet-mapping.json');
+  let mapping: SheetMapping;
+  let sheetAnswers: number;
+  let sheetState: ReadSheet;
+  let existing: { mapping: SheetMapping; state: ReadSheet } | null = null;
+  if ((await exists(labelsFile)) && (await exists(mappingFile))) {
+    const text = await readFile(labelsFile, 'utf8');
+    const header = sheetHeaderProblem(text);
+    if (header) throw new Error(header);
+    const read = await readJsonFile<SheetMapping>(mappingFile);
+    existing = { mapping: read, state: readTopicLabels(parseCsv(text), read) };
+  }
+  // `--rebuild-sheet` replaces a sheet only while nobody has written in it.
+  if (existing && rebuildSheet && (existing.state.labels.length > 0 || existing.state.problems.length > 0)) {
+    throw new Error('The label sheet has labels in it; --rebuild-sheet does not replace a sheet someone has started.');
+  }
+  if (existing && !rebuildSheet) {
+    mapping = existing.mapping;
+    sheetAnswers = mapping.rows.reduce((n, r) => n + Object.keys(r.letters).length, 0);
+    sheetState = existing.state;
+    console.log('The label sheet exists: not rewritten.');
+  } else {
+    const sheet = buildTopicSheet(data.items, data.answers);
+    mapping = sheet.mapping;
+    sheetAnswers = sheet.answers;
+    await write(questionsFile, sheet.questionsText);
+    await write(labelsFile, sheet.labelsCsv);
+    await write(mappingFile, `${JSON.stringify(sheet.mapping, null, 2)}\n`);
+    sheetState = readTopicLabels(parseCsv(sheet.labelsCsv), mapping);
+    console.log(`The label sheet written: ${sheet.questions} questions, ${sheet.answers} built answers.`);
+  }
+  console.log(renderSheetStatus(sheetState, mapping.rows.length));
+
+  // The details file: derived, rewritten every time.
+  const scored = scoredAnswers(data);
+  await write(path.join(dir, 'private/details.txt'), renderDetails({ ...data, verdicts: scored.verdicts, mapping, runDir: path.relative(path.join(ROOT, '..'), dir) }));
+
+  // The report: counts and rates only.
+  const log = (await exists(path.join(dir, 'progress.log'))) ? await readFile(path.join(dir, 'progress.log'), 'utf8') : '';
+  const report = renderTopicsReport(data, {
+    runDir: path.relative(path.join(ROOT, '..'), dir),
+    generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+    wallSeconds: wallSeconds(log),
+    sheet: { questions: mapping.rows.length, answers: sheetAnswers, labelled: sheetState.labels.length, withProblems: new Set(sheetState.problems.map((p) => p.key)).size },
+  });
+  const leaks = contentLeaks(report, data.items, data.answers, mapping.rows.map((r) => r.key));
+  if (leaks.length > 0) throw new Error(`The report would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
+  await write(path.join(ROOT, '..', TOPICS_REPORT), report);
+  console.log(`Written: ${TOPICS_REPORT} (${report.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
+}
+
 async function main(): Promise<void> {
   if (!(await exists(path.join(ROOT, 'wrangler.jsonc')))) throw new Error('Run from proxy/ (npm run eval -- …).');
   const [command, ...rest] = process.argv.slice(2);
@@ -1487,6 +1581,7 @@ async function main(): Promise<void> {
   if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
   if (command === 'sets') return buildSets();
   if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun();
+  if (command === 'topics' && rest.includes('analyze')) return topicsAnalyze(out, rest.includes('--rebuild-sheet'));
   if (command === 'topics' && rest.includes('run')) return runTopics(out);
   if (command === 'measure' && rest.includes('score')) return runMeasureScoring(out, rest.includes('--dry-run'));
   if (command === 'measure' && rest.includes('--dry-run')) return measureDryRun();
@@ -1496,7 +1591,7 @@ async function main(): Promise<void> {
   if (command === 'measure' && rest.includes('analyze')) return analyzeMeasurement(out);
   if (command === 'measure' && rest.includes('dt-more')) return runDtMore(out);
   console.log(
-    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run | topics run [--out DIR]',
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run | topics run [--out DIR] | topics analyze --out DIR',
   );
   process.exitCode = 1;
 }

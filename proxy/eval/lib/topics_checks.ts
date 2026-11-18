@@ -356,6 +356,31 @@ const MIN_SCENARIO_WORDS = 4;
 export function findDuplicates(items: readonly TopicItem[]): Map<string, CheckFlag[]> {
   const out = new Map<string, CheckFlag[]>();
   const add = (id: string, flag: CheckFlag) => out.set(id, [...(out.get(id) ?? []), flag]);
+  for (const pair of duplicatePairs(items)) {
+    const code = `${pair.same ? 'duplicate' : 'near_duplicate'}_${pair.inSet ? 'in_set' : 'across_sets'}`;
+    const detail = (other: TopicItem) => `${pair.same ? 'same words as' : `${Math.round(pair.similarity * 100)} % of the scenario words shared with`} ${other.id}`;
+    add(pair.a.id, { check: 'duplicate', code, detail: detail(pair.b) });
+    add(pair.b.id, { check: 'duplicate', code, detail: detail(pair.a) });
+  }
+  return out;
+}
+
+/** Two questions of one topic that resemble each other. */
+export interface DuplicatePair {
+  a: TopicItem;
+  b: TopicItem;
+  /** The same words; otherwise a near-duplicate. */
+  same: boolean;
+  /** Share of scenario words in common, 0 to 1. */
+  similarity: number;
+  /** Both in one generated set; otherwise across sets. */
+  inSet: boolean;
+}
+
+/** Every resembling pair, in the items' order: what {@link findDuplicates}
+ * flags, kept as pairs for the report's split and groups. */
+export function duplicatePairs(items: readonly TopicItem[]): DuplicatePair[] {
+  const pairs: DuplicatePair[] = [];
   const prepared = items.map((item) => ({ item, text: wordsOf(item.prompt).join(' '), words: scenarioWords(item) }));
   for (let i = 0; i < prepared.length; i++) {
     for (let j = i + 1; j < prepared.length; j++) {
@@ -366,14 +391,36 @@ export function findDuplicates(items: readonly TopicItem[]): Map<string, CheckFl
       const similarity = jaccard(a.words, b.words);
       const near = !same && a.item.type === b.item.type && Math.min(a.words.size, b.words.size) >= MIN_SCENARIO_WORDS && similarity >= NEAR_DUPLICATE_SIMILARITY;
       if (!same && !near) continue;
-      const where = a.item.set === b.item.set ? 'in_set' : 'across_sets';
-      const code = `${same ? 'duplicate' : 'near_duplicate'}_${where}`;
-      const detail = (other: TopicItem) => `${same ? 'same words as' : `${Math.round(similarity * 100)} % of the scenario words shared with`} ${other.id}`;
-      add(a.item.id, { check: 'duplicate', code, detail: detail(b.item) });
-      add(b.item.id, { check: 'duplicate', code, detail: detail(a.item) });
+      pairs.push({ a: a.item, b: b.item, same, similarity, inSet: a.item.set === b.item.set });
     }
   }
-  return out;
+  return pairs;
+}
+
+/**
+ * The groups of questions that resemble each other: questions joined by a
+ * chain of resembling pairs are one group (A like B and B like C make a group
+ * of three even when A and C are not a pair). Each group in the items' order,
+ * the groups in the order of their first question.
+ */
+export function duplicateGroups(items: readonly TopicItem[], pairs: readonly DuplicatePair[] = duplicatePairs(items)): TopicItem[][] {
+  const parent = new Map<string, string>();
+  const find = (id: string): string => {
+    let root = id;
+    while (parent.get(root) !== undefined && parent.get(root) !== root) root = parent.get(root) as string;
+    return root;
+  };
+  for (const { a, b } of pairs) {
+    for (const id of [a.id, b.id]) if (!parent.has(id)) parent.set(id, id);
+    parent.set(find(b.id), find(a.id));
+  }
+  const groups = new Map<string, TopicItem[]>();
+  for (const item of items) {
+    if (!parent.has(item.id)) continue;
+    const root = find(item.id);
+    groups.set(root, [...(groups.get(root) ?? []), item]);
+  }
+  return [...groups.values()];
 }
 
 // ---------------------------------------------------------------------------
