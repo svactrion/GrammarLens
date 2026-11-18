@@ -117,6 +117,246 @@ The exact moment on the phone (which refresh brought the rest scene while
 which condition said "not quiet") cannot be replayed without the phone;
 the two causes above are each enough to give the owner's symptom.
 
+**Fix (A1, `df1747c`).** The save only notes the Welcome earn. The results
+(V10) show alone; their "Climb my first step" opens the badge (V11) over
+them, and the badge's Continue goes on to the first climb (V12), or pops
+the route where there is no first climb. The results stay in one `Stack`
+whether or not a layer is open, so opening the badge no longer rebuilds
+them (their entrance replayed and the list jumped 10 pt). R05 unchanged
+(F3-1).
+
+**Tests (A1).** `first_launch_climb_test` "end to end (A1)": the Day 0
+walk records results, badge, first climb, Home, step, Premium in that
+order; it fails on the old code (the badge first). The result screen's,
+Home's and the first-launch flow's Welcome tests follow the new order
+(`climbThroughWelcome` in `test/support/celebration_support.dart`).
+
+**Fix (A2, `669b218`).** Home re-reads today's Daily Test and the free
+ticket whenever it becomes the visible tab again, so a ticket used from
+Review shows the rest scene at once. N01's check (`_scheduleSoftAskCheck`)
+runs after the frame that shows the rest scene and whenever Home's
+visibility changes: the tab, a route above it closing, resume, the pawn
+landing. A walk cut short by the rest scene no longer holds it back. Still
+once: the stored answer and the controller's open flag guard it.
+
+**Tests (A2).** `test/fix3_n01_trigger_test.dart`, the whole app shell:
+(a) Home, Review, ticket used, back to Home: rest scene and N01 at once;
+(a') the same with a resume while Review is in front; (b) a cold start into
+the rest scene; (c) never twice after "Not now", across tab switches and a
+resume; (c') never twice after a swipe close. (a) and (c') fail on the old
+code.
+
+### B1. V24f (and V24): full-bleed scene, attached sheet
+
+**What was wrong:** both rest scenes were a separate rounded card, the art
+about 2× zoomed in, the fire cut at the card's edge, the dream bubble in
+the middle. The boards: the scene full-bleed from the top of the screen
+(behind the status bar), the night sheet attached under it.
+
+**Fix (`d445e59`).** `RestScene` is rewritten: the scene is full-bleed from
+y = 0 with the art at the boards' scale (600 px of art over 390 pt), never
+scaled up; the night sheet is attached under it (rounded top corners, down
+to the page's end). After layout the sheet's top is fitted so its anchor
+ends 8 pt above the nav bar: V24f's "Wake <Hero> up" card, V24's last row.
+The scene is cropped from the top for it, never so far that the camp (tent
+top to fire foot) loses 12 pt above the sheet. Dream bubble top left,
+capsule top right; V24's chip and bubble as on its board. This replaces
+integration decision I-7 (a shorter, scaled-up scene). V24 had the same
+card, so it got the same treatment.
+
+**Tests.** `home_screen_test` "B1 V24/V24f size, text": both scenes ×
+default and largest text × 375 × 667, 390 × 844, 393 × 852, 402 × 874,
+428 × 926, 440 × 956: the scene full-bleed (top 0, full width), the sheet
+attached at its bottom, the camp (tent, companion, fire) inside the safe
+area and ≥ 12 pt above the sheet, Wake ≥ 8 pt above the bar where the
+screen is at least 800 pt tall, the row reachable by scrolling. No 375 ×
+667 or 428 × 926 simulator exists, so all sizes are widget-test renders
+(`FIX3_CAPTURE=1`: `build/fix3-captures/V24*-<w>x<h>-<text>.png`).
+
+Measured (points; "sheet top" is the scene's height above the sheet):
+
+| Board | Size | Text | Sheet top (= scene height above the sheet) | Camp gap above the sheet | Wake above the bar |
+|---|---|---|---|---|---|
+| V24f | 375 × 667 | default | 240.8 (minimum: camp + bubble band) | 12.0 | −32.8 (a short scroll) |
+| V24f | 390 × 844 | default | 364.0 | 86.1 | 9.0 |
+| V24f | 393 × 852 | default | 372.0 | 86.9 | 9.0 |
+| V24f | 402 × 874 | default | 394.0 | 89.6 | 9.0 |
+| V24f | 428 × 926 | default | 446.0 | 97.2 | 9.0 |
+| V24f | 440 × 956 | default | 476.0 | 100.7 | 9.0 |
+| V24f | 375 × 667 | largest | 240.8 (minimum) | 12.0 | −50.8 (a short scroll) |
+| V24f | 390 × 844 | largest | 324.0 | 63.7 | 9.0 |
+| V24f | 393 × 852 | largest | 332.0 | 58.8 | 9.0 |
+| V24f | 402 × 874 | largest | 354.0 | 75.1 | 9.0 |
+| V24f | 428 × 926 | largest | 430.0 | 97.2 | 9.0 |
+| V24f | 440 × 956 | largest | 460.0 | 100.7 | 9.0 |
+| V24 | 375 × 667 | default | 292.0 | 63.2 | (the row) |
+| V24 | 390 × 844 | default | 435.0 | 86.1 | |
+| V24 | 393 × 852 | default | 443.0 | 86.9 | |
+| V24 | 402 × 874 | default | 465.0 | 89.6 | |
+| V24 | 428 × 926 | default | 517.0 | 97.2 | |
+| V24 | 440 × 956 | default | 547.0 | 100.7 | |
+| V24 | 375 × 667 | largest | 279.0 | 50.2 | |
+| V24 | 390 × 844 | largest | 422.0 | 86.1 | |
+| V24 | 393 × 852 | largest | 430.0 | 86.9 | |
+| V24 | 402 × 874 | largest | 452.0 | 89.6 | |
+| V24 | 428 × 926 | largest | 504.0 | 97.2 | |
+| V24 | 440 × 956 | largest | 534.0 | 100.7 | |
+
+On the SE, Wake is a short scroll below the first view (F3-3).
+
+### B2. V05b's bar
+
+**What differed from the board:** the track was grey and its stripes dark
+and still; no gloss; the stops were 26 pt and shrank while pending; the
+pennant floated without its pole; every row not done was greyed; no disc
+or sparkles round the companion.
+
+**Fix (`8ae5467`).** A warm track (new `warmTrack` token, light and dark)
+with an inset top shadow; light stripes that travel; a gloss line; 28 pt
+stops that pop into green ticks; the last stop 16 pt from the end with the
+flag's pole standing on it and the pennant waving; a gold glow when full;
+the running row in full colour with pulsing dots, rows not started faint;
+the percentage at −2 letter spacing; the board's white disc and four
+sparkles round the companion. Loops stop with Reduce Motion.
+**Test:** `test/fix3_ready_bar_test.dart`, the bar's geometry in light and
+dark (fill 26 pt; stops 28 pt at 1/3 and 2/3; the last 16 pt from the end;
+the pole centred on it, its foot on the fill; the pennant at the pole).
+
+### B3. V05's tilt
+
+**Cause:** the tilt came from a per-goal list (−2, +2, +1.5, −1.5); with
+School added, cards 2 and 3 leaned the same way. **Fix (`66aeca3`):**
+`GoalCard.tiltFor(position)`: +2° for even positions, −2° for odd, so
+right, left, right, left whatever the goals. **Test:**
+`test/fix3_goal_tilt_test.dart`.
+
+### B4. One shared shine
+
+**Cause of the device's small square:** `PressableButton` laid the band
+out in a `Stack` sized by the label (inside the face's padding), and the
+skew was passed as a tangent to `Matrix4.skewX`, which takes an angle.
+**Fix (`1535036`):** `ButtonShine` is the one implementation: a band the
+face's full height, 38 % of its width, skewed −20°, white 0 → 50 % → 0,
+travelling from −140 % to +320 % of its width in the first 55 % of a 3 s
+loop, clipped to the button's shape. `PressableButton` lays it over its
+whole face; the paywall's `CtaGlow` uses the same widget. **Test:**
+`test/fix3_button_shine_test.dart` (full height, 38 %, −20°, clipped).
+
+Buttons that shine: Welcome "Get started" (V02); the buddy picker's "Climb
+with <Hero>" (V03); the lucky wheel's button (V03b); the goal screen's
+Continue once a goal is picked (V05); "Take my first step" (V06); the Daily
+Test card's button (X05, V14); the results' "Climb my first step" (V10);
+the month card's button (R04); "Wake <Hero> up" (V24f); the paywall's CTA
+through `CtaGlow` (V13, V13r).
+
+### B5. Switches
+
+**Cause:** no theme-level switch style; Material 3's default thumb is dark
+on this palette. **Fix (`3cf7f99`):** `buildAppTheme` sets
+`appSwitchTheme` for light and dark: a white thumb in both states (full
+size when off), the track navy when on and the `track` token when off, no
+outline. N03 drops its own override; V24f's reminder row keeps its green
+track (F3-6). **Test:** `test/fix3_switch_theme_test.dart`.
+
+### B6. V06's flag on each art's apex
+
+**Cause:** the pole stood on the trail's last point, which is under the
+peak: about 0.02 image widths right of it and 0.07 below. **Fix
+(`e1aea44`):** `tool/scene_art/summit_apex.py` measures every monthly
+mountain image (light and dark): the sky colour per row from the window's
+outer columns, the mountain as the region connected to a seed under the
+peak, its highest row's middle column. It writes
+`lib/widgets/monthly_climb/climb_summit_table.dart` next to the trail
+table, and `MountainScene.flagPointFor(theme, brightness)` stands the
+pole's foot on that point, 6 px of art into it (F3-7). Measured (px of
+1536 × 2048): Green Slope (791, 234) / dark (783, 233); Ember Peak
+(784, 229) / (782, 230); Glacier Peak (782, 223) / (780, 224); Red Canyon
+(785, 224) / (790, 224). Checked by eye on zoomed crops and on the V06
+captures. **Tests:** `test/fix3_summit_apex_test.dart`: every ready
+theme's two images have a row; the apex is above the trail's end; the
+image's pixels are mountain at and under the point and sky 6 px above it
+across ±40 px (decoded from the asset, so a new art fails until it is
+measured); V06 for each theme in light and dark puts the pole's foot on
+the point with the whole flag in the scene. `fix_round2_summit_flag_test`
+now checks the apex at four sizes. Captures:
+`build/fix3-captures/(dark/)V06-<theme>-<month>.png`, this month (November,
+Ember Peak) and October, December, January.
+
+### B7. V18 practice loading
+
+**What was wrong (weak-spot practice on the device):** the skeletons were
+narrower than the hint card, the weak spot's name sat at the top left as a
+big title, and the hint card was yellow. **Cause:** `PageLoading` drew each
+page's header over the preparing view, and `PracticePreparing` followed an
+older layout (three skeletons in a centred column, a gold card).
+**Fix (`0508d39`):** one V18 for topic, ticket and weak-spot practice, as
+on the board: no page title; a 130 pt thinking companion over three
+pulsing navy dots; the message "Writing 3 questions on <topic>…" (new
+string `practicePreparingTopic`, 8 languages; the count comes from
+`launchPracticeSet`, F3-8); two skeleton cards (bars 40/90/70 %, 14 pt)
+and the hint card in one column at the content's width, 16 pt apart; the
+hint card on the sky card with a navy "DID YOU KNOW?" and a pager. The
+weak-spot page keeps its back button (F3-9). **Tests:**
+`test/fix3_v18_preparing_test.dart` drives both entry points for real
+(Topic Practice and the weak spot's "Use today's ticket", generation held
+open) in light and dark: no text above the companion, the cards one width
+(the content's), two skeletons, the sky card, the message; and a page
+header passed with a topic (Review's ticket) is not drawn. Captures:
+`V18-topic`, `V18-weakspot` (light and dark).
+
+### Decisions (F3-n)
+
+- **F3-1. R05's order.** Question: should a later day's tier medal also
+  wait for a button, like the Welcome badge? Options: (a) keep it opening
+  over the results when the save lands; (b) open it from the results'
+  button. Choice: (a). Why: SPEC R05 says it opens "right after the Daily
+  Test results"; v11 changed only V10 → V11 → V12, and FIX3 keeps R05 as it
+  is unless SPEC says otherwise.
+- **F3-2. The Xcode script and the owner's team.** Question:
+  `tool/ios/configure_xcode_project.rb` removed `DEVELOPMENT_TEAM` and the
+  other signing keys from the widget target on every run, so the next run
+  would undo E1. Options: (a) leave it; (b) strip signing keys only when
+  the script creates the target. Choice: (b). Why: the owner's own setting
+  must survive; a new target still gets no signing setting from the run.
+  The dry run now says "Nothing to change."
+- **F3-3. V24f on the 375 × 667 SE.** Question: the camp, its 12 pt and the
+  bubble band leave no room for Wake above the bar on the first view (33 pt
+  short at default text, 51 pt at the largest). Options: (a) scale the art
+  down; (b) give up the camp's 12 pt; (c) let the page scroll. Choice: (c).
+  Why: FIX3 forbids (a) and (b); the scroll is short and the card stays
+  whole. Every other size keeps Wake on the first view.
+- **F3-4. The rest scene's fit.** Question: how to place the sheet so the
+  anchor ends 8 pt above the bar at any size and text size. Options: (a)
+  fixed sheet tops per board; (b) measure the anchor after layout and
+  re-place the sheet. Choice: (b), clamped between the camp's minimum and
+  the board's gap. Why: the sheet's content height depends on the text
+  size and the store's trial line; fixed numbers broke at the largest text.
+- **F3-5. Where V24's anchor is.** V24 has no Wake button; its sheet's last
+  row (the reminder row) is the anchor. Why: same rule as V24f, the whole
+  sheet on the first view.
+- **F3-6. V24f's switch colour.** Options: (a) the theme's navy track; (b)
+  the board's green track on the reminder row. Choice: (b). Why: rule 3,
+  V24f's board draws it green on the night sheet; the thumb is the theme's
+  white either way.
+- **F3-7. Where the pole's foot stands.** Options: (a) on the measured
+  point (the first non-sky pixel); (b) a few pixels into it. Choice: (b),
+  6 px of the 1536 px art (about 1.6 pt on V06). Why: the outline is
+  anti-aliased; on it the foot reads as floating. The tool is plain Python
+  plus ImageMagick: the scene-art venv (PIL) is not installed, and adding
+  it would add a package.
+- **F3-8. V18's message.** Options: (a) keep "Preparing your questions…";
+  (b) the board's "Writing 3 questions on superlatives…". Choice: (b), a
+  new string with the count and the topic's title in 8 languages. Why:
+  rule 3 (the board) comes before rule 4 (the app's current text). The
+  topic's title keeps its own capitals ("on Gerund vs. Infinitive…"):
+  lower-casing it is not safe across the languages (German nouns).
+  "Preparing your questions…" stays the fallback when no count is known.
+- **F3-9. V18's way out.** The board shows no navigation. Options: (a)
+  remove the weak-spot page's back button while generating; (b) keep it.
+  Choice: (b). Why: rule 4, the app's current behaviour; generation can
+  take several seconds and the button is the only way out. Topic Practice
+  and Review had none and still have none.
+
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
 `INTEGRATE.md`: `ui-polish` (fix round 2, `7f38e21`) and
