@@ -1472,9 +1472,9 @@ void main() {
     });
 
     testWidgets(
-        'a system back gesture (no button tapped) logs paywall_dismissed '
-        'with method system_back, via PopScope observing the pop rather '
-        'than a specific onPressed', (tester) async {
+        'fix round 5 (V13 v13): a system back gesture (no button tapped) '
+        'does not close the paywall and logs no paywall_dismissed; the X '
+        'still closes it with method close_button', (tester) async {
       final analytics = _FakeAnalyticsService();
       await pumpPremiumPushed(
         tester,
@@ -1483,18 +1483,23 @@ void main() {
       );
 
       // The standard way to simulate a hardware/gesture back in a widget
-      // test — this reaches the same Navigator.maybePop() path a real
-      // system back would, without going through any of this screen's
-      // own buttons.
+      // test — the same Navigator.maybePop() path a real system back takes,
+      // without going through any of this screen's own buttons.
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
+      expect(find.byType(PremiumScreen), findsOneWidget);
+      expect(
+          analytics.calls.where((c) => c.name == 'paywall_dismissed'), isEmpty);
+
+      await tester.tap(find.byKey(PremiumScreen.closeKey));
+      await tester.pumpAndSettle();
       expect(find.byType(PremiumScreen), findsNothing);
       final dismissed =
           analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
       expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
-          AnalyticsService.paywallDismissSystemBack);
+          AnalyticsService.paywallDismissCloseButton);
     });
 
     testWidgets(

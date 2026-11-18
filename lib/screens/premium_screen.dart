@@ -467,8 +467,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
         : null;
 
     return PopScope(
-      // Observes rather than blocks: a pop that did not go through
-      // _dismiss() is a system back gesture.
+      // Fix round 5 (SPEC V13 "Closing (v13)", §1.29): the paywall closes
+      // only with its X (or a purchase's Continue), wherever it is opened.
+      // Blocking the route's own pops turns off the iOS edge swipe back
+      // (the six entry points pushed as page routes closed with it on the
+      // device) and the system back (V13r's own route closed with it);
+      // _dismiss() pops the route itself and is not blocked. A pop that
+      // still arrives without _dismiss() is logged as a system back.
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop || _exitHandled) return;
         widget.analyticsService.paywallDismissed(

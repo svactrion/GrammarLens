@@ -19,6 +19,7 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 
 import 'support/recording_analytics_sink.dart';
+import 'support/paywall_close.dart';
 
 class _FakeSubscriptionService extends SubscriptionService {
   final bool hasAccess;
@@ -233,7 +234,13 @@ void main() {
         sink.events.where((e) => e.name == 'paywall_viewed').single.parameters,
         {'source': 'practice_result'},
       );
-    });
+      // Fix round 5, item 4: it closes only with its X.
+      PremiumScreen.resetExitReminder();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(_more, findsOneWidget);
+    }, variant: iOSOnly);
 
     testWidgets('entitlement read throws: not shown', (tester) async {
       final storage = _FakeStorageService(

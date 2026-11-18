@@ -61,6 +61,7 @@ import 'package:grammar_lens/widgets/monthly_climb/mountain_scene.dart';
 import 'support/fake_native_bridge.dart';
 import 'support/l10n_support.dart';
 import 'support/celebration_support.dart';
+import 'support/paywall_close.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
 /// swallowed) Firebase call, so a test can assert which Home entry point a
@@ -1136,6 +1137,34 @@ void main() {
       expect(find.byType(TopicPracticeScreen), findsNothing);
     });
 
+    // Fix round 5, item 4: the paywall from a Home topic card closes only
+    // with its X (the iOS edge swipe used to close it).
+    testWidgets(
+        'v13: the paywall from a Home topic card stays on a swipe, a drag '
+        'down and a system back; X → V13b once', (tester) async {
+      PremiumScreen.resetExitReminder();
+      await pumpHome(tester,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _restOffering()),
+          storageService: _FakeStorageService()
+            ..weakSpots = [_weakSpot(topicId: 'modalVerbs')]);
+      final unlock = find.text('Unlock all ${kTopics.length} topics');
+      await tester.ensureVisible(unlock);
+      await tester.pumpAndSettle();
+      await tester.tap(unlock);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      await closeWithX(tester, reminder: true);
+      expect(find.byType(TopicShowcase), findsOneWidget);
+      // The second time this session the X closes at once.
+      await tester.ensureVisible(unlock);
+      await tester.pumpAndSettle();
+      await tester.tap(unlock);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      await closeWithX(tester, reminder: false);
+    }, variant: iOSOnly);
+
     testWidgets(
         'a Premium user: no ticket, the practice card; a topic opens Topic '
         'Practice', (tester) async {
@@ -1404,6 +1433,21 @@ void main() {
                 tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0))),
             const Offset(21, 21));
       });
+
+      testWidgets(
+          'v13: V13r from Wake stays on a swipe, a drag down and a system '
+          'back; X → V13b → back to the scene', (tester) async {
+        PremiumScreen.resetExitReminder();
+        await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+        await expectPaywallHolds(tester);
+        await closeWithX(tester, reminder: true);
+        expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      }, variant: iOSOnly);
 
       testWidgets(
           'trial started → PW05r ("<Hero> is ready", "Practise <weak spot>") '

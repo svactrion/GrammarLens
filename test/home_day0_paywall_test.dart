@@ -16,6 +16,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 import 'support/recording_analytics_sink.dart';
+import 'support/paywall_close.dart';
 
 /// The paywall Home opens by itself, once, after the first-day climb
 /// (`HomeScreen.offerDay0Paywall`): when it appears, when it must not, and that
@@ -320,6 +321,21 @@ void main() {
       expect(pushedAtClaim, isFalse);
       expect(storage.claimed, {StorageService.day0PaywallFlag});
     });
+
+    // Fix round 5, item 4: the paywall after the first climb (onboarding)
+    // closes only with its X.
+    testWidgets(
+        'v13: it stays on a swipe, a drag down and a system back; X → V13b',
+        (tester) async {
+      PremiumScreen.resetExitReminder();
+      await pumpHome(tester);
+      await pumpUntil(tester, premiumShown);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byType(HomeScreen), findsOneWidget);
+    }, variant: iOSOnly);
 
     testWidgets(
         'dismissed with the close button: Home is back, and nothing brings it '

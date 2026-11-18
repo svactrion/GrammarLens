@@ -22,6 +22,7 @@ import 'package:grammar_lens/widgets/review_parts.dart';
 import 'package:grammar_lens/widgets/ticket.dart';
 
 import 'support/l10n_support.dart';
+import 'support/paywall_close.dart';
 
 /// Review (UI polish V16, V16b, V22, RV05, RV06): the free ticket (read
 /// from the existing free practice count, hidden for Premium), the weak
@@ -230,7 +231,13 @@ void main() {
       final premium = tester.widget<PremiumScreen>(find.byType(PremiumScreen));
       expect(
           premium.analyticsSource, AnalyticsService.paywallSourceReviewQuota);
-    });
+      // Fix round 5, item 4: it closes only with its X.
+      PremiumScreen.resetExitReminder();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byKey(ReviewScreen.moreKey), findsOneWidget);
+    }, variant: iOSOnly);
 
     testWidgets(
         '"Practice with my ticket": medium tap, the ticket tears ("Ticket '
