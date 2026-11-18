@@ -1,8 +1,9 @@
 # Device checks — `ui-polish-widgets` on the iPhone 14 Plus
 
 One ordered checklist for the owner's phone. It covers the UI polish
-(SPEC v10, fix rounds 1 and 2), the widgets and reminders, and the
-integration of the two (`INTEGRATE.md`). It merges fix round 2's "Owner
+(SPEC v10, fix rounds 1 and 2), the widgets and reminders, the
+integration of the two (`INTEGRATE.md`), and fix round 3 (`FIX3.md`, SPEC
+v11), whose second pass comes first. It merges fix round 2's "Owner
 device checks" (`PROGRESS.md`) and the widgets run's "Owner steps"
 (`PROGRESS-widgets.md`). Nothing on this list was checked on a device; the
 simulator results are in `PROGRESS.md` ("Integration").
@@ -10,6 +11,129 @@ simulator results are in `PROGRESS.md` ("Integration").
 Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
+
+## Fix round 3 — second pass (start here)
+
+Fix round 3 (`FIX3.md`, SPEC v11) changed what you found on the first
+device test. This section is the second pass, in order; sections 1–4 below
+are the first pass and stay for reference. Nothing here was checked on a
+device: the simulator and test results are in `PROGRESS.md` ("Fix round
+3"). Write down anything that differs (the item number and what you saw).
+
+### FR3-1. Build and install
+
+The same commands as section 1a and 1c. **No Xcode step is needed now:**
+your team is set on the widget target (your change, committed as round 3's
+E1). Install over the current test build; do not delete it.
+
+```bash
+cd ~/GrammarLens
+```
+
+```bash
+git switch ui-polish-widgets
+```
+
+```bash
+git pull --ff-only
+```
+
+```bash
+flutter pub get
+```
+
+```bash
+flutter devices
+```
+
+```bash
+flutter run --release -d <iPhone ID> --dart-define-from-file=config/prod.json
+```
+
+When it says the app is running, press `q`; the app stays on the phone.
+
+### FR3-2. On this install
+
+Do them in this order: the first two need **today's Daily Test not yet
+done**; the rest need it done.
+
+1. **A wrong answer's "oops"** (needs today's test not done). In the Daily
+   Test, answer one question wrong: the companion shakes its head and a
+   sweat drop falls beside "Oops! So close." — V09, B8.
+2. **The dark mode walk, part 1** (needs today's test not done). Switch the
+   phone to dark mode (Control Centre or Settings → Display). In the Daily
+   Test: the right answer's green chip and the wrong answer's red "Almost!"
+   read clearly; the results' rows ("Correct", "Needs work") too. — SY03, D
+3. **V18 from Review** (needs today's test done and the free ticket not
+   used). Review → a weak spot → "Use today's ticket": the loading screen
+   has no big title at the top, the companion thinks over three dots,
+   "Writing 3 questions on <topic>…", two skeleton cards and a **blue**
+   "Did you know?" card, all the same width. — V18, B7
+4. **N01 right after the practice** (the practice from item 3 done). Back
+   on Home: the rest scene shows and the reminder question (N01) opens at
+   once, without switching tabs. Answer it either way. — §5.10, A2
+5. **V24f's layout** (today's test done, the ticket used, a free account):
+   the scene runs to the top of the screen behind the status bar, the night
+   sheet is attached under it (no separate rounded card), the tent,
+   companion and fire are whole above the sheet, and "Wake <Hero> up" is
+   above the floating bar on the first view. — V24f, B1
+6. **The switches**: Profile → Notifications (N03), and V24f's "Remind me
+   tomorrow": white thumbs in both states, the track navy (N03) or green
+   (V24f) when on. — N03, B5
+7. **Profile**: the navy ribbon is the screen's width minus 60 pt, tails
+   included, and no longer looks thick; the name and "Climbing with … ·
+   since …" each on one line. Tap the companion: it changes to the wave
+   with a soft cross-fade, not a jump. — V23, C5, C6
+8. **The paywall** (a topic card on Home or a locked practice): the first
+   view says "Compare plans"; it scrolls to Free vs Premium, then "Choose
+   your plan" leads to the plans and the trial timeline at the end. The
+   orange button and its price line stay at the bottom all the way, and
+   the button already says the yearly trial before you reach the plans.
+   — V13, V13c, V13a, C4
+9. **The dark mode walk, part 2**: Home, Review, a weak spot, the paywall,
+   Profile, Notifications, Settings in dark mode: no navy text on dark
+   (links, eyebrows, icons are a light blue), soft cards are dark tints,
+   nothing hard to read. — SY03, D
+
+### FR3-3. Before today's test (the next day)
+
+1. **Home's first view**: the pawn and the gold ring on the next step are
+   above the floating nav bar. — V14, V15
+2. **The Daily Test card's companion** hops while it waits. — X05
+3. **The widgets' "before the test" state**: "Step N is waiting" / "one
+   test away", your mountain at your step; a tap opens the Daily Test.
+   — W01
+
+### FR3-4. Delete the app and install again (the first run)
+
+Delete GrammarLens from the home screen, then run the `flutter run
+--release …` command of FR3-1 again.
+
+1. **Splash**: about 2.2 s; the small lens scans the word slowly (about a
+   second). Open the app again later: the short splash only. — V01, C1
+2. **The name screen**: the companion is large in the middle with a warm
+   glow. Empty field: it waves and asks "Hi! What should I call you?".
+   Typing: it looks at the field through its lens, three dots in the
+   bubble. Stop typing: after a moment it cheers, hops once, three
+   sparkles, "Nice to meet you, <name>!" with the name in orange, a green
+   tick in the field and **one light haptic**. Type again: it listens;
+   clear the field: it asks again. — V04, V04s, C2
+3. **The goals**: the cards tilt right, left, right, left. — V05, B3
+4. **The shine** on the goal screen's Continue (once a goal is picked) is
+   a tall diagonal band across the whole button, not a small square. — B4
+5. **Getting ready**: the bar is a warm track with light stripes that
+   move, round stops that pop into green ticks, and the flag's pole
+   standing on the last stop. — V05b, B2
+6. **The mountain intro**: the flag stands on the very top of this
+   month's mountain. — V06, B6
+7. **Day 0**: the results come first, then "Climb my first step" opens the
+   Welcome badge, then the first climb. — V10, V11, V12, A1
+8. **The first climb**: "First step done! 29 to the summit." opens just
+   above your companion, its tail pointing at it. — V12, C3
+9. **The paywall** after the climb: the same order as FR3-2 item 8. — C4
+10. **N01 after the first practice**: Review → use the free ticket on a
+    weak spot → finish the practice → back on Home, the rest scene and N01
+    at once. — A2
 
 ## 1. Before the first device build (once)
 

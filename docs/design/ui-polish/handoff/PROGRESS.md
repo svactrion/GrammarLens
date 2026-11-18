@@ -472,6 +472,121 @@ V04's three states, V05b. A `cheerHops` option (two by default, V04 one).
 one only fading, the new one from 0.96 to 1; Reduce Motion: 150 ms, no
 scale).
 
+### D. Dark mode (SY03)
+
+**What was wrong:** navy text and icons stayed navy on the dark page and
+cards (1.5–1.8:1); the right answer's chip was dark green on a dark green
+fill (2.1:1), the wrong answer's red on its fill 4.0:1; gold text 2.2:1;
+orange eyebrows 3.2–3.6:1.
+
+**1. Inventory.** The colours come from three places:
+- `AppColors` (the UI polish tokens, light and dark sets): text, muted,
+  the accents (orange, navy, green, red, gold), their deep and soft
+  variants and their `on…` text, lip, line, page, card, track, skeleton,
+  toast, the night sky. Accents were the same in both themes and used both
+  as fills and as text.
+- The Material `ColorScheme` (`theme.dart`), which the older screens and
+  the paywall read; it already had dark roles (e.g. `secondary` is a light
+  blue in dark).
+- Colours written in widgets: shadows and scrims (black or white with
+  alpha), gloss bands (white with alpha), the medal tiers and the medal
+  celebration's palette (art on its own navy layer, the same in both
+  themes), the blanks' colours (already a light and a dark set), the
+  companion stage's ground shadow. None of them is text on a themed
+  surface, so none moved to a token.
+
+**2. Dark counterparts (`5e828ad`).** New text tokens, each a light-mode
+accent and its light counterpart on dark surfaces: `navyText` (#0D3B8F /
+#9DB8FF), `orangeText` (#A14805 / #FFA463), `goldText` (#8A5C00 /
+#F2C66B), `greenText` (#13734A / #7FD6A6), `redText` (#B83232 / #FF9C92).
+About sixty uses of navy, orangeDeep, goldDeep, greenDeep and red as text,
+icons, outlines, dots and progress strokes moved to them; fills that carry
+white text keep navy, orange and red (buttons, chips, the ribbon, the
+Premium card, the toast's discs). Dark values changed by SY03: greenSoft
+#173A2A with #7FD6A6 text, redSoft #42201F with #FF9C92 text, the card lip
+#2E2C36 (a lighter line instead of a shadow colour); dark green and red
+were brighter than the light ones and white ticks and labels on them failed
+(2.6:1, 3.6:1), so they now match light's strength (#1F9D63, #C93A3A). The
+warning toast's "!" is dark ink on its orange disc (white was 2.5:1, in
+both themes). Page and card keep D1-1's values (every ratio passes). B5's
+switch track became a value map in the same pass (`1c0ea98`): as a closure
+it made every build of the theme unequal, so `AnimatedTheme` animated on
+each rebuild.
+
+**3. The ratio test.** `test/fix3_contrast_test.dart` measures every pair
+below in both themes (WCAG relative luminance; translucent colours blended
+on their background): text at least 4.5:1 (large text is held to 4.5 too),
+icons at least 3:1; and the colour scheme's text roles at 4.5:1. All pass.
+
+| Foreground | Background | Role | Light | Dark | Min |
+|---|---|---|---|---|---|
+| text | page | text | 14.96 | 15.51 | 4.5 |
+| muted | page | text | 6.43 | 7.63 | 4.5 |
+| text | card | text | 16.64 | 13.00 | 4.5 |
+| muted | card | text | 7.15 | 6.39 | 4.5 |
+| text | sky | text | 13.70 | 10.00 | 4.5 |
+| muted | sky | text | 5.88 | 4.92 | 4.5 |
+| text | cream | text | 15.48 | 11.69 | 4.5 |
+| muted | cream | text | 6.65 | 5.75 | 4.5 |
+| text | orangeSoft | text | 14.04 | 11.69 | 4.5 |
+| muted | orangeSoft | text | 6.03 | 5.75 | 4.5 |
+| text | goldSoft | text | 15.25 | 10.71 | 4.5 |
+| muted | goldSoft | text | 6.55 | 5.27 | 4.5 |
+| text | greenSoft | text | 14.76 | 10.66 | 4.5 |
+| muted | greenSoft | text | 6.34 | 5.24 | 4.5 |
+| text | redSoft | text | 14.39 | 12.25 | 4.5 |
+| muted | redSoft | text | 6.18 | 6.02 | 4.5 |
+| text | lilac | text | 14.21 | 12.02 | 4.5 |
+| muted | lilac | text | 6.10 | 5.92 | 4.5 |
+| navyText | page | text | 8.97 | 9.32 | 4.5 |
+| orangeText | page | text | 5.31 | 9.33 | 4.5 |
+| goldText | page | text | 5.07 | 11.35 | 4.5 |
+| greenText | page | text | 5.11 | 10.48 | 4.5 |
+| redText | page | text | 5.17 | 9.05 | 4.5 |
+| green (icons) | page | icon | 3.02 | 5.26 | 3.0 |
+| red (icons) | page | icon | 5.17 | 3.60 | 3.0 |
+| navyText | card | text | 9.98 | 7.81 | 4.5 |
+| orangeText | card | text | 5.91 | 7.82 | 4.5 |
+| goldText | card | text | 5.64 | 9.51 | 4.5 |
+| greenText | card | text | 5.69 | 8.79 | 4.5 |
+| redText | card | text | 5.75 | 7.59 | 4.5 |
+| green (icons) | card | icon | 3.36 | 4.41 | 3.0 |
+| red (icons) | card | icon | 5.75 | 3.02 | 3.0 |
+| navyText | sky | text | 8.22 | 6.01 | 4.5 |
+| orangeText | orangeSoft | text | 4.99 | 7.03 | 4.5 |
+| orangeText | cream | text | 5.50 | 7.03 | 4.5 |
+| goldText | goldSoft | text | 5.17 | 7.83 | 4.5 |
+| greenText | greenSoft | text | 5.04 | 7.21 | 4.5 |
+| redText | redSoft | text | 4.97 | 7.15 | 4.5 |
+| onSky | sky | text | 10.23 | 9.04 | 4.5 |
+| onGreenSoft | greenSoft | text | 5.04 | 7.21 | 4.5 |
+| onRedSoft | redSoft | text | 7.33 | 7.15 | 4.5 |
+| onLilac | lilac | text | 6.83 | 9.15 | 4.5 |
+| onNavy | navy | text | 10.30 | 10.30 | 4.5 |
+| onNavyMuted | navy | text | 8.37 | 8.37 | 4.5 |
+| onRibbonMuted | navy (ribbon) | text | 7.13 | 7.13 | 4.5 |
+| onRibbonMuted | ribbonTop | text | 5.21 | 5.21 | 4.5 |
+| onOrange | orange | text | 6.93 | 6.93 | 4.5 |
+| onNavy (white) | red (button) | text | 5.93 | 5.06 | 4.5 |
+| onNavy (white) | greenDeep (button) | text | 5.87 | 5.87 | 4.5 |
+| onNavy (white tick) | green (disc) | icon | 3.46 | 3.46 | 3.0 |
+| onToast | toast | text | 13.15 | 9.96 | 4.5 |
+| onOrange (warning "!") | orange (disc) | icon | 6.93 | 6.93 | 3.0 |
+| text | night sheet (top) | text | 15.24 | 18.53 | 4.5 |
+| scheme: onSurface | surfaceContainerLow | text | 14.96 | 15.51 | 4.5 |
+| scheme: onSurface | surfaceContainerHigh | text | 16.64 | 13.00 | 4.5 |
+| scheme: onSurfaceVariant | surfaceContainerLow | text | 8.14 | 10.75 | 4.5 |
+| scheme: onSurfaceVariant | surfaceContainerHigh | text | 9.05 | 9.01 | 4.5 |
+| scheme: secondary | surfaceContainerLow | text | 8.97 | 10.98 | 4.5 |
+| scheme: secondary | surfaceContainerHigh | text | 9.98 | 9.20 | 4.5 |
+| scheme: onSecondaryContainer | secondaryContainer | text | 9.79 | 9.04 | 4.5 |
+| scheme: onPrimary | primary | text | 6.93 | 7.71 | 4.5 |
+
+Not in the test (graphics, not text or icons): borders, progress segments
+and rings, e.g. the wrong answer's soft orange border and segment
+(`wrong`, #E38B5A: 2.5:1 on the light card; the boards' colour, unchanged),
+the orange bars and the empty tracks.
+
 ### Decisions (F3-n)
 
 - **F3-1. R05's order.** Question: should a later day's tier medal also
@@ -576,6 +691,23 @@ scale).
 - **F3-21. Paywall hint taps.** The boards draw the hints as decorations
   (`aria-hidden`). Choice: they stay buttons (scroll to their section, 44 pt
   to tap), as "See plans" was. Why: rule 4.
+- **F3-22. Orange text in light mode.** The 4.5:1 rule is for both themes;
+  the boards' #C95A08 measures 3.5–4.1:1 on the light page, cards and soft
+  fills, where it sets 12–13 pt eyebrows. Options: (a) keep it (light was
+  approved); (b) a darker orange for text only. Choice: (b), #A14805
+  (4.9:1 or more on every light surface); the button lip and fills keep
+  #C95A08. Why: SPEC §1.19 / SY03's ratio is the rule (rule 1, 2).
+- **F3-23. Navy in dark mode.** Options: (a) make `navy` itself light blue
+  in dark and add a fill token; (b) keep `navy` as the fill (white text,
+  10.3:1) and add `navyText`. Choice: (b). Why: SY03 says navy stays a fill
+  where white text sits on it; fewer uses change.
+- **F3-24. Dark green and red.** SY03 gives the soft fills and their text,
+  not the solid accents. Their brighter dark values failed under white
+  content; they now match the light ones' strength. Why: the ratio rule;
+  both still read on the dark page (5.3:1, 3.6:1 as graphics).
+- **F3-25. Dark lip and line.** SY03: "a lighter line (#2E2C36 or so)
+  instead of the light shadow colour". The lip becomes #2E2C36; the border
+  line keeps #45454D (already lighter than the card).
 
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
