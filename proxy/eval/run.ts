@@ -168,7 +168,8 @@ import {
   type TopicItem,
 } from './lib/topics_measurement';
 import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemCheckRecord, type SetGate } from './lib/topics_checks';
-import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
+import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
+import { phaseCParts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
 import { buildTopicSheet, readTopicLabels, renderDetails, renderSheetStatus, sheetHeaderProblem, type ReadSheet, type SheetMapping } from './lib/topics_sheet';
 import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
@@ -1480,8 +1481,12 @@ async function runTopics(outDir: string | undefined): Promise<void> {
   if (!complete) process.exitCode = 1;
 }
 
-/** Where phase B's report goes (in the repository: counts and rates only). */
+/** Where the topics report goes (in the repository: counts and rates only). */
 const TOPICS_REPORT = 'docs/1.5.0-topics-report.md';
+/** The hand-written findings of phase C (causes, proposed fixes), from
+ * `proxy/`: put into the report as they are. In the repository, so they
+ * describe a defect in words and quote no question. */
+const TOPICS_FINDINGS = 'eval/data/topics/phase-c-findings.md';
 
 /**
  * Phase B (docs/TOPICS.md): from a finished run folder, the report into
@@ -1553,14 +1558,38 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false): 
   const scored = scoredAnswers(data);
   await write(path.join(dir, 'private/details.txt'), renderDetails({ ...data, verdicts: scored.verdicts, mapping, runDir: path.relative(path.join(ROOT, '..'), dir) }));
 
+  // Phase C, once every row is labelled and nothing is left to fix: the
+  // labels go into the report, and the second-look file into the run folder.
+  const runDir = path.relative(path.join(ROOT, '..'), dir);
+  const complete = sheetState.labels.length === mapping.rows.length && sheetState.unlabelled.length === 0 && sheetState.problems.length === 0;
+  let phaseC: PhaseCParts | undefined;
+  if (complete) {
+    const findingsFile = path.join(ROOT, TOPICS_FINDINGS);
+    const findings = (await exists(findingsFile)) ? (await readFile(findingsFile, 'utf8')).replace(/^<!--[\s\S]*?-->\s*/, '') : null;
+    phaseC = phaseCParts({ data, labels: sheetState.labels, verdicts: scored.verdicts, findings });
+    const secondLookFile = path.join(dir, 'second-look.md');
+    if ((await exists(secondLookFile)) && secondLookHasVerdicts(await readFile(secondLookFile, 'utf8'))) {
+      console.log("second-look.md has the owner's verdicts in it: not rewritten.");
+    } else {
+      await write(secondLookFile, renderTopicsSecondLook({ data, labels: sheetState.labels, verdicts: scored.verdicts, mapping, runDir }));
+      console.log('Written in the run folder: second-look.md.');
+    }
+  } else {
+    console.log('The sheet is not complete: the report is the phase B report, without the labels.');
+  }
+
   // The report: counts and rates only.
   const log = (await exists(path.join(dir, 'progress.log'))) ? await readFile(path.join(dir, 'progress.log'), 'utf8') : '';
-  const report = renderTopicsReport(data, {
-    runDir: path.relative(path.join(ROOT, '..'), dir),
-    generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
-    wallSeconds: wallSeconds(log),
-    sheet: { questions: mapping.rows.length, answers: sheetAnswers, labelled: sheetState.labels.length, withProblems: new Set(sheetState.problems.map((p) => p.key)).size },
-  });
+  const report = renderTopicsReport(
+    data,
+    {
+      runDir,
+      generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+      wallSeconds: wallSeconds(log),
+      sheet: { questions: mapping.rows.length, answers: sheetAnswers, labelled: sheetState.labels.length, withProblems: new Set(sheetState.problems.map((p) => p.key)).size },
+    },
+    phaseC,
+  );
   const leaks = contentLeaks(report, data.items, data.answers, mapping.rows.map((r) => r.key));
   if (leaks.length > 0) throw new Error(`The report would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
   await write(path.join(ROOT, '..', TOPICS_REPORT), report);

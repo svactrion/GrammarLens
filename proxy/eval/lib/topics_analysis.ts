@@ -256,6 +256,19 @@ export interface TopicsReportMeta {
   sheet: { questions: number; answers: number; labelled: number; withProblems: number };
 }
 
+/**
+ * What phase C puts into the report once the sheet is filled
+ * (`topics_labels.ts` builds it): the status line, the limitations, the
+ * label sections (their headings start with `## § `, numbered with the
+ * rest), and the closing section. Without it the report is phase B's.
+ */
+export interface PhaseCParts {
+  status: string;
+  limitations: string[];
+  sections: string[];
+  next: string[];
+}
+
 const usd = (n: number) => `$${n.toFixed(2)}`;
 const title = (topicId: string) => topicById(topicId, true)?.title ?? topicId;
 
@@ -278,11 +291,12 @@ function metricsRow(label: string, m: ScoringMetrics): string {
 }
 
 /**
- * The phase B report. Per topic and for the control: what was generated,
- * the gate, each automatic check's flags, the duplicates in detail, the
- * scorer against the built answers, spend and time. Counts and rates only.
+ * The report. Per topic and for the control: what was generated, the gate,
+ * each automatic check's flags, the duplicates in detail, the scorer against
+ * the built answers, spend and time; with [phaseC], the label sections come
+ * first. Counts and rates only.
  */
-export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta): string {
+export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta, phaseC?: PhaseCParts): string {
   const topics = measuredTopics();
   const newIds = new Set(topics.filter((t) => !t.control).map((t) => t.topic.id));
   const label = (t: (typeof topics)[number]) => `${t.topic.title}${t.control ? ' (control)' : ''}`;
@@ -304,18 +318,23 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
   push(
     '# 1.5.0 first-wave topics — measurement report',
     '',
-    `**Status: measured, not yet labelled (phase B of [\`TOPICS.md\`](TOPICS.md)).** Written by \`npm run eval -- topics analyze\` on ${meta.generatedAt} from \`${meta.runDir}\`, the owner's run of 2026-11-18. No API call is made to write it. Nothing is deployed and the first-wave topics stay switched off. Record and decisions: [\`1.5.0-topics-progress.md\`](1.5.0-topics-progress.md).`,
+    `**Status: ${phaseC ? phaseC.status : 'measured, not yet labelled (phase B of [`TOPICS.md`](TOPICS.md)).'}** Written by \`npm run eval -- topics analyze\` on ${meta.generatedAt} from \`${meta.runDir}\`, the owner's run of 2026-11-18. No API call is made to write it. Nothing is deployed and the first-wave topics stay switched off. Record and decisions: [\`1.5.0-topics-progress.md\`](1.5.0-topics-progress.md).`,
     '',
-    '## 0. Limitations, before any number',
+    '## § Limitations, before any number',
     '',
-    '- **The answers are built, not real learners\'.** A practice question carries no answer key, so a model wrote, for every question, a key, a second correct answer where it found one, and typical learner mistakes (decision T-2).',
-    '- **Their truth is by construction until phase C.** "Right" below means "written as the key or the second answer", "wrong" means "written as a mistake". A written mistake that is in fact acceptable is counted here against the scorer, and a wrong key too. Every built answer is on the label sheet; phase C replaces this truth with the labelled one (T-13).',
-    '- **The automatic checks are flags, not verdicts.** They are word-level rules that know nothing about meaning: a flag is a reason for a person to look. How the flags relate to real defects is known only after the labels.',
-    '- **No question is judged here.** Whether a question is good is the label sheet\'s job: all 165 questions are on it (T-12), and it is blind (T-14).',
-    '- **Small numbers.** 30 questions per new topic and 15 for the control: one question is 3.3 % of a topic, one of the control\'s 6.7 %.',
-    '- This report holds counts and rates only: no question, no answer and no sheet key, so it can be read before and while labelling.',
+    ...(phaseC
+      ? phaseC.limitations
+      : [
+          '- **The answers are built, not real learners\'.** A practice question carries no answer key, so a model wrote, for every question, a key, a second correct answer where it found one, and typical learner mistakes (decision T-2).',
+          '- **Their truth is by construction until phase C.** "Right" below means "written as the key or the second answer", "wrong" means "written as a mistake". A written mistake that is in fact acceptable is counted here against the scorer, and a wrong key too. Every built answer is on the label sheet; phase C replaces this truth with the labelled one (T-13).',
+          '- **The automatic checks are flags, not verdicts.** They are word-level rules that know nothing about meaning: a flag is a reason for a person to look. How the flags relate to real defects is known only after the labels.',
+          '- **No question is judged here.** Whether a question is good is the label sheet\'s job: all 165 questions are on it (T-12), and it is blind (T-14).',
+          '- **Small numbers.** 30 questions per new topic and 15 for the control: one question is 3.3 % of a topic, one of the control\'s 6.7 %.',
+          '- This report holds counts and rates only: no question, no answer and no sheet key, so it can be read before and while labelling.',
+        ]),
     '',
-    '## 1. What ran',
+    ...(phaseC ? [...phaseC.sections, ''] : []),
+    '## § What ran',
     '',
     '| Stage | Model | Calls | ok | Measured spend | Mean input / output tokens | Mean seconds per call |',
     '|---|---|---|---|---|---|---|',
@@ -331,7 +350,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
     '- **answers:** the harness\'s answer writer, one call per generated set.',
     '- **scoring:** the production scoring cell (1.4.0\'s C8), one generated set\'s questions per call.',
     '',
-    '## 2. What was generated, and the gate',
+    '## § What was generated, and the gate',
     '',
     'The practice path has no semantic gate (T-4). The measurement\'s gate is what the app\'s parser accepts, plus the prompt\'s rules a program can check: a fill-in-the-blank question has 1 to 4 blanks, a correction carries its sentence, and a set is 5 questions in the 2 : 2 : 1 mix the request names.',
     '',
@@ -351,7 +370,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
   push('');
   if (failedSets.length === 0) push('Every set passed.');
   else {
-    push('What failed, as counts (which question it was is in the details file, §8):', '');
+    push('What failed, as counts (which question it was is in the details file):', '');
     for (const t of topics) {
       const sets = failedSets.filter((s) => s.topicId === t.topic.id);
       if (sets.length === 0) continue;
@@ -364,7 +383,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
 
   push(
     '',
-    '## 3. The built answers',
+    '## § The built answers',
     '',
     '| Topic | Questions with answers | Built answers | Keys | Second answers | Mistakes | Right / wrong by construction |',
     '|---|---|---|---|---|---|---|',
@@ -394,7 +413,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
 
   push(
     '',
-    '## 4. The automatic checks',
+    '## § The automatic checks',
     '',
     'Questions with at least one flag of the check. "Not run" means the check needs the key and the question has none.',
     '',
@@ -432,7 +451,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
 
   push(
     '',
-    '## 5. Duplicates',
+    '## § Duplicates',
     '',
     'Two questions of one topic resemble each other when they have the same words ("same words": case, punctuation and numbers aside) or share at least 60 % of their scenario words and are of the same type ("near-duplicate"). Only questions of one topic are compared.',
     '',
@@ -470,7 +489,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
       ? 'These counts are recomputed from the run\'s questions and agree with the flags the run recorded (`checks.json`).'
       : `**These counts differ from the flags the run recorded for: ${mismatch.map(label).join(', ')}.** The duplicate rule changed after the run.`,
     '',
-    'The resembling questions themselves, side by side, are in the details file in the run folder; it is not to be opened before the sheet is labelled (§8).',
+    'The resembling questions themselves, side by side, are in the details file in the run folder; it is not to be opened before the sheet is labelled.',
     '',
     '### What makes two Topic Practice sets of one topic differ on the live path today',
     '',
@@ -482,14 +501,17 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
     '- The measurement mirrors this: the six sets of a topic are six identical requests, so the resemblance across sets above is what two sessions of one learner, or two learners, would see.',
     '- For contrast, the shared Daily Test does have such inputs: the day\'s plan (a scenario theme, a type per topic) and a list of the answers of recent days to stay away from (`sharedDailyTestUserPrompt`).',
     '',
-    'Whether the resemblance is a defect, and what to do about it, is the owner\'s decision after the labels; this report changes nothing.',
+    phaseC
+      ? 'What could be done about it is in the set-variety proposal ([`1.5.0-topics-set-variety.md`](1.5.0-topics-set-variety.md)); the owner decides, and this report changes nothing.'
+      : 'Whether the resemblance is a defect, and what to do about it, is the owner\'s decision after the labels; this report changes nothing.',
   );
 
   push(
     '',
-    '## 6. The scorer on the built answers',
+    phaseC ? '## § The scorer on the built answers, by construction (as before the labels)' : '## § The scorer on the built answers',
     '',
-    'Agreement: the scorer\'s `isCorrect`, as the app would receive it, equals the truth by construction. False "correct": answers built as wrong that the scorer called correct. False "needs work": answers built as right that the scorer called wrong. See §0: a disagreement here is the scorer\'s error, or a built answer whose truth is wrong; the labels decide which.',
+    ...(phaseC ? ['Kept for the record: these are the figures before the labels, with the truth as it was built. The figures that count are in "The scorer against the labelled truth" above.', ''] : []),
+    'Agreement: the scorer\'s `isCorrect`, as the app would receive it, equals the truth by construction. False "correct": answers built as wrong that the scorer called correct. False "needs work": answers built as right that the scorer called wrong. See the limitations: a disagreement here is the scorer\'s error, or a built answer whose truth is wrong; the labels decide which.',
     '',
     '| Topic | Built answers | Scored | Agreement | False "correct" (of wrong) | False "needs work" (of right) |',
     '|---|---|---|---|---|---|',
@@ -525,7 +547,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
     'For scale: in the 1.4.0 measurement the same cell agreed with the owner\'s labels on 97.8 % of 370 answers, with no false "correct" and 3.9 % false "needs work". Those answers had labelled truth and the five live topics; the figures above have neither yet.',
   );
 
-  push('', '## 7. Spend and time per topic', '', '| Topic | Calls | Spend | Generation | Answers | Scoring | Seconds of calls, summed |', '|---|---|---|---|---|---|---|');
+  push('', '## § Spend and time per topic', '', '| Topic | Calls | Spend | Generation | Answers | Scoring | Seconds of calls, summed |', '|---|---|---|---|---|---|---|');
   for (const t of topics) {
     const mine = data.records.filter((r) => recordTopic.get(r.customId) === t.topic.id);
     const cost = (stage: string) => usd(mine.filter((r) => r.stage === stage).reduce((n, r) => n + r.costUsd, 0));
@@ -542,7 +564,7 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
 
   push(
     '',
-    '## 8. The label sheet',
+    '## § The label sheet',
     '',
     `All ${meta.sheet.questions} questions and their ${meta.sheet.answers} built answers are on a blind sheet in the run folder (not in the repository): the questions in mixed order under opaque keys, each with its built answers under letters in a shuffled order. It shows what a learner sees and the built answers, nothing else.`,
     '',
@@ -550,19 +572,25 @@ export function renderTopicsReport(data: TopicsRunData, meta: TopicsReportMeta):
     '|---|---|---|',
     '| `sheet/questions.txt` | to read: the hint cards, then every question with its built answers | the labellers |',
     '| `sheet/labels.csv` | to fill: one row per question | the labellers |',
-    '| `private/sheet-mapping.json` | which question and which built answer each key and letter is | **nobody, until the sheet is filled** |',
-    '| `private/details.txt` | per question the flags, the gate, the scorer\'s verdicts and explanations; the resembling questions side by side | **nobody, until the sheet is filled** |',
+    `| \`private/sheet-mapping.json\` | which question and which built answer each key and letter is | ${phaseC ? 'open now that the sheet is filled' : '**nobody, until the sheet is filled**'} |`,
+    `| \`private/details.txt\` | per question the flags, the gate, the scorer\'s verdicts and explanations; the resembling questions side by side | ${phaseC ? 'open now that the sheet is filled' : '**nobody, until the sheet is filled**'} |`,
+    ...(phaseC ? ['| `second-look.md` | every answer where the scorer and the labelled truth differ, and the defect questions | the owner |'] : []),
     '',
-    'The run\'s own files (`items.json`, `answers.json`, `checks.json`, `records.json`, …) give the same away and stay closed as well.',
+    phaseC ? 'The sheet is filled, so the run\'s own files (`items.json`, `answers.json`, `checks.json`, `records.json`, …) may be opened as well.' : 'The run\'s own files (`items.json`, `answers.json`, `checks.json`, `records.json`, …) give the same away and stay closed as well.',
     '',
     `State of the sheet when this report was written: ${meta.sheet.labelled} of ${meta.sheet.questions} rows labelled${meta.sheet.withProblems > 0 ? `; ${meta.sheet.withProblems} rows with a value to fix (\`topics analyze\` names them)` : ''}.`,
     '',
-    '## 9. What comes next',
+    '## § What comes next',
     '',
-    'Phase C, after the labels: per topic the defect rate with the defects by reason, the scoring figures of §6 against the labelled truth of the built answers, and a second-look file with every answer where the scorer and the labelled truth differ. The owner\'s pass criteria per topic: at most 5 % defective questions after the gate, scoring agreement at least 95 %, false "correct" at most 2 %. Nothing in this report says whether a topic passes.',
+    ...(phaseC
+      ? phaseC.next
+      : [
+          'Phase C, after the labels: per topic the defect rate with the defects by reason, the scoring figures against the labelled truth of the built answers, and a second-look file with every answer where the scorer and the labelled truth differ. The owner\'s pass criteria per topic: at most 5 % defective questions after the gate, scoring agreement at least 95 %, false "correct" at most 2 %. Nothing in this report says whether a topic passes.',
+        ]),
     '',
   );
-  return out.join('\n');
+  let section = 0;
+  return out.join('\n').replace(/^## § /gm, () => `## ${section++}. `);
 }
 
 /**
