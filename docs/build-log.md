@@ -14404,3 +14404,53 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   release command, is `docs/design/ui-polish/handoff/DEVICE-CHECKS.md`.
 - **[Disk]** 7.1 GiB free before, 14 GiB after the allowed cleanup
   (`flutter clean` in both folders, their three DerivedData folders).
+
+## 2026-11-18 (UI polish fix round 3 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 3 (`docs/design/ui-polish/handoff/FIX3.md`,
+  SPEC v11), after the owner's device test of the integrated build
+  (iPhone 14 Plus, release). Record: `PROGRESS.md` "Fix round 3" (each
+  item's cause, fix and tests; decisions F3-1 to F3-26).
+- **[Engineering]** Bugs. Day 0 showed the Welcome badge before the
+  results: the result screen opened it as a layer the moment the save
+  landed; now the results come first and "Climb my first step" opens the
+  badge (V10 → V11 → V12). N01 opened only after another tab switch: Home
+  never re-read the free ticket when it became the visible tab again, and
+  the soft ask was checked only inside `build`; Home now re-reads on
+  becoming visible and checks after the frame that shows the rest scene.
+  Both have app-level regression tests.
+- **[Engineering]** Board fixes: V24f and V24 full-bleed with the night
+  sheet attached (measured at six sizes and two text sizes); V05b's bar;
+  the goal cards' tilt by position; one button shine (the device's "small
+  square" was the band laid out inside the label); white switch thumbs
+  from the theme; the summit flag on each mountain art's measured apex
+  (`tool/scene_art/summit_apex.py`); one V18 loading screen for topic and
+  weak-spot practice; the expression kit everywhere (the dialogs' cloud,
+  wrong answers' oops).
+- **[Engineering]** Owner decisions of SPEC v11: the splash takes 2.2 s on
+  the first launch; the name screen's companion asks, listens and greets
+  (new strings in 8 languages); V12's bubble right above the companion;
+  the paywall reads first view → Free vs Premium → plans ("Compare plans",
+  8 languages); the Profile ribbon follows the screen width; pose changes
+  cross-fade in `CompanionView`.
+- **[Engineering]** Dark mode from the theme (SY03): text tokens with light
+  counterparts on dark surfaces (navy text → #9DB8FF, right/wrong chips as
+  dark tints with light text), about sixty uses moved to them, and a test
+  that measures every text and icon pair in both themes (4.5:1 / 3:1).
+  Every gallery board captured in dark and looked at; the two still hard
+  to read were fixed. Found on the way: B5's switch style made every build
+  of the theme unequal, so `AnimatedTheme` animated on each rebuild; fixed.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2742 passed; Swift RunnerTests 22 passed, 0 failed (with
+  the widget snapshots); Runner + widget extension simulator build
+  succeeded; `flutter build ios --release --no-codesign` built Runner.app
+  (50.1 MB, arm64, 1.4.0 (7)) with the extension. A driven smoke walk of a
+  first install on the iPhone Air simulator (a local stand-in for the
+  practice proxy, no AI call): results before the badge, then Review, the
+  free ticket on a practice and back to Home, where the rest scene and N01
+  were on screen at once (A2).
+- **[Not verified]** Anything on a device. The owner's second pass, in
+  order, is the first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 8.5 GiB free before, 19 GiB after the allowed cleanup
+  (`flutter clean`, this project's DerivedData folders); the disk filled
+  once mid-run and was freed the same way.

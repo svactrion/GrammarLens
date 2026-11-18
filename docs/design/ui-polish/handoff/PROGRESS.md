@@ -11,7 +11,10 @@ section.
 `FIX3.md`, SPEC v11. The owner tested `ui-polish-widgets` on his iPhone 14
 Plus (release, iOS 26): an install over App Store 1.4.0 (data survived),
 then a fresh install. This round fixes what he found, on
-`ui-polish-widgets`. **Status: in progress.**
+`ui-polish-widgets`. **Status: done** (A1–E1 and steps 0–6 below; checks
+after the last code change under "Checks: builds and tests"); not on
+`main`, not shipped, waiting for the owner's second device pass
+(`DEVICE-CHECKS.md`, first section).
 
 ### 0. Start
 
@@ -760,6 +763,34 @@ a still shows them; differences are listed.
 | N03 | `N03` | `N03` | match: white thumbs, the navy track when on (B5) |
 | A wrong answer with oops | `V09-oops`, gallery `V09-Wrong` | same | match per SPEC v11 (the board draws the base pose; v11 says oops) |
 | V13b with the cloud | `V13b-cloud`, gallery `V13b-ExitReminder` | same | match per SPEC v11 (the cloud over the sad companion) |
+
+### Checks: builds and tests
+
+After the last code change (`ee40468`; the run at `cd88b12`, which only
+added docs since):
+- `flutter analyze`: no issues.
+- `flutter test`: 2742 passed, 0 failed.
+- Swift tests (`xcodebuild test`, scheme Runner, RunnerTests with the widget
+  snapshots, iPhone 18 Pro simulator, parallel testing off): 22 executed,
+  0 failures, TEST SUCCEEDED.
+- Simulator build of Runner with the widget extension (`xcodebuild build`):
+  BUILD SUCCEEDED.
+- `flutter build ios --release --no-codesign`: built `Runner.app` (50.1 MB,
+  arm64, 1.4.0 (7)) with `GrammarLensWidgets.appex` inside.
+
+One full-suite run during the round failed one layout test
+(`l10n_layout_test` "pt at 320 pt, Large Profile") while an Xcode build ran
+beside it; the test passed alone, as a file, and in the final run above.
+
+**Disk.** 8.5 GiB free at the start, 11 GiB after §0's cleanup. Mid-run the
+disk filled (680 MiB free: the simulators, including another booted
+simulator not from this run, and Xcode's shared caches had grown); only the
+allowed items were deleted then (`build/ios`, this project's DerivedData).
+At the end: `flutter clean` (the captures in `build/fix3-captures/` moved
+aside and back) and the DerivedData folders whose WorkspacePath is in
+`~/GrammarLens` (`Runner-gqpsqce…` 1.7 GB, `Runner-ghmgufz…`); two `Runner-*`
+folders without an info.plist were left alone. Free after: **19 GiB**
+(the target was 15).
 
 ### Checks: the smoke walk
 
