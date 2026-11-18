@@ -150,6 +150,21 @@ Future<void> main() async {
     await shot('A2-home-rest-and-N01');
     await wait(1500);
     await shot('A2-home-rest-and-N01-later');
+    // Fix round 4: N01 answered "Not now", the rest scene alone: one
+    // screen (V24f v12); a drag up must not move it.
+    if (await present(find.text(t('softAskNotNow')))) {
+      await tap(find.text(t('softAskNotNow')));
+      await wait(1500);
+    }
+    await shot('V24f-one-screen');
+    await d.runUnsynchronized(() => d.scroll(
+        find.byType('SingleChildScrollView'),
+        0,
+        -400,
+        const Duration(milliseconds: 300),
+        timeout: _timeout));
+    await wait(1200);
+    await shot('V24f-after-drag-up');
   } catch (e) {
     stdout.writeln('smoke stopped: $e');
     await shot('stopped-here');
