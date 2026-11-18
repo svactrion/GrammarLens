@@ -120,6 +120,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   /// the tear has played.
   WeakSpot? _tearingFor;
   bool _generating = false;
+  int? _preparingCount;
 
   /// The used ticket's countdown, updated every minute while shown.
   Timer? _minute;
@@ -309,6 +310,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         setGenerating: (value) {
           if (mounted) setState(() => _generating = value);
         },
+        onQuestionCount: (count) => _preparingCount = count,
         errorPrefix: context.l10n.weakSpotGenerateFailed,
       );
     } finally {
@@ -501,6 +503,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         message: l10n.weakSpotPreparing,
         topic: _tearingFor == null ? null : _topicOf(_tearingFor!),
         hero: widget.hero,
+        questionCount: _preparingCount,
       );
     }
 

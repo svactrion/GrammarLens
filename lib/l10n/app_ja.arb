@@ -277,6 +277,7 @@
   "reviewExploreTopicPractice": "トピック練習を見る",
   "weakSpotGenerateFailed": "復習用の問題を作成できませんでした",
   "weakSpotPreparing": "問題を準備しています…",
+  "practicePreparingTopic": "{count, plural, other{{topic}の問題を{count}問作成中…}}",
   "weakSpotLoadFailed": "最近のミスを読み込めませんでした。\n{error}",
   "weakSpotSavedFeedback": "保存したフィードバック",
   "weakSpotRecap": "{rule}でつまずいています。もう一度練習すると定着しやすくなります。",

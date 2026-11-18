@@ -277,6 +277,7 @@
   "reviewExploreTopicPractice": "Konu Pratiği'ne göz at",
   "weakSpotGenerateFailed": "Tekrar seti oluşturulamadı",
   "weakSpotPreparing": "Soruların hazırlanıyor…",
+  "practicePreparingTopic": "{count, plural, other{{topic} konusunda {count} soru yazılıyor…}}",
   "weakSpotLoadFailed": "Son hataların yüklenemedi.\n{error}",
   "weakSpotSavedFeedback": "Kayıtlı geri bildirim",
   "weakSpotRecap": "{rule} konusunda zorlandın. Yeniden pratik yapmak bunu pekiştirmene yardımcı olur.",

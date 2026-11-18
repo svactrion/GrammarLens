@@ -64,6 +64,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
 class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   late Future<List<ErrorEntry>> _mistakes;
   bool _generating = false;
+  int? _preparingCount;
 
   /// The ticket is tearing (V16b); practice starts once it has played.
   bool _tearing = false;
@@ -138,6 +139,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
+      onQuestionCount: (count) => _preparingCount = count,
       errorPrefix: context.l10n.weakSpotGenerateFailed,
     );
   }
@@ -189,6 +191,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
         message: context.l10n.weakSpotPreparing,
         topic: widget.topic,
         hero: widget.hero,
+        questionCount: _preparingCount,
       );
     }
     // R03 (UI polish): the topic as an eyebrow, the weak spot as the

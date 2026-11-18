@@ -277,6 +277,7 @@
   "reviewExploreTopicPractice": "주제별 연습 둘러보기",
   "weakSpotGenerateFailed": "복습 문제를 만들지 못했어요",
   "weakSpotPreparing": "문제를 준비하는 중…",
+  "practicePreparingTopic": "{count, plural, other{{topic} 문제 {count}개를 만드는 중…}}",
   "weakSpotLoadFailed": "최근 오답을 불러오지 못했어요.\n{error}",
   "weakSpotSavedFeedback": "저장된 피드백",
   "weakSpotRecap": "{rule} 부분에서 어려움이 있었어요. 다시 연습하면 더 확실히 익힐 수 있어요.",

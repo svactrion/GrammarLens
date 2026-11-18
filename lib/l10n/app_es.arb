@@ -277,6 +277,7 @@
   "reviewExploreTopicPractice": "Explorar la Práctica por temas",
   "weakSpotGenerateFailed": "No se pudo crear el repaso",
   "weakSpotPreparing": "Preparando tus preguntas…",
+  "practicePreparingTopic": "{count, plural, one{Escribiendo 1 pregunta sobre {topic}…} other{Escribiendo {count} preguntas sobre {topic}…}}",
   "weakSpotLoadFailed": "No se pudieron cargar tus errores recientes.\n{error}",
   "weakSpotSavedFeedback": "Retroalimentación guardada",
   "weakSpotRecap": "Has tenido dificultades con {rule}. Practicarlo de nuevo te ayudará a afianzarlo.",

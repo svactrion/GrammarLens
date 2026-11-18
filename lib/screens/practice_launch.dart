@@ -44,6 +44,8 @@ import 'premium_screen.dart';
 /// responsible for its own `mounted` check, since a `State`'s `setState`
 /// isn't reachable from here). [onReturned] runs after the pushed screen is
 /// popped, e.g. to refresh a list that the practice session may have changed.
+/// [onQuestionCount] gets the set's length just before [setGenerating]
+/// turns on, for V18's message.
 Future<void> launchPracticeSet({
   required BuildContext context,
   required Topic topic,
@@ -54,6 +56,7 @@ Future<void> launchPracticeSet({
   required void Function(bool generating) setGenerating,
   required String errorPrefix,
   VoidCallback? onReturned,
+  void Function(int questionCount)? onQuestionCount,
 }) async {
   bool hasFullAccess;
   try {
@@ -158,6 +161,8 @@ Future<void> launchPracticeSet({
     length = PracticeLength.quick;
   }
 
+  // V18 names the count ("Writing 3 questions on …").
+  onQuestionCount?.call(length.questionCount);
   setGenerating(true);
   try {
     final deviceId = await storageService.getOrCreateDeviceId();

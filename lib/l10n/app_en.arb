@@ -1479,6 +1479,14 @@
   "@weakSpotPreparing": {
     "description": "Shown while a practice set is made."
   },
+  "practicePreparingTopic": "{count, plural, one{Writing 1 question on {topic}…} other{Writing {count} questions on {topic}…}}",
+  "@practicePreparingTopic": {
+    "description": "V18: shown while a practice set is written; count is the number of questions, topic the topic's title (fix round 3, B7).",
+    "placeholders": {
+      "count": {"type": "int"},
+      "topic": {"type": "String"}
+    }
+  },
   "weakSpotLoadFailed": "Could not load your recent mistakes.\n{error}",
   "@weakSpotLoadFailed": {
     "description": "Weak spot screen when its mistakes could not be loaded; {error} is the technical reason.",

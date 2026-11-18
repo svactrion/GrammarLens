@@ -277,6 +277,7 @@
   "reviewExploreTopicPractice": "استكشف تدريب الموضوعات",
   "weakSpotGenerateFailed": "تعذّر إنشاء مجموعة المراجعة",
   "weakSpotPreparing": "جارٍ تجهيز أسئلتك…",
+  "practicePreparingTopic": "{count, plural, zero{جارٍ كتابة الأسئلة عن {topic}…} one{جارٍ كتابة سؤال واحد عن {topic}…} two{جارٍ كتابة سؤالين عن {topic}…} few{جارٍ كتابة {count} أسئلة عن {topic}…} many{جارٍ كتابة {count} سؤالًا عن {topic}…} other{جارٍ كتابة {count} سؤال عن {topic}…}}",
   "weakSpotLoadFailed": "تعذّر تحميل أخطائك الأخيرة.\n{error}",
   "weakSpotSavedFeedback": "الملاحظات المحفوظة",
   "weakSpotRecap": "واجهت صعوبة في {rule}. سيساعدك التدريب عليها مرة أخرى على ترسيخها.",

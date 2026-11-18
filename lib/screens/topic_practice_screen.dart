@@ -62,6 +62,7 @@ class TopicPracticeScreen extends StatefulWidget {
 
 class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
   bool _generating = false;
+  int? _preparingCount;
   Topic? _preparing;
   late Future<Map<String, TopicStats>> _statsFuture;
 
@@ -104,6 +105,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
+      onQuestionCount: (count) => _preparingCount = count,
       errorPrefix: context.l10n.topicPracticeGenerateFailed,
       // A completed practice set changes this topic's stats (and possibly
       // its weak spots), so refresh the cards once the user is back here.
@@ -129,6 +131,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
         message: context.l10n.weakSpotPreparing,
         topic: _preparing,
         hero: widget.hero,
+        questionCount: _preparingCount,
       );
     }
     final topics = practiceTopics(firstWave: widget.firstWaveTopics);
