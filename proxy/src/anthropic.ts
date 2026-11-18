@@ -1,4 +1,4 @@
-import { TOPICS, topicById } from './topics';
+import { FIRST_WAVE_TOPICS_ENABLED, TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './error_log';
 import {
@@ -191,8 +191,19 @@ function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): Anthropi
   return buildGeneratePracticeSetBodyFor(req, PRODUCTION_PRACTICE);
 }
 
-export function buildGeneratePracticeSetBodyFor(req: GeneratePracticeSetRequest, variant: PracticeVariant): AnthropicRequestBody {
-  const topic = topicById(req.topicId);
+/**
+ * [firstWave]: whether the first-wave practice topics count as known. The
+ * routes never pass it, so they follow {@link FIRST_WAVE_TOPICS_ENABLED}; the
+ * 1.5.0 topics measurement (`eval/lib/topics_measurement.ts`) passes `true`
+ * to build the body the proxy would send once the switch is on, without
+ * touching the switch.
+ */
+export function buildGeneratePracticeSetBodyFor(
+  req: GeneratePracticeSetRequest,
+  variant: PracticeVariant,
+  firstWave: boolean = FIRST_WAVE_TOPICS_ENABLED,
+): AnthropicRequestBody {
+  const topic = topicById(req.topicId, firstWave);
   if (!topic) throw new ProxyError('invalid_request', 400, 'Unknown topicId.');
 
   const schema = {

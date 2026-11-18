@@ -31,6 +31,12 @@
  *   npm run eval -- measure dt-more --out DIR
  *                                      six more dates per version for the v2/v3 check (12 calls)
  *                                      and the s-dt-2 sheet
+ *   npm run eval -- topics --dry-run   the 1.5.0 first-wave topics measurement's calls per stage and
+ *                                      estimated spend (no API call, no key needed)
+ *   npm run eval -- topics run [--out DIR]
+ *                                      runs it (or resumes DIR): generation, the answer writer,
+ *                                      scoring, the automatic checks; at most $15 of measured
+ *                                      spend; the key from ANTHROPIC_API_KEY in the environment only
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -140,6 +146,23 @@ import {
   type SGenItem,
 } from './lib/measurement';
 import { renderMeasurementReport, renderSecondLook, type AnalysisData } from './lib/analysis_measurement';
+import {
+  TOPICS_CAP_MARGIN,
+  TOPICS_SPEND_CAP_USD,
+  answerWriterCall,
+  builtAnswersFrom,
+  fitsTopicsCap,
+  generationCalls,
+  generationId,
+  measuredTopics,
+  planTopicsDryRun,
+  renderTopicsDryRun,
+  scoringCalls,
+  type AnswerProblem,
+  type TopicAnswer,
+  type TopicItem,
+} from './lib/topics_measurement';
+import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type SetGate } from './lib/topics_checks';
 import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
 const API = 'https://api.anthropic.com/v1';
@@ -1037,12 +1060,23 @@ class MeasureRun {
   private constructor(
     readonly dir: string,
     private readonly key: string,
+    /** Measured spend this folder may reach. */
+    readonly capUsd: number,
+    /** Whether a call of this estimated cost may still be made. */
+    private readonly fits: (spentUsd: number, estimateUsd: number) => boolean,
   ) {}
 
-  static async open(outDir: string | undefined, key: string): Promise<MeasureRun> {
-    const dir = outDir ?? path.join(ROOT, 'eval/out', `measure-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+  /** [options]: the folder's name prefix and its cap, for a measurement
+   * other than 1.4.0's (the topics measurement: `topics-…`, $15). */
+  static async open(
+    outDir: string | undefined,
+    key: string,
+    options: { prefix?: string; capUsd?: number; fits?: (spentUsd: number, estimateUsd: number) => boolean } = {},
+  ): Promise<MeasureRun> {
+    const dir = outDir ?? path.join(ROOT, 'eval/out', `${options.prefix ?? 'measure'}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
     await mkdir(path.join(dir, 'private'), { recursive: true });
-    const run = new MeasureRun(dir, key);
+    const capUsd = options.capUsd ?? MEASURE_SPEND_CAP_USD;
+    const run = new MeasureRun(dir, key, capUsd, options.fits ?? ((spent, estimate) => spent + estimate * 1.25 <= capUsd));
     if (await exists(run.recordsFile)) {
       run.records.push(...(await readJsonFile<MeasureRecord[]>(run.recordsFile)));
       for (const r of run.records) run.done.set(r.customId, r);
@@ -1071,6 +1105,12 @@ class MeasureRun {
     await writeFile(file, text);
   }
 
+  /** Prints [text] to the terminal only, under the same check. */
+  printSafe(text: string): void {
+    if (text.includes(this.key)) throw new Error('refusing to print the API key');
+    console.log(text);
+  }
+
   async log(line: string): Promise<void> {
     if (line.includes(this.key)) throw new Error('refusing to log the API key');
     const stamped = `${new Date().toISOString()} ${line}`;
@@ -1094,7 +1134,7 @@ class MeasureRun {
     const existing = this.done.get(c.customId);
     if (existing?.status === 'ok') return existing;
     const est = costOf(c.model, estimate, true);
-    if (this.spent() + est * 1.25 > MEASURE_SPEND_CAP_USD) {
+    if (!this.fits(this.spent(), est)) {
       const skipped: MeasureRecord = { customId: c.customId, stage: c.stage, group: c.group, model: c.model, status: 'skipped_budget', costUsd: 0 };
       this.put(skipped);
       await this.save();
@@ -1340,6 +1380,99 @@ async function runDtMore(outDir: string | undefined): Promise<void> {
   await run.log(`dt-more done; spent ${money(run.spent())}`);
 }
 
+// ---------------------------------------------------------------------------
+// The 1.5.0 first-wave topics measurement (docs/TOPICS.md, phase A)
+
+/** The calls per stage and the estimated spend. No API call and no key
+ * needed; says whether the key is in the environment, never what it is. */
+async function topicsDryRun(): Promise<void> {
+  const ratio = charactersPerToken();
+  const summary = renderTopicsDryRun(planTopicsDryRun(ratio), ratio);
+  console.log(summary.text);
+  console.log('');
+  console.log(process.env.ANTHROPIC_API_KEY?.trim() ? 'API key: found in the environment (not shown)' : 'API key: not in the environment (the dry run does not need it; the run does)');
+  if (!summary.withinLimit) process.exitCode = 1;
+}
+
+/**
+ * Generation, the answer writer, scoring, then the automatic checks; every
+ * call through [MeasureRun] (retry, the cap check before each call, records
+ * saved after each call, `progress.log`, no write that contains the key). A
+ * folder that stopped half way is resumed with `--out`: calls that are ok are
+ * not repeated, and the cap counts what the folder has already spent.
+ */
+async function runTopics(outDir: string | undefined): Promise<void> {
+  const run = await MeasureRun.open(outDir, measureKey(), { prefix: 'topics', capUsd: TOPICS_SPEND_CAP_USD, fits: (spent, estimate) => fitsTopicsCap(spent, estimate) });
+  const ratio = charactersPerToken();
+  const rel = path.relative(ROOT, run.dir);
+  await run.log(`topics run in ${rel}; cap ${money(run.capUsd)} of measured spend (a call is made while spent + estimate × ${TOPICS_CAP_MARGIN} stays within it); ${run.records.length} records already there; spent so far ${money(run.spent())}`);
+
+  // 1. Generation.
+  const generation = generationCalls(ratio);
+  await run.runPlanned(generation, 'generation');
+  const gates: SetGate[] = [];
+  for (const { topic, sets } of measuredTopics()) {
+    for (let set = 1; set <= sets; set++) {
+      const record = run.record(generationId(topic.id, set));
+      if (record?.status === 'ok') gates.push(gateSet(topic.id, set, record.content));
+    }
+  }
+  const items: TopicItem[] = gates.flatMap((g) => g.items);
+  await run.log(`generation: ${gates.length} of ${generation.length} sets generated, ${gates.filter((g) => g.passed).length} passed the gate; ${items.length} questions`);
+
+  // 2. The answer writer, one call per generated set.
+  const writerCalls = gates.filter((g) => g.items.length > 0).map((g) => ({ gate: g, call: answerWriterCall(g.topicId, g.set, g.items, ratio) }));
+  await run.runPlanned(writerCalls.map((w) => w.call), 'answers');
+  const answers: TopicAnswer[] = [];
+  const answerProblems: AnswerProblem[] = [];
+  for (const { gate, call } of writerCalls) {
+    const record = run.record(call.customId);
+    if (record?.status !== 'ok') continue;
+    const built = builtAnswersFrom(gate.items, record.content);
+    answers.push(...built.answers);
+    answerProblems.push(...built.problems);
+  }
+  await run.log(`answers: ${answers.length} built for ${new Set(answers.map((a) => a.itemId)).size} questions (${answers.filter((a) => a.truth).length} right, ${answers.filter((a) => !a.truth).length} wrong by construction); ${answerProblems.length} notes on the writer's entries (answer-problems.json)`);
+
+  // 3. Scoring with the production cell.
+  const scoring = scoringCalls(answers, ratio);
+  await run.runPlanned(scoring.map((s) => s.call), 'scoring');
+
+  // 4. The automatic checks, and what phase B reads.
+  const checks = checkItems(items, answers);
+  const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
+  await run.writeSafe(path.join(run.dir, 'sets.json'), json(gates.map((g) => ({ topicId: g.topicId, set: g.set, passed: g.passed, problems: g.problems, items: g.items.length }))));
+  await run.writeSafe(path.join(run.dir, 'items.json'), json(items));
+  await run.writeSafe(path.join(run.dir, 'answers.json'), json(answers));
+  await run.writeSafe(path.join(run.dir, 'answer-problems.json'), json(answerProblems));
+  await run.writeSafe(path.join(run.dir, 'scoring-calls.json'), json(scoring.map((s) => ({ customId: s.call.customId, answerIds: s.answerIds }))));
+  await run.writeSafe(path.join(run.dir, 'checks.json'), json(checks));
+
+  const plannedNow = [...generation, ...writerCalls.map((w) => w.call), ...scoring.map((s) => s.call)];
+  const ids = new Set(plannedNow.map((c) => c.customId));
+  const mine = run.records.filter((r) => ids.has(r.customId));
+  const failed = mine.filter((r) => r.status !== 'ok' && r.status !== 'skipped_budget').length;
+  const skipped = mine.filter((r) => r.status === 'skipped_budget').length;
+  const report = [
+    renderStageReport('First-wave topics measurement — measured against the estimate', plannedNow, mine),
+    '',
+    `Sets generated: ${gates.length} of ${generation.length}; passed the gate: ${gates.filter((g) => g.passed).length}. Questions: ${items.length}. Built answers: ${answers.length}; scoring calls: ${scoring.length}.`,
+    '',
+    '## Automatic checks (questions with at least one flag)',
+    '',
+    renderCheckSummary(summarizeChecks(checks)),
+  ].join('\n');
+  await run.writeSafe(path.join(run.dir, 'run-report.md'), `${report}\n`);
+  run.printSafe(`\n${report}\n`);
+  const complete = failed === 0 && skipped === 0 && gates.length === generation.length && writerCalls.every((w) => run.record(w.call.customId)?.status === 'ok');
+  await run.log(
+    complete
+      ? `topics run done: ${mine.length} calls ok; spent ${money(run.spent())} of ${money(run.capUsd)}; folder ${rel}`
+      : `topics run incomplete: ${failed} calls failed, ${skipped} skipped for the cap, ${generation.length - gates.length} sets not generated; spent ${money(run.spent())} of ${money(run.capUsd)}; run again with --out ${rel} to retry what failed`,
+  );
+  if (!complete) process.exitCode = 1;
+}
+
 async function main(): Promise<void> {
   if (!(await exists(path.join(ROOT, 'wrangler.jsonc')))) throw new Error('Run from proxy/ (npm run eval -- …).');
   const [command, ...rest] = process.argv.slice(2);
@@ -1353,6 +1486,8 @@ async function main(): Promise<void> {
   if (command === 'analyze') return analyzeRun(out);
   if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
   if (command === 'sets') return buildSets();
+  if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun();
+  if (command === 'topics' && rest.includes('run')) return runTopics(out);
   if (command === 'measure' && rest.includes('score')) return runMeasureScoring(out, rest.includes('--dry-run'));
   if (command === 'measure' && rest.includes('--dry-run')) return measureDryRun();
   if (command === 'measure' && rest.includes('probe')) return measureProbe();
@@ -1361,7 +1496,7 @@ async function main(): Promise<void> {
   if (command === 'measure' && rest.includes('analyze')) return analyzeMeasurement(out);
   if (command === 'measure' && rest.includes('dt-more')) return runDtMore(out);
   console.log(
-    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets',
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run | topics run [--out DIR]',
   );
   process.exitCode = 1;
 }
