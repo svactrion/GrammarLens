@@ -9,6 +9,7 @@ import '../models/avatar.dart';
 import '../models/topic.dart';
 import '../motion.dart';
 import '../theme.dart';
+import 'centered_scroll.dart';
 import 'companion_view.dart';
 import 'skeleton.dart';
 import 'thinking_dots.dart';
@@ -113,9 +114,11 @@ class _PracticePreparingState extends State<PracticePreparing>
     return Semantics(
       liveRegion: true,
       label: message,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 30, bottom: 24),
+      // v12: centred in the space under the header (V18, as V20).
+      child: CenteredScroll(
+        padding: const EdgeInsets.only(top: 12, bottom: 24),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Center(

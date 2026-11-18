@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../app_colors.dart';
 import '../models/avatar.dart';
+import '../motion.dart';
 import '../utils/haptics.dart';
 import '../widgets/companion_dialog.dart';
 import '../widgets/practice_reviewing.dart';
@@ -47,6 +48,9 @@ class PracticeScreen extends StatefulWidget {
   static const keepGoingKey = ValueKey('practice_keep_going');
   static const evaluatedLineKey = ValueKey('practice_evaluated_line');
 
+  /// V20 v12: how long the ticked checklist shows before the results.
+  static const resultBeat = Duration(milliseconds: 400);
+
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
 }
@@ -56,6 +60,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
   late final AnswerDrafts _drafts;
   int _currentIndex = 0;
   bool _submitting = false;
+
+  /// V20 v12: the result has arrived (the checklist's last item ticks).
+  bool _resultReady = false;
 
   /// The user's buddy (the leave dialog, the AI wait); read once.
   Avatar? _hero;
@@ -194,8 +201,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
         blankAnswers: blankAnswers,
       );
       if (!mounted) return;
-      // V20: the result is ready.
+      // V20: the result is ready: the last item ticks (v12), then the
+      // results.
       HapticMap.success();
+      setState(() => _resultReady = true);
+      await Future<void>.delayed(
+          AppMotion.orInstant(context, PracticeScreen.resultBeat));
+      if (!mounted) return;
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultsScreen(
@@ -265,6 +277,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   ? Padding(
                       padding: EdgeInsets.symmetric(horizontal: hPad),
                       child: PracticeReviewing(
+                        done: _resultReady,
                         hero: _hero,
                         topic: widget.topic.title(context.l10n),
                         answers: [

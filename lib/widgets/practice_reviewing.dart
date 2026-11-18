@@ -8,12 +8,17 @@ import '../models/avatar.dart';
 import '../motion.dart';
 import '../theme.dart';
 import '../utils/haptics.dart';
+import 'centered_scroll.dart';
 import 'companion_view.dart';
 
 /// V20: the wait between Submit and the results. The companion inspects
 /// through its magnifier; a scan window with the clay lens sweeps over the
-/// answer cards (3.2 s); a checklist ticks 0.8 s apart (light haptic each);
-/// an indeterminate bar runs under "Your feedback is on its way".
+/// answer cards (3.2 s), the lens inside the window; a checklist; an
+/// indeterminate bar runs under "Your feedback is on its way". v12: the
+/// content is centred in the space under the header, and the checklist is
+/// honest: the first two items tick 0.8 s apart (light haptic each), the
+/// last ("Writing your feedback") stays in progress (a pulsing dot) until
+/// the result arrives ([done]) and ticks with it.
 class PracticeReviewing extends StatefulWidget {
   final Avatar? hero;
   final String topic;
@@ -21,15 +26,30 @@ class PracticeReviewing extends StatefulWidget {
   /// The answers being checked, as written.
   final List<String> answers;
 
+  /// The result has arrived: the last item ticks (its haptic is the
+  /// result's own success).
+  final bool done;
+
   const PracticeReviewing({
     super.key,
     required this.topic,
     required this.answers,
     this.hero,
+    this.done = false,
   });
 
   static const tick = Duration(milliseconds: 800);
   static const sweep = Duration(milliseconds: 3200);
+
+  /// The checklist's items: 0–2 ticked, the last in progress until [done].
+  static ValueKey<String> stepKey(int i) => ValueKey('reviewing_step_$i');
+  static const tickedKey = ValueKey(true);
+  static const waitingKey = ValueKey('reviewing_waiting');
+  static const lensKey = ValueKey('reviewing_lens');
+  static const windowKey = ValueKey('reviewing_window');
+
+  /// The items that tick on their own timers (the last waits for [done]).
+  static const timedSteps = 2;
 
   @override
   State<PracticeReviewing> createState() => _PracticeReviewingState();
@@ -37,9 +57,10 @@ class PracticeReviewing extends StatefulWidget {
 
 class _PracticeReviewingState extends State<PracticeReviewing>
     with TickerProviderStateMixin {
-  late final AnimationController _ticks =
-      AnimationController(vsync: this, duration: PracticeReviewing.tick * 3)
-        ..addListener(_onTick);
+  late final AnimationController _ticks = AnimationController(
+      vsync: this,
+      duration: PracticeReviewing.tick * PracticeReviewing.timedSteps)
+    ..addListener(_onTick);
   AnimationController? _sweep;
   int _ticked = 0;
 
@@ -61,7 +82,8 @@ class _PracticeReviewingState extends State<PracticeReviewing>
   }
 
   void _onTick() {
-    final n = (_ticks.value * 3 + 1e-9).floor().clamp(0, 3);
+    const steps = PracticeReviewing.timedSteps;
+    final n = (_ticks.value * steps + 1e-9).floor().clamp(0, steps);
     if (n > _ticked) {
       setState(() => _ticked = n);
       if (!AppMotion.reduced(context)) HapticMap.light();
@@ -121,6 +143,7 @@ class _PracticeReviewingState extends State<PracticeReviewing>
                       (box.maxHeight - 56).clamp(0.0, double.infinity) * t;
                   return Stack(children: [
                     Positioned(
+                      key: PracticeReviewing.windowKey,
                       left: 0,
                       right: 0,
                       top: y,
@@ -133,9 +156,12 @@ class _PracticeReviewingState extends State<PracticeReviewing>
                         ),
                       ),
                     ),
-                    Positioned(
-                      right: 8,
-                      top: y - 14,
+                    // v12: the lens inside the window (it used to stand
+                    // 14 pt above it, out of the card at the top).
+                    PositionedDirectional(
+                      key: PracticeReviewing.lensKey,
+                      end: 8,
+                      top: y + 6,
                       width: 44,
                       height: 44,
                       child: Image.asset('assets/ui/lens.webp',
@@ -152,10 +178,11 @@ class _PracticeReviewingState extends State<PracticeReviewing>
     return Semantics(
       liveRegion: true,
       label: l10n.practiceReviewingTitle,
-      child: SingleChildScrollView(
+      child: CenteredScroll(
         padding: const EdgeInsets.fromLTRB(0, 12, 0, 24),
         child: ExcludeSemantics(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
@@ -178,34 +205,54 @@ class _PracticeReviewingState extends State<PracticeReviewing>
               cards,
               const SizedBox(height: 10),
               for (final (i, step) in steps.indexed)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(children: [
-                    AnimatedSwitcher(
-                      duration: AppMotion.orInstant(context, AppMotion.fast),
-                      transitionBuilder: (child, a) =>
-                          ScaleTransition(scale: a, child: child),
-                      child: i < _ticked
-                          ? Icon(Icons.check_circle_rounded,
-                              key: const ValueKey(true),
-                              color: c.green,
-                              size: 22)
-                          : Icon(Icons.radio_button_unchecked_rounded,
-                              key: const ValueKey(false),
-                              color: c.line,
-                              size: 22),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(step,
-                          style: theme.textTheme.bodyMedium!
-                              .withWeight(i < _ticked
-                                  ? FontWeight.w800
-                                  : FontWeight.w600)
-                              .copyWith(color: i < _ticked ? c.text : c.muted)),
-                    ),
-                  ]),
-                ),
+                Builder(builder: (context) {
+                  final last = i == steps.length - 1;
+                  final ticked = last ? widget.done : i < _ticked;
+                  // The last item is in progress once the timed ones have
+                  // ticked, until the result arrives.
+                  final waiting = last &&
+                      !widget.done &&
+                      _ticked >= PracticeReviewing.timedSteps;
+                  return Padding(
+                    key: PracticeReviewing.stepKey(i),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(children: [
+                      SizedBox.square(
+                        dimension: 22,
+                        child: AnimatedSwitcher(
+                          duration:
+                              AppMotion.orInstant(context, AppMotion.fast),
+                          transitionBuilder: (child, a) =>
+                              ScaleTransition(scale: a, child: child),
+                          child: ticked
+                              ? Icon(Icons.check_circle_rounded,
+                                  key: PracticeReviewing.tickedKey,
+                                  color: c.green,
+                                  size: 22)
+                              : waiting
+                                  ? _PulsingDot(
+                                      key: PracticeReviewing.waitingKey,
+                                      color: c.navyText)
+                                  : Icon(Icons.radio_button_unchecked_rounded,
+                                      key: const ValueKey(false),
+                                      color: c.line,
+                                      size: 22),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(step,
+                            style: theme.textTheme.bodyMedium!
+                                .withWeight(ticked || waiting
+                                    ? FontWeight.w800
+                                    : FontWeight.w600)
+                                .copyWith(
+                                    color:
+                                        ticked || waiting ? c.text : c.muted)),
+                      ),
+                    ]),
+                  );
+                }),
               const SizedBox(height: 14),
               Text(l10n.practiceReviewingOnItsWay.toUpperCase(),
                   style: theme.textTheme.labelSmall!
@@ -227,5 +274,58 @@ class _PracticeReviewingState extends State<PracticeReviewing>
         ),
       ),
     );
+  }
+}
+
+/// V20 v12: the item in progress, a dot that pulses (1.2 s; still under
+/// Reduce Motion).
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({super.key, required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context) && _t == null) {
+      _t = AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 1200))
+        ..repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget dot(double p) {
+      final wave = (1 - math.cos(2 * math.pi * p)) / 2;
+      return Center(
+        child: Container(
+          width: 10 + 4 * wave,
+          height: 10 + 4 * wave,
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: .55 + .45 * wave),
+            shape: BoxShape.circle,
+          ),
+        ),
+      );
+    }
+
+    final t = _t;
+    return t == null
+        ? dot(.5)
+        : AnimatedBuilder(animation: t, builder: (context, _) => dot(t.value));
   }
 }
