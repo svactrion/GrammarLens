@@ -154,7 +154,8 @@ void main() {
         (tester) async {
       await pump(tester);
       await toNameStep(tester);
-      expect(find.text('What should I call you?'), findsOneWidget);
+      // V04 (v11): the companion asks in its bubble (fix round 3, C2).
+      expect(find.text('Hi! What should I call you?'), findsOneWidget);
       expect(enabled(tester, OnboardingScreen.continueKey), isFalse);
       await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), '   ');
       await tester.pump();
@@ -196,11 +197,12 @@ void main() {
 
   group('step 3: the goal (V05)', () {
     testWidgets(
-        'greets by name, four cards with no preselection; Continue waits for '
+        'asks by name, four cards with no preselection; Continue waits for '
         'one; Skip is always there', (tester) async {
       await pump(tester);
       await toGoalStep(tester);
-      expect(find.text('Nice to meet you, Ada!'), findsOneWidget);
+      // The greeting moved to V04 (SPEC v11); V05's board has no chip.
+      expect(find.textContaining('Nice to meet you'), findsNothing);
       expect(find.text('What brings you to English, Ada?'), findsOneWidget);
       for (final goal in LearningGoal.values) {
         expect(find.byKey(OnboardingScreen.goalKey(goal)), findsOneWidget);

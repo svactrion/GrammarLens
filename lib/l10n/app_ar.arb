@@ -105,6 +105,7 @@
   "welcomeGetStarted": "ابدأ",
   "onboardingStep": "الخطوة {step} من {total}",
   "onboardingNameQuestion": "بماذا أناديك؟",
+  "onboardingNameAsk": "مرحبًا! بماذا أناديك؟",
   "onboardingNameHint": "اسمك",
   "onboardingNameNote": "يكفي اسم مستعار. يبقى على هذا الجهاز.",
   "onboardingPrivacyNote": "يبقى اسمك على هذا الجهاز. يُرسَل هدفك مع بيانات استخدام التطبيق، ولا يُرسَل مع اسمك أبدًا. تُجمَع بيانات الاستخدام والأعطال.",

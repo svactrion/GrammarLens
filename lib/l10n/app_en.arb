@@ -497,6 +497,10 @@
   "@onboardingNameQuestion": {
     "description": "Onboarding name step (V04): the buddy's question in its speech bubble."
   },
+  "onboardingNameAsk": "Hi! What should I call you?",
+  "@onboardingNameAsk": {
+    "description": "V04 (v11): the companion's bubble while the name field is empty (it waves)."
+  },
   "onboardingNameHint": "Your name",
   "@onboardingNameHint": {
     "description": "Onboarding step 1: the hint inside the empty name field."
@@ -3234,7 +3238,7 @@
   },
   "onboardingNiceToMeet": "Nice to meet you, {name}!",
   "@onboardingNiceToMeet": {
-    "description": "Onboarding goal step (V05): the buddy's greeting after the name. {name} is the user's name.",
+    "description": "V04 (v11): the companion's greeting 700 ms after the last key; the name shows in orange, cut to 16 characters. {name} is the user's name.",
     "placeholders": {
       "name": {
         "type": "String",

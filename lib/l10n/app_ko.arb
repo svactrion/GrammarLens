@@ -105,6 +105,7 @@
   "welcomeGetStarted": "시작하기",
   "onboardingStep": "{total}단계 중 {step}단계",
   "onboardingNameQuestion": "뭐라고 부르면 될까?",
+  "onboardingNameAsk": "안녕! 뭐라고 부르면 될까?",
   "onboardingNameHint": "이름",
   "onboardingNameNote": "닉네임도 괜찮아요. 이 기기에만 저장돼요.",
   "onboardingPrivacyNote": "이름은 이 기기에만 남아요. 목표는 앱 사용 데이터와 함께 전송되며, 이름과 함께 전송되지 않아요. 사용 데이터와 오류 데이터를 수집해요.",

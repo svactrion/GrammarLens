@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -12,12 +12,12 @@ import '../theme.dart';
 import '../utils/content_width.dart';
 import '../utils/haptics.dart';
 import '../widgets/learning_goal_icon.dart';
+import '../widgets/name_companion_stage.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/buddy_picker.dart';
 import '../widgets/companion_view.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/pressable_button.dart';
-import '../widgets/speech_bubble.dart';
 import 'lucky_wheel_screen.dart';
 
 /// The short privacy line under the goal options. Public so a test can pin
@@ -61,6 +61,18 @@ class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, required this.onComplete});
 
   static const nameFieldKey = ValueKey('onboarding_name');
+
+  /// V04: the green tick at the field's end while the companion greets.
+  static const nameTickKey = ValueKey('onboarding_name_tick');
+
+  /// V04: the n/40 counter under the field.
+  static const nameCounterKey = ValueKey('onboarding_name_counter');
+
+  /// V04: the companion's stage (glow, companion, bubble).
+  static const nameStageKey = ValueKey('onboarding_name_stage');
+
+  /// V04: the greeting comes this long after the last key (SPEC v11).
+  static const greetDelay = Duration(milliseconds: 700);
   static const continueKey = ValueKey('onboarding_continue');
   static const backKey = ValueKey('onboarding_back');
   static const startKey = ValueKey('onboarding_start');
@@ -83,8 +95,7 @@ class OnboardingScreen extends StatefulWidget {
 
 enum _Step { buddy, name, goal }
 
-class _OnboardingScreenState extends State<OnboardingScreen>
-    with TickerProviderStateMixin {
+class _OnboardingScreenState extends State<OnboardingScreen> {
   final _nameController = TextEditingController();
   final _dataLinkFocus = FocusNode(debugLabel: 'data link');
   LearningGoal? _selectedGoal;
@@ -94,21 +105,28 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // starts with Fox in front (V03, "1 / 9").
   Avatar _selectedAvatar = Avatar.fox;
 
-  /// The buddy's nod while the name is typed (V04: at most 4 Hz).
-  late final AnimationController _nod;
+  /// V04's state: asks (empty), listens (typing), greets (a pause).
+  NameStage _nameStage = NameStage.asks;
+  Timer? _greetTimer;
+
+  /// The names greeted so far: the greeting's haptic plays once per name.
+  final _greetedNames = <String>{};
+  final _nameFocus = FocusNode(debugLabel: 'name');
 
   @override
   void initState() {
     super.initState();
-    _nod = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
+    _nameFocus.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _greetTimer?.cancel();
     _nameController.dispose();
+    _nameFocus.dispose();
     _dataLinkFocus.dispose();
-    _nod.dispose();
     super.dispose();
   }
 
@@ -146,13 +164,28 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _back() => setState(() {
         _step = _step == _Step.goal ? _Step.name : _Step.buddy;
+        // Back on the name: the companion greets the name already given.
+        if (_step == _Step.name && _canContinue) {
+          _greetTimer?.cancel();
+          _nameStage = NameStage.greets;
+        }
       });
 
+  /// V04 (v11): clearing the field asks again; typing listens; 700 ms
+  /// after the last key a valid name is greeted (a light haptic, once per
+  /// name).
   void _onNameChanged() {
-    setState(() {});
-    if (!_nod.isAnimating && !AppMotion.reduced(context)) {
-      _nod.forward(from: 0);
-    }
+    _greetTimer?.cancel();
+    final name = _name;
+    setState(() {
+      _nameStage = name.isEmpty ? NameStage.asks : NameStage.listens;
+    });
+    if (name.isEmpty) return;
+    _greetTimer = Timer(OnboardingScreen.greetDelay, () {
+      if (!mounted || _name != name) return;
+      setState(() => _nameStage = NameStage.greets);
+      if (_greetedNames.add(name)) HapticMap.light();
+    });
   }
 
   void _finish({required bool skipGoal}) {
@@ -236,6 +269,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final theme = Theme.of(context);
     final c = AppColors.of(context);
     final hPad = _sidePadding(context);
+    final greets = _nameStage == NameStage.greets;
+    final focused = _nameFocus.hasFocus;
+    final small =
+        theme.textTheme.bodySmall!.copyWith(color: c.muted, fontSize: 13);
     // A tap anywhere outside the name field closes the keyboard and keeps
     // the name.
     return GestureDetector(
@@ -246,79 +283,78 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           _StepTop(step: 2, onBack: _back),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(hPad, 18, hPad, 12),
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      AnimatedBuilder(
-                        animation: _nod,
-                        builder: (context, child) {
-                          final t = _nod.value;
-                          final a = math.sin(t * math.pi) * -7 * math.pi / 180;
-                          return Transform.rotate(
-                            angle: a,
-                            alignment: const Alignment(0, .84),
-                            child: Transform.translate(
-                                offset: Offset(0, 2 * math.sin(t * math.pi)),
-                                child: child),
-                          );
-                        },
-                        child: CompanionView(
-                          hero: _selectedAvatar,
-                          mood: CompanionMood.idle,
-                          size: 92,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SpeechBubble(
-                          text: context.l10n.onboardingNameQuestion,
-                          pointer: BubblePointer.start,
-                        ),
-                      ),
-                    ],
+                  // V04 (v11): the companion large and centred in its
+                  // glow, the bubble above it.
+                  NameCompanionStage(
+                    key: OnboardingScreen.nameStageKey,
+                    hero: _selectedAvatar,
+                    stage: _nameStage,
+                    name: _name,
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    context.l10n.onboardingNameHint,
-                    style: theme.textTheme.labelLarge!
-                        .withWeight(FontWeight.w800)
-                        .copyWith(color: c.muted),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    key: OnboardingScreen.nameFieldKey,
-                    controller: _nameController,
-                    maxLength: UserProfile.maxNameLength,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.nickname],
-                    onChanged: (_) => _onNameChanged(),
-                    onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                    style: theme.textTheme.headlineSmall!
-                        .withWeight(FontWeight.w800)
-                        .copyWith(color: c.text),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: context.l10n.onboardingNameHint,
-                      fillColor: c.card,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide(color: c.line, width: 2),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide(color: c.navy, width: 3),
+                  const SizedBox(height: 16),
+                  AnimatedContainer(
+                    duration: AppMotion.orInstant(context, AppMotion.fast),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      // The board's focus ring: 6 pt of sky round the field.
+                      boxShadow: [
+                        if (focused) BoxShadow(color: c.sky, spreadRadius: 6),
+                      ],
+                    ),
+                    child: TextField(
+                      key: OnboardingScreen.nameFieldKey,
+                      controller: _nameController,
+                      focusNode: _nameFocus,
+                      maxLength: UserProfile.maxNameLength,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.nickname],
+                      onChanged: (_) => _onNameChanged(),
+                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                      style: theme.textTheme.headlineSmall!
+                          .withWeight(FontWeight.w800)
+                          .copyWith(color: c.text, fontSize: 24),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: context.l10n.onboardingNameHint,
+                        filled: true,
+                        fillColor: c.card,
+                        contentPadding: const EdgeInsetsDirectional.fromSTEB(
+                            18, 16, 16, 16),
+                        suffixIcon: greets
+                            ? const _NameTick(key: OnboardingScreen.nameTickKey)
+                            : null,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: c.line, width: 2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: c.navy, width: 3),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    context.l10n.onboardingNameNote,
-                    style: theme.textTheme.bodySmall!.copyWith(color: c.muted),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child:
+                            Text(context.l10n.onboardingNameNote, style: small),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '${_nameController.text.characters.length}/'
+                        '${UserProfile.maxNameLength}',
+                        key: OnboardingScreen.nameCounterKey,
+                        style: small.withWeight(FontWeight.w800),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -326,18 +362,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 12),
-            child: AnimatedOpacity(
-              opacity: 1,
-              duration: AppMotion.orInstant(
-                  context, const Duration(milliseconds: 200)),
-              child: PressableButton(
-                key: OnboardingScreen.continueKey,
-                label: context.l10n.commonContinue,
-                tone: ButtonTone.orange,
-                haptic: ButtonHaptic.light,
-                trailingIcon: _arrow(context),
-                onPressed: _canContinue ? _continue : null,
-              ),
+            child: PressableButton(
+              key: OnboardingScreen.continueKey,
+              label: context.l10n.commonContinue,
+              tone: ButtonTone.orange,
+              haptic: ButtonHaptic.light,
+              trailingIcon: _arrow(context),
+              onPressed: _canContinue ? _continue : null,
             ),
           ),
         ],
@@ -361,23 +392,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    CompanionView(
-                        hero: _selectedAvatar,
-                        mood: CompanionMood.wave,
-                        size: 44),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: SpeechBubble(
-                        text: context.l10n.onboardingNiceToMeet(_name),
-                        pointer: BubblePointer.start,
-                        compact: true,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
                 Text(
                   context.l10n.onboardingGoalQuestion(_name),
                   style: theme.textTheme.headlineMedium!
@@ -865,6 +879,41 @@ class _DataDialog extends StatelessWidget {
               child: Text(context.l10n.onboardingDataGotIt),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// V04's green tick at the field's end while the companion greets: a 28 pt
+/// green disc with a white check, popping in (300 ms after 100 ms).
+class _NameTick extends StatelessWidget {
+  const _NameTick({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final reduced = AppMotion.reduced(context);
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 16),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: reduced ? 1 : 0, end: 1),
+        duration: const Duration(milliseconds: 400),
+        builder: (context, t, child) {
+          // 100 ms late, then gl-pop11 over 300 ms.
+          final p = ((t - .25) / .75).clamp(0.0, 1.0);
+          final scale =
+              p < .7 ? .6 + .46 * (p / .7) : 1.06 - .06 * ((p - .7) / .3);
+          return Opacity(
+            opacity: (p / .7).clamp(0.0, 1.0),
+            child: Transform.scale(scale: scale, child: child),
+          );
+        },
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: c.green, shape: BoxShape.circle),
+          child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
         ),
       ),
     );

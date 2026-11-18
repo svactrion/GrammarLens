@@ -11,6 +11,7 @@ import '../motion.dart';
 import '../theme.dart';
 import 'companion_view.dart';
 import 'skeleton.dart';
+import 'thinking_dots.dart';
 
 /// V18: practice questions being prepared, the one loading screen of topic
 /// and weak-spot practice (SPEC V18, v11). As on the board: the companion
@@ -125,7 +126,7 @@ class _PracticePreparingState extends State<PracticePreparing>
                   decorative: true),
             ),
             const SizedBox(height: 8),
-            Center(child: _ThinkingDots(color: c.navy)),
+            Center(child: ThinkingDots(color: c.navy)),
             const SizedBox(height: 16),
             ExcludeSemantics(
               child: Text(message,
@@ -223,72 +224,4 @@ class _PracticePreparingState extends State<PracticePreparing>
             .withWeight(FontWeight.w600)
             .copyWith(color: AppColors.of(context).text, height: 1.4),
       );
-}
-
-/// The board's three 9 pt navy dots under the thinking companion, pulsing
-/// one after another (gl-dots: 1.2 s, 0.2 s apart); still with the loops
-/// off.
-class _ThinkingDots extends StatefulWidget {
-  final Color color;
-  const _ThinkingDots({required this.color});
-
-  @override
-  State<_ThinkingDots> createState() => _ThinkingDotsState();
-}
-
-class _ThinkingDotsState extends State<_ThinkingDots>
-    with SingleTickerProviderStateMixin {
-  AnimationController? _loop;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_loop == null && AppMotion.loopsOn(context)) {
-      _loop = AnimationController(
-          vsync: this, duration: const Duration(milliseconds: 1200))
-        ..repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _loop?.dispose();
-    super.dispose();
-  }
-
-  double _alpha(int i) {
-    final loop = _loop;
-    if (loop == null) return 1;
-    final t = (loop.value - i * .2 / 1.2) % 1;
-    return t < .4
-        ? .2 + .8 * t / .4
-        : t < .8
-            ? 1 - .8 * (t - .4) / .4
-            : .2;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Widget dots() => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < 3; i++)
-              Container(
-                width: 9,
-                height: 9,
-                margin: EdgeInsetsDirectional.only(end: i < 2 ? 5 : 0),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.color.withValues(alpha: _alpha(i)),
-                ),
-              ),
-          ],
-        );
-    final loop = _loop;
-    return ExcludeSemantics(
-      child: loop == null
-          ? dots()
-          : AnimatedBuilder(animation: loop, builder: (context, _) => dots()),
-    );
-  }
 }

@@ -105,6 +105,7 @@
   "welcomeGetStarted": "Başla",
   "onboardingStep": "Adım {step}/{total}",
   "onboardingNameQuestion": "Sana nasıl hitap edeyim?",
+  "onboardingNameAsk": "Selam! Sana nasıl hitap edeyim?",
   "onboardingNameHint": "Adın",
   "onboardingNameNote": "Bir takma ad da olur. Bu cihazda kalır.",
   "onboardingPrivacyNote": "Adın bu cihazda kalır. Hedefin uygulama kullanım verileriyle gönderilir, adınla asla. Kullanım ve çökme verileri toplanır.",

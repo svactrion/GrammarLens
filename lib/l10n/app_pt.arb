@@ -105,6 +105,7 @@
   "welcomeGetStarted": "Começar",
   "onboardingStep": "Etapa {step} de {total}",
   "onboardingNameQuestion": "Como devo te chamar?",
+  "onboardingNameAsk": "Oi! Como devo te chamar?",
   "onboardingNameHint": "Seu nome",
   "onboardingNameNote": "Pode ser um apelido. Ele fica neste dispositivo.",
   "onboardingPrivacyNote": "Seu nome fica neste dispositivo. Seu objetivo é enviado com os dados de uso do app, nunca com seu nome. Coletamos dados de uso e de falhas.",

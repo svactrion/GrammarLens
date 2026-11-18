@@ -105,6 +105,7 @@
   "welcomeGetStarted": "Los geht’s",
   "onboardingStep": "Schritt {step} von {total}",
   "onboardingNameQuestion": "Wie soll ich dich nennen?",
+  "onboardingNameAsk": "Hallo! Wie soll ich dich nennen?",
   "onboardingNameHint": "Dein Name",
   "onboardingNameNote": "Ein Spitzname reicht. Er bleibt auf diesem Gerät.",
   "onboardingPrivacyNote": "Dein Name bleibt auf diesem Gerät. Dein Ziel wird mit den App-Nutzungsdaten gesendet, nie mit deinem Namen. Nutzungs- und Absturzdaten werden erfasst.",

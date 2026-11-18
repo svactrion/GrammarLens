@@ -105,6 +105,7 @@
   "welcomeGetStarted": "はじめる",
   "onboardingStep": "ステップ {step}/{total}",
   "onboardingNameQuestion": "なんて呼べばいい？",
+  "onboardingNameAsk": "こんにちは！なんて呼べばいい？",
   "onboardingNameHint": "あなたの名前",
   "onboardingNameNote": "ニックネームでも大丈夫です。この端末内に保存されます。",
   "onboardingPrivacyNote": "名前はこの端末内に残ります。目標はアプリの利用データとともに送信され、名前と一緒に送られることはありません。利用データとクラッシュデータを収集します。",
