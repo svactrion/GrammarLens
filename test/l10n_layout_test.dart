@@ -139,7 +139,11 @@ final _sites = <_Site>[
       onSelectThemeMode: (_) {},
       textSize: AppTextSize.large,
       onSelectTextSize: (_) {},
-      profile: const UserProfile(name: 'Ada', learningGoal: LearningGoal.work),
+      // Fix round 5 (F5-9): a named hero. Without one Profile shows a
+      // random hero, and a long name in the ribbon's line ends in "…" by
+      // design, so the check failed one run in nine.
+      profile: const UserProfile(
+          name: 'Ada', learningGoal: LearningGoal.work, avatar: Avatar.fox),
       storageService: _Storage(),
       onProfileUpdated: (_) {},
       onResetOnboarding: () {},
