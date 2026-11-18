@@ -19,6 +19,9 @@ versions:
 recent:
   - version:
     date: 2026-11-18
+    notes: "First-wave practice topics, Conditionals: the owner decided to fix it and measure it again. The proxy's source now adds one generation-only sentence to the Conditionals practice request (first, second and third conditional only, no mixed conditional); no other topic's request changes, nothing is deployed, and the note is not in the app. The re-measurement of that topic alone is ready to run under the same $15 cap (dry run: 36 calls, about $0.24; the first run's $0.76 counts as spent). Also found: a fill-in-the-blank practice item without a blank is shown with one answer box and nothing on the live path stops it; a guard is proposed, not built. No API call made. The topics stay switched off; not on main, not shipped."
+  - version:
+    date: 2026-11-18
     notes: "First-wave practice topics: all 165 measured questions and their 464 built answers are labelled (Claude in the owner's Cowork chat, checked by the owner) and the report gives the owner's three pass criteria per topic. Passive Voice, Prepositions and Relative Clauses pass all three; Conditionals fails on scoring agreement and false 'correct' (cause: mixed conditionals, which its description and hint card do not cover); Comparatives & Superlatives fails on false 'correct' by one answer. Proposed, not built: a generation note for Conditionals with a re-measurement of that topic, one sentence in the scoring prompt, and a scenario theme per set to make Topic Practice sets differ (docs/1.5.0-topics-set-variety.md). No API call made. The topics stay switched off; not on main, not shipped."
   - version:
     date: 2026-11-18
@@ -29,16 +32,13 @@ recent:
   - version:
     date: 2026-11-18
     notes: "Fix round 5 of the UI polish on branch ui-polish-widgets, after the owner's third device pass: the free rest scene's panel is the ticket deck the owner chose (today's used ticket and a deck of the app's tickets on the Premium card); the Premium rest scene has its own done tiles and step card again; both panels end just above the nav bar; Profile's month progress card shows the medals on the bar; the paywall closes only with its X (no swipe or system back). Not on main, not shipped, waiting for the owner's fourth device pass."
-  - version:
-    date: 2026-11-18
-    notes: "Fix round 4 of the UI polish on branch ui-polish-widgets, after the owner's second device pass: the free rest scene fits one screen with the campfire by the companion; a compact paywall footer without 'Maybe later'; the tip widget shows the user's own latest mistake and every widget has a dark design; Profile's month progress card as designed; props placed by each companion's head; a light haptic on forward buttons; loading screens centred with an honest checklist; Turkish capitals with the dotted I. Not on main, not shipped, waiting for the owner's third device pass."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
   - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
   - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4 and 5 done there after the owner's device passes; not on main, not shipped, waiting for the owner's fourth device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
-  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement is run, labelled and reported (docs/1.5.0-topics-report.md, docs/1.5.0-topics-progress.md): Passive Voice, Prepositions and Relative Clauses pass the owner's criteria, Conditionals and Comparatives & Superlatives do not yet; next the owner's decisions (which topics go on, the proposed fixes and a re-measurement of Conditionals, the set-variety option in docs/1.5.0-topics-set-variety.md), then release prep on the owner's go"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement is run, labelled and reported (docs/1.5.0-topics-report.md, docs/1.5.0-topics-progress.md): Passive Voice, Prepositions and Relative Clauses pass the owner's criteria, Conditionals and Comparatives & Superlatives do not yet; Conditionals has its fix in the proxy's source (a generation note, not deployed) and waits for the owner's re-measurement run, its label sheet and the result; still open with the owner: Comparatives & Superlatives, the scoring-prompt sentence, the set-variety option (docs/1.5.0-topics-set-variety.md), a guard for fill-in-the-blank items without a blank, and which topics go on; then release prep on the owner's go"
 
 monetization:
   model: subscription

@@ -438,10 +438,26 @@ Owner decisions so far:
   re-measurement of Conditionals alone; one sentence in the scoring prompt,
   checked against the labelled answers; and for set variety a scenario theme
   the Worker gives each set
-  ([`1.5.0-topics-set-variety.md`](1.5.0-topics-set-variety.md)). **Next:
-  the owner's decisions** (which topics go on to release prep, the fixes,
-  the set-variety option). The topics stay switched off. Record and
-  decisions: [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
+  ([`1.5.0-topics-set-variety.md`](1.5.0-topics-set-variety.md)).
+  *(Superseded in part, kept as written:* **Next: the owner's decisions**
+  (which topics go on to release prep, the fixes, the set-variety
+  option).*)* **Owner decision (2026-11-18): Conditionals is fixed as
+  proposed and measured again; phase C2 done up to its stop (2026-11-18, no
+  API call):** the Worker's source adds one generation-only sentence to the
+  Conditionals practice request (the first, second and third conditional, no
+  mixed conditional; no other topic's request changes, not deployed), and
+  `topics --dry-run | run --only conditionals` measures that topic alone in
+  a run of its own under the same $15.00 cap (dry run: 36 calls, about
+  $0.24; the first run's $0.76 counts as spent). Also found, from the code:
+  a fill-in-the-blank practice item without a blank is shown with one answer
+  box and nothing on the live path stops it; a guard in the Worker is
+  proposed, not built. **Next: the owner's Conditionals run** from his
+  Terminal (`proxy/eval/README.md`, "Owner checklist — Conditionals
+  re-measurement"), then its 30-question sheet, then the labels folded in.
+  Still open with the owner: Comparatives & Superlatives, the scoring
+  prompt, set variety, which topics go on. The topics stay switched off.
+  Record and decisions:
+  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
     as `school`, a new value of the `learning_goal` user property). It is

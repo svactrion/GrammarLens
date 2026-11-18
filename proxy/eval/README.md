@@ -461,3 +461,136 @@ npm run eval -- topics analyze --out eval/out/topics-2026-11-18T16-35-34-632Z
 
 It reads `sheet/labels.csv` and never changes it. The `private` folder and
 the run's own files may be opened now.
+
+---
+
+# The Conditionals re-measurement (phase C2)
+
+What and why: `docs/TOPICS.md`, "Phase C2"; the record and the decisions:
+`docs/1.5.0-topics-progress.md`. In the first run Conditionals failed two of
+the three criteria, and its failures sat on the mixed conditional. The
+Worker's source now adds one sentence to the Conditionals practice request
+(first, second and third conditional, no mixed conditional), and this run
+measures that topic again: 6 sets, the answers, the scoring, the checks, in
+a run folder of its own. The first run's folder is not touched. Nothing is
+deployed and the first-wave topics stay switched off.
+
+**It calls the Anthropic API and costs money: about $0.24 (36 calls).** The
+$15.00 cap is on the measurement as a whole, so this run starts with the
+first run's $0.76 counted as spent.
+
+## Owner checklist — Conditionals re-measurement
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+this run, for example "grammarlens-conditionals", **in the Default
+workspace**. Not the first run's key (its checklist asked you to revoke
+that one), and not the Worker's live key: do not use it and do not revoke
+it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics --dry-run --only conditionals
+```
+
+It must show **Topics: conditionals × 6**, **36 calls**, **Estimated spend
+$0.24**, the line `earlier runs spent $0.76, so this run starts at $0.76
+spent`, and end with `API key: found in the environment (not shown)`. If the
+last line says the key is not in the environment, repeat step 3.
+
+### 5. The run
+
+```bash
+caffeinate -i npm run eval -- topics run --only conditionals
+```
+
+**About two minutes.** One line per call appears (counts, tokens and cost
+only, never a question or an answer); the same lines go to
+`eval/out/topics-conditionals-…/progress.log`.
+
+### 6. What "done" looks like
+
+The last line in the Terminal, and in `progress.log`, reads like:
+
+```text
+2026-11-19T09:12:44.000Z topics run done: 34 calls ok; spent $0.13 in this run, $0.89 with the earlier runs, of $15.00; folder eval/out/topics-conditionals-2026-11-19T09-10-40-000Z
+```
+
+The number of calls is between 30 and 36. To read the last line again:
+
+```bash
+tail -n 1 "$(ls -d eval/out/topics-conditionals-* | tail -n 1)/progress.log"
+```
+
+**If the last line says `topics run incomplete`**, run the same folder
+again. It knows it is the Conditionals run; finished calls are not repeated
+and are not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics run --out "$(ls -d eval/out/topics-conditionals-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines of `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Write the label sheet (no key needed, no API call)
+
+```bash
+npm run eval -- topics analyze --out "$(ls -d eval/out/topics-conditionals-* | tail -n 1)"
+```
+
+It must print `The label sheet written: 30 questions, …` and `Label sheet: 0
+of 30 rows labelled, 30 not started, 0 with something to fix`. It writes, in
+the run folder: `sheet/questions.txt` (to read), `sheet/labels.csv` (to
+fill), and `private/sheet-mapping.json` and `private/details.txt`, which
+**nobody opens before the sheet is filled**; the run's own files
+(`items.json`, `answers.json`, `checks.json`, `records.json`,
+`run-report.md`) stay closed as well. It also adds a "Re-measurement:
+Conditionals" section at the end of `docs/1.5.0-topics-report.md` (counts
+only, safe to read). That file then shows as changed in git: leave it,
+Claude Code commits it in the next step.
+
+### 9. Tell Claude in the Cowork chat that the sheet is ready
+
+Give it the run folder's path and say: **"The Conditionals re-measurement
+sheet is ready: read `sheet/questions.txt`, fill `sheet/labels.csv`, as
+before; do not open the `private` folder or any other file of that folder."**
+The rules are the ones of the first sheet (`multi:` and `minor:` notes
+included). To check the sheet at any time, run the command of step 8 again:
+a sheet that exists is never rewritten. When it prints `30 of 30 rows
+labelled, 0 not started, 0 with something to fix`, tell Claude Code to fold
+the labels in (the last step of Phase C2 in `docs/TOPICS.md`).

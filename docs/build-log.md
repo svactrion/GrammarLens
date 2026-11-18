@@ -14683,3 +14683,56 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Not verified]** Any proposed fix. The owner decides which topics go on
   to release prep, which fixes are made, and the set-variety option.
 - Record and decisions T-23 to T-33: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics, phase C2: the Conditionals generation note and the re-measurement's tooling; no API call)
+
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, "Phase C2"): fix
+  Conditionals as phase C proposed and measure that topic again. His
+  decisions on Comparatives & Superlatives, set variety and the scoring
+  prompt are open.
+- **[Engineering]** The fix, in the Worker's source, not deployed: a topic
+  may carry a generation-only note (`generationNote` in
+  `proxy/src/topics.ts`), and the practice request's topic line ends with it
+  (`proxy/src/anthropic.ts`). Conditionals has one: "Use the first, second
+  and third conditional only; no mixed conditional (a past condition with a
+  present result, or a present condition with a past result)." No other
+  topic has one and no other request changed; the system prompt, the scoring
+  prompt and the hint card are as they were. The note is not in the app and
+  is never returned to it. `FIRST_WAVE_TOPICS_ENABLED` and
+  `kFirstWaveTopicsEnabled` stay `false`.
+- **[Engineering]** `npm run eval -- topics --dry-run --only conditionals`
+  and `topics run --only conditionals [--out DIR]`: a run folder of its own
+  (`topics-conditionals-…`, with a `run.json` that says what it measures), 6
+  sets, the answers, the scoring, the checks. The $15.00 cap is on the
+  measurement as a whole: the earlier runs' measured spend is read from
+  their folders and counted as spent before every call. `topics analyze` on
+  that folder writes its blind sheet (keys that are not the first run's),
+  the private files, and a section "Re-measurement: Conditionals" after the
+  first run's part of `docs/1.5.0-topics-report.md`, with the first run's
+  Conditionals figures beside each table and the count of questions the
+  hint-card check still marks as a mixed conditional; the first run's
+  sections are not touched and keep the section when they are written again.
+- **[Cost]** The dry run: 36 calls, estimated $0.24; with the first run's
+  $0.76 the measurement comes to $1.00 of $15.00; worst case $1.89 for this
+  run.
+- **[Finding]** From the code, nothing changed: a fill-in-the-blank practice
+  item without a blank is shown as a normal question with one short answer
+  box, and nothing on the live path stops it (the prompt asks for at most 4
+  blanks, not at least one; the schema cannot require one; the Worker
+  returns a practice set as the model wrote it; the app's parser accepts
+  it). The first run had one such question in 33 sets. Proposed, not built:
+  the Worker removes such an item from the practice response, as the legacy
+  Daily Test route already removes a correction without its sentence.
+- **[Verified]** `npm run typecheck` clean; `npm test` 672 passed (25 new,
+  no network). The five live topics' and the other four first-wave topics'
+  requests are byte for byte what they were (fingerprints taken before the
+  change, in the test); the route still refuses the first-wave ids. The
+  re-measurement's path was rehearsed on a local stand-in for `fetch`: the
+  run, a resume, a wrong-topic resume refused, the sheet, the report
+  section before and after labels. The first run's records, sheet and
+  labels are unchanged, and `docs/1.5.0-topics-report.md` was not changed.
+- **[Not verified]** Whether the note keeps the generator to the three
+  types, and whether Conditionals passes with it: no API call was made. The
+  run is the owner's, from his Terminal (`proxy/eval/README.md`, "Owner
+  checklist — Conditionals re-measurement").
+- Record and decisions T-34 to T-44: `docs/1.5.0-topics-progress.md`.
