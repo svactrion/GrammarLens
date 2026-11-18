@@ -129,7 +129,7 @@ const byItem = (labels: readonly QuestionLabel[]) => new Map(labels.map((l) => [
 
 describe('topics labels: the note markers', () => {
   it('multi: and minor: count at the start of the note or of a later sentence in it', () => {
-    expect(noteMarks('multi: who and that are both right')).toEqual({ multi: true, minor: false });
+    expect(noteMarks('multi: either pronoun fits here')).toEqual({ multi: true, minor: false });
     expect(noteMarks('  Minor: an awkward word order')).toEqual({ multi: false, minor: true });
     expect(noteMarks('minor: the hint lists the answers. multi: both prepositions fit')).toEqual({ multi: true, minor: true });
     expect(noteMarks('multi: either fits; minor: the hint gives it away')).toEqual({ multi: true, minor: true });
