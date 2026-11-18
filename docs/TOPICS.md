@@ -147,16 +147,54 @@ Owner decisions of 2026-11-18, made after phase A (record them in
 
 ## Phase C — after the labels (later prompt)
 
-Fold the labels into the report: per topic (30 labelled questions; the
-control 15) the defect rate with the defects by `why`, and the scoring
-metrics against the labelled truth of the built answers (`unsure` answers
-counted apart, in neither rate). Every answer where the scorer and the
-labelled truth differ goes, with the scorer's explanation, into a
-second-look file for the owner (as 1.4.0's `second-look-C8.md`). Pass
-criteria (owner): at most 5 % defective questions after the gate, scoring
-agreement at least 95 %, false "correct" at most 2 %. For a topic that
-fails: the cause and a proposed prompt or hint-data fix; a re-measurement
-of that topic only, after the owner's OK (new spend, same cap rules).
+The sheet is filled (2026-11-18): 165 of 165 rows, labelled by Claude in the
+owner's Cowork chat and checked by the owner; `topics analyze` reports
+nothing to fix. 4 questions are labelled `defect`, 6 built answers `unsure`.
+The `private` folder and the run's own files may be opened from now on.
+**No API call in this phase.**
+
+Owner decision of 2026-11-18 (record it in `docs/1.5.0-topics-progress.md`
+under the next T number): **a question with more than one right answer is
+not a defect for that reason.** The scorer is a model and matches no key, so
+"who" and "that" can both be right; a question is a defect only when it
+contradicts itself, teaches something false or cannot be answered. The
+labels mark such questions with a note that starts `multi:`, and lesser
+blemishes with a note that starts `minor:`. The risk moves to the scorer (a
+right alternative called "needs work"), so this phase shows it per topic.
+
+1. Fold the labels into the report, per topic (30 questions; the control
+   15): the defect rate after the gate, with the questions that failed the
+   gate counted apart and the defects by `why`; how many questions carry a
+   `multi:` note and how many a `minor:` note.
+2. Scoring against the labelled truth, per topic and for the five new topics
+   together: agreement, false "correct" among wrong answers, false "needs
+   work" among right answers; `unsure` answers counted apart, in neither
+   rate. Split the false "needs work": on the built key, on the other
+   answers labelled right, and on the questions noted `multi:`. Also count,
+   per topic, where the labelled truth differs from the construction (a
+   built mistake labelled right, a built right answer labelled wrong).
+3. A second-look file in the run folder (not in the repository), as 1.4.0's
+   `second-look-C8.md`: every answer where the scorer and the labelled truth
+   differ, with the question, the answer, the label's note and the scorer's
+   verdict and explanation; and the defect questions with what the automatic
+   checks and the gate said about them.
+4. Pass criteria (owner), stated per topic with the counts behind each: at
+   most 5 % defective questions after the gate, scoring agreement at least
+   95 %, false "correct" at most 2 %. For a topic that fails: the cause and
+   a proposed prompt or hint-data fix; a re-measurement of that topic only,
+   after the owner's OK (new spend, same cap rules). Say also what the
+   automatic checks were worth: how their flags relate to the labels.
+5. Set variety: propose, do not build. Phase B found that two Topic Practice
+   requests for one topic are the same request, and the run's sets repeat
+   scenarios. Give two or three ways to make sets differ (for example a
+   scenario or theme the Worker draws at random, or recent questions to
+   avoid), each with what would change in the app, the Worker and the
+   prompt, its cost per set, whether it sends new data (the legal pages),
+   whether it applies to the five live topics too, and whether it needs a
+   new measurement; then a recommendation. The owner decides.
+6. No question text, no answer text and no sheet key in the report or in any
+   commit: describe a defect in words. Unit tests for the new code (no
+   network), `npm run typecheck` clean. Commit, push, **stop**.
 
 ## Phase D — release prep (only on the owner's go, later prompt)
 
