@@ -943,8 +943,16 @@ class _TopBar extends StatelessWidget {
             style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
             onPressed: onClose,
           ),
-          const Spacer(),
-          if (badge) const Flexible(flex: 4, child: _PremiumLabel()),
+          const SizedBox(width: 8),
+          // At the row's end (the board's `margin-left: auto`), shrinking
+          // for a long translation.
+          Expanded(
+            child: badge
+                ? const Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: _PremiumLabel())
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

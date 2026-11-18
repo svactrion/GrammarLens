@@ -51,56 +51,66 @@ void main() {
     }
   }
 
-  testWidgets('V20 in Turkish: "GERİ BİLDİRİMİN YOLDA"', (tester) async {
-    await pumpFix3(
-        tester,
-        const Scaffold(
-            body: PracticeReviewing(
-                topic: 'Articles', answers: ['a'], hero: Avatar.fox)),
-        locale: const Locale('tr'),
-        settle: false);
-    await tester.pump(const Duration(seconds: 2));
-    final shown = upperCaseIn('tr', tr.practiceReviewingOnItsWay);
-    expect(find.text(shown), findsOneWidget);
-    expect(find.text('GERI BILDIRIMIN YOLDA'), findsNothing);
-    expectTurkishCapitals(tr.practiceReviewingOnItsWay, shown);
-    await fix4Capture(tester, 'tr-capitals-V20');
-  });
+  for (final brightness in Brightness.values) {
+    testWidgets('V20 in Turkish: "GERİ BİLDİRİMİN YOLDA" (${brightness.name})',
+        (tester) async {
+      await pumpFix3(
+          tester,
+          const Scaffold(
+              body: PracticeReviewing(
+                  topic: 'Articles', answers: ['a'], hero: Avatar.fox)),
+          locale: const Locale('tr'),
+          brightness: brightness,
+          settle: false);
+      await tester.pump(const Duration(seconds: 2));
+      final shown = upperCaseIn('tr', tr.practiceReviewingOnItsWay);
+      expect(find.text(shown), findsOneWidget);
+      expect(find.text('GERI BILDIRIMIN YOLDA'), findsNothing);
+      expectTurkishCapitals(tr.practiceReviewingOnItsWay, shown);
+      await fix4Capture(tester, 'tr-capitals-V20',
+          dark: brightness == Brightness.dark);
+    });
+  }
 
-  testWidgets('V24f in Turkish: "TİLKİ RÜYASINDA…"', (tester) async {
-    await pumpFix3(
-        tester,
-        Scaffold(
-          body: SingleChildScrollView(
-            child: RestScene(
-              theme: ClimbThemes.emberPeak,
-              days: 30,
-              steps: 3,
-              hero: Avatar.fox,
-              name: 'Ada',
-              testLine: tr.restDailyTestDone(4, 5),
-              practiceLine: tr.restFreeTicketUsed,
-              clock: () => DateTime(2026, 11, 18, 13, 36),
-              offer: RestOffer(
-                  weakSpot: 'Missing Article',
-                  trialDays: 7,
-                  topics: 5,
-                  onWake: () async {}),
+  for (final brightness in Brightness.values) {
+    testWidgets('V24f in Turkish: "TİLKİ RÜYASINDA…" (${brightness.name})',
+        (tester) async {
+      await pumpFix3(
+          tester,
+          Scaffold(
+            body: SingleChildScrollView(
+              child: RestScene(
+                theme: ClimbThemes.emberPeak,
+                days: 30,
+                steps: 3,
+                hero: Avatar.fox,
+                name: 'Ada',
+                testLine: tr.restDailyTestDone(4, 5),
+                practiceLine: tr.restFreeTicketUsed,
+                clock: () => DateTime(2026, 11, 18, 13, 36),
+                offer: RestOffer(
+                    weakSpot: 'Missing Article',
+                    trialDays: 7,
+                    topics: 5,
+                    onWake: () async {}),
+              ),
             ),
           ),
-        ),
-        size: const Size(428, 926),
-        locale: const Locale('tr'));
-    final source = tr.restDreamingOf(Avatar.fox.name(tr));
-    final shown = upperCaseIn('tr', source);
-    expect(shown, startsWith('TİLKİ'));
-    expect(find.text(shown), findsOneWidget);
-    expectTurkishCapitals(source, shown);
-    // The chip and the ticket stub are written in capitals in the ARB.
-    expect(find.text('PREMIUM'), findsOneWidget);
-    expect(find.text(tr.restTicketUsedStub), findsOneWidget);
-    await fix4Capture(tester, 'tr-capitals-V24f');
-  });
+          size: const Size(428, 926),
+          brightness: brightness,
+          locale: const Locale('tr'));
+      final source = tr.restDreamingOf(Avatar.fox.name(tr));
+      final shown = upperCaseIn('tr', source);
+      expect(shown, startsWith('TİLKİ'));
+      expect(find.text(shown), findsOneWidget);
+      expectTurkishCapitals(source, shown);
+      // The chip and the ticket stub are written in capitals in the ARB.
+      expect(find.text('PREMIUM'), findsOneWidget);
+      expect(find.text(tr.restTicketUsedStub), findsOneWidget);
+      await fix4Capture(tester, 'tr-capitals-V24f',
+          dark: brightness == Brightness.dark);
+    });
+  }
 
   testWidgets('V18 in Turkish: "BİLİYOR MUYDUN?"', (tester) async {
     await pumpFix3(
