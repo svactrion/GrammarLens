@@ -196,6 +196,58 @@ right alternative called "needs work"), so this phase shows it per topic.
    commit: describe a defect in words. Unit tests for the new code (no
    network), `npm run typecheck` clean. Commit, push, **stop**.
 
+## Phase C2 — Conditionals: the fix and its re-measurement (later prompt)
+
+Phase C's result: Passive Voice, Prepositions and Relative Clauses pass all
+three criteria; Comparatives & Superlatives fails false "correct" by one
+answer; Conditionals fails on agreement and on false "correct", and its
+failures sit on one structure, the mixed conditional. **Owner decision of
+2026-11-18 (record it under the next T number): fix Conditionals as phase C
+proposed and measure that topic again.** The owner's other decisions
+(Comparatives & Superlatives, set variety, the scoring prompt) are still
+open and are not part of this phase.
+
+This session: build, prove with a dry run, write the owner's commands, stop.
+**No API call**, no deploy, the production flags stay off.
+
+1. The fix: a generation-only note for Conditionals in the Worker's topic
+   table, added to the practice request's topic line and never sent to or
+   shown in the app: the items use the first, second and third conditional
+   (the three the hint card teaches) and no mixed conditional. Nothing else
+   in any prompt changes and the hint card stays as it is. Tests: the note
+   is in the Conditionals request and in no other topic's; the requests of
+   the five live topics are byte for byte what they were; the route still
+   refuses the first-wave ids.
+2. The re-measurement's tooling: `topics --dry-run --only conditionals` and
+   `topics run --only conditionals [--out DIR]`: a run folder of its own,
+   6 sets, the answers, the scoring, the checks, as in the first run. The
+   $15.00 cap is on the measurement as a whole: this run counts the first
+   run's $0.76 as already spent.
+3. `topics analyze --out DIR` on that folder: its blind sheet and private
+   files as in phase B (the same blindness, the same three sheet files and
+   details file), and once the sheet is filled its phase C tables and
+   second-look file. In `docs/1.5.0-topics-report.md` the re-measurement is
+   a section of its own after the first run's, which stays as it is; the
+   report says that the re-measurement is the Conditionals result that
+   counts, and how many of its questions the hint-card check still marks as
+   a mixed conditional (whether the note worked).
+4. From the code, with no change: what the app shows today for a
+   fill-in-the-blank item that has no blank, and whether anything on the
+   live path stops such an item. Propose a guard if one is missing; do not
+   build it. In the progress doc.
+5. In `proxy/eval/README.md`, "Owner checklist — Conditionals
+   re-measurement", in the style of the first checklist: a new separate
+   Console key in the Default workspace; the key into the environment of
+   that Terminal only; the dry run; the run; what "done" looks like; then
+   the `topics analyze --out …` command that writes the sheet (no key
+   needed); then: tell Claude in the Cowork chat that the sheet is ready.
+6. Unit tests (no network), `npm run typecheck` clean, the dry run's numbers
+   in the progress doc. Commit, push, **stop**.
+
+After the owner's run the sheet (30 questions) is labelled in the owner's
+Cowork chat as before; a later prompt folds the labels in, with the same
+three criteria.
+
 ## Phase D — release prep (only on the owner's go, later prompt)
 
 App: `kFirstWaveTopicsEnabled = true` for the passing topics; Topic Practice
