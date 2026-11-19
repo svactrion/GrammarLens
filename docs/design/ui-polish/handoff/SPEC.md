@@ -809,7 +809,8 @@ Haptics: card: light.
 with a 3-part mastery strip; the user's weak spot topic as a full-width
 "Picked for you" card. A free user tapping a topic gets the paywall.
 Behaviour: the list comes from the app's topic data; first-wave topics stay
-hidden (§1.11).
+hidden (§1.11). *(1.5.0, owner 2026-11-19: the five first-wave topics are
+switched on, so the list has ten cards; `docs/TOPICS.md` phase D.)*
 Motion: cards float (3.6 s, staggered); press moves 2 px down, then the
 length step.
 Haptics: card: light.
@@ -879,6 +880,9 @@ Prepositions, Relative Clauses, Comparatives & Superlatives to the app's topic
 data (with hint cards like the existing topics) and to the proxy's topic
 handling, behind a flag that is off. Tests cover both flag states. Do not
 deploy the proxy and do not run any generation or measurement script.
+*(1.5.0, owner 2026-11-19: measured, then switched on in the app and in the
+proxy's source; the deploy is the owner's. `docs/TOPICS.md` phase D,
+`docs/1.5.0-topics-report.md` "Decision".)*
 
 ### 5.7 Paywall (one scrolling page, §1.7)
 

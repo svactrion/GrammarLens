@@ -4,7 +4,8 @@ One ordered checklist for the owner's phone. It covers the UI polish
 (SPEC v10, fix rounds 1 and 2), the widgets and reminders, the
 integration of the two (`INTEGRATE.md`), fix round 3 (`FIX3.md`, SPEC v11),
 fix round 4 (`FIX4.md`, SPEC v12) and fix round 5 (`FIX5.md`, SPEC v13),
-whose fourth pass comes first. It merges fix round 2's "Owner
+whose fourth pass comes first, and the first-wave topics switched on for
+1.5.0 (`docs/TOPICS.md` phase D), whose checks need the Worker's deploy. It merges fix round 2's "Owner
 device checks" (`PROGRESS.md`) and the widgets run's "Owner steps"
 (`PROGRESS-widgets.md`). Nothing on this list was checked on a device; the
 simulator results are in `PROGRESS.md` ("Integration").
@@ -12,6 +13,91 @@ simulator results are in `PROGRESS.md` ("Integration").
 Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
+
+## First-wave topics (1.5.0) — after the Worker's deploy
+
+Phase D of `docs/TOPICS.md` switched the five new practice topics on
+(Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives &
+Superlatives). **Deploy the Worker first** (`proxy/README.md`, "Owner
+checklist — deploy for 1.5.0"): until then the new topics answer with an
+error. Then build and install as in FR5-1 below (the same commands, no Xcode
+step, over the current test build) and go through this section; the fourth
+pass (FR5) can be done on the same install, in either order. Nothing here
+was checked on a device, and no VoiceOver check is asked for. Write down
+anything that differs (the item number and what you saw).
+
+Topic names stay English in every language; the rest is in your interface
+language (Turkish below).
+
+**Needs Premium** (the sandbox trial or your subscription) for T-1 to T-3:
+Topic Practice is the Premium part. Five sets are a whole day's sessions
+(5 a day), so do T-2 on a day without other practice, or over two days.
+
+1. **T-1. Ten cards on Topic Practice.** Home → Topic Practice. Ten topic
+   cards, two a row, in this order: Gerund vs. Infinitive, Modal Verbs,
+   Modal Past Forms, Tense Selection, Articles, then Conditionals, Passive
+   Voice, Prepositions, Relative Clauses, Comparatives & Superlatives. Each
+   new card has its own icon and colour, its description in Turkish and
+   "not started yet" in Turkish under it. Scroll to the end: no title is cut
+   ("Comparatives & Superlatives" wraps onto two lines), the two cards of a
+   row are the same height, nothing touches the screen's edge. If a weak
+   spot of yours is in a topic, that topic is the navy "Senin için seçildi"
+   card on top and the other nine follow. — R01
+2. **T-2. One set in each new topic, through to its results.** For each of
+   the five: tap the card, choose a length, Start.
+   - The loading screen says "<topic> konusunda soruların yazılıyor…" with
+     **no number**, and the "Biliyor muydun?" card shows that topic's own
+     four lines in turn. — V18
+   - The questions are about that topic and each is set in a different
+     everyday situation. Every fill-in-the-blank question shows its blank
+     (a line of underscores with a box). A set may have one question fewer
+     than you chose; that is the guard, not a fault. — V19
+   - The hint (the lamp on a question, where the card is offered) shows the
+     topic's card.
+   - Submit: the results have **a card for every question you answered**,
+     with a verdict on each. If instead a message says the scoring failed
+     and your answers are still on the screen, send them again: that is the
+     new retry giving up, and worth writing down with the time. — V20, V21
+   - Write down any question that looks wrong and any answer you think was
+     judged wrongly, with the topic. In Conditionals in particular: an
+     answer that mixes two conditional types and is still called correct is
+     the known weakness (5 of 132 in the measurement).
+3. **T-3. A new topic's weak spot on Review.** After T-2 you will have
+   mistakes in the new topics. Review: each new weak spot is listed with
+   its own name; opening one shows its own screen with **its own topic**
+   (the topic label, the hint card, "Bunu çalış" starting a set in that
+   topic, not in Gerund vs. Infinitive). "Önerilen odak" may be one of
+   them. — R11, R12
+4. **T-4. The copy that counts topics says 10.** As a free user (or before
+   the trial): Home's topic showcase lists the topics in a row that scrolls
+   sideways, the new ones included, and its button says "10 konunun tümünü
+   aç". On the paywall: the benefit row says "10 konunun hepsi · …", the
+   Free vs Premium table has "10 konunun tümü", and the page opened from
+   the rest scene says "10 dilbilgisi konusunun tümü". Nowhere a "5" for
+   the number of topics. — V14, V13, V13c, V13r
+5. **T-5. V24f with a new topic's weak spot.** As a free user, on a day
+   when the Daily Test is done, the free ticket is used and your most
+   repeated weak spot is one from a new topic: the dream bubble and the
+   front ticket show that weak spot's name on one line; the ticket deck's
+   line without a weak spot would read "10 konudan biri". After "Tilki
+   uyansın" and the trial, "practise" opens that weak spot in its own
+   topic. If your most repeated weak spot is an old one, skip this and say
+   so. — V24f, V13r, PW05r
+6. **T-6. The tip widget.** With the tip widget on the Home Screen and a
+   weak spot in a new topic as your most repeated one: the widget's label
+   is that topic's name in capitals and the tip is a line of that topic's
+   card (it changes daily). Without such a weak spot the daily tip stays
+   on the five Daily Test topics; that is intended. — W01
+7. **T-7. The Modal Past Forms card.** Topic Practice → Modal Past Forms →
+   a set: on the loading screen and in a question's hint the card now has
+   these four lines, each on one line at your text size:
+   "could / would: the past of can / will" ·
+   "Reported: "I can" → she said she could" ·
+   "modal + have + past participle: past events" ·
+   "must have: sure · should have: regret". In the Daily Test, a Modal Past
+   Forms question's hint shows the same card. — V18, the hint card
+8. **T-8. The Daily Test is as it was.** Its five questions come from the
+   five old topics only; no new topic appears in it.
 
 ## Fix round 5 — fourth pass (start here)
 
