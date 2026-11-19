@@ -161,7 +161,7 @@ Future<void> launchPracticeSet({
     length = PracticeLength.quick;
   }
 
-  // V18 names the count ("Writing 3 questions on …").
+  // V18 switches to "Writing your questions on …" (it shows no number).
   onQuestionCount?.call(length.questionCount);
   setGenerating(true);
   try {

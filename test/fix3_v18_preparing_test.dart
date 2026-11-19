@@ -98,11 +98,14 @@ void _expectBoard(WidgetTester tester, {required Brightness brightness}) {
   final context = tester.element(find.byType(PracticePreparing));
   final l10n = context.l10n;
 
-  // The message names the count and the topic.
-  expect(find.text(l10n.practicePreparingTopic(3, _topic.title(l10n))),
+  // The message names the topic, and no number of questions (1.5.0: a set
+  // may come a question short).
+  expect(find.text(l10n.practicePreparingTopic(_topic.title(l10n))),
       findsOneWidget);
-  expect(find.text('Writing 3 questions on ${_topic.title(l10n)}…'),
+  expect(find.text('Writing your questions on ${_topic.title(l10n)}…'),
       findsOneWidget);
+  expect(l10n.practicePreparingTopic(_topic.title(l10n)),
+      isNot(contains(RegExp(r'\d'))));
 
   // Nothing above the companion: no page title.
   final companion = tester.getRect(find.byType(CompanionView));
@@ -210,7 +213,7 @@ void main() {
     expect(find.text('Missing articles'), findsNothing);
     expect(
         find.text(
-            'Writing 5 questions on ${_topic.title(tester.element(find.byType(PracticePreparing)).l10n)}…'),
+            'Writing your questions on ${_topic.title(tester.element(find.byType(PracticePreparing)).l10n)}…'),
         findsOneWidget);
   });
 }

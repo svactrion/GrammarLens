@@ -124,7 +124,7 @@ void main() {
               topic: kTopics.first,
               hero: Avatar.fox,
               questionCount: 5,
-              message: tr.practicePreparingTopic(5, 'Articles')),
+              message: tr.practicePreparingTopic('Articles')),
         ),
         locale: const Locale('tr'),
         settle: false);

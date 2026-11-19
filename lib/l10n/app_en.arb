@@ -1483,13 +1483,10 @@
   "@weakSpotPreparing": {
     "description": "Shown while a practice set is made."
   },
-  "practicePreparingTopic": "{count, plural, one{Writing 1 question on {topic}…} other{Writing {count} questions on {topic}…}}",
+  "practicePreparingTopic": "Writing your questions on {topic}…",
   "@practicePreparingTopic": {
-    "description": "V18: shown while a practice set is written; count is the number of questions, topic the topic's title (fix round 3, B7).",
+    "description": "V18: shown while a practice set is written; topic is the topic's title. No number of questions: the set may come a question short (1.5.0).",
     "placeholders": {
-      "count": {
-        "type": "int"
-      },
       "topic": {
         "type": "String"
       }

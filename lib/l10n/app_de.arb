@@ -278,7 +278,7 @@
   "reviewExploreTopicPractice": "Themenübung entdecken",
   "weakSpotGenerateFailed": "Übung zur Schwachstelle konnte nicht erstellt werden",
   "weakSpotPreparing": "Deine Fragen werden vorbereitet…",
-  "practicePreparingTopic": "{count, plural, one{1 Frage zu {topic} wird geschrieben…} other{{count} Fragen zu {topic} werden geschrieben…}}",
+  "practicePreparingTopic": "Deine Fragen zu {topic} werden geschrieben…",
   "weakSpotLoadFailed": "Deine letzten Fehler konnten nicht geladen werden.\n{error}",
   "weakSpotSavedFeedback": "Gespeichertes Feedback",
   "weakSpotRecap": "Du hattest Schwierigkeiten mit {rule}. Wenn du es noch einmal übst, festigt sich das Wissen.",

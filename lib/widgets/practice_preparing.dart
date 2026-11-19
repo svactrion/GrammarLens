@@ -17,8 +17,10 @@ import '../utils/upper_case.dart';
 
 /// V18: practice questions being prepared, the one loading screen of topic
 /// and weak-spot practice (SPEC V18, v11). As on the board: the companion
-/// thinks over three pulsing dots, the message names the count and the
-/// topic ("Writing 3 questions on …"), two question card skeletons shimmer,
+/// thinks over three pulsing dots, the message names the topic ("Writing
+/// your questions on …"; no number since 1.5.0, owner decision 2026-11-19:
+/// the proxy serves a set a question short when it removes an item it
+/// cannot show), two question card skeletons shimmer,
 /// and the topic's hint cards rotate under "Did you know?" on a sky card
 /// with a pager (one every 3 s; the first one only when loops are off).
 /// The skeletons and the hint card are one width, the content's (fix round
@@ -28,8 +30,9 @@ class PracticePreparing extends StatefulWidget {
   final Topic topic;
   final Avatar? hero;
 
-  /// The questions being written; null shows [message] instead of
-  /// "Writing [questionCount] questions on [topic]…".
+  /// The length that was asked for, once a set is being written; null
+  /// shows [message] instead of "Writing your questions on [topic]…". The
+  /// number itself is not shown: the set may have fewer questions.
   final int? questionCount;
   final String message;
 
@@ -85,10 +88,9 @@ class _PracticePreparingState extends State<PracticePreparing>
     final c = AppColors.of(context);
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final count = widget.questionCount;
-    final message = count == null
+    final message = widget.questionCount == null
         ? widget.message
-        : l10n.practicePreparingTopic(count, widget.topic.title(l10n));
+        : l10n.practicePreparingTopic(widget.topic.title(l10n));
     // The board's bars: the card's line colour, shimmering lighter.
     Widget bar(double share) => SkeletonBar(
           widthFactor: share,
