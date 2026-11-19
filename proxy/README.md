@@ -66,6 +66,164 @@ transform doesn't typecheck.
    detail and validation-rejection reasons are visible (never sent to the
    client).
 
+## Owner checklist — deploy for 1.5.0 (first-wave topics)
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+Nothing here was run from a Claude session: the deploy is yours.
+
+**The order** (owner, 2026-11-19): 1. this deploy; 2. the device checks on
+the release build, which talks to the live Worker
+(`docs/design/ui-polish/handoff/DEVICE-CHECKS.md`, "First-wave topics"); 3.
+the merge into `main` and the 1.5.0 build.
+
+**What goes live with it.** Everything is on the practice path; the Daily
+Test, its cron and its read route are unchanged.
+
+| Change | Who gets it |
+|---|---|
+| The five first-wave topic ids are accepted (`conditionals`, `passiveVoice`, `prepositions`, `relativeClauses`, `comparativesSuperlatives`) | only an app that sends them: 1.5.0. A released version never sends them |
+| A scenario theme per practice set, stepped per device (phase C3) | every version, all ten topics |
+| The prompt's line on blanks, and the guard that removes a fill-in-the-blank item without a blank (phase C3) | every version. A set can arrive a question short; a released app then says "Writing 5 questions…" and shows 4 |
+| The Conditionals generation note (phase C2) | 1.5.0 only (the topic) |
+| One retry when the scorer leaves an answer without a verdict; an error instead of a short result if the second response is incomplete too (phase D) | every version |
+
+The production scoring prompt and the generation prompt's other lines are
+as they are live today. The scoring candidates S, T and ST are in the
+source and no route sends them. No secret, no variable and no KV namespace
+changes.
+
+### 1. Before the deploy
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+It must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+```bash
+git pull --ff-only
+```
+
+It must print nothing (a clean tree):
+
+```bash
+git status --short
+```
+
+```bash
+npm ci
+```
+
+It must end with `Tests  737 passed`:
+
+```bash
+npm test
+```
+
+It must print no error:
+
+```bash
+npm run typecheck
+```
+
+It uploads nothing and must say `Total Upload: 104.46 KiB` or close to it,
+then `--dry-run: exiting now.`:
+
+```bash
+npx wrangler deploy --dry-run
+```
+
+**Write down the version id of the newest line** (the last one listed, with
+today's live Worker; it was `18d87c6b-5f7b-4290-a08b-f07a32565511` after
+the deploy of 2026-11-02). It is where you go back to:
+
+```bash
+npx wrangler deployments list
+```
+
+Before you deploy, on the phone: the test build that is on it now (or 1.4.0
+from the App Store on another phone) is your "released app" for step 3. Do
+not install the new build yet.
+
+### 2. Deploy
+
+```bash
+npm run deploy
+```
+
+It prints the new version id (`Current Version ID: …`). Write it down too.
+
+### 3. Check right after
+
+1. **The Worker answers.** It must print `ok`:
+
+   ```bash
+   curl https://api.ahmettayfur.com/health
+   ```
+
+2. **A released app still gets its practice sets and its scoring.** In a
+   second Terminal window, from `~/GrammarLens/proxy`:
+
+   ```bash
+   npx wrangler tail --format pretty
+   ```
+
+   On the phone, with the build from before this deploy: open the Daily
+   Test (it loads as always), then do one practice set through to its
+   results (a weak spot with the free ticket, or any topic with Premium).
+   The questions come, the results come with a card for every question.
+   In the tail: `anthropic_usage` with `"operation":"generate_practice_set"`,
+   then `practice_filter` (`received` and `served`, normally equal, `removed`
+   0), then `anthropic_usage` with `"operation":"score_answers"` and
+   `score_feedback`. A `score_incomplete` line means the retry worked for
+   that request: `"outcome":"retry"` followed by a normal result is fine.
+
+3. **A new topic's id is accepted.** One real generation (about one cent,
+   one of the day's 300 calls). The app token is read from
+   `config/prod.json` and is not printed. It must print `200`; the same
+   command printed `400` before the deploy:
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" -X POST https://api.ahmettayfur.com/v1/generate-practice-set \
+     -H "content-type: application/json" \
+     -H "x-grammarlens-token: $(python3 -c "import json; print(json.load(open('../config/prod.json'))['APP_TOKEN'])")" \
+     -d '{"deviceId":"deploy-check-1-5-0","topicId":"conditionals","count":3}'
+   ```
+
+   The tail shows its `anthropic_usage` and `practice_filter` lines.
+
+Stop the tail with Ctrl-C. Then go on to the device checks.
+
+### 4. How to go back
+
+If step 3 fails (no `ok`, the released app gets an error where it did not
+before, or errors pile up in the tail), go back to the version you wrote
+down in step 1:
+
+```bash
+npx wrangler rollback <previous-version-id> -m "roll back the 1.5.0 topics deploy"
+```
+
+It restores the previous code for every route and the cron within seconds;
+KV is not touched, and this deploy changed no stored data, so nothing needs
+to be undone there. Check `/health` and one practice set again. After a
+rollback the five new ids are refused again (`400`), so a build with the new
+topics shows an error for them: roll back only while 1.5.0 is not released,
+and tell Claude Code what you saw. Once 1.5.0 is released a problem is fixed
+by a new deploy, not by a rollback.
+
+### 5. In the first days
+
+In Workers Logs, the two new events say how often the measured problems
+happen on the live path: `practice_filter` (sum `removed` against `received`:
+fill-in-the-blank items without a blank) and `score_incomplete` (each
+`"outcome":"failed"` or `"failed_no_time"` was a "try again" on a device).
+Both hold counts only.
+
 ## Token usage log
 
 Every successful Anthropic call writes one JSON line with `console.log`
