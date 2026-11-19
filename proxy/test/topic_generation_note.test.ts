@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRODUCTION_PRACTICE, buildBody, buildGeneratePracticeSetBodyFor } from '../src/anthropic';
-import { GENERATION_SYSTEM_PROMPT } from '../src/prompts';
+import { GENERATION_SYSTEM_PROMPT, PRACTICE_BLANKS_RULE, PRACTICE_BLANKS_RULE_UNTIL_2026_11 } from '../src/prompts';
 import { FIRST_WAVE_TOPICS, FIRST_WAVE_TOPICS_ENABLED, TOPICS, isKnownTopicId, topicById } from '../src/topics';
 import { validateGeneratePracticeSet } from '../src/validation';
 import dartTopics from '../../lib/data/topics.dart?raw';
@@ -19,7 +19,10 @@ const NOTE = 'Use the first, second and third conditional only; no mixed conditi
 
 /** SHA-256 of each topic's practice request body, at 5 and at 3 questions,
  * as the builder made it on 2026-11-18 before the note existed (device id
- * "device", the production variant, the first-wave topics known). */
+ * "device", the production variant, the first-wave topics known): the
+ * requests the first topics run measured. Since phase C3 every request also
+ * differs from these by the prompt's line on blanks (and by a theme line
+ * when the worker gives one; none is given here). */
 const BEFORE_THE_NOTE: Readonly<Record<string, readonly [string, string]>> = {
   gerundVsInfinitive: ['d7884e7c9eebaeb815b2bc954f7c1c0b196241098c2a688f198df83c6fa55de0', '7cc7bc94beabf54d88e1d1b3f006071968fbba5d38bce1db2913f266bd48b711'],
   modalVerbs: ['181904142c3116386728ce220a9b7be07d3fd977ae5ede8e04d5ecff9c46cc43', '8d5aebc040b2f49d633749ff46b56d869eccff67e2215e38318e3082078c69eb'],
@@ -39,6 +42,12 @@ async function sha256(text: string): Promise<string> {
 }
 
 const body = (topicId: string, count: number) => buildGeneratePracticeSetBodyFor({ deviceId: 'device', topicId, count }, PRODUCTION_PRACTICE, true);
+
+/** [request] with the prompt's line on blanks as it was before phase C3. */
+function withEarlierBlanksLine<T extends { system: string }>(request: T): T {
+  expect(request.system).toContain(PRACTICE_BLANKS_RULE);
+  return { ...request, system: request.system.replace(PRACTICE_BLANKS_RULE, PRACTICE_BLANKS_RULE_UNTIL_2026_11) };
+}
 
 describe('the generation note', () => {
   it('is on Conditionals and on no other topic', () => {
@@ -61,25 +70,26 @@ describe('the generation note', () => {
     }
   });
 
-  it('the requests of the five live topics are byte for byte what they were', async () => {
+  it('the requests of the five live topics are what the first run measured, but for the line on blanks', async () => {
     expect(TOPICS.map((t) => t.id)).toEqual(['gerundVsInfinitive', 'modalVerbs', 'modalPastForms', 'tenseSelection', 'articles']);
     for (const topic of TOPICS) {
-      expect([await sha256(JSON.stringify(body(topic.id, 5))), await sha256(JSON.stringify(body(topic.id, 3)))]).toEqual(BEFORE_THE_NOTE[topic.id]);
-      // The route's own request (the switch off) is the same body.
+      expect([await sha256(JSON.stringify(withEarlierBlanksLine(body(topic.id, 5)))), await sha256(JSON.stringify(withEarlierBlanksLine(body(topic.id, 3))))]).toEqual(BEFORE_THE_NOTE[topic.id]);
+      expect(await sha256(JSON.stringify(body(topic.id, 5)))).not.toBe(BEFORE_THE_NOTE[topic.id]?.[0]);
+      // The builder's request for the switch off, with no theme, is the same body.
       expect(buildBody({ op: 'generate_practice_set', request: { deviceId: 'device', topicId: topic.id, count: 5 } })).toEqual(body(topic.id, 5));
     }
   });
 
-  it('the requests of the other four first-wave topics are byte for byte what they were', async () => {
+  it('the requests of the other four first-wave topics are what the first run measured, but for the line on blanks', async () => {
     for (const topic of FIRST_WAVE_TOPICS) {
       if (topic.id === 'conditionals') continue;
-      expect([await sha256(JSON.stringify(body(topic.id, 5))), await sha256(JSON.stringify(body(topic.id, 3)))]).toEqual(BEFORE_THE_NOTE[topic.id]);
+      expect([await sha256(JSON.stringify(withEarlierBlanksLine(body(topic.id, 5)))), await sha256(JSON.stringify(withEarlierBlanksLine(body(topic.id, 3))))]).toEqual(BEFORE_THE_NOTE[topic.id]);
     }
   });
 
-  it('the Conditionals request differs from what it was by the note alone', async () => {
+  it('the Conditionals request differs from the first run\'s by the note and the line on blanks alone', async () => {
     for (const [i, count] of [5, 3].entries()) {
-      const now = body('conditionals', count);
+      const now = withEarlierBlanksLine(body('conditionals', count));
       expect(await sha256(JSON.stringify(now))).not.toBe(BEFORE_THE_NOTE.conditionals?.[i]);
       const withoutNote = { ...now, messages: now.messages.map((m) => ({ ...m, content: m.content.replace(` ${NOTE}`, '') })) };
       expect(await sha256(JSON.stringify(withoutNote))).toBe(BEFORE_THE_NOTE.conditionals?.[i]);

@@ -25,6 +25,18 @@
  *   fingerprint pins it.
  */
 
+/**
+ * The practice prompt's line on blanks (owner decision 2026-11-19, phase C3
+ * of docs/TOPICS.md): the measurement found fill_in_blank items with no
+ * blank at all, which the earlier line ("at most 4") did not rule out. The
+ * app shows one answer box per blank, at most 4, and reads a run of two or
+ * more underscores as a blank. Built, not deployed.
+ */
+export const PRACTICE_BLANKS_RULE = 'A fill_in_blank item has 1 to 4 blanks, and each blank is written as a run of underscores (____).';
+/** The line as deployed since 2026-10-16 and as measured in the first
+ * topics run; kept so a test can show what the request changed by. */
+export const PRACTICE_BLANKS_RULE_UNTIL_2026_11 = 'A fill_in_blank item has at most 4 blanks.';
+
 export const GENERATION_SYSTEM_PROMPT = `
 You are an IELTS grammar coach generating practice exercises for B1-C1
 learners whose first language is not English. Write natural, exam-relevant
@@ -56,7 +68,7 @@ answer in, e.g. "Find the mistake and rewrite the full corrected sentence."
 Always ask for the full rewritten sentence, not just the fixed word or
 phrase.
 
-A fill_in_blank item has at most 4 blanks.
+${PRACTICE_BLANKS_RULE}
 
 Return only the structured output — no extra commentary.
 `.trim();
@@ -364,6 +376,46 @@ isCorrect consistent with "blanks": true only when every entry is accepted.
 "summary": the whole item's lesson in at most two sentences, which the app
 shows under the per-blank notes.
 `.trim();
+
+/**
+ * The scoring prompt **candidate** (owner decision 2026-11-19, phase C3 of
+ * docs/TOPICS.md): `SCORING_SYSTEM_PROMPT` with two additions, selectable by
+ * the measurement only (`CANDIDATE_SCORING` in `anthropic.ts`). It is not
+ * the production prompt and no route sends it; it becomes one only on the
+ * owner's word, after the measurement. The examples are not taken from any
+ * measured answer.
+ *
+ * 1. A misspelling in the form an item tests is a mistake (the first
+ *    measurement's one false "correct" in Comparatives & Superlatives).
+ * 2. The verdict follows the scorer's own correction, in both directions (in
+ *    3 of that measurement's 5 false "correct" verdicts the scorer's own
+ *    text contradicted its verdict; the Conditionals re-measurement had the
+ *    reverse case once).
+ */
+export const SCORING_CANDIDATE_SPELLING_RULE = `
+A misspelling in the very form an item tests is a mistake, not a keyboard
+variant. When the item tests a form whose spelling is part of the rule (for
+example the doubled consonant in "hotter", y changing to i in "easier", an
+irregular past form) and the learner chose the right form but misspelt it,
+mark isCorrect: false, give the correct spelling in correctedAnswer and name
+the spelling rule in the explanation. The character variants described above
+(an accented, dotted or dotless form of a letter, full-width letters,
+alternative quotation marks, spacing) stay acceptable.
+`.trim();
+
+export const SCORING_CANDIDATE_VERDICT_RULE = `
+isCorrect must follow your own correction. Compare your correctedAnswer with
+the learner's answer in the structure the item tests: if the correctedAnswer
+changes it there (another form, another word, another word order), the
+answer is not correct, so isCorrect is false; if the correctedAnswer leaves
+it as the learner wrote it, isCorrect is true. A difference that is only the
+keyboard variants described above, or only the full sentence written out
+around a correct word or phrase, is not a change. Never mark an answer
+correct while correcting it in the tested structure, and never mark it wrong
+while giving it back unchanged.
+`.trim();
+
+export const SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11 = `${SCORING_SYSTEM_PROMPT}\n\n${SCORING_CANDIDATE_SPELLING_RULE}\n\n${SCORING_CANDIDATE_VERDICT_RULE}`;
 
 /**
  * The scoring prompt as deployed on 2026-10-16 and live until D3/D11 deploy

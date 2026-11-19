@@ -15,6 +15,15 @@ async function readCount(kv: KVNamespace, key: string): Promise<number> {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** What a reservation read on the way: the UTC day and how many requests
+ * the device had made that day before this one. The practice route steps
+ * its scenario theme from it (`practice_theme.ts`); nothing new is read or
+ * stored for that. */
+export interface QuotaReservation {
+  day: string;
+  deviceCount: number;
+}
+
 /**
  * Reserves one unit of quota for [deviceId] before the Anthropic call is
  * made — counts the attempt, not just a success, since the whole point is
@@ -31,7 +40,7 @@ async function readCount(kv: KVNamespace, key: string): Promise<number> {
  * this reserves a Durable Object to fix. If real concurrent traffic ever
  * makes that overshoot matter, that's the fix to reach for then.
  */
-export async function reserveQuota(env: Env, deviceId: string, now: Date = new Date()): Promise<void> {
+export async function reserveQuota(env: Env, deviceId: string, now: Date = new Date()): Promise<QuotaReservation> {
   const day = todayKey(now);
   const deviceKey = `d:${day}:${deviceId}`;
   const globalKey = `g:${day}`;
@@ -64,4 +73,5 @@ export async function reserveQuota(env: Env, deviceId: string, now: Date = new D
     env.QUOTA_KV.put(deviceKey, String(deviceCount + 1), { expirationTtl: KEY_TTL_SECONDS }),
     env.QUOTA_KV.put(globalKey, String(globalCount + 1), { expirationTtl: KEY_TTL_SECONDS }),
   ]);
+  return { day, deviceCount };
 }

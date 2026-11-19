@@ -21,7 +21,7 @@ describe('reserveQuota', () => {
   });
 
   it('allows requests under both the device and global limit', async () => {
-    await expect(reserveQuota(env, 'device-a', now)).resolves.toBeUndefined();
+    await expect(reserveQuota(env, 'device-a', now)).resolves.toEqual({ day: todayKey(now), deviceCount: 0 });
   });
 
   it('rejects once a single device hits its own daily limit, without touching other devices', async () => {
@@ -36,7 +36,7 @@ describe('reserveQuota', () => {
     });
 
     // A different device is unaffected by device-a's cap.
-    await expect(reserveQuota(env, 'device-b', now)).resolves.toBeUndefined();
+    await expect(reserveQuota(env, 'device-b', now)).resolves.toEqual({ day: todayKey(now), deviceCount: 0 });
   });
 
   it('rejects every device once the global daily cap is reached', async () => {
@@ -69,6 +69,6 @@ describe('reserveQuota', () => {
     await expect(reserveQuota(env, 'device-a', now)).rejects.toThrow(ProxyError);
 
     const nextDay = new Date('2026-09-07T00:00:01Z');
-    await expect(reserveQuota(env, 'device-a', nextDay)).resolves.toBeUndefined();
+    await expect(reserveQuota(env, 'device-a', nextDay)).resolves.toEqual({ day: todayKey(nextDay), deviceCount: 0 });
   });
 });

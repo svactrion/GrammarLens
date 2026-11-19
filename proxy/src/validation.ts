@@ -51,6 +51,13 @@ export interface GeneratePracticeSetRequest {
   deviceId: string;
   topicId: string;
   count: number;
+  /**
+   * The set's scenario theme. Set by the worker itself after validation
+   * (`practice_theme.ts`), never by the client: [validateGeneratePracticeSet]
+   * refuses any field but the three above, so no client text reaches the
+   * prompt through it.
+   */
+  theme?: string;
 }
 
 export function validateGeneratePracticeSet(body: unknown): GeneratePracticeSetRequest {

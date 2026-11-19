@@ -6,6 +6,7 @@ import {
   GENERATION_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT_LIVE_2026_10,
   SCORING_SYSTEM_PROMPT,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11,
   SCORING_SYSTEM_PROMPT_LIVE_2026_10,
   SHARED_CHECK_SYSTEM_PROMPT,
   SHARED_DAILY_TEST_SYSTEM_PROMPT_V2,
@@ -168,8 +169,10 @@ export interface ScoringVariant {
   thinking?: boolean;
   effort?: GeneratorEffort;
   /** `live`: the 2026-10 prompt with the six-field schema and the 2,048
-   * budget; `d3d11`: D3's prompt with D11's fields and the scaled budget. */
-  prompt: 'live' | 'd3d11';
+   * budget; `d3d11`: D3's prompt with D11's fields and the scaled budget;
+   * `candidate`: `d3d11` with the 2026-11 candidate's two additions
+   * (measurement only, never a route). */
+  prompt: 'live' | 'd3d11' | 'candidate';
 }
 
 /** Practice generation: `claude-sonnet-5-5` at `low` with the D3 prompt
@@ -186,6 +189,17 @@ export const PRODUCTION_PRACTICE: PracticeVariant = { model: 'claude-sonnet-5-5'
  */
 export const PRODUCTION_SCORING: ScoringVariant = { model: 'claude-haiku-5-5', thinking: true, effort: 'low', prompt: 'd3d11' };
 export const FALLBACK_SCORING: ScoringVariant = { model: 'claude-sonnet-5-5', thinking: true, effort: 'low', prompt: 'd3d11' };
+/** The production scoring cell with the candidate prompt (docs/TOPICS.md,
+ * phase C3): for the measurement only. No route uses it; it replaces
+ * [PRODUCTION_SCORING]'s prompt only on the owner's word. */
+export const CANDIDATE_SCORING: ScoringVariant = { ...PRODUCTION_SCORING, prompt: 'candidate' };
+
+/** The line that gives a practice set its scenario theme (owner decision
+ * 2026-11-19, option A of docs/1.5.0-topics-set-variety.md): the last line
+ * of the user prompt when the worker has chosen a theme. */
+export function practiceThemeLine(theme: string): string {
+  return `Scenario theme for this set: "${theme}". Set every item in a different everyday situation within that theme.`;
+}
 
 function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): AnthropicRequestBody {
   return buildGeneratePracticeSetBodyFor(req, PRODUCTION_PRACTICE);
@@ -243,7 +257,10 @@ export function buildGeneratePracticeSetBodyFor(
           // has one, its generation note. Without a note the line is what
           // it always was, byte for byte.
           `Topic: "${topic.title}" — ${topic.description}${topic.generationNote ? ` ${topic.generationNote}` : ''}\n` +
-          `Generate exactly ${req.count} fresh practice items: ${itemMix(req.count)}. Each "id" must be a short unique slug.`,
+          `Generate exactly ${req.count} fresh practice items: ${itemMix(req.count)}. Each "id" must be a short unique slug.` +
+          // Only when the worker chose a theme for the set (the route always
+          // does); a request without one is the request it always was.
+          (req.theme ? `\n${practiceThemeLine(req.theme)}` : ''),
       },
     ],
   };
@@ -545,7 +562,7 @@ export function buildScoreAnswersBodyFor(req: ScoreAnswersRequest, variant: Scor
   return {
     model: variant.model,
     max_tokens: (live ? 2048 : scoreMaxTokensFor(req.items.length)) + (variant.thinking ? THINKING_HEADROOM_TOKENS : 0),
-    system: live ? SCORING_SYSTEM_PROMPT_LIVE_2026_10 : SCORING_SYSTEM_PROMPT,
+    system: live ? SCORING_SYSTEM_PROMPT_LIVE_2026_10 : variant.prompt === 'candidate' ? SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11 : SCORING_SYSTEM_PROMPT,
     ...(variant.thinking ? { thinking: { type: 'adaptive' as const } } : {}),
     output_config: {
       format: { type: 'json_schema', schema: live ? scoringSchemaLive() : schema },
