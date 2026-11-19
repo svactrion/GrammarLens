@@ -7,6 +7,9 @@ import {
   GENERATION_SYSTEM_PROMPT_LIVE_2026_10,
   SCORING_SYSTEM_PROMPT,
   SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_S,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_ST,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_T,
   SCORING_SYSTEM_PROMPT_LIVE_2026_10,
   SHARED_CHECK_SYSTEM_PROMPT,
   SHARED_DAILY_TEST_SYSTEM_PROMPT_V2,
@@ -171,8 +174,11 @@ export interface ScoringVariant {
   /** `live`: the 2026-10 prompt with the six-field schema and the 2,048
    * budget; `d3d11`: D3's prompt with D11's fields and the scaled budget;
    * `candidate`: `d3d11` with the 2026-11 candidate's two additions
-   * (measurement only, never a route). */
-  prompt: 'live' | 'd3d11' | 'candidate';
+   * (dropped; kept for the runs scored with it); `candidateS`,
+   * `candidateT`, `candidateST`: `d3d11` with the second round's spelling
+   * addition, its conditional-types addition, or both. Every candidate is
+   * for the measurement only, never a route. */
+  prompt: 'live' | 'd3d11' | 'candidate' | 'candidateS' | 'candidateT' | 'candidateST';
 }
 
 /** Practice generation: `claude-sonnet-5-5` at `low` with the D3 prompt
@@ -193,6 +199,23 @@ export const FALLBACK_SCORING: ScoringVariant = { model: 'claude-sonnet-5-5', th
  * phase C3): for the measurement only. No route uses it; it replaces
  * [PRODUCTION_SCORING]'s prompt only on the owner's word. */
 export const CANDIDATE_SCORING: ScoringVariant = { ...PRODUCTION_SCORING, prompt: 'candidate' };
+
+/** The second round's three candidates (docs/TOPICS.md, phase C4): the
+ * production scoring cell with one addition, the other, or both. For the
+ * measurement only; no route uses one. */
+export const SECOND_ROUND_SCORING: Readonly<Record<'S' | 'T' | 'ST', ScoringVariant>> = {
+  S: { ...PRODUCTION_SCORING, prompt: 'candidateS' },
+  T: { ...PRODUCTION_SCORING, prompt: 'candidateT' },
+  ST: { ...PRODUCTION_SCORING, prompt: 'candidateST' },
+};
+
+const SCORING_PROMPTS: Readonly<Record<Exclude<ScoringVariant['prompt'], 'live'>, string>> = {
+  d3d11: SCORING_SYSTEM_PROMPT,
+  candidate: SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11,
+  candidateS: SCORING_SYSTEM_PROMPT_CANDIDATE_S,
+  candidateT: SCORING_SYSTEM_PROMPT_CANDIDATE_T,
+  candidateST: SCORING_SYSTEM_PROMPT_CANDIDATE_ST,
+};
 
 /** The line that gives a practice set its scenario theme (owner decision
  * 2026-11-19, option A of docs/1.5.0-topics-set-variety.md): the last line
@@ -562,7 +585,7 @@ export function buildScoreAnswersBodyFor(req: ScoreAnswersRequest, variant: Scor
   return {
     model: variant.model,
     max_tokens: (live ? 2048 : scoreMaxTokensFor(req.items.length)) + (variant.thinking ? THINKING_HEADROOM_TOKENS : 0),
-    system: live ? SCORING_SYSTEM_PROMPT_LIVE_2026_10 : variant.prompt === 'candidate' ? SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11 : SCORING_SYSTEM_PROMPT,
+    system: variant.prompt === 'live' ? SCORING_SYSTEM_PROMPT_LIVE_2026_10 : SCORING_PROMPTS[variant.prompt],
     ...(variant.thinking ? { thinking: { type: 'adaptive' as const } } : {}),
     output_config: {
       format: { type: 'json_schema', schema: live ? scoringSchemaLive() : schema },

@@ -1,6 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { CANDIDATE_SCORING, PRODUCTION_PRACTICE, PRODUCTION_SCORING, buildBody, buildGeneratePracticeSetBodyFor, buildScoreAnswersBodyFor, practiceThemeLine } from '../src/anthropic';
+import { CANDIDATE_SCORING, PRODUCTION_PRACTICE, PRODUCTION_SCORING, SECOND_ROUND_SCORING, buildBody, buildGeneratePracticeSetBodyFor, buildScoreAnswersBodyFor, practiceThemeLine } from '../src/anthropic';
 import { filterPracticeSet, logPracticeFilter } from '../src/practice_filter';
 import { practiceTheme, practiceThemeIndex } from '../src/practice_theme';
 import {
@@ -8,10 +8,15 @@ import {
   GENERATION_SYSTEM_PROMPT_LIVE_2026_10,
   PRACTICE_BLANKS_RULE,
   PRACTICE_BLANKS_RULE_UNTIL_2026_11,
+  SCORING_ADDITION_CONDITIONALS,
+  SCORING_ADDITION_SPELLING,
   SCORING_CANDIDATE_SPELLING_RULE,
   SCORING_CANDIDATE_VERDICT_RULE,
   SCORING_SYSTEM_PROMPT,
   SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_S,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_ST,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_T,
 } from '../src/prompts';
 import { SCENARIO_THEMES } from '../src/shared_daily_test';
 import { FIRST_WAVE_TOPICS, TOPICS } from '../src/topics';
@@ -242,5 +247,70 @@ describe('the scoring prompt candidate', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]?.system).toBe(SCORING_SYSTEM_PROMPT);
     expect(sent[0]?.system).not.toContain('must follow your own correction');
+  });
+});
+
+/**
+ * Phase C4 (owner decisions 2026-11-19): the first candidate is dropped, and
+ * three more are measured: S (a paragraph on spelling), T (a paragraph on
+ * conditional types), ST (both). None is live.
+ */
+describe('the scoring candidates of the second round', () => {
+  const request = { deviceId: 'measurement', items: [{ id: 'a1', type: 'error_correction', prompt: 'She go home.\nRewrite it.', userAnswer: 'She goes home.' }] };
+
+  it('each is the production prompt with its addition after it, and nothing else', () => {
+    expect(SCORING_SYSTEM_PROMPT_CANDIDATE_S).toBe(`${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_SPELLING}`);
+    expect(SCORING_SYSTEM_PROMPT_CANDIDATE_T).toBe(`${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_CONDITIONALS}`);
+    expect(SCORING_SYSTEM_PROMPT_CANDIDATE_ST).toBe(`${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_SPELLING}\n\n${SCORING_ADDITION_CONDITIONALS}`);
+    // The production prompt has neither.
+    expect(SCORING_SYSTEM_PROMPT).not.toContain('misspelling');
+    expect(SCORING_SYSTEM_PROMPT).not.toContain('conditional');
+    // The dropped candidate's verdict rule is in none of the three.
+    for (const prompt of [SCORING_SYSTEM_PROMPT_CANDIDATE_S, SCORING_SYSTEM_PROMPT_CANDIDATE_T, SCORING_SYSTEM_PROMPT_CANDIDATE_ST]) {
+      expect(prompt).not.toContain(SCORING_CANDIDATE_VERDICT_RULE);
+    }
+  });
+
+  it('the additions are short and general: no quoted example, and each says what it is about', () => {
+    for (const addition of [SCORING_ADDITION_SPELLING, SCORING_ADDITION_CONDITIONALS]) {
+      expect(addition.length).toBeLessThan(600);
+      // An example could be an answer of the labelled runs; a rule cannot.
+      expect(addition).not.toMatch(/["\u201c\u201d\u2018\u2019]/);
+      expect(addition).toContain('isCorrect: false');
+    }
+    expect(SCORING_ADDITION_SPELLING).toMatch(/^A misspelling in the very form an item tests is a mistake/);
+    expect(SCORING_ADDITION_SPELLING).toContain('The character variants described above stay acceptable.');
+    // T names both ways a conditional answer goes wrong, and protects a
+    // result that matches its time and also says up to when it holds.
+    expect(SCORING_ADDITION_CONDITIONALS).toMatch(/^In a conditional sentence, judge each clause against the time the sentence\nitself gives it\./);
+    expect(SCORING_ADDITION_CONDITIONALS).toContain('mixes two types without such time words is a mistake');
+    expect(SCORING_ADDITION_CONDITIONALS).toContain('keeps a single type against them');
+    expect(SCORING_ADDITION_CONDITIONALS).toMatch(/A result that\nmatches its time stays correct when it also carries a phrase saying up to\nwhen it holds\.$/);
+  });
+
+  it('are selectable by the measurement: the production cell with another prompt, the same request otherwise', () => {
+    const production = buildScoreAnswersBodyFor(request, PRODUCTION_SCORING);
+    const prompts = { S: SCORING_SYSTEM_PROMPT_CANDIDATE_S, T: SCORING_SYSTEM_PROMPT_CANDIDATE_T, ST: SCORING_SYSTEM_PROMPT_CANDIDATE_ST } as const;
+    expect(Object.keys(SECOND_ROUND_SCORING)).toEqual(['S', 'T', 'ST']);
+    for (const id of ['S', 'T', 'ST'] as const) {
+      expect(SECOND_ROUND_SCORING[id]).toEqual({ ...PRODUCTION_SCORING, prompt: `candidate${id}` });
+      const body = buildScoreAnswersBodyFor(request, SECOND_ROUND_SCORING[id]);
+      expect(body.system).toBe(prompts[id]);
+      expect({ ...body, system: production.system }).toEqual(production);
+    }
+    // The first candidate is still selectable: the stored runs were scored with it.
+    expect(buildScoreAnswersBodyFor(request, CANDIDATE_SCORING).system).toBe(SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11);
+  });
+
+  it('none is live: the production cell and the route send the production prompt', async () => {
+    expect(PRODUCTION_SCORING.prompt).toBe('d3d11');
+    expect(buildBody({ op: 'score_answers', request: { ...request, deviceId: 'd1' } }).system).toBe(SCORING_SYSTEM_PROMPT);
+    respond = () => ({ feedback: [{ itemId: 'a1', isCorrect: true, correctedAnswer: 'She goes home.', explanation: 'ok', summary: 's', blanks: [{ index: 0, correctAnswer: 'She goes home.', accepted: true, note: 'n' }] }] });
+    const response = await post('/v1/score-answers', { ...request, deviceId: 'd1' });
+    expect(response.status).toBe(200);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.system).toBe(SCORING_SYSTEM_PROMPT);
+    expect(sent[0]?.system).not.toContain('misspelling');
+    expect(sent[0]?.system).not.toContain('In a conditional sentence');
   });
 });

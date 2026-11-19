@@ -418,6 +418,48 @@ while giving it back unchanged.
 export const SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11 = `${SCORING_SYSTEM_PROMPT}\n\n${SCORING_CANDIDATE_SPELLING_RULE}\n\n${SCORING_CANDIDATE_VERDICT_RULE}`;
 
 /**
+ * The scoring prompt's second round (owner decision 2026-11-19, phase C4 of
+ * docs/TOPICS.md). The first candidate above was dropped, in whole and in
+ * its verdict rule: on the 1,163 labelled answers both prompts scored it was
+ * worse on every count. It stays in the source only because two stored runs
+ * were scored with it. This round tries two small additions, each alone and
+ * both together, against the answers that already have labels:
+ *
+ * - S, spelling: a misspelling in the very form an item tests is a mistake.
+ * - T, conditional types: in every run the production prompt accepted
+ *   answers whose two clauses do not fit the time the sentence gives them
+ *   (5 of 132 wrong Conditionals answers), and twice rejected a correct
+ *   result for a phrase saying up to when it holds.
+ *
+ * None of the three is the production prompt and no route sends one
+ * (`SECOND_ROUND_SCORING` in `anthropic.ts` is for the measurement only).
+ * Neither addition quotes an example, so none can be an answer of the
+ * labelled runs.
+ */
+export const SCORING_ADDITION_SPELLING = `
+A misspelling in the very form an item tests is a mistake, not a keyboard
+variant: when the learner chose the right form but spelt it wrongly (a
+consonant that should be doubled, a y that should become i, an irregular
+form), mark isCorrect: false and give the correct spelling in
+correctedAnswer. The character variants described above stay acceptable.
+`.trim();
+
+export const SCORING_ADDITION_CONDITIONALS = `
+In a conditional sentence, judge each clause against the time the sentence
+itself gives it. The if-part and the result belong to the same type of
+conditional unless the sentence's own time words place them at different
+times (a past condition with a result now, or the reverse): an answer that
+mixes two types without such time words is a mistake, and so is one that
+keeps a single type against them, so mark isCorrect: false. A result that
+matches its time stays correct when it also carries a phrase saying up to
+when it holds.
+`.trim();
+
+export const SCORING_SYSTEM_PROMPT_CANDIDATE_S = `${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_SPELLING}`;
+export const SCORING_SYSTEM_PROMPT_CANDIDATE_T = `${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_CONDITIONALS}`;
+export const SCORING_SYSTEM_PROMPT_CANDIDATE_ST = `${SCORING_SYSTEM_PROMPT}\n\n${SCORING_ADDITION_SPELLING}\n\n${SCORING_ADDITION_CONDITIONALS}`;
+
+/**
  * The scoring prompt as deployed on 2026-10-16 and live until D3/D11 deploy
  * (the Turkish-keyboard paragraph, no structured fields): the measurement's
  * baseline cells (C1, C3, C6, C7) send exactly this, with the six-field
