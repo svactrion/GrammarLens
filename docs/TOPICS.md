@@ -397,16 +397,78 @@ This session: build, prove with a dry run, write the owner's commands, stop.
    in the progress doc. No question text, no answer text and no sheet key in
    any commit. Commit, push, **stop**.
 
-## Phase D — release prep (only on the owner's go, later prompt)
+## Phase D — release prep (the owner's go: 2026-11-19)
 
-App: `kFirstWaveTopicsEnabled = true` for the passing topics; Topic Practice
-with ten cards (R01 layout at the five sizes and the largest text size);
-every copy that counts topics uses the real count (the paywall's benefits
-and the V13c table: "All 10 topics"); the new topics' weak spots on Review,
-V24f's dream bubble and the tip widget. Proxy: the flag on in code, tests,
-**no deploy** — the owner deploys from his Terminal (`npm run deploy`),
-before the 1.5.0 build is submitted (old app versions never send the new
-ids). `product.yaml`: `recent`, `planned`, `updated_at`; `legal` unchanged
-(no new data, no new service).
+The measurement is closed at $3.83 of $15.00. The scoring prompt's second
+round ran (`proxy/eval/out/topics-rescore-2026-11-19T05-20-02-911Z`, 960
+calls, $1.31); its section of the report is written.
+
+**Owner decisions of 2026-11-19 (record them under the next T numbers):**
+
+- **All five first-wave topics ship in 1.5.0, with the production scoring
+  prompt as it is.** No candidate becomes the production prompt; S, T and ST
+  stay in the source and are not live.
+- **The report says it as it is.** On the pooled reading Passive Voice,
+  Prepositions and Relative Clauses meet all three criteria. Comparatives &
+  Superlatives is one answer over the false "correct" line (2 of 95) and
+  Conditionals is over it (5 of 132): both ship on the owner's acceptance,
+  not as a pass. His reasons: the same answers scored four times moved a
+  topic's count by one or two answers, so the 2 % line is finer than this
+  measurement resolves; the weakest new topic is well under a topic that is
+  live (Articles, 5 of 46); and the scorer is on the server, so it can be
+  improved after the release without a new app version.
+- **Three small fixes ship with it:** the Worker retries once when the
+  scorer returns no usable verdict for an answer (as proposed in the
+  progress doc); the loading screen does not promise a number of questions
+  the set may not have; the app treats an empty practice set as a failed
+  generation.
+- **The Modal Past Forms hint card is rewritten to cover both** what that
+  topic's questions ask today ("could" and "would" as the past of "can" and
+  "will", also in reported speech) and modal + have + past participle. The
+  owner's plan for the topic is mixed questions with a general card; making
+  the questions mixed is a generation change and comes after 1.5.0 with a
+  measurement.
+- **After 1.5.0, not now:** repeated scoring to verify T; the wording that
+  makes a correction item's sentence clearly wrong (phase C3's proposal);
+  Articles' scoring; mixed Modal Past Forms questions.
+
+The work:
+
+1. **App.** `kFirstWaveTopicsEnabled = true` for all five. Topic Practice
+   with ten cards (R01 layout at the five sizes and the largest text size).
+   Every copy that counts topics uses the real count (the paywall's benefits
+   and the V13c table: "All 10 topics"), in every language the app has. The
+   new topics' weak spots on Review, V24f's dream bubble and the tip widget.
+   The two app fixes above. The Modal Past Forms card: four short lines in
+   the card's style, in every language the cards exist in; keep the
+   harness's copy of the cards in step (its test pins them).
+2. **Proxy.** `FIRST_WAVE_TOPICS_ENABLED = true` in code, the route's tests
+   for the five ids, the retry with its tests. With the deploy the changes
+   of phase C3 go live as well (the theme per set for all ten topics, the
+   line on blanks, the guard, the Conditionals note). **No deploy from this
+   session.**
+3. **The owner's deploy checklist**, in `proxy/README.md` or beside it, for
+   the macOS Terminal app: `npm run deploy` in `proxy/`; what to check right
+   after (a released app still gets its practice sets and scoring; a new
+   topic's id is accepted); how to go back to the previous version if
+   something is wrong. The order is: deploy the Worker first, then the
+   device checks on the release build (it talks to the live Worker), then
+   the merge and the 1.5.0 build. Old app versions never send the new ids;
+   they do get the themes, the guard and the retry.
+4. **Device checks.** Add to
+   `docs/design/ui-polish/handoff/DEVICE-CHECKS.md` what the owner should
+   look at on his iPhone after the deploy: the ten cards, one practice set
+   in each new topic through to its results, the copy with the topic count,
+   the new topics on Review, V24f and the tip widget, the Modal Past Forms
+   card. No VoiceOver checks.
+5. **The report and the records.** A closing "Decision" section in
+   `docs/1.5.0-topics-report.md` with the pooled table and the owner's
+   decision in his terms above; the progress doc's phase table; roadmap;
+   build log; `product.yaml` (`recent`, `planned`, `updated_at`; `legal`
+   unchanged: no new data, no new service; `status` and `versions` are the
+   owner's).
+6. Flutter tests, Swift tests, the proxy's tests and typecheck, a release
+   build. The version stays as it is (the bump belongs to the release
+   prep). Commit in small steps, push, **stop**.
 
 Code, comments, commit messages and all docs stay in English.
