@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +26,7 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 import 'support/fake_native_bridge.dart';
+import 'support/fix3_render.dart';
 import 'support/recording_analytics_sink.dart';
 
 /// Fix round 6, item 1 (SPEC §1.8, v14). On the owner's phone: the free
@@ -612,6 +614,55 @@ void main() {
       expect(_restOpacity(tester), isNull);
     });
   });
+
+  // With `FIX6_CAPTURE=1`: a frame strip of the walk, the pawn at rest and
+  // the rest scene, in `build/fix6-captures/[dark/]`.
+  for (final brightness in Brightness.values) {
+    final dark = brightness == Brightness.dark;
+    testWidgets(
+        'the whole run in ${brightness.name}: the walk, the pawn at rest, '
+        'the fade, the rest scene (frame strip)', (tester) async {
+      final storage = _Storage()
+        ..today = _waitingSet()
+        ..freeUsed = 1;
+      await pumpFix3(
+          tester,
+          HomeScreen(
+            userName: 'Ada',
+            claudeService: ClaudeService(),
+            storageService: storage,
+            analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
+            subscriptionService: _Subscription(),
+            clock: () => DateTime(2026, 1, 1, 9),
+          ),
+          brightness: brightness);
+      await doTest(tester);
+      await tester.tap(find.text('See your climb'));
+      await untilStepStarts(tester, 8);
+      final frames = <ui.Image?>[await fix6Frame(tester)];
+      // The walk is 850 ms.
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(milliseconds: 212));
+        frames.add(await fix6Frame(tester));
+      }
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump();
+      expect(_rest, findsNothing);
+      // The pawn at rest, half way through the beat.
+      await tester.pump(const Duration(milliseconds: 500));
+      frames.add(await fix6Frame(tester));
+      // The fade, about half way.
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
+      expect(_restOpacity(tester), inExclusiveRange(0, 1));
+      frames.add(await fix6Frame(tester));
+      await tester.pumpAndSettle();
+      expect(_rest, findsOneWidget);
+      expect(_restOpacity(tester), isNull);
+      frames.add(await fix6Frame(tester));
+      await fix6Strip(tester, 'item1-step-then-rest', frames, dark: dark);
+    });
+  }
 
   testWidgets(
       'an ordinary day (practice unused) is as before: the step, no rest '

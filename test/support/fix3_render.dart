@@ -112,3 +112,47 @@ void recordFix5(String file, String row) {
   out.parent.createSync(recursive: true);
   out.writeAsStringSync('$row\n', mode: FileMode.append);
 }
+
+/// Fix round 6: frames of one run side by side. [fix6Frame] takes the
+/// screen now (with `FIX6_CAPTURE=1`; null otherwise), [fix6Strip] writes
+/// the frames, left to right, as `build/fix6-captures/[dark/]<name>.png`.
+Future<ui.Image?> fix6Frame(WidgetTester tester) async {
+  if (Platform.environment['FIX6_CAPTURE'] != '1') return null;
+  await tester.runAsync(() async {
+    for (final element in find.byType(Image).evaluate()) {
+      await precacheImage((element.widget as Image).image, element);
+    }
+  });
+  await tester.pump();
+  return tester.runAsync(() {
+    final render = fix3Boundary.currentContext!.findRenderObject()!
+        as RenderRepaintBoundary;
+    return render.toImage(pixelRatio: 1);
+  });
+}
+
+Future<void> fix6Strip(WidgetTester tester, String name, List<ui.Image?> frames,
+    {bool dark = false}) async {
+  final images = frames.whereType<ui.Image>().toList();
+  if (images.isEmpty) return;
+  await tester.runAsync(() async {
+    const gap = 8.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final width = images.fold<double>(0, (w, i) => w + i.width) +
+        gap * (images.length - 1);
+    final height = images.fold<int>(0, (h, i) => i.height > h ? i.height : h);
+    canvas.drawRect(Rect.fromLTWH(0, 0, width, height.toDouble()),
+        Paint()..color = const Color(0xFF808080));
+    var x = 0.0;
+    for (final image in images) {
+      canvas.drawImage(image, Offset(x, 0), Paint());
+      x += image.width + gap;
+    }
+    final strip = await recorder.endRecording().toImage(width.round(), height);
+    final bytes = await strip.toByteData(format: ui.ImageByteFormat.png);
+    final out = File('build/fix6-captures/${dark ? 'dark/' : ''}$name.png');
+    out.parent.createSync(recursive: true);
+    out.writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
+}
