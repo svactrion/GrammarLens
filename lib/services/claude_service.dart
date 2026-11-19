@@ -52,6 +52,9 @@ enum ClaudeApiErrorReason {
   /// .statusCode] says which.
   serverStatus,
   server,
+
+  /// The proxy answered 200 with a practice set that has no question.
+  emptySet,
 }
 
 class ClaudeApiException implements Exception {
@@ -88,6 +91,7 @@ String userFacingErrorMessage(Object error, AppLocalizations l10n) {
     ClaudeApiErrorReason.serverStatus =>
       l10n.errorServerStatus(error.statusCode ?? 0),
     ClaudeApiErrorReason.server => error.message,
+    ClaudeApiErrorReason.emptySet => l10n.errorGeneral,
   };
 }
 
@@ -163,6 +167,16 @@ class ClaudeService {
     final items = (json['items'] as List)
         .map((e) => PracticeItem.fromJson(e as Map<String, dynamic>))
         .toList();
+    // A set without a question is a failed generation (owner decision
+    // 2026-11-19): the caller shows its error and counts no session, where
+    // the practice screen would have opened on nothing.
+    if (items.isEmpty) {
+      throw const ClaudeApiException(
+        // l10n-guard: log text; the screen shows errorGeneral
+        'The practice service returned a set without questions.',
+        reason: ClaudeApiErrorReason.emptySet,
+      );
+    }
     return PracticeSet(topicId: topic.id.name, items: items);
   }
 
