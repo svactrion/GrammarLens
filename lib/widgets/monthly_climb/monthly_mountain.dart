@@ -76,6 +76,12 @@ class MonthlyMountain extends StatefulWidget {
   /// mounts at, and not for a move that another move interrupts.
   final VoidCallback? onMotionEnd;
 
+  /// Called after [onMotionEnd], once everything the arrival shows has
+  /// ended: a save point just reached has lit up and its name label has
+  /// gone. Right after [onMotionEnd] when the step reached no save point.
+  /// Home's rest scene waits for it (fix round 6, item 1).
+  final VoidCallback? onArrivalEnd;
+
   /// The month's theme: its images, its dark-mode object filter and
   /// whether it draws the flag. Home passes the month's recorded theme
   /// (`StorageService.resolveClimbMonthTheme`).
@@ -121,6 +127,7 @@ class MonthlyMountain extends StatefulWidget {
       this.theme = ClimbThemes.greenSlope,
       this.showPassedDayDots = passedDayDots,
       this.onMotionEnd,
+      this.onArrivalEnd,
       this.zoom,
       this.zoomCrossFade = false,
       this.labelAvoid,
@@ -203,6 +210,10 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   /// Under Reduce Motion the label is not animated at all: it shows, and
   /// this ends it.
   Timer? _labelTimer;
+
+  /// A move has ended and [MonthlyMountain.onArrivalEnd] is still owed:
+  /// reported once the save point's fade and its label are over.
+  bool _arrivalPending = false;
   late ClimbRoute _route;
   double _from = 0, _to = 0;
   bool _reduceMotion = false;
@@ -264,6 +275,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed && mounted) {
           setState(() => _labelled = null);
+          _checkArrivalEnded();
         }
       });
     // The position the scene mounts at shows no label: only a step taken
@@ -312,6 +324,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         _lit.addAll(_fading);
         _fading.clear();
       });
+      _checkArrivalEnded();
     }, onError: (_) {});
   }
 
@@ -392,7 +405,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     if (_reduceMotion) {
       _label.stop();
       _labelTimer = Timer(MonthlyMountain.labelShownReduceMotion, () {
-        if (mounted) setState(() => _labelled = null);
+        if (!mounted) return;
+        setState(() => _labelled = null);
+        _checkArrivalEnded();
       });
       return;
     }
@@ -452,6 +467,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       _lit
         ..clear()
         ..addAll(_reached());
+      // A fade this cut short no longer reports its end.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkArrivalEnded());
     }
     if (oldWidget.days != widget.days ||
         oldWidget.completedDays != widget.completedDays) {
@@ -474,6 +491,18 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     if (!mounted) return;
     _updateSavePoints();
     widget.onMotionEnd?.call();
+    _arrivalPending = true;
+    _checkArrivalEnded();
+  }
+
+  /// Reports [MonthlyMountain.onArrivalEnd] once nothing of the arrival is
+  /// still showing: no move, no save point fading in, no name label. Asked
+  /// again whenever one of them ends.
+  void _checkArrivalEnded() {
+    if (!_arrivalPending || !mounted) return;
+    if (_motion.isAnimating || _fading.isNotEmpty || _labelled != null) return;
+    _arrivalPending = false;
+    widget.onArrivalEnd?.call();
   }
 
   @override

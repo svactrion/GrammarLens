@@ -171,9 +171,22 @@ class HomeScreen extends StatefulWidget {
   static const capsuleKey = ValueKey('home_score_capsule');
   static const restSceneKey = ValueKey('home_rest_scene');
 
+  /// The rest scene's fade over Home after the day's step (fix round 6);
+  /// present only while it fades in.
+  static const restFadeKey = ValueKey('home_rest_fade');
+
   /// PW05r's practice, opened from the rest scene's paywall (tests).
   static const restPractiseKey = ValueKey('home_rest_practise');
   static const ticketKey = ValueKey('home_ticket');
+
+  /// Fix round 6, item 1 (SPEC §1.8, v14): how long the pawn stands on the
+  /// day's new step, with nothing else moving, before the rest scene comes.
+  static const restBeat = Duration(seconds: 1);
+
+  /// The cross-fade from Home to the rest scene after [restBeat]
+  /// (`AppMotion.slow`; under Reduce Motion `AppMotion.fast`).
+  static Duration restReveal(BuildContext context) =>
+      AppMotion.entrance(context, AppMotion.slow);
   static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
   /// The clock the month card's open time is measured with; a test seam,
@@ -248,6 +261,38 @@ class _HomeScreenState extends State<HomeScreen>
   /// screen, whatever path led there).
   bool _softAskCheckScheduled = false;
   String? _pendingClimbDay;
+
+  /// Fix round 6, item 1: the rest scene waits for the day's step. Set when
+  /// a Daily Test's completion is saved (with [_pendingClimbDay]); while it
+  /// is set on a rest day, Home keeps its normal content: the step is
+  /// pending (Home not visible yet), walking, or followed by what a step
+  /// brings (a save point's light and name, a month card), then
+  /// [HomeScreen.restBeat], then the cross-fade. Cleared when the scene has
+  /// come, when there is no step to show, and when the user leaves Home
+  /// once the walk has begun (the scene is then simply there on return).
+  bool _restWaitsForStep = false;
+
+  /// The pawn has landed and the mountain has nothing more to show for it
+  /// (`MonthlyMountain.onArrivalEnd`); the beat starts once Home is quiet.
+  bool _stepArrived = false;
+
+  /// [HomeScreen.restBeat], then the cross-fade to the rest scene.
+  late final AnimationController _restArrival;
+
+  /// The rest scene's opacity over Home during [_restArrival]'s second part.
+  Animation<double> _restOpacity = kAlwaysDismissedAnimation;
+
+  /// Whether the cross-fade's part of [_restArrival] has begun: both Home
+  /// and the rest scene are built.
+  bool _restRevealing = false;
+
+  /// Home's normal content, kept as one subtree (its scroll position, the
+  /// mountain) when the rest scene fades in over it.
+  final _homeContentKey = GlobalKey();
+
+  /// The rest scene, one subtree from the first frame of its fade to the
+  /// frame it stands alone (its loops do not restart).
+  final _restContentKey = GlobalKey();
 
   /// Steps the pending completion earned, known only when it arrived through
   /// [HomeScreen.initialPendingClimb]. It lets the first load derive the
@@ -359,9 +404,15 @@ class _HomeScreenState extends State<HomeScreen>
     _zoom = ClimbZoomController(vsync: this)..addListener(_onZoomChanged);
     _chipOpacity =
         CurvedAnimation(parent: _zoom.progress, curve: const Interval(.85, 1));
+    _restArrival = AnimationController(vsync: this)
+      ..addListener(_onRestArrivalTick)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) _endRestWait();
+      });
     WidgetsBinding.instance.addObserver(this);
     final initialClimb = widget.initialPendingClimb;
     if (initialClimb != null && initialClimb.step > 0) {
+      _restWaitsForStep = true;
       _pendingClimbDay = initialClimb.day;
       _pendingClimbStep = initialClimb.step;
     }
@@ -405,6 +456,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (widget.reminders == null) _reminders.dispose();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
+    _restArrival.dispose();
     _zoom.removeListener(_onZoomChanged);
     _zoom.dispose();
     super.dispose();
@@ -413,6 +465,10 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // A route was pushed above Home, or its tab's tickers stopped, after
+    // the day's step began: the rest scene no longer waits (a build
+    // follows).
+    _dropRestWaitIfLeft(rebuild: false);
     // A route above Home closed, or Home's visibility changed: N01 may be
     // waiting for exactly this (A2).
     _scheduleSoftAskCheck();
@@ -453,6 +509,9 @@ class _HomeScreenState extends State<HomeScreen>
       oldWidget.dailyTestLinks?.removeListener(_onDailyTestLink);
       widget.dailyTestLinks?.addListener(_onDailyTestLink);
     }
+    if (oldWidget.active && !widget.active) {
+      _dropRestWaitIfLeft(rebuild: false);
+    }
     if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
       _loadClimb();
     }
@@ -479,6 +538,7 @@ class _HomeScreenState extends State<HomeScreen>
         _monthCardOpenStart();
       }
     }
+    if (state == AppLifecycleState.paused) _dropRestWaitIfLeft();
     if (state == AppLifecycleState.resumed) {
       // Refresh greeting and cached day after midnight/timezone changes.
       // This is a local read; resuming never generates another question set.
@@ -614,7 +674,10 @@ class _HomeScreenState extends State<HomeScreen>
       // simply loaded.
       if (showStep) {
         _climbAnimating = true;
+        _stepArrived = false;
       } else if (!_climbAnimating) {
+        // No step to show: the rest scene has nothing to wait for.
+        if (!_stepArrived) _endRestWait();
         _armDay0Paywall(Duration.zero);
       }
     } catch (_) {
@@ -623,7 +686,10 @@ class _HomeScreenState extends State<HomeScreen>
         _loadingClimb = false;
         _climbLoadFailed = true;
       });
-      if (!_climbAnimating) _armDay0Paywall(Duration.zero);
+      if (!_climbAnimating) {
+        if (!_stepArrived) _endRestWait();
+        _armDay0Paywall(Duration.zero);
+      }
     }
   }
 
@@ -760,6 +826,8 @@ class _HomeScreenState extends State<HomeScreen>
     } finally {
       _monthCardShowing = false;
     }
+    // The card and its zoom were the last thing after the day's step.
+    _tryRestArrival();
     _presentDebugMilestone();
     _onDebugPlay();
   }
@@ -896,6 +964,92 @@ class _HomeScreenState extends State<HomeScreen>
     _scheduleSoftAskCheck();
   }
 
+  /// The pawn has landed and a save point it reached has shown its light
+  /// and its name: on a rest day the beat before the rest scene can start.
+  void _onMountainArrivalEnd() {
+    if (!_restWaitsForStep) return;
+    if (!_restDay) {
+      // An ordinary day: nothing waits for this step.
+      _restWaitsForStep = false;
+      return;
+    }
+    _stepArrived = true;
+    _tryRestArrival();
+  }
+
+  /// Whether the rest scene is held back for the day's step (fix round 6).
+  bool get _restHeld => _restWaitsForStep && _restDay;
+
+  /// Starts [HomeScreen.restBeat] and the cross-fade once the day's step
+  /// and everything after it have ended and nothing is above Home. Asked
+  /// when the pawn's arrival ends and when a month card closes.
+  void _tryRestArrival() {
+    if (!mounted || !_restWaitsForStep || !_stepArrived) return;
+    if (_restArrival.isAnimating || _climbAnimating) return;
+    if (_monthCardShowing || _pendingMonthCard != null || _zoom.active) return;
+    if (!_restDay) {
+      _restWaitsForStep = false;
+      _stepArrived = false;
+      return;
+    }
+    if (!_homeVisible) {
+      _endRestWait();
+      return;
+    }
+    final reveal = HomeScreen.restReveal(context);
+    final total = HomeScreen.restBeat + reveal;
+    _restOpacity = CurvedAnimation(
+        parent: _restArrival,
+        curve: Interval(
+            HomeScreen.restBeat.inMicroseconds / total.inMicroseconds, 1,
+            curve: AppMotion.enter));
+    _restArrival
+      ..duration = total
+      ..forward(from: 0);
+  }
+
+  /// The beat has passed: from here Home and the rest scene are both built
+  /// and the scene fades in.
+  void _onRestArrivalTick() {
+    final total = _restArrival.duration;
+    if (total == null || !mounted) return;
+    final revealing = _restArrival.isAnimating &&
+        _restArrival.value * total.inMicroseconds >=
+            HomeScreen.restBeat.inMicroseconds;
+    if (revealing != _restRevealing) {
+      setState(() => _restRevealing = revealing);
+    }
+  }
+
+  /// The rest scene no longer waits: it has faded in, there was no step to
+  /// show, or the user left Home. With [rebuild] false the caller is
+  /// already in a build.
+  void _endRestWait({bool rebuild = true}) {
+    if (!_restWaitsForStep && !_stepArrived && !_restRevealing) return;
+    _restWaitsForStep = false;
+    _stepArrived = false;
+    _restRevealing = false;
+    if (_restArrival.isAnimating || _restArrival.value != 0) {
+      _restArrival.stop();
+      _restArrival.value = 0;
+    }
+    if (rebuild && mounted) setState(() {});
+    // N01 follows the scene (A2): asked once it is fully on screen.
+    _scheduleSoftAskCheck();
+  }
+
+  /// The user left Home (another tab, a route above, the app in the
+  /// background) after the day's step had begun to walk: the rest scene is
+  /// shown on return and the step is not replayed. A step that has not
+  /// begun (Home was not visible when the test was saved) still waits for
+  /// Home. A month card Home opened itself is not leaving.
+  void _dropRestWaitIfLeft({bool rebuild = true}) {
+    if (!_restWaitsForStep || !mounted) return;
+    final begun = _climbAnimating || _stepArrived || _restArrival.isAnimating;
+    if (!begun || _monthCardShowing || _homeVisible) return;
+    _endRestWait(rebuild: rebuild);
+  }
+
   /// The climb has landed, or there is none to wait for: opens the paywall
   /// after [delay] (or as soon as Home is visible, if it is not now).
   void _armDay0Paywall(Duration delay) {
@@ -992,6 +1146,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _maybeShowSoftAsk() {
     if (!_softAskQueued || !_reminders.mayAsk) return;
     if (!_homeVisible || _climbAnimating || _monthCardShowing) return;
+    // Fix round 6: on a rest day N01 follows the delayed rest scene.
+    if (_restHeld) return;
     _softAskQueued = false;
     _reminders.askOpened();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1136,6 +1292,8 @@ class _HomeScreenState extends State<HomeScreen>
           analyticsService: widget.analyticsService,
           onCompletionSaved: () {
             if (!mounted) return;
+            _restWaitsForStep = true;
+            _stepArrived = false;
             _pendingClimbDay = result.$1.day;
             _refreshAfterDailyTest();
           },
@@ -1368,8 +1526,10 @@ class _HomeScreenState extends State<HomeScreen>
     _maybeShowSoftAsk();
 
     // V24 (SPEC §1.8): once every daily right is used, the rest scene
-    // replaces Home's content.
-    if (_restDay && _climbSteps != null && completion != null) {
+    // replaces Home's content. Fix round 6 (v14): after the day's step and
+    // a short beat, not instead of them ([_restWaitsForStep]).
+    final restDay = _restDay && _climbSteps != null && completion != null;
+    Widget restScene({required bool primary}) {
       if (!_hasFullAccess && !_restTrialRequested) {
         _restTrialRequested = true;
         unawaited(paywallTrialDays(widget.subscriptionService).then((days) {
@@ -1379,7 +1539,7 @@ class _HomeScreenState extends State<HomeScreen>
       final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
       // The rest scene replaces the mountain: a step that was still walking
       // never reports its end, so it no longer holds N01 back (A2).
-      _climbAnimating = false;
+      if (primary) _climbAnimating = false;
       // N01 the first time the rest scene is shown (once the stored answer
       // is known), checked after this frame, when the scene is on screen.
       if (!_restSceneSeen && _reminders.loaded) {
@@ -1391,12 +1551,15 @@ class _HomeScreenState extends State<HomeScreen>
       // (behind the status bar), the night sheet attached under it; no
       // page padding. Light status bar text on the night sky.
       return AnnotatedRegion<SystemUiOverlayStyle>(
+        key: _restContentKey,
         value: SystemUiOverlayStyle.light,
         child: Scaffold(
           // The night panel's colour (v13, both themes).
           backgroundColor: AppColors.restPanel,
           body: SingleChildScrollView(
-            primary: true,
+            // While it fades in over Home, Home's list still holds the
+            // route's primary scroll controller.
+            primary: primary,
             child: RestScene(
               key: HomeScreen.restSceneKey,
               theme: _climbTheme,
@@ -1410,7 +1573,7 @@ class _HomeScreenState extends State<HomeScreen>
               // V24's done tiles (fix round 5, its own board again): "4/5 ·
               // +9 points" and "5/5 sessions" (V24f shows the used ticket
               // instead).
-              testLine: l10n.restTestLine(completion.correct,
+              testLine: l10n.restTestLine(completion!.correct,
                   completion.results.length, todayPoints ?? 0),
               practiceLine: l10n.restSessionsLine(
                   _sessionsToday, StorageService.dailySessionLimit),
@@ -1432,6 +1595,8 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
+    if (restDay && !_restWaitsForStep) return restScene(primary: true);
+
     // INTEGRATE 3b: the mountain window is fitted above the floating nav
     // bar after each layout (there is no bar for a screen shown alone).
     _navClearance =
@@ -1446,7 +1611,8 @@ class _HomeScreenState extends State<HomeScreen>
     // 1.2.0 Home, UI polish V14 / V15: the brand with the score capsule,
     // the greeting, the Daily Test card, the month's mountain, the free
     // ticket (free users), and topic practice.
-    return BrandScaffold(
+    final home = BrandScaffold(
+      key: _homeContentKey,
       isTabRoot: true,
       appBar: AppBar(
         toolbarHeight: 0,
@@ -1582,6 +1748,16 @@ class _HomeScreenState extends State<HomeScreen>
         ]),
       ],
     );
+    if (!restDay || !_restRevealing) return home;
+    // Fix round 6: the beat has passed; the rest scene fades in over Home,
+    // which takes no more taps and is no longer read out.
+    return Stack(fit: StackFit.expand, children: [
+      IgnorePointer(child: ExcludeSemantics(child: home)),
+      FadeTransition(
+          key: HomeScreen.restFadeKey,
+          opacity: _restOpacity,
+          child: restScene(primary: false)),
+    ]);
   }
 
   /// INTEGRATE 3b: on Home's first view (scrolled to the top) the pawn and
@@ -1657,6 +1833,7 @@ class _HomeScreenState extends State<HomeScreen>
                   avatar: widget.avatar ?? Avatar.values.first,
                   theme: _climbTheme,
                   onMotionEnd: _onMountainMotionEnd,
+                  onArrivalEnd: _onMountainArrivalEnd,
                   zoom: _zoom.active ? _zoom.progress : null,
                   zoomCrossFade: _zoom.crossFade,
                   debugHop: _debugHop,
