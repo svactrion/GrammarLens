@@ -747,3 +747,24 @@ included); the sheet now has the five live topics too, with their hint
 cards at the top. To check the sheet at any time, run the command of step 8
 again: a sheet that exists is never rewritten. When it prints that every row
 is labelled with nothing to fix, tell Claude Code to fold the labels in.
+
+## After the labels of the final configuration (no API call)
+
+The same `topics analyze` command, once the sheet is complete, folds the
+labels into the "Final configuration" section of the report: the three
+criteria per new topic with both scoring prompts (both held to the answers
+each of them scored), the live topics for reference, both prompts compared
+on everything that is labelled, the duplicates before and after the themes,
+and the findings (hand-written in `eval/data/topics/final-findings.md`:
+edit that file, not the report). In the run folders, never the repository:
+
+- the final folder's `second-look.md`: every answer where the production
+  prompt and the label differ, with both prompts' words, the answers
+  labelled `unsure`, and the defect questions;
+- `changed-verdicts.md` in the final folder and in the rescore folder
+  (`topics analyze --out eval/out/topics-rescore-…` writes that one): every
+  answer the two scoring prompts judged differently, grouped by which prompt
+  the label agrees with.
+
+Each entry ends with an "Owner:" line; once one is filled, the file is no
+longer rewritten.

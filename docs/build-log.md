@@ -14803,3 +14803,70 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Legal]** No change needed: the app sends what it sent, nothing new is
   stored, no service is added.
 - Record and decisions T-45 to T-62: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics: the final configuration measured and labelled; the scoring candidate recommended against; no API call)
+
+- **[Measured]** The owner ran both commands: `topics rescore` (146 calls,
+  $0.20) and `topics final run` (453 calls, $1.43; 60 of 60 sets, 300 items,
+  none removed by the guard, 651 built answers, each scored with both
+  prompts). The measurement has spent $2.52 of $15.00. The sheet's 225
+  questions were labelled in his Cowork chat: 3 defects, 17 built answers
+  `unsure`.
+- **[Result]** The owner's three criteria per new topic, production scoring
+  prompt (defective questions at most 5 %; agreement at least 95 %; false
+  "correct" at most 2 %):
+  - Passive Voice: 0 of 30; 82 of 82; 0 of 48. **Passes** (as in the first
+    run).
+  - Relative Clauses: 0 of 30; 91 of 91; 0 of 49. **Passes** (as in the
+    first run).
+  - Prepositions: 1 of 30; 81 of 82 (98.8 %); 1 of 48 (2.1 %). **Fails** on
+    false "correct", by one answer.
+  - Comparatives & Superlatives: 0 of 30; 81 of 83 (97.6 %); 1 of 48
+    (2.1 %). **Fails** on false "correct", by one answer.
+  - Conditionals: 1 of 30; 82 of 85 (96.5 %); 2 of 45 (4.4 %). **Fails** on
+    false "correct"; both answers mix two conditional types, as did every
+    one of this topic's 5 false "correct" verdicts over three runs (5 of
+    132).
+  - With the candidate prompt the same two topics pass and the same three
+    fail (Prepositions with 3 of 48).
+  - Live topics, for reference: Gerund vs. Infinitive and Tense Selection
+    pass; Modal Verbs (false "correct" 1 of 23), Modal Past Forms (1 defect
+    of 15) and Articles (agreement 35 of 38, false "correct" 3 of 24) do
+    not.
+- **[Result]** The practice-path changes: no fill-in-the-blank item without
+  a blank in 300 (4 in the 195 before); no question of a new topic
+  resembling another (15, 11, 7, 7 and 2 in the first run); 3 defects in 225
+  questions.
+- **[Result]** The scoring prompt candidate, on the 1,163 labelled answers
+  both prompts scored (first run, Conditionals re-measurement, final run):
+  agreement 1,137 (97.8 %) → 1,126 (96.8 %); false "correct" 14 → 16 of
+  661; false "needs work" 12 → 21 of 502; of 31 answers judged differently
+  the candidate has the label's verdict on 10. **Recommended against,** in
+  whole and for its verdict rule (the model does not keep it); the spelling
+  sentence fixed its one case and is unproven alone. The candidate stays the
+  measurement's variant; the production scoring prompt is unchanged.
+- **[Finding]** The production scorer left 3 of 651 answers without a usable
+  verdict (a response that answered one of three items; one that answered
+  under an id that was not asked).
+- **[Finding]** From the code, nothing changed: Modal Past Forms is
+  described to the generator as "will → would, can → could" (the Worker's
+  topic table and the app's description), while the app's hint card teaches
+  modal + have + past participle; the generator does what the description
+  says, and did so before any theme (1.4.0's measurement, 30 questions, none
+  with modal + have). Proposals in the progress doc; the owner chooses.
+- **[Finding]** From the code, nothing changed: the practice prompt asks for
+  "a sentence containing exactly one grammar mistake" and nothing more, so
+  two Conditionals corrections gave a sentence that was already correct; the
+  shared Daily Test's prompt has had the rule "the original must be clearly
+  wrong" since September. A wording for practice is proposed, not applied.
+- **[Engineering]** `topics analyze` on the final folder: both prompts held
+  to the same answers, the comparison over every labelled run, the findings
+  from `proxy/eval/data/topics/final-findings.md`; in the run folders the
+  second-look file with both prompts and `changed-verdicts.md` (final and
+  rescore folders).
+- **[Verified]** `npm run typecheck` clean; `npm test` 712 passed (6 new, no
+  network); every run folder's records, sheets and labels unchanged; no
+  question, answer or sheet key in the report or in the commits.
+- **[Not verified]** Any proposal: none was built. Nothing is deployed.
+- **[Legal]** No change needed.
+- Record and decisions T-63 to T-70: `docs/1.5.0-topics-progress.md`.

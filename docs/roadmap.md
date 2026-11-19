@@ -475,12 +475,32 @@ Owner decisions so far:
   labelled answers with the candidate; dry run 146 calls, about $0.18) and
   `topics final run` (all ten topics with the final request, both scoring
   prompts; dry run 465 calls, about $2.28); the measurement has spent $0.89
-  of $15.00. **Next: the owner's two runs** from his Terminal
-  (`proxy/eval/README.md`, "Owner checklist — final configuration"), then
-  the sheet (at most 225 questions), then the labels folded in; then the
-  owner decides topic by topic what goes to release prep and whether the
-  candidate becomes the scoring prompt. The topics stay switched off.
-  Record and decisions:
+  of $15.00. *(Superseded, kept as written:* **Next: the owner's two runs**
+  from his Terminal (`proxy/eval/README.md`, "Owner checklist — final
+  configuration"), then the sheet (at most 225 questions), then the labels
+  folded in.*)* **The final configuration is run and labelled (owner,
+  2026-11-19; the measurement has spent $2.52 of $15.00) and reported
+  (2026-11-19, no API call).** With the production scoring prompt, against
+  the owner's three criteria: **Passive Voice and Relative Clauses pass all
+  three (for the second time); Prepositions and Comparatives &
+  Superlatives fail on false "correct" by one answer each (1 of 48);
+  Conditionals fails on false "correct" by two (2 of 45), all of them
+  answers that mix two conditional types.** The changes to the practice path
+  did what they were for: no fill-in-the-blank item without a blank in 300,
+  no question of a new topic resembling another (15, 11, 7, 7 and 2 before),
+  3 defects in 225 questions. Live topics for reference: Gerund vs.
+  Infinitive and Tense Selection pass; Modal Verbs, Modal Past Forms and
+  Articles do not (Articles: false "correct" 3 of 24). **The scoring prompt
+  candidate is recommended against:** on the 1,163 labelled answers both
+  prompts scored, agreement 97.8 % → 96.8 %, false "correct" 14 → 16, false
+  "needs work" 12 → 21; it stays the measurement's variant. Also found, from
+  the code: Modal Past Forms is described to the generator as will → would,
+  can → could, while its hint card teaches modal + have + past participle;
+  and the practice prompt does not require a correction's sentence to be
+  really wrong, as the Daily Test's prompt does (a wording is proposed).
+  **Next: the owner's decisions**, topic by topic what goes to release prep,
+  and the candidate, the two findings and the deploy of the practice path.
+  The topics stay switched off. Record and decisions:
   [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
