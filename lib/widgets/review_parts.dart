@@ -26,55 +26,71 @@ class InlineMistake extends StatelessWidget {
   const InlineMistake({super.key, required this.entry, this.style});
 
   /// The spans for [entry], or null when it has nothing to show.
-  static List<(String, _Mark)>? parts(ErrorEntry entry) {
+  ///
+  /// The sentence is the correction's; the learner's wrong words are put
+  /// into it where the two sides line up ([AnswerDiff.matches]). Fix round
+  /// 6, item 3: the two sides were walked in step, one unmarked word of the
+  /// answer for one of the correction. A multi-blank Practice answer is
+  /// stored as the whole line that holds the blanks, with the instruction
+  /// and the cues in brackets that stand on it; those words used up the
+  /// correction's, the wrong word was struck in the wrong place and the
+  /// rest of the answer's line was appended struck through. Now a word of
+  /// the answer that is neither wrong nor shared with the correction is
+  /// left out: it was never part of the sentence.
+  static List<(String, InlineMark)>? parts(ErrorEntry entry) {
     final user = entry.userAnswer?.trim() ?? '';
     final fixed = entry.correctedAnswer?.trim() ?? '';
     if (fixed.isEmpty) return null;
-    if (user.isEmpty) return [(fixed, _Mark.right)];
+    if (user.isEmpty) return [(fixed, InlineMark.right)];
     final diff = diffAnswer(
         userAnswer: user, correctedAnswer: fixed, prompt: entry.prompt);
+    final u = diff.user, c = diff.corrected;
     if (!diff.highlighted) {
-      return [(user, _Mark.wrong), (' ', _Mark.plain), (fixed, _Mark.right)];
+      // Not lined up word by word: the answer, then the correction. Of an
+      // answer assembled from the prompt only what the learner typed, never
+      // the prompt's own words.
+      final wrote = diff.assembled
+          ? [
+              for (var i = 0; i < u.length; i++)
+                if (diff.userIsLearner[i]) u[i].core
+            ].join(' ')
+          : user;
+      return [
+        if (wrote.isNotEmpty) ...[
+          (wrote, InlineMark.wrong),
+          (' ', InlineMark.plain)
+        ],
+        (fixed, InlineMark.right),
+      ];
     }
-    final out = <(String, _Mark)>[];
-    void add(String text, _Mark mark) {
-      if (out.isNotEmpty) out.add((' ', _Mark.plain));
+    final out = <(String, InlineMark)>[];
+    void add(String text, InlineMark mark) {
+      if (out.isNotEmpty) out.add((' ', InlineMark.plain));
       out.add((text, mark));
     }
 
     var i = 0, j = 0;
-    final u = diff.user, c = diff.corrected;
-    while (i < u.length || j < c.length) {
-      final uPlain = i < u.length && !u[i].painted;
-      final cPlain = j < c.length && !c[j].painted;
-      if (uPlain && cPlain) {
-        add(c[j].text, _Mark.plain);
-        i++;
-        j++;
-        continue;
+    // Up to the next word both sides share: the learner's wrong words,
+    // then the correction's words for them.
+    void between(int userEnd, int correctedEnd) {
+      for (; i < userEnd; i++) {
+        if (u[i].painted) add(u[i].core, InlineMark.wrong);
       }
-      var moved = false;
-      while (i < u.length && u[i].painted) {
-        add(u[i].core, _Mark.wrong);
-        i++;
-        moved = true;
-      }
-      while (j < c.length && c[j].painted) {
-        add(c[j].text, _Mark.right);
-        j++;
-        moved = true;
-      }
-      if (!moved) {
-        // One side has run out: the rest of the other, as it is.
-        if (i < u.length) {
-          add(u[i].text, _Mark.wrong);
-          i++;
-        } else if (j < c.length) {
-          add(c[j].text, _Mark.plain);
-          j++;
-        }
+      for (; j < correctedEnd; j++) {
+        add(c[j].text, c[j].painted ? InlineMark.right : InlineMark.plain);
       }
     }
+
+    for (final (ui, cj) in diff.matches) {
+      // A pair the bridge rule painted belongs to the wrong and the right
+      // run around it (B10.3), not between them.
+      if (u[ui].painted || c[cj].painted) continue;
+      between(ui, cj);
+      add(c[cj].text, InlineMark.plain);
+      i = ui + 1;
+      j = cj + 1;
+    }
+    between(u.length, c.length);
     return out;
   }
 
@@ -94,27 +110,28 @@ class InlineMistake extends StatelessWidget {
         TextSpan(
           text: text,
           style: switch (mark) {
-            _Mark.plain => null,
-            _Mark.wrong => TextStyle(
+            InlineMark.plain => null,
+            InlineMark.wrong => TextStyle(
                 color: c.redText,
                 decoration: TextDecoration.lineThrough,
                 decorationColor: c.redText,
                 decorationThickness: 2),
-            _Mark.right => const TextStyle()
+            InlineMark.right => const TextStyle()
                 .withWeight(FontWeight.w900)
                 .copyWith(color: c.greenText, backgroundColor: c.greenSoft),
           },
           semanticsLabel: switch (mark) {
-            _Mark.wrong => context.l10n.mistakeWrongSemantics(text),
-            _Mark.right => context.l10n.mistakeRightSemantics(text),
-            _Mark.plain => null,
+            InlineMark.wrong => context.l10n.mistakeWrongSemantics(text),
+            InlineMark.right => context.l10n.mistakeRightSemantics(text),
+            InlineMark.plain => null,
           },
         ),
     ]));
   }
 }
 
-enum _Mark { plain, wrong, right }
+/// How a piece of [InlineMistake]'s sentence is shown.
+enum InlineMark { plain, wrong, right }
 
 /// A weak spot on Review (V16, V22, R12): the topic and a "new" chip, how
 /// often and when, the weak spot's title, its latest mistake inline, and

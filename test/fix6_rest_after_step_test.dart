@@ -123,7 +123,7 @@ class _Subscription extends SubscriptionService {
 
 DailyTestSet _waitingSet() => DailyTestSet(day: '2026-01-01', questions: [
       DailyTestQuestion(
-        item: PracticeItem(
+        item: const PracticeItem(
           id: 'q0',
           type: PracticeItemType.fillInBlank,
           instruction: 'Question 0',
