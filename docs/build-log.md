@@ -14986,3 +14986,53 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   and the 1.5.0 build.
 - Record and decisions T-87 to T-110: `docs/1.5.0-topics-progress.md`.
 
+## 2026-11-19 (UI polish fix round 6 on branch `ui-polish-widgets`; the Worker deployed for 1.5.0 by the owner; not on `main`, not shipped)
+
+- **[Owner]** Deployed the Worker for 1.5.0: version
+  `a3f736ef-0877-4200-b0b2-a996ef20cca0` (the earlier one,
+  `18d87c6b-5f7b-4290-a08b-f07a32565511`, is the rollback point); `/health`
+  answered `ok`, a Conditionals practice request `200`. Installed the build
+  of `ui-polish-widgets` over his test build. On the phone: the ten topic
+  cards show, practice sets of the new topics generate and are scored,
+  their weak spots appear in Review. He found one flow defect and two
+  things to look into (`docs/design/ui-polish/handoff/FIX6.md`).
+- **[Fix, app]** The day's step plays before the rest scene. With the
+  practice allowance used before the Daily Test (free: the ticket;
+  Premium: every session), Home showed the rest scene as soon as the test
+  was saved and the step was never seen. Now Home keeps the mountain, the
+  pawn walks, a save point shows its light and its name, the pawn rests
+  for 1 s, and the rest scene fades in over Home (400 ms; 150 ms under
+  Reduce Motion). N01 opens when the scene stands. Leaving Home once the
+  walk has begun shows the scene on return; no step to show brings it at
+  once; the other order is unchanged. SPEC v14, §1.8.
+- **[Fix, app]** Review's inline mistake. A multi-blank practice answer is
+  stored as the whole line that holds the blanks, instruction and
+  bracketed cues included; the card walked the answer and the correction
+  in step, so the wrong word landed in the wrong place and the rest of the
+  line was appended struck through. The card now follows the diff's own
+  alignment; nothing stored changes, so the records on phones are drawn
+  right. The older topics' multi-blank lines could show the same and are
+  covered.
+- **[Fix, app, found by the smoke walk]** Review's weak spots are read
+  again when Review is the top route again: after a practice started with
+  the ticket, "Back to topics" showed the old list.
+- **[Measured, not changed]** The Daily Test card's companion: filmed on
+  the simulator, the hop is drawn as specified (16.3 pt up every 1.2 s,
+  back on the ground after 0.58 s, not clipped). Whether that is large
+  enough at this size is the owner's call.
+- **[Verified]** After the last code change: `flutter analyze` clean, 2925
+  Flutter tests and 23 Swift tests pass, the simulator build with
+  `xcodebuild` and the release build (`--no-codesign`, 50.3 MB, with the
+  widget extension, 1.4.0 (7)) succeed. Two smoke walks on the simulator in
+  Turkish as a free user, the practice on a local stand-in (no AI call):
+  the ticket first, then the Daily Test (the step walks, the pawn rests,
+  the rest scene follows 5.9 s after "See your climb" on a save point day,
+  N01 over it); and a fresh install in the other order (the rest scene
+  with N01 at once, as before).
+- **[Not verified]** Anything on a device. The owner's check is the first
+  section of `DEVICE-CHECKS.md`, "Fix round 6 — the next morning".
+- **[Not done]** No deploy, no API call, nothing under `proxy/` changed, no
+  version bump, not merged into `main`.
+- **[Disk]** 18 GiB free before, 17 GiB after the builds and the walks.
+- Record and decisions F6-1 to F6-14:
+  `docs/design/ui-polish/handoff/PROGRESS.md`, "Fix round 6".

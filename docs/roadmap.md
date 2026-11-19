@@ -333,9 +333,17 @@ round 5 is done there** (`FIX5.md`, SPEC v13, after the owner's third
 device pass: V24f's ticket-deck panel chosen by the owner, V24 on its own
 board again, both panels ending just above the nav bar, Profile's month
 progress card with the medals on the bar, a paywall that closes only with
-its X); **not on `main`, not shipped, waiting for the owner's fourth
-device pass.** Fix rounds 3 to 5 were built and checked on the simulator
-and in tests only; the fourth pass, in order, is the first section of
+its X), **and fix round 6 is done there** (`FIX6.md`, SPEC v14, after the
+owner's device check of 2026-11-19: with the practice allowance used
+before the Daily Test, Home plays the day's step, lets the pawn rest for a
+second and then fades to the rest scene, where it used to show the rest
+scene at once; Review's inline mistake strikes the wrong word in place on
+multi-blank answers; Review's list is fresh after a ticket practice; the
+Daily Test card's hop was measured and runs as specified, unchanged);
+**not on `main`, not shipped, waiting for the owner's next device check**
+(the morning after, before that day's Daily Test). Fix rounds 3 to 6 were
+built and checked on the simulator and in tests only; the checks, in
+order, start with "Fix round 6 — the next morning" in
 [`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
 record, decisions to review and gaps:
 [`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
@@ -558,6 +566,24 @@ Owner decisions so far:
   questions. Record and decisions:
   [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md); the decision:
   [`1.5.0-topics-report.md`](1.5.0-topics-report.md), "Decision".
+  **The Worker is deployed for 1.5.0 (owner, 2026-11-19):** new version
+  `a3f736ef-0877-4200-b0b2-a996ef20cca0`; the earlier one,
+  `18d87c6b-5f7b-4290-a08b-f07a32565511`, is the rollback point; `/health`
+  answered `ok` and a Conditionals practice request `200`. The owner
+  installed the build of `ui-polish-widgets` over his test build; on the
+  phone the ten topic cards show, practice sets of the new topics generate
+  and are scored, and their weak spots appear in Review. The other device
+  checks are open. **Fix round 6 (2026-11-19) is done on
+  `ui-polish-widgets`** after that check (the day's step before the rest
+  scene; Review's inline mistake; the card companion's hop measured), and
+  waits for the owner's next check; then the merge into `main` and the
+  1.5.0 build. Recorded by the owner for the version after 1.5.0, with the
+  4th tab, no work yet: a Premium user reaches the topics only through the
+  row of cards at the bottom of Home (the button under it opens Review's
+  mistake); a free user who has done the Daily Test and the day's practice
+  sees nothing of the topics on offer; on Topic Practice the "Picked for
+  you" card leaves nine cards in the grid, so the last row has one
+  (accepted for now).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
     as `school`, a new value of the `learning_goal` user property). It is

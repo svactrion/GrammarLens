@@ -6,6 +6,430 @@ its fix rounds, and the integration with the widgets and reminders
 and how, decisions, open items. The final summary is below the Integration
 section.
 
+## Fix round 6 (owner's device check of 2026-11-19)
+
+`FIX6.md`, SPEC v14. On 2026-11-19 the owner deployed the Worker for 1.5.0
+himself and installed this branch's build. On the phone the ten topic cards
+show, practice sets of the new topics generate and are scored, and their
+weak spots appear in Review. He found one flow defect (item 1) and two
+things to look into (items 2 and 3). This round fixes them on
+`ui-polish-widgets` for his next check, the next morning. **Status: done**
+(items 1–3, steps 0, Checks and Docs below; the checks ran after the last
+code change, `6618036`; the app's last change is `1e53b21`). Not on `main`,
+not shipped, nothing deployed, no API call, nothing under `proxy/` changed,
+no version bump. Not checked on a device: the owner's check is the first
+section of `DEVICE-CHECKS.md`.
+
+| Step | Status | Commits |
+|---|---|---|
+| 0 Start | done | `c274b62` |
+| 1 The day's step before the rest scene | fixed | `0648d5c`, `b02f750` (the frame strips) |
+| 2 The card companion's hop | measured, runs as specified, nothing changed | `6618036` (a test that holds it) |
+| 3 Review's inline mistake | fixed | `fc7d4d7` |
+| Found by the checks: Review's list after a ticket practice | fixed | `1e53b21` (with the new smoke driver) |
+| Checks | done | — |
+| Docs | done | this commit |
+
+### 0. Start
+
+`df -h ~`: **18 GiB** free at the start (228 GiB disk); nothing needed
+deleting. On `ui-polish-widgets`, `git pull --ff-only` (up to date);
+`FIX6.md` committed as "docs: fix round 6 task" (`c274b62`) and pushed. The
+end-of-run figure is under "Checks: builds, tests, disk".
+
+### 1. The day's step plays before the rest scene
+
+**What the owner saw.** He had used the free ticket before the Daily Test.
+After the test, "See your climb" opened the rest scene at once; the
+mountain, the walk and the pawn on its new step were never shown.
+
+**Diagnosis (FIX6's, confirmed in the code and by a test).** Home's `build`
+returned the rest scene whenever `_restDay` was true. With the practice
+allowance already used, `_restDay` turns true the moment the test is saved,
+while the result screen is still open: Home under it became the rest scene
+and the mountain was unmounted. When the result screen closed, `_loadClimb`
+found a step to show but no mountain to scroll to or to animate; it set the
+new step count and `_climbAnimating = true`, and the rest scene's branch set
+that flag back to false ("a step that was still walking never reports its
+end"). The same in the Premium order (all five sessions, then the test).
+`test/fix6_rest_after_step_test.dart` shows it: with the hold switched off,
+12 of the 17 tests it had at that point fail (the 5 that pass are the
+unchanged paths).
+
+**Fix (`0648d5c`).** The rest scene waits for the day's step.
+- `home_screen.dart`: a flag set when a Daily Test's completion is saved
+  (`_restWaitsForStep`, with `_pendingClimbDay`). While it is set on a rest
+  day, `build` returns Home's normal content, so the mountain stays mounted
+  under the result screen and the step plays exactly as on an ordinary day:
+  the mountain is brought into view, the pawn walks, a save point lights up
+  and shows its name.
+- `monthly_mountain.dart`: a new callback, `onArrivalEnd`, after
+  `onMotionEnd`: once nothing of the arrival is still showing (no move, no
+  save point fading in, no name label). Right away on a plain step.
+- Then, once nothing is above Home (no month card, no zoom), **the beat**:
+  `HomeScreen.restBeat`, **1 second**, with the pawn at rest; then the rest
+  scene **fades in over Home** (`AppMotion.slow`, 400 ms, `AppMotion.enter`;
+  under Reduce Motion `AppMotion.fast`, 150 ms, the rule `AppMotion.entrance`
+  already gives). During the fade Home is still drawn under the scene and
+  takes no taps; both are moved, not rebuilt (global keys), so Home keeps
+  its scroll position and the scene's loops do not restart when it stands
+  alone. Beat and fade are one animation, so nothing is left pending if
+  Home goes away.
+- **Reduce Motion:** the mountain shows the step at its new place without a
+  walk (as before), the same beat, then the 150 ms fade.
+- **N01** is held back while the scene waits and is asked when the fade
+  has ended (F6-4). Its fix round 3 rule (A2) is otherwise unchanged.
+- **Home not visible when the test is saved** (another tab, a route above):
+  as before the step waits (`_loadClimb` returns while Home is not
+  visible); the flag stays, so on return the step plays and the scene
+  comes after it.
+- **Leaving Home once the walk has begun** (another tab, a route pushed
+  above, the app in the background), also during the beat or the fade: the
+  wait ends at once, so the rest scene is there on return and the step is
+  not replayed.
+- **No step to show** (every question skipped; the climb fails to load; no
+  earlier position to walk from): the wait ends as soon as the load says
+  so, and the scene comes at once, as before.
+- **The other order** (test first, last practice second) never sets the
+  wait on a rest day: by the time the practice is used the step has been
+  played and the flag dropped. Unchanged.
+
+**How long, measured.** A plain step: the walk 0.85 s, the beat 1.0 s, the
+fade 0.4 s. A save point day adds the light-up and the name, 3.1 s (3 s
+under Reduce Motion). On the simulator (a debug build, a save point day,
+Halfway Hut) the rest scene was in the tree 5.9 s after the tap on "See
+your climb", which includes the result screen closing and the scroll to
+the mountain.
+
+**Tests** (`test/fix6_rest_after_step_test.dart`, 19, on the real Home with
+its real Daily Test and result screen): free with the ticket used, then
+the test (the owner's path: the pawn's position before, during and after
+the walk, no scene during the beat, the fade over Home, the scene alone);
+Premium with every session used, then the test; the other order, in two
+forms; a save point day (the name is up before the scene, the beat starts
+when it has gone); Reduce Motion; Home not visible at the save; leaving
+during the beat by another tab, during the walk, by a pushed route, by the
+app going to the background, and during the fade; N01 not during the walk,
+the beat or the fade and once when the scene stands (first rest scene, and
+also queued by a second test); no step to show (all skipped; the climb
+fails to load); an ordinary day as before.
+
+**Captures** (`FIX6_CAPTURE=1`): `build/fix6-captures/item1-step-then-rest.png`
+and `build/fix6-captures/dark/item1-step-then-rest.png`, seven frames each
+from the widget run (four of the walk, the pawn at rest, the fade half way,
+the rest scene). In those the score capsule reads "-1" and "0": the test's
+storage fake reports no month points, not the app. From the simulator walk
+in Turkish, one frame a second from the tap:
+
+![The step, the pawn at rest, the rest scene, then N01 (simulator, Turkish)](fix6/item1-simulator-strip.jpg)
+
+### 2. The Daily Test card's companion: the hop is there
+
+**What the owner saw.** The companion on Home's Daily Test card moves "as
+if breathing"; he would not call it a hop.
+
+**What was measured.** The app (the seeded learner, today's test waiting)
+on the iPhone 18 Pro simulator, Home filmed with `xcrun simctl io …
+recordVideo` (512 frames in 8.5 s) and the companion's top and bottom edge
+read from every frame inside the card
+(`build/fix6-captures/item2/card.mp4`, `travel.csv`).
+
+| | Specified (X05, `gl-hop`; the code) | Drawn on the simulator |
+|---|---|---|
+| Period | 1.2 s | 1.200 s (six periods: 1.197–1.202 s) |
+| The feet's travel | 16 pt up | **16.3 pt** (49 px at 3×) |
+| Up | by 30 % (0.36 s) | 0.35 s |
+| Down again | by 50 % (0.60 s) | 0.58 s |
+| Squash on landing | 0.92 high until 65 % (0.78 s) | the top 6.3 pt lower, back by 0.75 s |
+| Still | 65–100 % (0.42 s) | 0.45 s |
+| Top edge, whole range | hop + stretch + squash | 26.7 pt (80 px) |
+
+The hypotheses FIX6 lists, each checked:
+- *The slot clips it:* no. The companion draws above its 100 pt box (the
+  stack does not clip); in the frames the ears at the hop's top are whole
+  and clear of the "Free every day" chip.
+- *The idle mood's loop wins over the ambient one:* no. The idle breath
+  would be 6 pt and a 4 % scale over 3 s; the frames show 16 pt in 0.35 s
+  every 1.2 s. The card goes loading → waiting on one widget; the loop is
+  rebuilt for the hop when the mood changes (a test holds this now).
+- *A ticker that is off:* no; the loop runs. It stops, as specified, when
+  Home is not visible and under Reduce Motion (then the companion stands
+  still, it does not breathe).
+- *A scale:* none on the slot or the card.
+
+**Finding: the hop runs as specified. Nothing was changed** (as FIX6 asks
+for this case). Seven frames of one hop from the simulator (rest, up, up,
+the top, down, the squash on landing, rest):
+
+![One hop of the card companion on the simulator](fix6/item2-hop-strip.jpg)
+
+**For the owner to decide:** whether 16 pt on a 100 pt companion, back on
+the ground in 0.6 s with a squash, is the motion he called "as if
+breathing", and whether it should be larger or slower at this size. It
+could not be checked whether his phone draws something else; the release
+build runs the same code, and Reduce Motion on the phone would stop the
+motion altogether, not turn it into a breath (`DEVICE-CHECKS.md` FR6-2
+item 2 asks). No redesign in this round.
+
+**Test** (`6618036`, `daily_test_card_test.dart`): after loading, the
+waiting card's companion lifts 16 pt in each 1.2 s, in the air for the
+first half and still for the rest.
+
+### 3. Review's inline mistake on the new topics
+
+**What the owner saw.** After one practice set each of Relative Clauses,
+Prepositions and Passive Voice, three weak-spot cards showed the whole
+corrected sentence and then, appended, a long struck-through piece of his
+own line: on two cards one word differed and about eight words were
+struck; on the third the struck piece began inside the instruction and
+carried the bracketed base verbs.
+
+**What is stored** (read from the code, `ResultsScreen._saveErrors`,
+`QuestionDrafts.answerFor`, `assembleBlanks`, `blankSourceText`):
+- `prompt`: the item's full text (context and instruction).
+- `correctedAnswer`: the scorer's, as it came.
+- `userAnswer`, a question with **one box** (one blank, or no blank: an
+  error correction, a sentence to write): what the learner typed.
+- `userAnswer`, a fill-in question with **2 to 4 blanks**: the text that
+  holds the blanks (the context, the instruction, or both) **with each
+  blank filled**. So everything else on that text is in it: an instruction
+  on the same line ("Complete with the verbs in brackets:"), the quotation
+  marks, the cue in brackets after a blank. A blank left empty keeps its
+  underscores.
+- The Daily Test stores the typed answer and the set's own correct answer.
+
+**Reproduced** with invented fixtures of those shapes, on the code before
+the fix (the real texts are on the owner's phone only and were not asked
+for). `~…~` struck, `+…+` green:
+
+| Stored answer (invented) | The card before | The card now |
+|---|---|---|
+| "Choose the right preposition for each blank: 'We arrived to the airport on Monday morning.'" | We arrived +at+ the airport on Monday morning. ~'We arrived to the airport on Monday morning.'~ | We arrived ~to~ +at+ the airport on Monday morning. |
+| "Fill in each blank with a relative pronoun: 'The woman which lives next door has a son who plays the violin.'" | The woman +who+ lives next door has a son who plays ~which~ the violin. ~door has a son who plays the violin.'~ | The woman ~which~ +who+ lives next door has a son who plays the violin. |
+| "Complete with the verbs in brackets: 'The reports was sent (send) yesterday, and the invoices are paid (pay) today.'" | The reports +were+ sent yesterday, and the invoices are ~was~ paid today. ~yesterday, and the invoices are paid (pay) today.'~ | The reports ~was~ +were+ sent yesterday, and the invoices are paid today. |
+
+All three of the owner's descriptions are there: the corrected sentence
+first, then about eight struck words; one changed word, yet half a line
+struck; the cue in brackets in the struck piece.
+
+**Cause.** Not the diff: `diffAnswer` marks exactly the wrong and the right
+word in every one of these (the answer is recognised as the prompt with
+its blanks filled, and the prompt's own words are never painted). The
+fault was in the card, `InlineMistake.parts`: it walked the two sides in
+step, taking one unmarked word of the answer for one unmarked word of the
+correction. That holds only when both sides are the same sentence. In a
+stored multi-blank line the answer has unmarked words the correction does
+not have (the instruction, a cue in brackets); each of them used up one of
+the correction's words, the wrong word was put in the wrong place, and
+when the correction ran out the rest of the answer's line was appended
+struck through.
+
+**Fix (`fc7d4d7`), in the card, nothing stored changes.** The card now
+follows the diff's own alignment (`AnswerDiff.matches`, the words the two
+sides share, in order): the sentence is the correction's; between two
+shared words come the learner's wrong words, struck, then the correction's
+words for them; a word of the answer that is neither wrong nor shared is
+left out (the instruction, a cue, a blank left empty). When the two sides
+cannot be lined up word by word (B10's noise guard), an assembled answer
+shows only what the learner typed, struck, then the correction, never the
+line's other words (F6-10). Records already on phones are drawn right
+from the next build on; the weak spot's detail screen ("You wrote" /
+"Corrected", B10) is not touched.
+
+**The five older topics can show the same**: yes, wherever a multi-blank
+practice line carries more than the bare sentence (an Articles fixture
+with "Fill in the blanks with a, an or the: '…'" showed it before the
+fix). A bare multi-blank sentence, a single box and a rewritten sentence
+were right before and are unchanged.
+
+**Tests** (`test/fix6_inline_mistake_test.dart`, 14): the three shapes
+above; blanks in the context line with the instruction on its own line;
+several blanks with two wrong; a blank left empty; a wrong word that is
+also a word of the instruction; an older topic's line with and without its
+instruction; the noise guard on an assembled answer; a single box; a
+rewritten sentence; B10.3's bridged function word; a word missing, too
+many, a different ending; nothing stored; and Review's card as a widget
+(one struck word, in place). B10's own tests (`answer_diff_test.dart`) and
+the Review tests pass unchanged.
+
+On the simulator walk (below) the card of a two-blank answer with an
+instruction and cues on its line read "She can ~speaks~ **speak** three
+languages, and her brother…".
+
+### Found by the checks: Review's list after a ticket practice
+
+**What the smoke walk showed.** After a practice started with the ticket
+on Review, "Back to topics" showed the old weak spots (2, where the
+practice had just added 3); the new ones came only after leaving the tab
+and entering it again.
+
+**Cause.** Review reloads its list when the practice it launched ends. A
+practice replaces its own screen with the results (`pushReplacement`),
+which ends that wait at once, before the results screen has saved the new
+mistakes; nothing reloaded the list when the user came back. A practice
+started from a weak spot's own screen was not affected (Review waits for
+that screen).
+
+**Fix (`1e53b21`).** Review reads its list and the ticket again whenever
+its route is the top one again. Confirmed by the same walk run again: 5
+weak spots right after "Back to topics". Test: `review_screen_test.dart`
+(a screen above Review replaced by another, the data changed, back: the
+list is read again). Why this was fixed although it is not an item: F6-12.
+
+### Decisions
+
+- **F6-1. What "follows a step" today.** FIX6 lists "save point ring and
+  celebration, medal, month card". In the code: a save point has no ring;
+  it lights up (0.4 s) and its name shows (3.1 s, 3 s under Reduce Motion).
+  A medal's celebration plays on the result screen, before Home. A month
+  card opens over Home and is followed by its zoom. The gold ring is the
+  next step's (V15), shown only while the test waits. Choice: the scene
+  waits for the save point's light and name, and for a month card and its
+  zoom when one is open or due; then the beat. Why: FIX6's rule, "when the
+  last of these has ended".
+- **F6-2. The beat's length.** Options: 0.6 s (the wait before the Day 0
+  paywall), 1 s, 1.5 s. Choice: **1 s** (`HomeScreen.restBeat`). Why: FIX6
+  says about one second; on a save point day the name has already held
+  Home for 3 s, so longer would drag.
+- **F6-3. The transition.** Options: (a) a hard cut; (b) the scene slides
+  up like a sheet; (c) a cross-fade. Choice: (c), 400 ms (`AppMotion.slow`)
+  with the entrance curve, 150 ms under Reduce Motion. Why: FIX6 asks for a
+  short transition and "as `AppMotion` reduces it"; the scene is a place,
+  not a sheet. Home and the scene are both built only while the fade runs,
+  so Home's widget tree is as it was at every other moment.
+- **F6-4. N01's "first frame the rest scene is on screen".** Options: the
+  fade's first frame, or its last. Choice: when the fade has ended and the
+  scene stands alone. Why: a sheet rising over a half-faded scene reads as
+  a glitch; the difference is 0.4 s.
+- **F6-5. What counts as leaving Home.** Another tab, a route pushed above
+  Home, the app paused. Not: the app merely inactive (Control Centre, a
+  system dialog), and not a month card Home opened itself. Before the walk
+  has begun (the step still pending because Home was not visible) leaving
+  changes nothing: the step still plays on return. Why: FIX6's two rules
+  ("Home not visible when the test is saved" and "the user leaves Home
+  during the walk or the beat") drawn at the moment the walk starts.
+- **F6-6. No timer as a safety net.** FIX6: "on no path does the user stay
+  on normal Home with every right used for longer than the step and the
+  beat". Each wait has its own end: no step to show and a failed load end
+  it in `_loadClimb`; the walk's end and the arrival's end come from the
+  mountain, which stays mounted while the wait holds; a month card's close
+  asks again; leaving ends it. Choice: no extra timeout. Why: a timeout
+  would have to guess the longest honest wait (a month card stays open as
+  long as the user reads it).
+- **F6-7. Day 0.** FIX6 lists Day 0 under "no step to show". On Day 0 the
+  first-launch flow does the test before any practice is possible, so the
+  day cannot be a rest day when Home first shows; the wait is set there
+  too, for one rule, and is dropped when that step has landed. Not tested
+  as a rest day (it cannot be reached).
+- **F6-8. Item 2: a test and a picture, no change.** The hop runs as
+  specified, so the app is as it was. Added: a widget test that holds the
+  16 pt and the 1.2 s, and the frame strip as a small image beside this
+  file (`fix6/`), since FIX6 asks for the strip in `PROGRESS.md`.
+- **F6-9. Item 3: fix the card, not the diff and not what is stored.**
+  Options: (a) store the bare sentence for multi-blank answers; (b) change
+  `diffAnswer`; (c) make the card follow the diff's alignment. Choice: (c).
+  Why: the diff was right; (a) would leave the records already on phones
+  as they are and change what the scorer and the detail screen read; (c)
+  repairs every stored record without touching one.
+- **F6-10. Item 3: an assembled answer that cannot be lined up.** Before:
+  the whole stored line struck, then the correction. Choice: only the
+  words the learner typed, struck, then the correction. Why: R03, "never a
+  piece of the instruction, never the bracketed cue words".
+- **F6-11. Item 3: a single box is as before.** A one-blank answer is
+  stored as the typed word; against a scorer's full sentence the card
+  shows the word struck and then the whole sentence green (B10's guard).
+  Not changed: it is not what the owner saw, and FIX6 keeps B10's cases as
+  they are. Whether that card should show the word in its place in the
+  sentence is a question for another round.
+- **F6-12. Review's stale list: fixed, not only recorded.** Options: (a)
+  record it; (b) fix it. Choice: (b). Why: it sits on the path of the
+  owner's check of item 3 (a practice, then back to Review to look at the
+  new card), the cause is plain in the code, the fix is one reload, and it
+  has a test and a before/after on the simulator.
+- **F6-13. The smoke walks.** The order "ticket first" cannot start from a
+  fresh install (Day 0 does the test first), so that walk uses the seeded
+  learner (`smoke_app.dart` without `SEED_SKIP`: weak spots, today's test
+  waiting) and a new driver, `tool/ui_polish/smoke_ticket_first_driver.dart`,
+  which films the last part. "The other order on a fresh install" is the
+  existing walk (`smoke_driver.dart`). The stand-in for the practice proxy
+  is a small local script outside the repository (canned items and
+  feedback on localhost; no AI call), as in earlier rounds.
+- **F6-14. `onArrivalEnd` is new API on the mountain widget.** Presentation
+  only, like `onMotionEnd`; nothing else uses it.
+
+### Checks: the smoke walks (Turkish, a free user)
+
+On the iPhone 18 Pro simulator (402 × 874, `49ECC1F0…`), `flutter drive`,
+`SEED_LANGUAGE=tr`, `SMOKE_LANG=tr`, the practice on the local stand-in (no
+AI call; `GET /v1/shared-daily-test/…` answered 404 there too). Both walks
+ended with exit 0.
+
+**1. The ticket first, then the Daily Test** (the owner's order; the
+seeded learner; `build/fix6-captures/smoke-tr-ticket-first/`, 11
+screenshots and the film `see-your-climb.mp4`). Home with the test
+waiting; Review; "Biletimle pratik yap", the practice (the first question
+two blanks on a line with an instruction and cues, one answer wrong), its
+results; "Konulara dön": **Review with 5 weak spots at once**, the new
+ones marked "yeni", the two-blank answer's card with the wrong word struck
+in place; Home: the ordinary Home, the ticket used, the test waiting (the
+driver: "rest scene before the test: false"); the Daily Test (4 of 5);
+"Tırmanışını gör": **Home with the mountain in view, the pawn walking to
+step 15, "Yarı Yol Kulübesi" lit with its name, the pawn at rest, then the
+rest scene** ("rest scene in the tree after: 5979 ms"), then N01 over it
+("N01 opened over the rest scene: true"); "Şimdi değil"; V24f; another tab
+and back: the rest scene, no step ("rest scene on return: true").
+
+The first run of this walk, before the Review fix, is kept in
+`smoke-tr-ticket-first-run1/` (Review with the 2 old weak spots after the
+practice; the step, the rest and the scene as above, 5902 ms).
+
+**2. The other order, a fresh install** (the app removed first;
+`build/fix6-captures/smoke-tr-fresh-install/`, 34 screenshots): Welcome to
+the Day 0 test, the results, the badge, the first climb, the paywall and
+its X, Home with the pawn on step 1; Review; the ticket on a practice;
+"Konulara dön": Review with the new weak spots; Home: **the rest scene
+with N01 at once**, as before this round; then V24f on one screen,
+Profile's progress card and the paywall from Wake, which stayed through a
+drag down and closed with X. The walk's edge-swipe step (round 5) was
+answered without a swipe this time; it is not part of this round.
+
+### Checks: builds, tests, disk
+
+After the last code change (`6618036`; the app's own last change
+`1e53b21`):
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | no issues |
+| `flutter test` (with `FIX6_CAPTURE=1`) | **2925 passed**, 0 failed |
+| Swift `RunnerTests` (iPhone 18 Pro simulator, with the repository's fixtures) | **23 tests, 0 failures**, none skipped |
+| Simulator build of Runner + widget extension (`xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Debug -destination "platform=iOS Simulator,id=49ECC1F0…" build`, as in round 5) | **BUILD SUCCEEDED**, `GrammarLensWidgets.appex` embedded |
+| `flutter build ios --release --no-codesign` | **built** `Runner.app` (50.3 MB reported; 1.4.0 (7)) with `GrammarLensWidgets.appex` |
+
+What the checks found and fixed: Review's list after a ticket practice
+(above). The whole suite ran once after item 1 with no test of an earlier
+round changed, and again at the end.
+
+**Disk.** 18 GiB free at the start; **17 GiB** after the builds and the
+walks; no cleanup was needed (the aim is 15 GiB).
+
+### Not verified
+
+- **Anything on a device.** The step, the beat's length and the fade on
+  the phone; whether the three cards the owner saw now read right (they
+  were reproduced from invented lines of the shapes the code stores, not
+  from his records); the companion's hop as his phone draws it.
+- **The Premium order on the simulator** (all five sessions, then the
+  test): checked in a widget test only; the walk is a free user's.
+- **A month card on the same visit as the day's step** (the first Home of
+  a month, with the practice already used and the test just done): the
+  code waits for the card and its zoom, no test or walk covers it.
+- **The step on the simulator's film at a plain step**: the walk's day was
+  a save point day (step 15); a plain step is covered by the widget tests
+  and their frame strips.
+- **The practice in the walks** used the local stand-in: no real
+  generation or scoring.
+
 ## Fix round 5 (owner's third device pass, 2026-11-18)
 
 `FIX5.md`, SPEC v13. On the third pass (iPhone 14 Plus) the owner confirmed
@@ -2242,15 +2666,20 @@ not open the app there). All of it is in `DEVICE-CHECKS.md`.
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
 `ui-polish` (pushed), **integrated with the widgets and reminders on
 branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix rounds
-3, 4 and 5 done there** (pushed; "Fix round 5" at the top: the owner's
-third device pass, SPEC v13; "Fix round 4" and "Fix round 3" under it). Not
-merged into `main`, not shipped. The owner tested `ui-polish` and then
-`ui-polish-widgets` on his iPhone 14 Plus three times; fix rounds 3 to 5
-were built and checked **on the simulator and in tests only**. What only
-the phone can confirm is in [`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its
-first section, "Fix round 5 — fourth pass", in order. Decisions for the
-owner to review: F5-1 to F5-19 ("Fix round 5", "Decisions"), and F4-1 to
-F4-13 before them (F5-2 changes F4-1 and F4-4).
+3, 4, 5 and 6 done there** (pushed; "Fix round 6" at the top: the owner's
+device check of 2026-11-19, SPEC v14; "Fix round 5", "Fix round 4" and
+"Fix round 3" under it). Not merged into `main`, not shipped. The owner
+tested `ui-polish` and then `ui-polish-widgets` on his iPhone 14 Plus; on
+2026-11-19 he deployed the Worker for 1.5.0 and saw the ten topic cards,
+the new topics' practice sets and their weak spots on the phone. Fix
+rounds 3 to 6 were built and checked **on the simulator and in tests
+only**. What only the phone can confirm is in
+[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md): its first section, "Fix round 6 —
+the next morning", then "First-wave topics" and "Fix round 5 — fourth
+pass". Decisions for the owner to review: F6-1 to F6-14 ("Fix round 6",
+"Decisions"; item 2's question is his: is the specified hop large
+enough), then F5-1 to F5-19 and F4-1 to F4-13 (F5-2 changes F4-1 and
+F4-4).
 
 | Batch | Status | Commits |
 |---|---|---|
@@ -2271,7 +2700,8 @@ F4-13 before them (F5-2 changes F4-1 and F4-4).
 | Integration with the widgets (2026-11-17) | done | see "Integration" above |
 | Fix round 3 (owner device test of the integration, 2026-11-18) | done | see "Fix round 3" above |
 | Fix round 4 (owner's second device pass, 2026-11-18) | done | see "Fix round 4" above |
-| Fix round 5 (owner's third device pass, 2026-11-18) | done | see "Fix round 5" at the top |
+| Fix round 5 (owner's third device pass, 2026-11-18) | done | see "Fix round 5" above |
+| Fix round 6 (owner's device check, 2026-11-19) | done | see "Fix round 6" at the top |
 
 **Done.** Every in-scope board of SPEC §5 is built and captured on the
 iPhone 18 Pro simulator (iOS 27.2) through the debug-only board gallery

@@ -4,17 +4,127 @@ One ordered checklist for the owner's phone. It covers the UI polish
 (SPEC v10, fix rounds 1 and 2), the widgets and reminders, the
 integration of the two (`INTEGRATE.md`), fix round 3 (`FIX3.md`, SPEC v11),
 fix round 4 (`FIX4.md`, SPEC v12) and fix round 5 (`FIX5.md`, SPEC v13),
-whose fourth pass comes first, and the first-wave topics switched on for
-1.5.0 (`docs/TOPICS.md` phase D), whose checks need the Worker's deploy. It merges fix round 2's "Owner
+whose fourth pass is below, the first-wave topics switched on for
+1.5.0 (`docs/TOPICS.md` phase D; the Worker is deployed, owner 2026-11-19),
+and fix round 6 (`FIX6.md`, SPEC v14), whose check comes first. It merges fix round 2's "Owner
 device checks" (`PROGRESS.md`) and the widgets run's "Owner steps"
-(`PROGRESS-widgets.md`). Nothing on this list was checked on a device; the
-simulator results are in `PROGRESS.md` ("Integration").
+(`PROGRESS-widgets.md`). Nothing on this list was checked on a device by
+the runs that wrote it; what the owner has seen on his phone is marked on
+the item. The simulator results are in `PROGRESS.md`.
 
 Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
 
+## Fix round 6 — the next morning (start here)
+
+Fix round 6 (`FIX6.md`, SPEC v14) changed three things after your check of
+2026-11-19: the rest scene now comes after the day's step (item 1),
+Review's inline mistake on multi-blank answers (item 3), and Review's list
+after a ticket practice (found on the way). The card companion's hop was
+measured and not changed (item 2). Nothing here was checked on a device:
+the simulator and test results are in `PROGRESS.md` ("Fix round 6"). No
+VoiceOver check is asked for. Write down anything that differs (the item
+number and what you saw).
+
+### FR6-1. Build and install
+
+The same commands as FR5-1 below (**no Xcode step**), over the current test
+build; do not delete it.
+
+```bash
+cd ~/GrammarLens
+```
+
+```bash
+git switch ui-polish-widgets
+```
+
+```bash
+git pull --ff-only
+```
+
+```bash
+flutter pub get
+```
+
+```bash
+flutter devices
+```
+
+```bash
+flutter run --release -d <iPhone ID> --dart-define-from-file=config/prod.json
+```
+
+When it says the app is running, press `q`; the app stays on the phone.
+Keep the interface in Turkish and your larger text size, as before.
+
+### FR6-2. As a free user, before that day's Daily Test
+
+1. **Home's first view.** Scrolled to the top: the pawn and the gold ring
+   on the next step are above the floating nav bar. — V15, FR3-3 item 1
+2. **The card companion (item 2).** On the Daily Test card the companion
+   hops while the test waits: up by about a sixth of its height and down
+   again in a little over half a second, a small squash on landing, still
+   for a moment, then again (every 1.2 s). On the simulator this is what is
+   drawn (16 pt at the card's 100 pt companion; the frames are in
+   `PROGRESS.md`, "Fix round 6", item 2). Say whether this is the motion you
+   called "as if breathing" and whether the hop should be larger at this
+   size; nothing was changed. Check that Reduce Motion is off (Settings →
+   Accessibility → Motion): with it on, the companion stands still. — X05
+3. **The widgets' "before the test" state**: "Step N is waiting" / "one
+   test away", your mountain at your step; a tap opens the Daily Test. —
+   W01, FR3-3 item 3
+4. **T-4** below (the copy that counts topics says 10).
+
+### FR6-3. The ticket first, then the Daily Test (item 1)
+
+5. **Use the ticket.** Review → "Biletimle pratik yap" on a weak spot → answer
+   → submit → "Konulara dön". **Review's list is up to date at once** (the
+   new weak spots are there with "yeni", without leaving the tab). Home:
+   the ordinary Home, the ticket "used", the test still waiting.
+6. **The Daily Test, then "Tırmanışını gör".** On Home:
+   - the mountain comes into view and **the pawn walks to its new step**;
+   - on a save point day (a hut, a camp, the spring) the save point lights
+     up and its name shows for about three seconds;
+   - the pawn **rests for about a second** with nothing else moving;
+   - **the rest scene fades in** over Home (not a hard cut);
+   - the reminder question (N01), if it is still due, opens once the rest
+     scene stands, not over the mountain.
+   Write down if the rest scene comes before the walk, if the wait feels
+   too long or too short (the second is a number that is easy to change),
+   or if anything jumps. — V24f, §1.8
+7. **Leave and come back.** Another tab and back, then the app to the
+   background and back: the rest scene is there, the step is not played
+   again.
+8. **T-5** below (V24f with a new topic's weak spot), if your most repeated
+   weak spot is in a new topic.
+
+Not needed for this check, but if you have a Premium day: the same order
+there is all five sessions first, then the Daily Test; the step, the rest
+and then V24.
+
+### FR6-4. Review's cards for the new topics (item 3)
+
+9. **The inline mistake.** Review: on each weak-spot card, the sentence
+   shows your wrong word **struck through in its place**, the right word
+   green next to it, the rest plain. Nowhere a struck-through piece of the
+   instruction ("… the verbs in brackets: '…"), nowhere a bracketed cue
+   word, nowhere half a sentence struck through after the corrected one.
+   **The three cards you saw on 2026-11-19 change by themselves** (nothing
+   stored was changed, only how it is drawn): look at those first. Open one:
+   its detail screen ("Senin yazdığın" / "Düzeltilmiş hali") is as before.
+   If a card still looks wrong, a screenshot of the card and of its detail
+   screen is what is needed to go on. — V16, R03
+
 ## First-wave topics (1.5.0) — after the Worker's deploy
+
+**State (2026-11-19):** the owner deployed the Worker (version
+`a3f736ef-0877-4200-b0b2-a996ef20cca0`; `/health` answered `ok`, a
+Conditionals practice request `200`) and installed this branch's build. On
+his phone: the ten topic cards show (T-1), practice sets of the new topics
+generate and are scored, and their weak spots appear in Review (T-3). The
+other items are open.
 
 Phase D of `docs/TOPICS.md` switched the five new practice topics on
 (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives &
@@ -33,7 +143,8 @@ language (Turkish below).
 Topic Practice is the Premium part. Five sets are a whole day's sessions
 (5 a day), so do T-2 on a day without other practice, or over two days.
 
-1. **T-1. Ten cards on Topic Practice.** Home → Topic Practice. Ten topic
+1. **T-1. Ten cards on Topic Practice.** *(Seen by the owner on
+   2026-11-19: the ten cards show.)* Home → Topic Practice. Ten topic
    cards, two a row, in this order: Gerund vs. Infinitive, Modal Verbs,
    Modal Past Forms, Tense Selection, Articles, then Conditionals, Passive
    Voice, Prepositions, Relative Clauses, Comparatives & Superlatives. Each
@@ -62,7 +173,9 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
      judged wrongly, with the topic. In Conditionals in particular: an
      answer that mixes two conditional types and is still called correct is
      the known weakness (5 of 132 in the measurement).
-3. **T-3. A new topic's weak spot on Review.** After T-2 you will have
+3. **T-3. A new topic's weak spot on Review.** *(Seen by the owner on
+   2026-11-19: the new topics' weak spots appear in Review.)* After T-2 you
+   will have
    mistakes in the new topics. Review: each new weak spot is listed with
    its own name; opening one shows its own screen with **its own topic**
    (the topic label, the hint card, "Bunu çalış" starting a set in that
@@ -99,7 +212,7 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
 8. **T-8. The Daily Test is as it was.** Its five questions come from the
    five old topics only; no new topic appears in it.
 
-## Fix round 5 — fourth pass (start here)
+## Fix round 5 — fourth pass
 
 Fix round 5 (`FIX5.md`, SPEC v13) built the panel you chose for V24f, the
 new month progress card and a paywall that closes only with its X. This
