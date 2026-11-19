@@ -627,6 +627,11 @@ $0.89 so far.
 
 For the macOS Terminal app. Copy one block at a time, paste, press Enter.
 
+> Done on 2026-11-19, kept as the record. Since Phase C4 `topics rescore`
+> runs the scoring prompt's second round (see "Owner checklist — scoring
+> prompt, second round" below); the folder of step 5 is only read, with
+> `topics analyze --out`.
+
 ### 1. A new separate API key
 
 In the Anthropic Console (Settings → API keys) create a new key only for
@@ -768,3 +773,142 @@ edit that file, not the report). In the run folders, never the repository:
 
 Each entry ends with an "Owner:" line; once one is filled, the file is no
 longer rewritten.
+
+## The scoring prompt, second round (Phase C4)
+
+Owner decisions of 2026-11-19: the first scoring candidate is dropped, in
+whole and in its verdict rule. The scoring criteria (agreement, false
+"correct") are read on all labelled answers pooled over the first run, the
+Conditionals re-measurement and the final configuration; the defect
+criterion stays on the final configuration's questions. One more round for
+the scorer, with no new labels: three candidates, each the production
+scoring prompt with a short paragraph after it, scored against the 1,190
+built answers that are labelled.
+
+| Candidate | What it adds | In the source |
+|---|---|---|
+| S | a paragraph on spelling: a misspelling in the tested form is a mistake | `SCORING_SYSTEM_PROMPT_CANDIDATE_S` |
+| T | a paragraph on conditional types: each clause is judged against the time the sentence gives it | `SCORING_SYSTEM_PROMPT_CANDIDATE_T` |
+| ST | both | `SCORING_SYSTEM_PROMPT_CANDIDATE_ST` |
+
+None is live: the route sends `SCORING_SYSTEM_PROMPT`, unchanged. The
+wording is in `src/prompts.ts` (`SCORING_ADDITION_SPELLING`,
+`SCORING_ADDITION_CONDITIONALS`).
+
+`topics rescore` scores every stored scoring call of the three labelled runs
+again, once per candidate: the same answers in the same order per call, the
+prompt the only difference (320 calls a candidate, 960 in all). It generates
+nothing and needs no labels of its own. When the run is complete it writes
+
+- the section "The scoring prompt, second round" at the end of
+  `docs/1.5.0-topics-report.md` (counts and rates only): the three criteria
+  per new topic on the pooled reading, for the production prompt and each
+  candidate, with pass or fail; each prompt against the labels per topic and
+  per run; and the verdicts each candidate changed, towards the label and
+  away from it;
+- `changed-verdicts.md` in the round's own run folder (never the
+  repository): every changed verdict, with the question, the label and both
+  scorers' words.
+
+`topics rescore --dry-run` makes no call. Besides the plan it prints, from
+the stored verdicts, the production prompt's pooled criteria as they stand
+before any candidate. `topics analyze --out eval/out/topics-rescore-…`
+writes the section and the file again from a finished folder, without a key.
+
+**It calls the Anthropic API and costs money: about $1.19** (960 calls). The
+$15.00 cap is on the measurement as a whole, which has spent $2.52 so far.
+
+## Owner checklist — scoring prompt, second round
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+this run, for example "grammarlens-second-round", **in the Default
+workspace**. Not an earlier run's key (those are revoked), and not the
+Worker's live key: do not use it and do not revoke it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics rescore --dry-run
+```
+
+It must say **960 calls** (320 for each of S, T and ST), **Estimated spend
+$1.19: within the dry-run limit**, `earlier runs spent $2.52`, and end with
+`API key: found in the environment (not shown)`. Above that last line it
+shows the production prompt's criteria per new topic as they stand today
+(Passive Voice, Prepositions and Relative Clauses pass; Conditionals and
+Comparatives & Superlatives fail on false "correct"). If the last line says
+the key is not in the environment, repeat step 3.
+
+### 5. The run (about 30 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics rescore
+```
+
+One line per call (counts, tokens and cost only).
+
+### 6. What "done" looks like
+
+The last three lines, with other times and amounts:
+
+```text
+2026-11-19T11:32:10.000Z topics rescore done: 960 calls ok; spent $1.20 in this run, $3.72 with the earlier runs, of $15.00; folder eval/out/topics-rescore-2026-11-19T11-00-01-000Z
+Written in the run folder: changed-verdicts.md.
+Written: the "scoring prompt, second round" section of docs/1.5.0-topics-report.md (94 lines).
+```
+
+If instead a line says `topics rescore incomplete`, run the same folder
+again; finished calls are not repeated and not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics rescore --out "$(ls -d eval/out/topics-rescore-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines of that folder's `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Bring the result to the Cowork chat
+
+Copy the line that starts with `Written: the "scoring prompt, second round"
+section` (the last line of step 6) into your Cowork chat. The section is
+read there: `docs/1.5.0-topics-report.md`, "The scoring prompt, second
+round", from S1 on. It has counts and rates only. The report then shows as
+changed in git: leave it, Claude Code commits it with the reading.
+
+Nobody needs to label anything for this round, and nothing is deployed:
+whether S, T or ST becomes the production scoring prompt is your decision
+after the reading.

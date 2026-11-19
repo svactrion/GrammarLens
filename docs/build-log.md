@@ -14870,3 +14870,60 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Not verified]** Any proposal: none was built. Nothing is deployed.
 - **[Legal]** No change needed.
 - Record and decisions T-63 to T-70: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase C4: the scoring prompt's second round, its tooling and the pooled reading; no API call)
+
+- **[Owner decisions]** The first scoring candidate is dropped, in whole and
+  in its verdict rule. Agreement and false "correct" are read on all
+  labelled answers pooled over the first run, the Conditionals
+  re-measurement and the final run; the defect criterion stays on the final
+  configuration's questions. One more round for the scorer, with no new
+  labels (T-71 to T-73).
+- **[Engineering]** Three candidates beside the production scoring prompt
+  (`proxy/src/prompts.ts`, `SECOND_ROUND_SCORING` in `proxy/src/anthropic.ts`),
+  none live: S, a short paragraph on spelling (a misspelling in the tested
+  form is a mistake, the keyboard variants stay acceptable); T, one on
+  conditional types (each clause judged against the time the sentence gives
+  it; a result that also says up to when it holds stays correct); ST, both.
+  Each is the production prompt byte for byte with the addition after it.
+  No example in either: no phrase of them occurs in a labelled question or
+  answer.
+- **[Engineering]** `topics rescore` is now this round
+  (`proxy/eval/lib/topics_round2.ts`): every stored scoring call of the
+  three labelled runs again, once per candidate, the same answers per call;
+  one folder, resumable, under the cap on the whole measurement. When
+  complete it writes the report's section "The scoring prompt, second round"
+  (the three criteria per new topic pooled, for the production prompt and
+  each candidate; per topic and per run; the verdicts each candidate
+  changed, towards the label and away) and, in the run folder,
+  `changed-verdicts.md`. The first candidate's folder is refused for a run
+  and still read by `topics analyze`.
+- **[Engineering]** A report section now counts the spend of the run
+  folders started before its own, so writing an earlier section again after
+  a later run gives the same number; the cap before a call counts every
+  folder, as before.
+- **[Dry run]** `topics rescore --dry-run`: 960 calls (320 a candidate),
+  about $1.19; with the $2.52 spent, about $3.70 of $15.00; worst case
+  $9.54 with the earlier runs.
+- **[Measured, from stored verdicts]** The production prompt on the pooled
+  reading: Passive Voice (0 of 99 false "correct"), Prepositions (1 of 96)
+  and Relative Clauses (0 of 100) pass all three criteria; Conditionals
+  fails (5 of 132, 3.8 %; agreement 228 of 239) and Comparatives &
+  Superlatives fails by one answer (2 of 95, 2.1 %).
+- **[Finding]** From the code, nothing changed: when the scorer leaves an
+  answer of a set out, the Worker passes the response on and the app shows
+  a result without that question (four cards and a score out of 4 for five
+  questions; nothing saved for it); feedback under an id that was not asked
+  is shown as a skipped card without its question. No crash, and no log
+  line. A check with one retry in the Worker is proposed, not built.
+- **[Docs]** `proxy/eval/README.md`: "Owner checklist — scoring prompt,
+  second round".
+- **[Verified]** `npm run typecheck` clean; `npm test` 723 passed (11 new, no
+  network); the whole command rehearsed against a local stand-in (made-up
+  key, no network, scratch folder and a scratch copy of the report); the
+  run folders' records, sheets and labels unchanged; no question, answer or
+  sheet key in the commits.
+- **[Not verified]** What any candidate does: the owner's run is the first
+  time. Nothing is deployed; both first-wave switches are false.
+- **[Legal]** No change needed.
+- Record and decisions T-71 to T-86: `docs/1.5.0-topics-progress.md`.

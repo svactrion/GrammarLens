@@ -498,9 +498,30 @@ Owner decisions so far:
   can → could, while its hint card teaches modal + have + past participle;
   and the practice prompt does not require a correction's sentence to be
   really wrong, as the Daily Test's prompt does (a wording is proposed).
-  **Next: the owner's decisions**, topic by topic what goes to release prep,
-  and the candidate, the two findings and the deploy of the practice path.
-  The topics stay switched off. Record and decisions:
+  *(Superseded, kept as written:* **Next: the owner's decisions**, topic by
+  topic what goes to release prep, and the candidate, the two findings and
+  the deploy of the practice path.*)* **Owner decisions (2026-11-19) and
+  phase C4 done up to its stop (2026-11-19, no API call):** the first
+  scoring candidate is dropped, in whole and in its verdict rule; the two
+  scoring criteria are read on all labelled answers pooled over the three
+  runs, the defect criterion on the final configuration's questions; and the
+  scorer gets one more round with no new labels. On the pooled reading the
+  production scoring prompt stands today at: **Passive Voice, Prepositions
+  and Relative Clauses pass all three; Conditionals fails on false "correct"
+  (5 of 132, 3.8 %) and Comparatives & Superlatives by one answer (2 of 95,
+  2.1 %).** Three candidates stand beside the production prompt, none live:
+  S (a short paragraph on spelling), T (one on conditional types), ST
+  (both). `topics rescore` scores the 1,190 labelled answers with each (dry
+  run 960 calls, about $1.19; the measurement has spent $2.52 of $15.00)
+  and writes the report's section "The scoring prompt, second round". Also
+  found, from the code: when the scorer leaves an answer of a set out (3 of
+  1,190 in the measurement), the app shows a result without that question
+  and says nothing; a check in the Worker is proposed, not built. **Next:
+  the owner's run** from his Terminal (`proxy/eval/README.md`, "Owner
+  checklist — scoring prompt, second round"), then the section read in the
+  Cowork chat, then his decisions: the scoring prompt, topic by topic what
+  goes to release prep, the two earlier findings and the deploy of the
+  practice path. The topics stay switched off. Record and decisions:
   [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
