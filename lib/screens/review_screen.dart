@@ -273,6 +273,31 @@ class _ReviewScreenState extends State<ReviewScreen> {
     });
   }
 
+  /// Whether Review's route was the top one at the last look
+  /// ([didChangeDependencies]).
+  bool _routeCurrent = true;
+
+  /// Fix round 6 (found by the smoke walk): Review is the top route again
+  /// after something above it closed, so the list and the ticket are read
+  /// again. A practice started with the ticket replaces its own screen
+  /// with the results, which ends the wait in [_onTorn] before the results
+  /// have saved the new mistakes: the list was re-read too early and "Back
+  /// to topics" showed the old weak spots until the tab was left and
+  /// entered again.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ModalRoute.of(context)?.isCurrent ?? true;
+    if (current && !_routeCurrent && widget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _reloadWeakSpots();
+        _loadStatus();
+      });
+    }
+    _routeCurrent = current;
+  }
+
   @override
   void didUpdateWidget(covariant ReviewScreen oldWidget) {
     super.didUpdateWidget(oldWidget);

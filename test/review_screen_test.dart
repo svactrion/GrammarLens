@@ -346,6 +346,34 @@ void main() {
         'She is a the tallest girl in her class.');
   });
 
+  // Fix round 6 (the smoke walk): a practice started with the ticket
+  // replaces its screen with the results, which ended Review's wait before
+  // the results had saved the new mistakes; "Back to topics" then showed
+  // the old list.
+  testWidgets(
+      'back on Review after routes above it closed (a practice replaced by '
+      'its results, then "Back to topics"): the weak spots are read again',
+      (tester) async {
+    final storage = _Storage(weakSpots: [_spot('missing_article')]);
+    await pump(tester, storage: storage);
+    expect(find.byType(ReviewSpotCard), findsOneWidget);
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.push(MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('practice'))));
+    await tester.pumpAndSettle();
+    final readsBefore = storage.weakSpotReads.length;
+    navigator.pushReplacement(MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('results'))));
+    await tester.pumpAndSettle();
+    // The results save the new mistake only now.
+    storage.weakSpots = [_spot('a_vs_an'), _spot('missing_article')];
+    expect(find.byType(ReviewSpotCard), findsNothing, reason: 'covered');
+    navigator.popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    expect(storage.weakSpotReads.length, greaterThan(readsBefore));
+    expect(find.byType(ReviewSpotCard), findsNWidgets(2));
+  });
+
   group('sort order (unchanged behaviour, moved to the list heading)', () {
     testWidgets('the stored order is read and shown', (tester) async {
       final storage =
