@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { practiceThemeLine } from '../src/anthropic';
 import { practiceTheme } from '../src/practice_theme';
-import { GENERATION_SYSTEM_PROMPT, SCORING_SYSTEM_PROMPT, SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11 } from '../src/prompts';
+import {
+  GENERATION_SYSTEM_PROMPT,
+  SCORING_SYSTEM_PROMPT,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_2026_11,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_S,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_ST,
+  SCORING_SYSTEM_PROMPT_CANDIDATE_T,
+} from '../src/prompts';
 import { SCENARIO_THEMES } from '../src/shared_daily_test';
 import { FIRST_WAVE_TOPICS, TOPICS, topicById } from '../src/topics';
 import type { MeasureRecord } from '../eval/lib/measurement';
@@ -27,8 +34,9 @@ import {
   rescoreCalls,
   type RescoreSource,
 } from '../eval/lib/topics_final';
-import { answersId, builtAnswersFrom, generationId, placeholderAnswers, placeholderItems, scoringCalls, type TopicAnswer } from '../eval/lib/topics_measurement';
+import { answersId, builtAnswersFrom, generationId, placeholderAnswers, placeholderItems, priorTopicsSpend, scoringCalls, startedBefore, type TopicAnswer } from '../eval/lib/topics_measurement';
 import { laterSectionName, remeasurementBlocks, withRemeasurement, withoutRemeasurements } from '../eval/lib/topics_remeasure';
+import { ROUND_TWO, changedAgainstProduction, pooled, renderPooledCriteria, renderRoundTwoDryRun, renderRoundTwoSection, roundTwoCalls, type PooledRun } from '../eval/lib/topics_round2';
 import { LETTERS, buildTopicSheet, readTopicLabels, topicsOf, type QuestionLabel } from '../eval/lib/topics_sheet';
 import { parseCsv } from '../eval/lib/labels';
 
@@ -321,6 +329,7 @@ describe('the later sections of the report', () => {
     expect(laterSectionName('conditionals')).toBe('Re-measurement: Conditionals');
     expect(laterSectionName('final')).toBe('Final configuration');
     expect(laterSectionName('rescore')).toBe('The scoring prompt candidate on the labelled answers');
+    expect(laterSectionName('second')).toBe('The scoring prompt, second round');
     const first = '# Report\n\n**Status: measured.** Text.\n\n## 0. A section\n\nBody.\n';
     let report = withRemeasurement(first, 'conditionals', '# Re-measurement: Conditionals\n\nA.');
     report = withRemeasurement(report, 'rescore', '# The scoring prompt candidate on the labelled answers\n\nB.');
@@ -333,6 +342,23 @@ describe('the later sections of the report', () => {
     expect(again).toContain('B2.');
     expect(again).not.toContain('\nB.\n');
     expect(remeasurementBlocks(again).map((b) => b.topicId).sort()).toEqual(['conditionals', 'final', 'rescore']);
+  });
+
+  it('a section counts the spend of the runs started before its own, so a later run does not change it', () => {
+    const folders = [
+      { name: 'topics-2026-11-18T16-35-34-632Z', spendUsd: 0.76 },
+      { name: 'topics-conditionals-2026-11-19T03-29-29-295Z', spendUsd: 0.13 },
+      { name: 'topics-rescore-2026-11-19T04-05-41-106Z', spendUsd: 0.2 },
+      { name: 'topics-rescore-2026-11-20T08-00-00-000Z', spendUsd: 1.2 },
+    ];
+    const before = startedBefore(folders, 'topics-final-2026-11-19T04-12-48-488Z');
+    expect(before.map((f) => f.name)).toEqual(folders.slice(0, 3).map((f) => f.name));
+    expect(priorTopicsSpend(before)).toBeCloseTo(1.09, 5);
+    expect(startedBefore(folders, 'topics-2026-11-18T16-35-34-632Z')).toEqual([]);
+    // A folder that cannot be placed in time is counted, and a run folder
+    // without a time in its name counts every other one.
+    expect(startedBefore([...folders, { name: 'topics-mine', spendUsd: 1 }], 'topics-final-2026-11-19T04-12-48-488Z')).toHaveLength(4);
+    expect(startedBefore(folders, 'my-own-folder')).toHaveLength(4);
   });
 
   it('a sheet lists the hint cards of the topics it has, new topics first, the live ones after', () => {
@@ -385,5 +411,144 @@ describe('both scoring prompts on everything that is labelled', () => {
     // Nine Conditionals answers left on both sides.
     expect(text).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | 88.9 % (8 / 9): **FAIL** | 100.0 % (9 / 9): **pass** |');
     expect(text).toContain('1 of the 23 built answers got no usable verdict from the production prompt and 0 none from the candidate');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase C4: the scoring prompt's second round (S, T, ST) and the pooled reading.
+
+describe('the scoring prompt, second round', () => {
+  const m = made();
+  const labels = labelsOf(m.data);
+  const answers = m.data.answers;
+  const truth = new Map(answers.map((a): [string, AnswerVerdict] => [a.id, { answerId: a.id, isCorrect: a.truth, correctedAnswer: '', explanation: '' }]));
+  // Production calls one Conditionals mistake correct. S (the made-up
+  // candidate of the tests above) does not, but rejects a right key of the
+  // live topic; T agrees with every label.
+  const run: PooledRun = { name: 'First run', answers, labels, verdicts: { production: m.production, S: m.candidate, T: truth } };
+  const source: RescoreSource = { tag: 'a', folder: 'topics-first', answers, scoringCalls: scoringCalls(answers).map((s) => ({ customId: s.call.customId, answerIds: s.answerIds })) };
+  const conditionals = (a: TopicAnswer) => a.topicId === 'conditionals';
+
+  it('every stored scoring call once per candidate: the same answers, the prompt the only difference', () => {
+    const calls = roundTwoCalls([source], ratio);
+    const stored = source.scoringCalls;
+    expect(ROUND_TWO.map((c) => c.id)).toEqual(['S', 'T', 'ST']);
+    expect(calls).toHaveLength(3 * stored.length);
+    expect(new Set(calls.map((c) => c.call.customId)).size).toBe(calls.length);
+    const prompts = { S: SCORING_SYSTEM_PROMPT_CANDIDATE_S, T: SCORING_SYSTEM_PROMPT_CANDIDATE_T, ST: SCORING_SYSTEM_PROMPT_CANDIDATE_ST };
+    const first = rescoreCalls([source], ratio);
+    for (const { id } of ROUND_TWO) {
+      const mine = calls.filter((c) => c.candidate === id);
+      expect(mine).toHaveLength(stored.length);
+      mine.forEach((c, i) => {
+        expect(c.call.customId).toBe(`rescore${id}_a_${stored[i]?.customId}`);
+        expect(c.answerIds).toEqual(stored[i]?.answerIds);
+        expect(c.call.body.system).toBe(prompts[id]);
+        // The request of the first candidate's rescore, but for the prompt.
+        expect({ ...c.call.body, system: '' }).toEqual({ ...first[i]?.call.body, system: '' });
+      });
+    }
+    // No id of this round is an id of the first candidate's rescore.
+    expect(calls.some((c) => c.call.customId.startsWith('rescore_'))).toBe(false);
+    // Two runs keep their tags apart.
+    expect(new Set(roundTwoCalls([source, { ...source, tag: 'b' }], ratio).map((c) => c.call.customId)).size).toBe(6 * stored.length);
+  });
+
+  it('pools the runs, each prompt on the answers every listed prompt scored', () => {
+    const two = pooled([run, { ...run, name: 'Final configuration' }], ['production', 'S', 'T'], conditionals);
+    expect([two.production?.compared, two.production?.agree, two.production?.falseCorrect, two.production?.wrong]).toEqual([20, 18, 2, 12]);
+    expect([two.T?.compared, two.T?.agree, two.T?.falseCorrect]).toEqual([20, 20, 0]);
+    const all = pooled([run], ['production', 'S', 'T']);
+    expect([all.production?.compared, all.S?.falseNeedsWork, all.S?.right, all.T?.falseNeedsWork]).toEqual([23, 1, 9, 0]);
+    // An answer one prompt has no verdict for is in no prompt's numbers.
+    const lost = answers.find((a) => a.topicId === 'conditionals' && a.kind === 'key') as TopicAnswer;
+    const fewer = new Map(m.candidate);
+    fewer.delete(lost.id);
+    const held = pooled([{ ...run, verdicts: { ...run.verdicts, S: fewer } }], ['production', 'S']);
+    expect([held.production?.compared, held.S?.compared]).toEqual([22, 22]);
+    // A prompt that is not asked about does not narrow the others.
+    expect(pooled([{ ...run, verdicts: { ...run.verdicts, S: fewer } }], ['production', 'T']).production?.compared).toBe(23);
+    // A run a prompt did not score adds nothing for any of them.
+    expect(pooled([run, { ...run, verdicts: { production: m.production } }], ['production', 'T']).production?.compared).toBe(23);
+  });
+
+  it('counts the verdicts a candidate changed, towards the label and away from it', () => {
+    expect(changedAgainstProduction([run], 'T')).toEqual({ changed: 1, towards: 1, away: 0 });
+    expect(changedAgainstProduction([run], 'S')).toEqual({ changed: 2, towards: 1, away: 1 });
+    expect(changedAgainstProduction([run], 'S', conditionals)).toEqual({ changed: 1, towards: 1, away: 0 });
+    expect(changedAgainstProduction([run, run], 'S')).toEqual({ changed: 4, towards: 2, away: 2 });
+    expect(changedAgainstProduction([run], 'ST')).toEqual({ changed: 0, towards: 0, away: 0 });
+  });
+
+  it('the three criteria per new topic: the final run\'s defects, the scoring numbers pooled, decided per prompt', () => {
+    const lines = renderPooledCriteria([run], ['production', 'T'], new Map([['conditionals', { defects: 0, afterGate: 4 }]]));
+    // A heading, a rule, and two prompts for each of the five new topics.
+    expect(lines).toHaveLength(12);
+    expect(lines[0]).toContain('Defective questions, final configuration (at most 5 %)');
+    expect(lines[0]).toContain('Agreement, pooled (at least 95 %)');
+    expect(lines[0]).toContain('False "correct", pooled (at most 2 %)');
+    expect(lines).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | production prompt | 90.0 % (9 / 10): **FAIL** | 16.7 % (1 / 6): **FAIL** | **fails** |');
+    expect(lines).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | candidate T | 100.0 % (10 / 10): **pass** | 0.0 % (0 / 6): **pass** | **passes** |');
+    // A topic with nothing measured has no verdict.
+    expect(lines).toContain('| Passive Voice | – | production prompt | – | – | – |');
+    // The live topic is not a row: the criteria are for the new topics.
+    expect(lines.some((l) => l.startsWith('| Articles'))).toBe(false);
+  });
+
+  it('the dry run: the calls per candidate, the estimate, the cap on the whole measurement, and the production prompt as it stands', () => {
+    const calls = roundTwoCalls([source], ratio);
+    const per = source.scoringCalls.length;
+    const dry = renderRoundTwoDryRun(calls, [source], 2.52, ratio, null);
+    expect(dry.calls).toBe(3 * per);
+    expect(dry.withinLimit).toBe(true);
+    expect(dry.text).toContain('the scoring prompt\'s second round (topics rescore) — dry run (no API call)');
+    expect(dry.text).toContain(`The labelled answers of 1 run (topics-first: ${answers.length}; ${answers.length} in all), scored again with each of 3 candidates`);
+    expect(dry.text).toContain(`| S | the spelling addition alone | claude-haiku-5-5 | ${per} |`);
+    expect(dry.text).toContain(`| T | the conditional-types addition alone | claude-haiku-5-5 | ${per} |`);
+    expect(dry.text).toContain(`| ST | both additions | claude-haiku-5-5 | ${per} |`);
+    expect(dry.text).toContain(`| **Total** | | | **${3 * per}** | | | | **$${dry.usd.toFixed(2)}** |`);
+    expect(dry.text).toContain(`earlier runs spent $2.52; with this run the measurement comes to $${(2.52 + dry.usd).toFixed(2)} of $15.00.`);
+    expect(dry.text).not.toContain('The production scoring prompt today');
+    // With the stored verdicts: the production prompt's pooled criteria, at no cost.
+    const withTable = renderRoundTwoDryRun(calls, [source], 2.52, ratio, { runs: [run], defects: new Map([['conditionals', { defects: 0, afterGate: 4 }]]) });
+    expect(withTable.text).toContain('The production scoring prompt today, before any candidate (from the stored verdicts, no call)');
+    expect(withTable.text).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | production prompt | 90.0 % (9 / 10): **FAIL** | 16.7 % (1 / 6): **FAIL** | **fails** |');
+    expect(withTable.text).not.toContain('candidate T');
+    expect([withTable.calls, withTable.usd]).toEqual([dry.calls, dry.usd]);
+    // The cap is on the measurement as a whole.
+    const tight = renderRoundTwoDryRun(calls, [source], 14.99, ratio, null);
+    expect(tight.withinLimit).toBe(false);
+    expect(tight.text).toContain('OVER the cap with the margin');
+    expect(contentLeaks(withTable.text, m.data.items, answers)).toEqual([]);
+  });
+
+  it('the report\'s section: both additions in words, the criteria pooled, per topic, per run, and the changed verdicts', () => {
+    const text = renderRoundTwoSection({ runs: [run, { ...run, name: 'Final configuration' }], defects: new Map([['conditionals', { defects: 0, afterGate: 4 }]]), generatedAt: '2026-11-20 09:00 UTC', runDir: 'proxy/eval/out/topics-rescore-test', calls: 24, failed: 0, spendUsd: 1.2, priorSpendUsd: 2.52 });
+    expect(text).toMatch(/^# The scoring prompt, second round\n/);
+    expect(text).toContain('**Status: measured.** The 46 built answers that have labels (First run: 23; Final configuration: 23), scored again with 2 candidates: `proxy/eval/out/topics-rescore-test`, 24 calls, $1.20; the measurement as a whole has then spent $3.72 of $15.00.');
+    expect(text).toContain('> A misspelling in the very form an item tests is a mistake, not a keyboard');
+    expect(text).toContain('> In a conditional sentence, judge each clause against the time the sentence');
+    for (const heading of ['## S1. The three criteria per new topic, on the pooled reading', '## S2. Each prompt against the labels, per topic, pooled over the runs', '## S3. Each prompt against the labels, per run', '## S4. The verdicts each candidate changed']) {
+      expect(text).toContain(heading);
+    }
+    // S1: the pooled reading, each prompt decided on its own.
+    expect(text).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | production prompt | 90.0 % (18 / 20): **FAIL** | 16.7 % (2 / 12): **FAIL** | **fails** |');
+    expect(text).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | candidate S | 100.0 % (20 / 20): **pass** | 0.0 % (0 / 12): **pass** | **passes** |');
+    expect(text).toContain('those labelled right or wrong that each of the 3 gave a verdict for (46 of the 46;');
+    expect(text).toContain('Without a usable verdict: production prompt 0, candidate S 0, candidate T 0.');
+    // S2 and S3: in each cell production · S · T.
+    expect(text).toContain('In each cell: production prompt · candidate S · candidate T.');
+    expect(text).toContain('| Conditionals | 20 | 18 · 20 · 20 | 2 · 0 · 0 of 12 | 0 · 0 · 0 of 8 |');
+    expect(text).toContain('| Articles (live) | 26 | 26 · 24 · 26 | 0 · 0 · 0 of 16 | 0 · 2 · 0 of 10 |');
+    expect(text).toContain('| **Everything labelled** | 46 | 44 · 44 · 46 | 2 · 0 · 0 of 28 | 0 · 2 · 0 of 18 |');
+    expect(text).toContain('| First run | 23 | 22 · 22 · 23 | 1 · 0 · 0 of 14 | 0 · 1 · 0 of 9 |');
+    // S4: towards and away, Conditionals apart from the rest.
+    expect(text).toContain('| S | 4 | 2 | 2 | 2 / 0 | 0 / 2 |');
+    expect(text).toContain('| T | 2 | 2 | 0 | 2 / 0 | 0 / 0 |');
+    // A candidate that scored nothing is left out.
+    expect(text).not.toContain('| ST |');
+    expect(text).not.toContain('candidate ST');
+    expect(text).toContain('`changed-verdicts.md` (not in the repository)');
+    expect(contentLeaks(text, m.data.items, answers)).toEqual([]);
   });
 });

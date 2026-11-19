@@ -103,6 +103,23 @@ export function priorTopicsSpend(folders: readonly { name: string; spendUsd: num
   return folders.some((f) => f.name === TOPICS_FIRST_RUN.folder) ? read : read + TOPICS_FIRST_RUN.spendUsd;
 }
 
+/**
+ * Of [folders], those started before the run folder [name], by the time in
+ * the folders' names (`topics-…-2026-11-19T04-12-48-488Z`). A report section
+ * says what the measurement had spent when its run was made: a run started
+ * later is not in it, so writing the section again after a later run gives
+ * the same number. A folder without a time in its name (an `--out` of the
+ * owner's own naming) cannot be placed and is counted, on either side.
+ */
+export function startedBefore<T extends { name: string }>(folders: readonly T[], name: string): T[] {
+  const stamp = (n: string) => /\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z/.exec(n)?.[0];
+  const mine = stamp(name);
+  return folders.filter((f) => {
+    const theirs = stamp(f.name);
+    return mine === undefined || theirs === undefined || theirs < mine;
+  });
+}
+
 /** A model the harness has a price for; a production model without one
  * stops the plan instead of running unpriced. */
 export function pricedModel(model: string): EvalModel {

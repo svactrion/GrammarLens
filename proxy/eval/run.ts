@@ -46,8 +46,10 @@
  *                                      topics with the final request, the guard applied, every built
  *                                      answer scored with the production prompt and the candidate
  *   npm run eval -- topics rescore --dry-run | topics rescore [--out DIR]
- *                                      the labelled answers of the earlier runs scored with the
- *                                      candidate prompt, and its section of the report
+ *                                      the scoring prompt's second round: every labelled answer of
+ *                                      every run scored with the candidates S, T and ST, and its
+ *                                      section of the report (the first candidate's rescore, now
+ *                                      dropped, is only read: topics analyze --out its folder)
  *   npm run eval -- topics analyze --out DIR
  *                                      phase B, no API call: docs/1.5.0-topics-report.md, and in the
  *                                      run folder the blind label sheet and the details file; a
@@ -178,6 +180,7 @@ import {
   measuredTopics,
   planTopicsDryRun,
   priorTopicsSpend,
+  startedBefore,
   renderTopicsDryRun,
   scoringCalls,
   type AnswerProblem,
@@ -185,9 +188,10 @@ import {
   type TopicItem,
 } from './lib/topics_measurement';
 import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemCheckRecord, type SetGate } from './lib/topics_checks';
-import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
-import { phaseCParts, renderChangedVerdicts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
+import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type AnswerVerdict, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
+import { phaseCParts, questionSummary, renderChangedVerdicts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
 import { carryRemeasurements, renderRemeasurement, withRemeasurement, type RunForSection } from './lib/topics_remeasure';
+import { ROUND_TWO, renderRoundTwoDryRun, renderRoundTwoSection, roundTwoCalls, type FinalDefects, type PooledRun } from './lib/topics_round2';
 import {
   finalGenerationCalls,
   finalScoringCalls,
@@ -1458,6 +1462,14 @@ async function topicsFolderSpends(except?: string): Promise<{ name: string; spen
   return spends;
 }
 
+/** What the measurement had spent when the run in [dir] was made: the other
+ * run folders started before it. For a report section, so that it reads the
+ * same when it is written again after a later run; the cap before a call
+ * counts every folder. */
+async function spentBefore(dir: string): Promise<number> {
+  return priorTopicsSpend(startedBefore(await topicsFolderSpends(dir), path.basename(dir)));
+}
+
 /** What a topics run folder says about itself (`run.json`): the one topic it
  * measures when it is a re-measurement, so a resume or an analysis of the
  * folder needs no flag and cannot pick the wrong plan. */
@@ -1467,6 +1479,10 @@ interface TopicsRunInfo {
    * the labelled answers of the runs named in [sources]. */
   kind?: 'final' | 'rescore';
   sources?: string[];
+  /** A rescore of the second round (the candidates S, T, ST); absent on the
+   * first candidate's rescore. */
+  round?: number;
+  candidates?: string[];
 }
 
 async function readTopicsRunInfo(dir: string): Promise<TopicsRunInfo | null> {
@@ -1644,7 +1660,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
   // topic, the final configuration, or the candidate's rescoring.
   const info = await readTopicsRunInfo(dir);
   const reportFile = reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT);
-  if (info?.kind === 'rescore') return writeRescoreSection(dir, reportFile);
+  if (info?.kind === 'rescore') return info.round === 2 ? writeRoundTwoSection(dir, reportFile) : writeRescoreSection(dir, reportFile);
   const isFinal = info?.kind === 'final';
   const all = await loadTopicsRun(dir);
   // The final run generates more sets than it labels: the sheet, the details
@@ -1759,7 +1775,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
           runDir,
           generatedAt,
           wallSeconds: wallSeconds(log),
-          priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+          priorSpendUsd: await spentBefore(dir),
           sheet: sheetMeta,
           findings: await findingsOf(path.join(ROOT, 'eval/data/topics/final-findings.md')),
         })
@@ -1769,7 +1785,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
       first,
       generatedAt,
       wallSeconds: wallSeconds(log),
-      priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+      priorSpendUsd: await spentBefore(dir),
       sheet: sheetMeta,
       findings: await findingsOf(path.join(ROOT, `eval/data/topics/remeasure-${only}-findings.md`)),
     });
@@ -1800,7 +1816,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
 
 /** The labelled runs the candidate scores again: the first run and every
  * re-measurement whose sheet is filled, in the folders' order. Read-only. */
-async function rescoreSources(): Promise<{ source: RescoreSource; run: RunForSection; name: string }[]> {
+async function rescoreSources(): Promise<{ source: RescoreSource; run: RunForSection; name: string; final: boolean }[]> {
   const out = path.join(ROOT, 'eval/out');
   let names: string[] = [];
   try {
@@ -1808,18 +1824,20 @@ async function rescoreSources(): Promise<{ source: RescoreSource; run: RunForSec
   } catch {
     // no eval/out
   }
-  const found: { source: RescoreSource; run: RunForSection; name: string }[] = [];
+  const found: { source: RescoreSource; run: RunForSection; name: string; final: boolean }[] = [];
   for (const folder of names) {
     const dir = path.join(out, folder);
     const info = await readTopicsRunInfo(dir);
-    if (info?.kind !== undefined) continue;
+    // A rescore's folder holds no answers of its own.
+    if (info?.kind === 'rescore') continue;
     const run = await loadRunForSection(dir);
     if (run === null || run.labels === null) continue;
     const scoring = await readJsonFile<{ customId: string; answerIds: string[] }[]>(path.join(dir, 'scoring-calls.json'));
     found.push({
       source: { tag: String.fromCharCode(97 + found.length), folder, answers: run.data.answers, scoringCalls: scoring },
       run,
-      name: info?.only ? `${topicById(info.only, true)?.title ?? info.only} re-measurement` : 'First run',
+      name: info?.kind === 'final' ? 'Final configuration' : info?.only ? `${topicById(info.only, true)?.title ?? info.only} re-measurement` : 'First run',
+      final: info?.kind === 'final',
     });
   }
   return found;
@@ -1829,7 +1847,8 @@ async function rescoreSources(): Promise<{ source: RescoreSource; run: RunForSec
  * cap. No API call and no key needed. */
 async function topicsFinalDryRun(which: 'final' | 'rescore'): Promise<void> {
   const ratio = charactersPerToken();
-  const sources = (await rescoreSources()).map((s) => s.source);
+  // The first candidate's rescore covered the runs that were labelled then.
+  const sources = (await rescoreSources()).filter((s) => !s.final).map((s) => s.source);
   const summary = renderFinalDryRun(planFinalDryRun(ratio), rescoreCalls(sources, ratio), sources, priorTopicsSpend(await topicsFolderSpends()), ratio, which);
   console.log(summary.text);
   console.log('');
@@ -1943,9 +1962,18 @@ async function runTopicsFinal(outDir: string | undefined): Promise<void> {
 async function runTopicsRescore(outDir: string | undefined, reportArg: string | undefined): Promise<void> {
   const sources = await rescoreSources();
   if (sources.length === 0) throw new Error('No labelled topics run under eval/out/ to score again.');
-  const { run, prior, rel } = await openKindRun(outDir, 'rescore', { sources: sources.map((s) => s.source.folder) });
-  const calls = rescoreCalls(sources.map((s) => s.source), charactersPerToken());
-  await run.runPlanned(calls.map((c) => c.call), `scoring ${sources.reduce((n, s) => n + s.source.answers.length, 0)} labelled answers with the candidate prompt`);
+  if (outDir !== undefined) {
+    const dir = path.resolve(ROOT, outDir);
+    if ((await exists(path.join(dir, 'records.json'))) && (await readTopicsRunInfo(dir))?.round !== 2) {
+      throw new Error(`${outDir} is the first candidate's rescore, which was dropped: it is not run again (topics analyze --out reads it).`);
+    }
+  }
+  const { run, prior, rel } = await openKindRun(outDir, 'rescore', { round: 2, candidates: ROUND_TWO.map((c) => c.id), sources: sources.map((s) => s.source.folder) });
+  const calls = roundTwoCalls(sources.map((s) => s.source), charactersPerToken());
+  const answers = sources.reduce((n, s) => n + s.source.answers.length, 0);
+  for (const { id, what } of ROUND_TWO) {
+    await run.runPlanned(calls.filter((c) => c.candidate === id).map((c) => c.call), `candidate ${id} (${what}): scoring ${answers} labelled answers`);
+  }
   const ids = new Set(calls.map((c) => c.call.customId));
   const mine = run.records.filter((r) => ids.has(r.customId));
   const failed = mine.filter((r) => r.status !== 'ok' && r.status !== 'skipped_budget').length;
@@ -1960,7 +1988,82 @@ async function runTopicsRescore(outDir: string | undefined, reportArg: string | 
     process.exitCode = 1;
     return;
   }
-  await writeRescoreSection(run.dir, reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT));
+  await writeRoundTwoSection(run.dir, reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT));
+}
+
+/** Every labelled run with the production prompt's stored verdicts and, when
+ * [dir] is a second-round folder, each candidate's; and the defect counts of
+ * the final configuration's questions. Read-only. */
+async function loadPooledRuns(dir: string | null): Promise<{ sources: Awaited<ReturnType<typeof rescoreSources>>; runs: PooledRun[]; defects: FinalDefects; records: MeasureRecord[] }> {
+  const named = dir === null ? undefined : (await readTopicsRunInfo(dir))?.sources;
+  const sources = (await rescoreSources()).filter((s) => named === undefined || named.includes(s.source.folder));
+  const records = dir === null ? [] : await readJsonFile<MeasureRecord[]>(path.join(dir, 'records.json'));
+  const calls = dir === null ? [] : roundTwoCalls(sources.map((s) => s.source), charactersPerToken());
+  const runs: PooledRun[] = sources.map(({ source, run, name }) => {
+    const verdicts: Record<string, ReadonlyMap<string, AnswerVerdict>> = { production: run.verdicts };
+    for (const { id } of dir === null ? [] : ROUND_TWO) {
+      verdicts[id] = scoredAnswers({ records, answers: source.answers, scoringCalls: calls.filter((c) => c.candidate === id && c.source === source.tag).map((c) => ({ customId: c.call.customId, answerIds: c.answerIds })) }).verdicts;
+    }
+    return { name, answers: source.answers, labels: run.labels ?? [], verdicts };
+  });
+  // The defect criterion stays on the final configuration's questions.
+  const defects = new Map<string, { defects: number; afterGate: number }>();
+  const final = sources.find((s) => s.final);
+  if (final) {
+    const labels = new Map((final.run.labels ?? []).map((l) => [l.itemId, l]));
+    const items = final.run.data.items.filter((i) => isLabelledSet(i.topicId, i.set));
+    for (const { topic } of finalTopics()) {
+      const q = questionSummary(topic.id, items, labels);
+      defects.set(topic.id, { defects: q.defects, afterGate: q.afterGate });
+    }
+  }
+  return { sources, runs, defects, records };
+}
+
+/** The second round's calls and estimate, and the production prompt's
+ * pooled criteria as they stand today. No API call and no key needed. */
+async function topicsRescoreDryRun(): Promise<void> {
+  const ratio = charactersPerToken();
+  const { sources, runs, defects } = await loadPooledRuns(null);
+  const summary = renderRoundTwoDryRun(roundTwoCalls(sources.map((s) => s.source), ratio), sources.map((s) => s.source), priorTopicsSpend(await topicsFolderSpends()), ratio, sources.length === 0 ? null : { runs, defects });
+  console.log(summary.text);
+  console.log('');
+  console.log(process.env.ANTHROPIC_API_KEY?.trim() ? 'API key: found in the environment (not shown)' : 'API key: not in the environment (the dry run does not need it; the run does)');
+  if (!summary.withinLimit) process.exitCode = 1;
+}
+
+/** The second round's section of the report and the changed verdicts in
+ * its own folder, from that folder and the labelled runs (read-only). */
+async function writeRoundTwoSection(dir: string, reportFile: string): Promise<void> {
+  const { sources, runs, defects, records } = await loadPooledRuns(dir);
+  const runDir = path.relative(path.join(ROOT, '..'), dir);
+  const changedFile = path.join(dir, 'changed-verdicts.md');
+  if ((await exists(changedFile)) && secondLookHasVerdicts(await readFile(changedFile, 'utf8'))) {
+    console.log("changed-verdicts.md has the owner's verdicts in it: not rewritten.");
+  } else {
+    const perCandidate = ROUND_TWO.flatMap(({ id }) =>
+      sources.map(({ run, name }, i) => ({ name: `Candidate ${id}, ${name}`, items: run.data.items, answers: run.data.answers, labels: run.labels ?? [], production: run.verdicts, candidate: (runs[i] as PooledRun).verdicts[id] ?? new Map() })),
+    );
+    await writeFile(changedFile, renderChangedVerdicts(perCandidate, runDir));
+    console.log('Written in the run folder: changed-verdicts.md.');
+  }
+  const section = renderRoundTwoSection({
+    runs,
+    defects,
+    generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+    runDir,
+    calls: records.length,
+    failed: records.filter((r) => r.status !== 'ok').length,
+    spendUsd: records.reduce((n, r) => n + r.costUsd, 0),
+    priorSpendUsd: await spentBefore(dir),
+  });
+  const leaks = sources.flatMap(({ run }) => contentLeaks(section, run.data.items, run.data.answers));
+  if (leaks.length > 0) throw new Error(`The section would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
+  const envKey = process.env.ANTHROPIC_API_KEY?.trim();
+  if (envKey && section.includes(envKey)) throw new Error('refusing to write a file that contains the API key');
+  if (!(await exists(reportFile))) throw new Error(`${path.relative(ROOT, reportFile)} is not there: analyse the first run first.`);
+  await writeFile(reportFile, withRemeasurement(await readFile(reportFile, 'utf8'), 'second', section));
+  console.log(`Written: the "scoring prompt, second round" section of ${path.relative(path.join(ROOT, '..'), reportFile)} (${section.split('\n').length} lines).`);
 }
 
 /** The rescore's section of the report, from its folder and the sources'
@@ -1968,7 +2071,10 @@ async function runTopicsRescore(outDir: string | undefined, reportArg: string | 
 /** The earlier labelled runs with the candidate's verdicts from a rescore
  * folder. Read-only. */
 async function loadRescoredRuns(dir: string): Promise<{ sources: Awaited<ReturnType<typeof rescoreSources>>; runs: RescoredRun[]; records: MeasureRecord[] }> {
-  const sources = await rescoreSources();
+  // The runs this rescore scored, as its `run.json` names them: a run that
+  // was labelled later is not one of them.
+  const named = (await readTopicsRunInfo(dir))?.sources;
+  const sources = (await rescoreSources()).filter((s) => named === undefined || named.includes(s.source.folder));
   const records = await readJsonFile<MeasureRecord[]>(path.join(dir, 'records.json'));
   const calls = rescoreCalls(sources.map((s) => s.source), charactersPerToken());
   const runs: RescoredRun[] = sources.map(({ source, run, name }) => ({
@@ -1991,7 +2097,10 @@ async function latestRescoreDir(): Promise<string | null> {
     // no eval/out
   }
   for (const name of names.reverse()) {
-    if ((await readTopicsRunInfo(path.join(out, name)))?.kind === 'rescore' && (await exists(path.join(out, name, 'records.json')))) return path.join(out, name);
+    // The second round's folder has the same prefix and kind; it holds three
+    // candidates' verdicts and is not the first candidate's rescore.
+    const info = await readTopicsRunInfo(path.join(out, name));
+    if (info?.kind === 'rescore' && info.round !== 2 && (await exists(path.join(out, name, 'records.json')))) return path.join(out, name);
   }
   return null;
 }
@@ -2014,7 +2123,7 @@ async function writeRescoreSection(dir: string, reportFile: string): Promise<voi
     calls: records.length,
     failed: records.filter((r) => r.status !== 'ok').length,
     spendUsd: records.reduce((n, r) => n + r.costUsd, 0),
-    priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+    priorSpendUsd: await spentBefore(dir),
   });
   const leaks = sources.flatMap(({ run }) => contentLeaks(section, run.data.items, run.data.answers));
   if (leaks.length > 0) throw new Error(`The section would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
@@ -2043,7 +2152,7 @@ async function main(): Promise<void> {
   if (onlyIndex >= 0 && (only === undefined || only.startsWith('--'))) throw new Error('--only needs a topic id, e.g. --only conditionals.');
   const reportOption = rest.indexOf('--report') >= 0 ? rest[rest.indexOf('--report') + 1] : undefined;
   if (command === 'topics' && rest[0] === 'final') return rest.includes('--dry-run') ? topicsFinalDryRun('final') : rest.includes('run') ? runTopicsFinal(out) : Promise.reject(new Error('Usage: topics final --dry-run | topics final run [--out DIR]'));
-  if (command === 'topics' && rest[0] === 'rescore') return rest.includes('--dry-run') ? topicsFinalDryRun('rescore') : runTopicsRescore(out, reportOption);
+  if (command === 'topics' && rest[0] === 'rescore') return rest.includes('--dry-run') ? topicsRescoreDryRun() : runTopicsRescore(out, reportOption);
   if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun(only);
   const reportIndex = rest.indexOf('--report');
   if (command === 'topics' && rest.includes('analyze')) return topicsAnalyze(out, rest.includes('--rebuild-sheet'), reportIndex >= 0 ? rest[reportIndex + 1] : undefined);

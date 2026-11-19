@@ -289,6 +289,7 @@ export function withoutRemeasurements(report: string): string {
 export function laterSectionName(id: string): string {
   if (id === 'final') return 'Final configuration';
   if (id === 'rescore') return 'The scoring prompt candidate on the labelled answers';
+  if (id === 'second') return 'The scoring prompt, second round';
   return `Re-measurement: ${title(id)}`;
 }
 

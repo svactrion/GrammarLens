@@ -1,4 +1,4 @@
-import { CANDIDATE_SCORING, PRODUCTION_PRACTICE, buildGeneratePracticeSetBodyFor, buildScoreAnswersBodyFor, practiceThemeLine, type AnthropicRequestBody } from '../../src/anthropic';
+import { CANDIDATE_SCORING, PRODUCTION_PRACTICE, buildGeneratePracticeSetBodyFor, buildScoreAnswersBodyFor, practiceThemeLine, type AnthropicRequestBody, type ScoringVariant } from '../../src/anthropic';
 import { filterPracticeSet } from '../../src/practice_filter';
 import { practiceTheme } from '../../src/practice_theme';
 import { FIRST_WAVE_TOPICS, TOPICS, topicById, type TopicInfo } from '../../src/topics';
@@ -170,16 +170,18 @@ export interface RescoreCall {
  * answers in the same order, so the scoring prompt is the only difference
  * from the stored verdicts.
  */
-export function rescoreCalls(sources: readonly RescoreSource[], ratio?: number): RescoreCall[] {
+export function rescoreCalls(sources: readonly RescoreSource[], ratio?: number, variant: ScoringVariant = CANDIDATE_SCORING, prefix = 'rescore'): RescoreCall[] {
+  // [variant] and [prefix]: the same calls for another candidate (the
+  // second round's S, T and ST), under ids of their own.
   const calls: RescoreCall[] = [];
   for (const source of sources) {
     const byId = new Map(source.answers.map((a) => [a.id, a]));
     for (const original of source.scoringCalls) {
       const group = original.answerIds.map((id) => byId.get(id)).filter((a): a is TopicAnswer => a !== undefined);
       if (group.length === 0) continue;
-      const body = buildScoreAnswersBodyFor(validateScoreAnswers(scoringRequest(group)), CANDIDATE_SCORING);
+      const body = buildScoreAnswersBodyFor(validateScoreAnswers(scoringRequest(group)), variant);
       calls.push({
-        call: planned(`rescore_${source.tag}_${original.customId}`, 'scoring', `rescore ${source.tag}`, body, SCORING_OUTPUT_TOKENS_PER_ANSWER * group.length, ratio),
+        call: planned(`${prefix}_${source.tag}_${original.customId}`, 'scoring', `${prefix} ${source.tag}`, body, SCORING_OUTPUT_TOKENS_PER_ANSWER * group.length, ratio),
         source: source.tag,
         answerIds: group.map((a) => a.id),
       });
