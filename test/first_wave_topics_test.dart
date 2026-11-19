@@ -38,15 +38,37 @@ void main() {
     TopicId.comparativesSuperlatives,
   ];
 
-  test('the switch is off', () {
-    expect(kFirstWaveTopicsEnabled, isFalse);
+  test('the switch is on (1.5.0): Topic Practice offers all ten', () {
+    expect(kFirstWaveTopicsEnabled, isTrue);
+    expect(practiceTopics(), [...kTopics, ...kFirstWaveTopics]);
+    expect(practiceTopics(), hasLength(10));
   });
 
   test('flag off: Topic Practice offers the five, as before', () {
-    expect(practiceTopics(), kTopics);
+    expect(practiceTopics(firstWave: false), kTopics);
     expect(practiceTopics(firstWave: false).map((t) => t.id),
         isNot(contains(TopicId.conditionals)));
-    expect(kTopics.map((t) => t.id), isNot(contains(TopicId.conditionals)));
+  });
+
+  test('the Daily Test keeps its five topics', () {
+    expect(kTopics.map((t) => t.id), [
+      TopicId.gerundVsInfinitive,
+      TopicId.modalVerbs,
+      TopicId.modalPastForms,
+      TopicId.tenseSelection,
+      TopicId.articles,
+    ]);
+    for (final id in firstWave) {
+      expect(kTopics.map((t) => t.id), isNot(contains(id)));
+    }
+  });
+
+  test('a stored weak spot finds its topic, a first-wave one included', () {
+    for (final t in [...kTopics, ...kFirstWaveTopics]) {
+      expect(topicOfWeakSpot(t.id.name), t);
+    }
+    // A name this version does not know: the first topic, as before.
+    expect(topicOfWeakSpot('phrasalVerbs'), kTopics.first);
   });
 
   test('flag on: the five plus the first wave, each fully described', () {

@@ -7,8 +7,9 @@ enum TopicId {
   tenseSelection,
   articles,
 
-  // The first-wave practice topics (UI polish SPEC §1.11): in the code,
-  // switched off ([kFirstWaveTopicsEnabled]); never in the Daily Test.
+  // The first-wave practice topics (UI polish SPEC §1.11): in Topic
+  // Practice since 1.5.0 ([kFirstWaveTopicsEnabled]); never in the Daily
+  // Test.
   conditionals,
   passiveVoice,
   prepositions,

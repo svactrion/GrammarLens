@@ -15,6 +15,7 @@ import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/topic.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
@@ -1128,7 +1129,7 @@ void main() {
                   .firstWhere((t) => t.id.name == 'modalVerbs')
                   .title(en))),
           findsOneWidget);
-      final unlock = find.text('Unlock all ${kTopics.length} topics');
+      final unlock = find.text('Unlock all ${practiceTopics().length} topics');
       await tester.ensureVisible(unlock);
       await tester.pumpAndSettle();
       await tester.tap(unlock);
@@ -1137,8 +1138,21 @@ void main() {
       expect(find.byType(TopicPracticeScreen), findsNothing);
     });
 
-    // Fix round 5, item 4: the paywall from a Home topic card closes only
-    // with its X (the iOS edge swipe used to close it).
+    // 1.5.0: a weak spot in a first-wave topic picks that topic, not the
+    // first one (the lookup knew only the Daily Test's five).
+    testWidgets('a free user: a weak spot in a new topic is "Picked for you"',
+        (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()
+            ..weakSpots = [_weakSpot(topicId: 'prepositions')]);
+      final showcase = find.byType(TopicShowcase);
+      expect(tester.widget<TopicShowcase>(showcase).picked?.id,
+          TopicId.prepositions);
+      expect(find.descendant(of: showcase, matching: find.text('Prepositions')),
+          findsOneWidget);
+      expect(find.text('Unlock all 10 topics'), findsOneWidget);
+    });
+
     testWidgets(
         'v13: the paywall from a Home topic card stays on a swipe, a drag '
         'down and a system back; X → V13b once', (tester) async {
@@ -1148,7 +1162,7 @@ void main() {
               _FakeSubscriptionService(offering: _restOffering()),
           storageService: _FakeStorageService()
             ..weakSpots = [_weakSpot(topicId: 'modalVerbs')]);
-      final unlock = find.text('Unlock all ${kTopics.length} topics');
+      final unlock = find.text('Unlock all ${practiceTopics().length} topics');
       await tester.ensureVisible(unlock);
       await tester.pumpAndSettle();
       await tester.tap(unlock);

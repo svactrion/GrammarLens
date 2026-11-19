@@ -309,10 +309,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (order != null) await _changeSortOrder(order);
   }
 
-  Topic _topicOf(WeakSpot spot) => kTopics.firstWhere(
-        (t) => t.id.name == spot.topicId,
-        orElse: () => kTopics.first,
-      );
+  Topic _topicOf(WeakSpot spot) => topicOfWeakSpot(spot.topicId);
 
   /// "Practice with my ticket" (V16 → V16b): the ticket tears, then the
   /// weak spot's practice starts through `launchPracticeSet` (the AI
@@ -357,10 +354,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _openWeakSpot(WeakSpot spot) async {
     if (_opening) return;
     _opening = true;
-    final topic = kTopics.firstWhere(
-      (t) => t.id.name == spot.topicId,
-      orElse: () => kTopics.first,
-    );
+    final topic = topicOfWeakSpot(spot.topicId);
     try {
       await Navigator.of(context).push(
         MaterialPageRoute(

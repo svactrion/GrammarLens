@@ -44,9 +44,12 @@ class TopicShowcase extends StatelessWidget {
     final c = AppColors.of(context);
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final picked = this.picked ?? kTopics.first;
+    // Every topic Topic Practice offers, the first-wave ones included
+    // (the row scrolls sideways).
+    final topics = practiceTopics();
+    final picked = this.picked ?? topics.first;
     final others = [
-      for (final t in kTopics)
+      for (final t in topics)
         if (t.id != picked.id) t
     ];
     return Container(

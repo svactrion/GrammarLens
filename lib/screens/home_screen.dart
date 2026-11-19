@@ -1210,10 +1210,7 @@ class _HomeScreenState extends State<HomeScreen>
       _openPremium(context, sourceContext: humanizeSlug(spot.errorType));
       return;
     }
-    final topic = kTopics.firstWhere(
-      (t) => t.id.name == spot.topicId,
-      orElse: () => kTopics.first,
-    );
+    final topic = topicOfWeakSpot(spot.topicId);
     Navigator.of(context)
         .push(
           MaterialPageRoute(
@@ -1275,8 +1272,7 @@ class _HomeScreenState extends State<HomeScreen>
       _openTopicPractice(context, afterPurchase: true);
       return;
     }
-    final topic = kTopics.firstWhere((t) => t.id.name == spot.topicId,
-        orElse: () => kTopics.first);
+    final topic = topicOfWeakSpot(spot.topicId);
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => WeakSpotDetailScreen(
@@ -1443,10 +1439,8 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitClimbWindow());
 
     final steps = _climbSteps;
-    final topic = _weakSpots.isEmpty
-        ? null
-        : kTopics.firstWhere((t) => t.id.name == _weakSpots.first.topicId,
-            orElse: () => kTopics.first);
+    final topic =
+        _weakSpots.isEmpty ? null : topicOfWeakSpot(_weakSpots.first.topicId);
     final ticketUsed = _freeUsedToday >= StorageService.freeDailyPracticeLimit;
 
     // 1.2.0 Home, UI polish V14 / V15: the brand with the score capsule,
