@@ -35,7 +35,7 @@ import {
   type RescoreSource,
 } from '../eval/lib/topics_final';
 import { answersId, builtAnswersFrom, generationId, placeholderAnswers, placeholderItems, priorTopicsSpend, scoringCalls, startedBefore, type TopicAnswer } from '../eval/lib/topics_measurement';
-import { laterSectionName, remeasurementBlocks, withRemeasurement, withoutRemeasurements } from '../eval/lib/topics_remeasure';
+import { DECISION_SECTION, laterSectionName, remeasurementBlocks, withRemeasurement, withoutRemeasurements } from '../eval/lib/topics_remeasure';
 import { ROUND_TWO, changedAgainstProduction, pooled, renderPooledCriteria, renderRoundTwoDryRun, renderRoundTwoSection, roundTwoCalls, type PooledRun } from '../eval/lib/topics_round2';
 import { LETTERS, buildTopicSheet, readTopicLabels, topicsOf, type QuestionLabel } from '../eval/lib/topics_sheet';
 import { parseCsv } from '../eval/lib/labels';
@@ -342,6 +342,22 @@ describe('the later sections of the report', () => {
     expect(again).toContain('B2.');
     expect(again).not.toContain('\nB.\n');
     expect(remeasurementBlocks(again).map((b) => b.topicId).sort()).toEqual(['conditionals', 'final', 'rescore']);
+  });
+
+  it('the closing Decision section stays last and is named apart, whatever is written after it', () => {
+    expect(laterSectionName(DECISION_SECTION)).toBe('Decision');
+    const first = '# Report\n\n**Status: measured.** Text.\n\n## 0. A section\n\nBody.\n';
+    let report = withRemeasurement(first, 'final', '# Final configuration\n\nC.');
+    report = withRemeasurement(report, DECISION_SECTION, '# Decision\n\nThe owner decided.');
+    // A measured section written again, and a new one, both after the decision was written.
+    report = withRemeasurement(report, 'final', '# Final configuration\n\nC2.');
+    report = withRemeasurement(report, 'second', '# The scoring prompt, second round\n\nD.');
+    expect(remeasurementBlocks(report).map((b) => b.topicId)).toEqual(['final', 'second', DECISION_SECTION]);
+    expect(report.trimEnd().endsWith('The owner decided.\n<!-- topics-remeasurement:decision:end -->')).toBe(true);
+    expect(report).toContain('**Measured again after this run: see "Final configuration", "The scoring prompt, second round" at the end of this report.**');
+    expect(report).toContain('**What was decided with these results: "Decision", the last section of this report.**');
+    expect(report).not.toContain('see "Decision"');
+    expect(withoutRemeasurements(report)).toBe(first);
   });
 
   it('a section counts the spend of the runs started before its own, so a later run does not change it', () => {

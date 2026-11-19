@@ -284,19 +284,29 @@ export function withoutRemeasurements(report: string): string {
   return `${report.replace(BLOCK, '').replace(pointer, '').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
 }
 
+/** The id of the report's closing section: the owner's decision (phase D of
+ * docs/TOPICS.md). It is written by hand, kept by every later write of the
+ * report like the measured sections, and always stands last. */
+export const DECISION_SECTION = 'decision';
+
 /** The heading of a later section, by its id: a re-measured topic's id, or
  * one of the two sections of the final configuration. */
 export function laterSectionName(id: string): string {
+  if (id === DECISION_SECTION) return 'Decision';
   if (id === 'final') return 'Final configuration';
   if (id === 'rescore') return 'The scoring prompt candidate on the labelled answers';
   if (id === 'second') return 'The scoring prompt, second round';
   return `Re-measurement: ${title(id)}`;
 }
 
-function assemble(base: string, blocks: readonly { topicId: string; text: string }[]): string {
-  if (blocks.length === 0) return base;
-  const names = blocks.map((b) => `"${laterSectionName(b.topicId)}"`);
-  const pointer = `${POINTER_START}\n**Measured again after this run: see ${names.join(', ')} at the end of this report.** A later section is the result that counts for what it measures again; the rows of the first run below are kept as they were measured.\n${POINTER_END}`;
+function assemble(base: string, all: readonly { topicId: string; text: string }[]): string {
+  if (all.length === 0) return base;
+  // The measured sections in the order they were written; the decision last.
+  const measured = all.filter((b) => b.topicId !== DECISION_SECTION);
+  const decision = all.filter((b) => b.topicId === DECISION_SECTION);
+  const blocks = [...measured, ...decision];
+  const names = measured.map((b) => `"${laterSectionName(b.topicId)}"`);
+  const pointer = `${POINTER_START}\n${measured.length > 0 ? `**Measured again after this run: see ${names.join(', ')} at the end of this report.** A later section is the result that counts for what it measures again; the rows of the first run below are kept as they were measured.` : ''}${decision.length > 0 ? `${measured.length > 0 ? ' ' : ''}**What was decided with these results: "${laterSectionName(DECISION_SECTION)}", the last section of this report.**` : ''}\n${POINTER_END}`;
   const lines = base.trimEnd().split('\n');
   const status = lines.findIndex((line) => line.startsWith('**Status:'));
   const withPointer = status < 0 ? [pointer, '', ...lines] : [...lines.slice(0, status + 1), '', pointer, ...lines.slice(status + 1)];
