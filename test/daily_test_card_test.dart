@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/motion.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:grammar_lens/widgets/daily_test_card.dart';
@@ -106,6 +107,52 @@ void main() {
     expect(view.hopping, isTrue);
     expect(find.text('Start today’s test'), findsOneWidget);
     expect(find.byType(ScoreRing), findsNothing);
+  });
+
+  // Fix round 6, item 2: the owner saw the companion move "as if
+  // breathing". Measured (here and on the simulator): the hop is drawn as
+  // specified, so nothing was changed; this holds it there.
+  testWidgets(
+      'todo after loading: the companion hops 16 pt every 1.2 s (X05, '
+      'gl-hop), not the idle breath', (tester) async {
+    AppMotion.loopsEnabled = true;
+    addTearDown(() => AppMotion.loopsEnabled = false);
+    Widget card(DailyTestCardState state) => MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Scaffold(
+            body: Column(children: [
+          DailyTestCard(
+              state: state,
+              hero: Avatar.fox,
+              title: 'Your next step.',
+              subtitle: '5 questions · about 2 minutes',
+              results: const [],
+              buttonLabel: 'Start today’s test',
+              onPressed: () {}),
+        ])));
+    // As on Home: the card is loading first, then the test waits.
+    await tester.pumpWidget(card(DailyTestCardState.loading));
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pumpWidget(card(DailyTestCardState.todo));
+    double lift() => -tester
+        .widget<Transform>(find.byKey(CompanionView.bodyKey))
+        .transform
+        .getTranslation()
+        .y;
+    final lifts = <double>[];
+    for (var ms = 0; ms < 2400; ms += 20) {
+      await tester.pump(const Duration(milliseconds: 20));
+      lifts.add(lift());
+    }
+    final first = lifts.sublist(0, 60), second = lifts.sublist(60);
+    for (final hop in [first, second]) {
+      expect(hop.reduce((a, b) => a > b ? a : b), closeTo(16, .3));
+      // In the air for the first half, still on the ground for the rest.
+      expect(hop.sublist(1, 28).every((y) => y > 0), isTrue);
+      expect(hop.sublist(31, 59).every((y) => y == 0), isTrue);
+    }
+    // The slot does not clip it: the companion draws above its 100 pt box.
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('done: the score ring 4/5 and Review answers', (tester) async {
