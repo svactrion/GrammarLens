@@ -186,7 +186,7 @@ import {
 } from './lib/topics_measurement';
 import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemCheckRecord, type SetGate } from './lib/topics_checks';
 import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
-import { phaseCParts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
+import { phaseCParts, renderChangedVerdicts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
 import { carryRemeasurements, renderRemeasurement, withRemeasurement, type RunForSection } from './lib/topics_remeasure';
 import {
   finalGenerationCalls,
@@ -1704,6 +1704,9 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
 
   // The details file: derived, rewritten every time.
   const scored = scoredAnswers(data);
+  // The final run scored every answer twice: the candidate's verdicts.
+  const candidateCallsFile = path.join(dir, 'scoring-calls-candidate.json');
+  const candidateVerdicts = isFinal && (await exists(candidateCallsFile)) ? scoredAnswers({ records: all.records, answers: all.answers, scoringCalls: await readJsonFile<{ customId: string; answerIds: string[] }[]>(candidateCallsFile) }).verdicts : undefined;
   await write(path.join(dir, 'private/details.txt'), renderDetails({ ...data, verdicts: scored.verdicts, mapping, runDir: path.relative(path.join(ROOT, '..'), dir) }));
 
   // Phase C, once every row is labelled and nothing is left to fix: the
@@ -1715,8 +1718,17 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
     if ((await exists(secondLookFile)) && secondLookHasVerdicts(await readFile(secondLookFile, 'utf8'))) {
       console.log("second-look.md has the owner's verdicts in it: not rewritten.");
     } else {
-      await write(secondLookFile, renderTopicsSecondLook({ data, labels: sheetState.labels, verdicts: scored.verdicts, mapping, runDir }));
+      await write(secondLookFile, renderTopicsSecondLook({ data, labels: sheetState.labels, verdicts: scored.verdicts, ...(candidateVerdicts ? { candidate: candidateVerdicts } : {}), mapping, runDir }));
       console.log('Written in the run folder: second-look.md.');
+    }
+    if (candidateVerdicts) {
+      const changedFile = path.join(dir, 'changed-verdicts.md');
+      if ((await exists(changedFile)) && secondLookHasVerdicts(await readFile(changedFile, 'utf8'))) {
+        console.log("changed-verdicts.md has the owner's verdicts in it: not rewritten.");
+      } else {
+        await write(changedFile, renderChangedVerdicts([{ name: 'Final configuration', items: data.items, answers: data.answers, labels: sheetState.labels, production: scored.verdicts, candidate: candidateVerdicts }], runDir));
+        console.log('Written in the run folder: changed-verdicts.md.');
+      }
     }
   } else {
     console.log(`The sheet is not complete: the report ${only === undefined ? 'is the phase B report' : 'section is'} without the labels.`);
@@ -1734,13 +1746,14 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
     const firstDir = path.join(ROOT, 'eval/out', TOPICS_FIRST_RUN.folder);
     const first = firstDir === dir ? null : await loadRunForSection(firstDir);
     if (first === null) console.log(`The first run's folder (eval/out/${TOPICS_FIRST_RUN.folder}) is not there: the section has no comparison columns.`);
-    const candidateFile = path.join(dir, 'scoring-calls-candidate.json');
+    const rescoreDir = isFinal ? await latestRescoreDir() : null;
     const section = isFinal
       ? renderFinalSection({
+          ...(rescoreDir ? { earlier: (await loadRescoredRuns(rescoreDir)).runs } : {}),
           data: all,
           guard: await readJsonFile<{ topicId: string; set: number; received: number | null; removed: number; rejected: boolean }[]>(path.join(dir, 'guard.json')),
           production: scored.verdicts,
-          candidate: scoredAnswers({ records: all.records, answers: all.answers, scoringCalls: (await exists(candidateFile)) ? await readJsonFile<{ customId: string; answerIds: string[] }[]>(candidateFile) : [] }).verdicts,
+          candidate: candidateVerdicts ?? new Map(),
           labels: complete ? sheetState.labels : null,
           first: first?.data ?? null,
           runDir,
@@ -1952,7 +1965,9 @@ async function runTopicsRescore(outDir: string | undefined, reportArg: string | 
 
 /** The rescore's section of the report, from its folder and the sources'
  * folders (read-only). Counts and rates only. */
-async function writeRescoreSection(dir: string, reportFile: string): Promise<void> {
+/** The earlier labelled runs with the candidate's verdicts from a rescore
+ * folder. Read-only. */
+async function loadRescoredRuns(dir: string): Promise<{ sources: Awaited<ReturnType<typeof rescoreSources>>; runs: RescoredRun[]; records: MeasureRecord[] }> {
   const sources = await rescoreSources();
   const records = await readJsonFile<MeasureRecord[]>(path.join(dir, 'records.json'));
   const calls = rescoreCalls(sources.map((s) => s.source), charactersPerToken());
@@ -1963,6 +1978,35 @@ async function writeRescoreSection(dir: string, reportFile: string): Promise<voi
     production: run.verdicts,
     candidate: scoredAnswers({ records, answers: source.answers, scoringCalls: calls.filter((c) => c.source === source.tag).map((c) => ({ customId: c.call.customId, answerIds: c.answerIds })) }).verdicts,
   }));
+  return { sources, runs, records };
+}
+
+/** The newest `topics rescore` folder under `eval/out/`, or null. */
+async function latestRescoreDir(): Promise<string | null> {
+  const out = path.join(ROOT, 'eval/out');
+  let names: string[] = [];
+  try {
+    names = (await readdir(out)).filter((n) => n.startsWith('topics-rescore-')).sort();
+  } catch {
+    // no eval/out
+  }
+  for (const name of names.reverse()) {
+    if ((await readTopicsRunInfo(path.join(out, name)))?.kind === 'rescore' && (await exists(path.join(out, name, 'records.json')))) return path.join(out, name);
+  }
+  return null;
+}
+
+async function writeRescoreSection(dir: string, reportFile: string): Promise<void> {
+  const { sources, runs, records } = await loadRescoredRuns(dir);
+  // The answers the two prompts judged differently, for the owner: in the
+  // rescore's own folder, never the repository.
+  const changedFile = path.join(dir, 'changed-verdicts.md');
+  if ((await exists(changedFile)) && secondLookHasVerdicts(await readFile(changedFile, 'utf8'))) {
+    console.log("changed-verdicts.md has the owner's verdicts in it: not rewritten.");
+  } else {
+    await writeFile(changedFile, renderChangedVerdicts(sources.map(({ run, name }, i) => ({ name, items: run.data.items, answers: run.data.answers, labels: run.labels ?? [], production: run.verdicts, candidate: (runs[i] as RescoredRun).candidate })), path.relative(path.join(ROOT, '..'), dir)));
+    console.log('Written in the run folder: changed-verdicts.md.');
+  }
   const section = renderRescoreSection({
     runs,
     generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,

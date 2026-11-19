@@ -4,6 +4,7 @@ import { contentLeaks, renderTopicsReport, scoredAnswers, type TopicsRunData } f
 import { checkItems, gateSet } from '../eval/lib/topics_checks';
 import {
   PASS_CRITERIA,
+  changedVerdicts,
   checksWorth,
   labelledMetrics,
   labelledTruth,
@@ -11,6 +12,7 @@ import {
   passCriteria,
   phaseCParts,
   questionSummary,
+  renderChangedVerdicts,
   renderTopicsSecondLook,
   scorerDisagreements,
   secondLookHasVerdicts,
@@ -433,5 +435,48 @@ describe('topics labels: the second-look file', () => {
   it('a blank in an answer or a note stays a run of underscores in the rendered file', () => {
     const blanked = renderTopicsSecondLook({ data, labels: labels.map((l) => (l.itemId === 'articles.1.3' ? { ...l, note: 'multi: the ____ may take *either*' } : l)), verdicts, mapping, runDir: 'x' });
     expect(blanked).toContain('multi: the \\_\\_\\_\\_ may take \\*either\\*');
+  });
+});
+
+describe('topics labels: two scoring prompts, answer by answer', () => {
+  // The production prompt rejects every second answer of the control; the
+  // candidate accepts them but calls one Conditionals mistake correct.
+  const data = run((a) => a.kind === 'variant' && a.topicId === 'articles');
+  const production = scoredAnswers(data).verdicts;
+  const slip = data.answers.find((a) => a.itemId === 'conditionals.1.0' && a.kind === 'mistake1') as TopicAnswer;
+  const candidate = new Map([...production].map(([id, v]) => [id, { ...v, isCorrect: id === slip.id ? true : (data.answers.find((a) => a.id === id) as TopicAnswer).truth, explanation: `candidate on ${id}` }]));
+  const { labels, mapping } = labelled(data, { 'articles.1.2': { answers: { variant: 'wrong' } }, 'articles.1.3': { answers: { variant: 'unsure' } } });
+  const one = { name: 'Final configuration', items: data.items, answers: data.answers, labels, production, candidate };
+
+  it('groups the changed verdicts by what the label says', () => {
+    const c = changedVerdicts(one);
+    const names = (list: readonly TopicAnswer[]) => list.map((a) => `${a.itemId}:${a.kind}`).sort();
+    // The candidate accepts the second answer of 1.4 (labelled right): it is right, the production prompt is not.
+    expect(names(c.candidateRight)).toEqual(['articles.1.4:variant']);
+    // It accepts the second answer the labels call wrong, and the Conditionals mistake.
+    expect(names(c.candidateWrong)).toEqual(['articles.1.2:variant', 'conditionals.1.0:mistake1']);
+    expect(names(c.unsure)).toEqual(['articles.1.3:variant']);
+  });
+
+  it('the file for the owner: every changed answer with the question, the label and both prompts\' words', () => {
+    const text = renderChangedVerdicts([one], 'proxy/eval/out/topics-final-test');
+    expect(text).toContain('## Final configuration: the candidate is right by the label, the production prompt is not (1)');
+    expect(text).toContain('## Final configuration: the production prompt is right by the label, the candidate is not (2)');
+    expect(text).toContain('## Final configuration: the prompts differ on an answer labelled unsure (1)');
+    expect(text).toContain('### conditionals.1.0 (Conditionals, Write a sentence)');
+    expect(text).toContain(`- **Production prompt:** needs work — explanation for ${slip.id} *Corrected:* corrected ${slip.id}`);
+    expect(text).toContain(`- **Candidate prompt:** correct — candidate on ${slip.id} *Corrected:* corrected ${slip.id}`);
+    expect(text.match(/^- \*\*Owner:\*\*$/gm)?.length).toBe(4);
+    // An answer both prompts judged alike is not in it.
+    expect(text).not.toContain('### conditionals.1.2');
+  });
+
+  it('the second-look file shows both prompts on each entry when the run scored twice', () => {
+    const both = renderTopicsSecondLook({ data, labels, verdicts: production, candidate, mapping, runDir: 'x' });
+    expect(both).toContain('- **Scorer, production prompt:** needs work — ');
+    expect(both).toContain('- **Scorer, candidate prompt:** correct — candidate on ');
+    const single = renderTopicsSecondLook({ data, labels, verdicts: production, mapping, runDir: 'x' });
+    expect(single).toContain('- **Scorer:** needs work — ');
+    expect(single).not.toContain('candidate prompt');
   });
 });

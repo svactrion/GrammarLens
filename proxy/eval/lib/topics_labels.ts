@@ -489,6 +489,9 @@ export interface SecondLookInput {
   data: TopicsRunData;
   labels: readonly QuestionLabel[];
   verdicts: ReadonlyMap<string, AnswerVerdict>;
+  /** The scoring prompt candidate's verdicts, when the run scored every
+   * answer twice: each entry then shows both. */
+  candidate?: ReadonlyMap<string, AnswerVerdict>;
   mapping: SheetMapping;
   runDir: string;
 }
@@ -539,10 +542,9 @@ export function renderTopicsSecondLook(input: SecondLookInput): string {
     ...(item.hint === undefined ? [] : [`(hint: ${item.hint})`]),
     '```',
   ];
-  const scorerLine = (a: TopicAnswer) => {
-    const v = verdicts.get(a.id);
-    return v === undefined ? 'not scored' : `${v.isCorrect ? 'correct' : 'needs work'} — ${md(v.explanation)} *Corrected:* ${md(v.correctedAnswer)}`;
-  };
+  const lineOf = (v: AnswerVerdict | undefined) => (v === undefined ? 'not scored' : `${v.isCorrect ? 'correct' : 'needs work'} — ${md(v.explanation)} *Corrected:* ${md(v.correctedAnswer)}`);
+  const scorerLine = (a: TopicAnswer) => lineOf(verdicts.get(a.id));
+  const candidateLines = (a: TopicAnswer) => (input.candidate ? [`- **Scorer, candidate prompt:** ${lineOf(input.candidate.get(a.id))}`] : []);
   const noteLine = (label: QuestionLabel | undefined) =>
     `- **Label's note on the question:** ${label?.note ? md(label.note) : '(none)'}${label && label.alsoAccept.length > 0 ? ` *Also accept:* ${label.alsoAccept.map(md).join(' · ')}` : ''}`;
   const answerEntry = (a: TopicAnswer): string[] => {
@@ -558,7 +560,8 @@ export function renderTopicsSecondLook(input: SecondLookInput): string {
       `- **Built as:** ${KIND_NAMES[a.kind]}${a.breaks ? ` (breaks: ${md(a.breaks)})` : ''}`,
       `- **Labelled:** ${truth.get(a.id) ?? 'no label'}${label?.verdict === 'defect' ? ' (the question is labelled defect)' : ''}`,
       noteLine(label),
-      `- **Scorer:** ${scorerLine(a)}`,
+      `- **Scorer${input.candidate ? ', production prompt' : ''}:** ${scorerLine(a)}`,
+      ...candidateLines(a),
       '- **Owner:**',
       '',
     ];
@@ -607,4 +610,80 @@ export function renderTopicsSecondLook(input: SecondLookInput): string {
  * never rewritten. */
 export function secondLookHasVerdicts(text: string): boolean {
   return text.split(/\r?\n/).some((line) => /^- \*\*Owner:\*\*\s*\S/.test(line));
+}
+
+// ---------------------------------------------------------------------------
+// The two scoring prompts, answer by answer (run folder only)
+
+export interface ChangedVerdictsRun {
+  name: string;
+  items: readonly TopicItem[];
+  answers: readonly TopicAnswer[];
+  labels: readonly QuestionLabel[];
+  production: ReadonlyMap<string, AnswerVerdict>;
+  candidate: ReadonlyMap<string, AnswerVerdict>;
+}
+
+/** The answers the two prompts judged differently, by what the label says. */
+export function changedVerdicts(run: ChangedVerdictsRun): { candidateRight: TopicAnswer[]; candidateWrong: TopicAnswer[]; unsure: TopicAnswer[] } {
+  const truth = labelledTruth(run.labels);
+  const changed = run.answers.filter((a) => run.production.has(a.id) && run.candidate.has(a.id) && run.production.get(a.id)?.isCorrect !== run.candidate.get(a.id)?.isCorrect);
+  const right = (a: TopicAnswer) => run.candidate.get(a.id)?.isCorrect === (truth.get(a.id) === 'right');
+  const decided = changed.filter((a) => truth.get(a.id) === 'right' || truth.get(a.id) === 'wrong');
+  return { candidateRight: decided.filter(right), candidateWrong: decided.filter((a) => !right(a)), unsure: changed.filter((a) => !decided.includes(a)) };
+}
+
+/**
+ * Every answer on which the production scoring prompt and the candidate
+ * gave different verdicts, with the question, the answer, the label and
+ * what each prompt said: what the owner reads to decide about the
+ * candidate. Holds questions and answers: for a run folder, never the
+ * repository.
+ */
+export function renderChangedVerdicts(runs: readonly ChangedVerdictsRun[], runDir: string): string {
+  const out: string[] = [
+    '# The two scoring prompts, answer by answer',
+    '',
+    `From \`${runDir}\`. No API call: the stored verdicts of the production scoring prompt and of the candidate on the same built answers, and the labels. Every answer the two prompts judged differently is here; an answer they judged alike is not. This file holds questions and answers and stays in the run folder, outside the repository.`,
+    '',
+  ];
+  for (const run of runs) {
+    const items = new Map(run.items.map((i) => [i.id, i]));
+    const labels = new Map(run.labels.map((l) => [l.itemId, l]));
+    const truth = labelledTruth(run.labels);
+    const line = (v: AnswerVerdict | undefined) => (v === undefined ? 'not scored' : `${v.isCorrect ? 'correct' : 'needs work'} — ${md(v.explanation)} *Corrected:* ${md(v.correctedAnswer)}`);
+    const entry = (a: TopicAnswer): string[] => {
+      const item = items.get(a.itemId);
+      const label = labels.get(a.itemId);
+      return [
+        `### ${a.itemId} (${title(a.topicId)}${item ? `, ${TYPE_NAMES[item.type]}` : ''})`,
+        '',
+        '```text',
+        ...(item?.context === undefined ? [] : [item.context]),
+        item?.instruction ?? '',
+        '```',
+        '',
+        `- **Answer:** ${md(a.userAnswer)}`,
+        `- **Built as:** ${KIND_NAMES[a.kind]}${a.breaks ? ` (breaks: ${md(a.breaks)})` : ''}`,
+        `- **Labelled:** ${truth.get(a.id) ?? 'no label'}${label?.note ? `. Note on the question: ${md(label.note)}` : ''}`,
+        `- **Production prompt:** ${line(run.production.get(a.id))}`,
+        `- **Candidate prompt:** ${line(run.candidate.get(a.id))}`,
+        '- **Owner:**',
+        '',
+      ];
+    };
+    const c = changedVerdicts(run);
+    out.push(
+      `## ${run.name}: the candidate is right by the label, the production prompt is not (${c.candidateRight.length})`,
+      '',
+      ...c.candidateRight.flatMap(entry),
+      `## ${run.name}: the production prompt is right by the label, the candidate is not (${c.candidateWrong.length})`,
+      '',
+      ...c.candidateWrong.flatMap(entry),
+      `## ${run.name}: the prompts differ on an answer labelled unsure (${c.unsure.length})`,
+      '',
+      ...c.unsure.flatMap(entry),
+    );
+  }
+  return `${out.join('\n')}\n`;
 }

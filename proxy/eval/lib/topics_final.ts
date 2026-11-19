@@ -14,6 +14,7 @@ import {
   TOPICS_SPEND_CAP_USD,
   answerWriterCall,
   generationId,
+  normalizeAnswer,
   placeholderAnswers,
   placeholderItems,
   planCost,
@@ -314,6 +315,28 @@ export function comparePrompts(answers: readonly TopicAnswer[], labels: readonly
   return { production: labelledMetrics(both, production, truth, multi), candidate: labelledMetrics(both, candidate, truth, multi), changed, changedToRight, changedToWrong };
 }
 
+/** Two comparisons added up: the same answers never count twice, because
+ * each comes from another run. */
+export function addComparisons(a: PromptComparison, b: PromptComparison): PromptComparison {
+  const sum = (x: LabelledMetrics, y: LabelledMetrics): LabelledMetrics => Object.fromEntries((Object.keys(x) as (keyof LabelledMetrics)[]).map((k) => [k, x[k] + y[k]])) as unknown as LabelledMetrics;
+  return { production: sum(a.production, b.production), candidate: sum(a.candidate, b.candidate), changed: a.changed + b.changed, changedToRight: a.changedToRight + b.changedToRight, changedToWrong: a.changedToWrong + b.changedToWrong };
+}
+
+/**
+ * Answers a prompt marked "needs work" while its corrected answer is the
+ * learner's answer unchanged (case, spacing and the final stop aside), and
+ * how the labels call them: a verdict that contradicts the scorer's own
+ * correction, which a program can see without a model.
+ */
+export function givenBackUnchanged(answers: readonly TopicAnswer[], labels: readonly QuestionLabel[], verdicts: ReadonlyMap<string, AnswerVerdict>): { count: number; labelledRight: number; labelledWrong: number } {
+  const truth = labelledTruth(labels);
+  const hits = answers.filter((a) => {
+    const v = verdicts.get(a.id);
+    return v !== undefined && !v.isCorrect && v.correctedAnswer.trim().length > 0 && normalizeAnswer(v.correctedAnswer) === normalizeAnswer(a.userAnswer);
+  });
+  return { count: hits.length, labelledRight: hits.filter((a) => truth.get(a.id) === 'right').length, labelledWrong: hits.filter((a) => truth.get(a.id) === 'wrong').length };
+}
+
 export interface RescoreSectionInput {
   runs: readonly RescoredRun[];
   generatedAt: string;
@@ -372,6 +395,10 @@ export interface FinalSectionInput {
   /** The first run's data, for the duplicates before the themes; null when
    * its folder is not there. */
   first: TopicsRunData | null;
+  /** The earlier labelled runs with the candidate's verdicts on them (the
+   * rescore), when its folder is there: for the comparison over everything
+   * that is labelled. */
+  earlier?: readonly RescoredRun[];
   runDir: string;
   generatedAt: string;
   wallSeconds: number | null;
@@ -428,14 +455,18 @@ export function renderFinalSection(input: FinalSectionInput): string {
     );
     for (const t of topics) {
       const q = questionSummary(t.topic.id, itemsOf(t.topic.id).filter((i) => isLabelledSet(i.topicId, i.set)), labelsByItem);
-      const p = passCriteria(q, labelledMetrics(answersOf(t.topic.id), input.production, truth, multi));
-      const c = passCriteria(q, labelledMetrics(answersOf(t.topic.id), input.candidate, truth, multi));
+      // Both prompts on the same answers: those each of them gave a verdict for.
+      const both = comparePrompts(answersOf(t.topic.id), input.labels ?? [], input.production, input.candidate);
+      const p = passCriteria(q, both.production);
+      const c = passCriteria(q, both.candidate);
       const all = (x: boolean | null) => (x === null ? '–' : `${x ? '**passes**' : '**fails**'}${t.newTopic ? '' : ' (for reference)'}`);
       push(`| ${label(t)} | ${criterion(p.defects)} | ${criterion(p.agreement)} | ${criterion(c.agreement)} | ${criterion(p.falseCorrect)} | ${criterion(c.falseCorrect)} | ${all(p.pass)} | ${all(c.pass)} |`);
     }
     push(
       '',
       'A question the guard removed is not on the sheet and in no rate: the worker removes it before a learner sees it. A question that the guard left and the measurement\'s own gate still faults is counted apart, as before. The live topics are measured the same way for reference: they ship already.',
+      '',
+      `Both prompts are held to the same answers: those labelled right or wrong that each of them gave a verdict for. ${data.answers.filter((a) => !input.production.has(a.id)).length} of the ${data.answers.length} built answers got no usable verdict from the production prompt and ${data.answers.filter((a) => !input.candidate.has(a.id)).length} none from the candidate (a response that left an item out, or answered under an id that was not asked); they are in no rate.`,
     );
     section('The scorer against the labels, both prompts');
     push('| Topic | Answers compared | Agreement: production → candidate | False "correct" (of wrong): production → candidate | False "needs work" (of right): production → candidate | Verdicts changed (candidate right / wrong by the label) |', '|---|---|---|---|---|---|');
@@ -445,6 +476,39 @@ export function renderFinalSection(input: FinalSectionInput): string {
     };
     for (const t of topics) push(row(label(t), answersOf(t.topic.id)));
     push(row('**The five new topics**', data.answers.filter((a) => topics.find((t) => t.topic.id === a.topicId)?.newTopic)), row('**The five live topics**', data.answers.filter((a) => !topics.find((t) => t.topic.id === a.topicId)?.newTopic)));
+    if (input.earlier && input.earlier.length > 0) {
+      section('Both scoring prompts on everything that is labelled');
+      const finalRun: RescoredRun = { name: 'Final configuration', answers: data.answers, labels: input.labels ?? [], production: input.production, candidate: input.candidate };
+      const runs = [...input.earlier, finalRun];
+      const line = (name: string, c: PromptComparison) =>
+        `| ${name} | ${c.production.compared} | ${arrow(rate(c.production.agree, c.production.compared), rate(c.candidate.agree, c.candidate.compared))} | ${arrow(rate(c.production.falseCorrect, c.production.wrong), rate(c.candidate.falseCorrect, c.candidate.wrong))} | ${arrow(rate(c.production.falseNeedsWork, c.production.right), rate(c.candidate.falseNeedsWork, c.candidate.right))} | ${c.changed} (${c.changedToRight} / ${c.changedToWrong}) |`;
+      const of = (r: RescoredRun, pick: (a: TopicAnswer) => boolean = () => true) => comparePrompts(r.answers.filter(pick), r.labels, r.production, r.candidate);
+      const total = (pick: (a: TopicAnswer) => boolean = () => true) => runs.map((r) => of(r, pick)).reduce(addComparisons);
+      push(
+        `The built answers of every labelled run (${runs.map((r) => `${r.name}: ${r.answers.length}`).join('; ')}), each scored once with each prompt. Same answers, same labels, the same calls: the prompt is the only difference.`,
+        '',
+        '| | Answers compared | Agreement: production → candidate | False "correct" (of wrong): production → candidate | False "needs work" (of right): production → candidate | Verdicts changed (candidate right / wrong by the label) |',
+        '|---|---|---|---|---|---|',
+        ...runs.map((r) => line(r.name, of(r))),
+        line('**Everything labelled**', total()),
+        '',
+        'The same, per topic over all the runs that have it:',
+        '',
+        '| Topic | Answers compared | Agreement: production → candidate | False "correct" (of wrong): production → candidate | False "needs work" (of right): production → candidate | Verdicts changed (candidate right / wrong by the label) |',
+        '|---|---|---|---|---|---|',
+        ...topics.map((t) => line(label(t), total((a) => a.topicId === t.topic.id))),
+      );
+      const all = total();
+      const unchanged = (which: 'production' | 'candidate') => runs.map((r) => givenBackUnchanged(r.answers, r.labels, r[which])).reduce((x, y) => ({ count: x.count + y.count, labelledRight: x.labelledRight + y.labelledRight, labelledWrong: x.labelledWrong + y.labelledWrong }));
+      const p = unchanged('production');
+      const c = unchanged('candidate');
+      push(
+        '',
+        `Of the ${all.changed} answers the two prompts judge differently, the candidate has the label's verdict on ${all.changedToRight} and the production prompt on ${all.changedToWrong}. One scoring per prompt: the scorer is not deterministic (1.4.0: the same prompt gave the same verdict on 98.9 % of answers scored twice), so some of these would differ between two runs of one prompt.`,
+        '',
+        `A verdict that contradicts the scorer's own correction, as a program can see it: an answer marked "needs work" whose corrected answer is the learner's answer unchanged. The production prompt did this on ${p.count} answer${p.count === 1 ? '' : 's'} (${p.labelledRight} labelled right, ${p.labelledWrong} labelled wrong), the candidate on ${c.count} (${c.labelledRight} labelled right, ${c.labelledWrong} labelled wrong), although its second addition forbids exactly that.`,
+      );
+    }
     section('The questions: defects and notes');
     push('| Topic | Questions on the sheet | Faulted by the gate (labelled defect) | Defects after the guard | Defects by `why` | Noted `multi:` | Noted `minor:` |', '|---|---|---|---|---|---|---|');
     for (const t of topics) {

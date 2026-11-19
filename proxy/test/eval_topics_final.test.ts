@@ -10,7 +10,9 @@ import { contentLeaks, type AnswerVerdict, type TopicsRunData } from '../eval/li
 import { checkItems } from '../eval/lib/topics_checks';
 import {
   FINAL_DAY,
+  addComparisons,
   comparePrompts,
+  givenBackUnchanged,
   finalGenerationBody,
   finalGenerationCalls,
   finalScoringCalls,
@@ -338,5 +340,50 @@ describe('the later sections of the report', () => {
     const items = guardedSet('modalVerbs', 1, setOf('articles')).gate.items;
     const sheet = buildTopicSheet(items, []);
     expect(sheet.questionsText).toContain(`${topicById('modalVerbs')?.title}\n  - modal + base verb: no "to", no "-s"`);
+  });
+});
+
+describe('both scoring prompts on everything that is labelled', () => {
+  const m = made();
+  const labels = labelsOf(m.data);
+  const earlier = { name: 'First run', answers: m.data.answers, labels, production: m.production, candidate: m.candidate };
+  const base = { data: m.data, guard: m.guard, production: m.production, candidate: m.candidate, first: null, runDir: 'x', generatedAt: '2026-11-20 09:00 UTC', wallSeconds: 300, priorSpendUsd: 1.09, findings: null, labels, sheet: { questions: 9, answers: 23, labelled: 9, withProblems: 0 } };
+
+  it('adds the runs up: per run, per topic, and everything', () => {
+    const one = comparePrompts(m.data.answers, labels, m.production, m.candidate);
+    const two = addComparisons(one, one);
+    expect(two.production.compared).toBe(2 * one.production.compared);
+    expect([two.changed, two.changedToRight, two.changedToWrong]).toEqual([4, 2, 2]);
+    expect(two.candidate.falseNeedsWork).toBe(2);
+    const text = renderFinalSection({ ...base, earlier: [earlier] });
+    expect(text).toMatch(/## F\d+\. Both scoring prompts on everything that is labelled/);
+    expect(text).toContain('(First run: 23; Final configuration: 23)');
+    expect(text).toContain('| First run | 23 | 95.7 % (22 / 23) → 95.7 % (22 / 23) | 7.1 % (1 / 14) → 0.0 % (0 / 14) | 0.0 % (0 / 9) → 11.1 % (1 / 9) | 2 (1 / 1) |');
+    expect(text).toContain('| **Everything labelled** | 46 | 95.7 % (44 / 46) → 95.7 % (44 / 46) | 7.1 % (2 / 28) → 0.0 % (0 / 28) | 0.0 % (0 / 18) → 11.1 % (2 / 18) | 4 (2 / 2) |');
+    expect(text).toContain('| Conditionals | 20 | 90.0 % (18 / 20) → 100.0 % (20 / 20) |');
+    expect(text).toContain("Of the 4 answers the two prompts judge differently, the candidate has the label's verdict on 2 and the production prompt on 2.");
+    expect(contentLeaks(text, m.data.items, m.data.answers)).toEqual([]);
+    // Without the rescore's folder the section is left out.
+    expect(renderFinalSection(base)).not.toContain('everything that is labelled');
+  });
+
+  it('counts a verdict that contradicts the scorer\'s own correction: "needs work" with the answer given back unchanged', () => {
+    const key = m.data.answers.find((a) => a.kind === 'key' && a.item.type === 'error_correction') as TopicAnswer;
+    const mistake = m.data.answers.find((a) => a.kind === 'mistake1' && a.item.type === 'error_correction') as TopicAnswer;
+    const verdicts = new Map(m.production);
+    verdicts.set(key.id, { answerId: key.id, isCorrect: false, correctedAnswer: ` ${key.userAnswer.toUpperCase()} `, explanation: '' });
+    verdicts.set(mistake.id, { answerId: mistake.id, isCorrect: false, correctedAnswer: 'Something else entirely.', explanation: '' });
+    expect(givenBackUnchanged(m.data.answers, labels, verdicts)).toEqual({ count: 1, labelledRight: 1, labelledWrong: 0 });
+    expect(givenBackUnchanged(m.data.answers, labels, m.production)).toEqual({ count: 0, labelledRight: 0, labelledWrong: 0 });
+  });
+
+  it('holds both prompts to the answers both scored, and says how many got no verdict', () => {
+    const lost = m.data.answers.find((a) => a.topicId === 'conditionals' && a.kind === 'key') as TopicAnswer;
+    const production = new Map(m.production);
+    production.delete(lost.id);
+    const text = renderFinalSection({ ...base, production });
+    // Nine Conditionals answers left on both sides.
+    expect(text).toContain('| Conditionals | 0.0 % (0 / 4): **pass** | 88.9 % (8 / 9): **FAIL** | 100.0 % (9 / 9): **pass** |');
+    expect(text).toContain('1 of the 23 built answers got no usable verdict from the production prompt and 0 none from the candidate');
   });
 });
