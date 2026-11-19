@@ -115,12 +115,14 @@ describe('the generation note', () => {
     expect(dartHints).toContain("'If + had + p.p., would have + p.p.: past',");
   });
 
-  it('the route still refuses the first-wave ids: the switch is off', () => {
-    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(false);
+  it('the route accepts the first-wave ids: the switch is on (phase D), and the request carries the topic line', () => {
+    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(true);
     for (const topic of FIRST_WAVE_TOPICS) {
-      expect(isKnownTopicId(topic.id)).toBe(false);
-      expect(() => validateGeneratePracticeSet({ deviceId: 'device', topicId: topic.id, count: 5 })).toThrow('not a recognized topic id');
-      expect(() => buildBody({ op: 'generate_practice_set', request: { deviceId: 'device', topicId: topic.id, count: 5 } })).toThrow('Unknown topicId.');
+      expect(isKnownTopicId(topic.id)).toBe(true);
+      expect(validateGeneratePracticeSet({ deviceId: 'device', topicId: topic.id, count: 5 })).toEqual({ deviceId: 'device', topicId: topic.id, count: 5 });
+      const body = buildBody({ op: 'generate_practice_set', request: { deviceId: 'device', topicId: topic.id, count: 5 } });
+      expect(body.messages[0]?.content.startsWith(`Topic: "${topic.title}" — ${topic.description}`)).toBe(true);
     }
+    expect(() => validateGeneratePracticeSet({ deviceId: 'device', topicId: 'notATopic', count: 5 })).toThrow('not a recognized topic id');
   });
 });

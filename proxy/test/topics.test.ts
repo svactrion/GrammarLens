@@ -7,8 +7,9 @@ import {
   topicById,
 } from '../src/topics';
 
-// UI polish SPEC §1.11: the first-wave practice topics are written but
-// switched off; the Daily Test keeps the five.
+// UI polish SPEC §1.11, switched on for 1.5.0 (docs/TOPICS.md phase D): the
+// first-wave practice topics are known to the practice route; the Daily
+// Test keeps the five.
 describe('first-wave topics', () => {
   const ids = FIRST_WAVE_TOPICS.map((t) => t.id);
 
@@ -29,20 +30,24 @@ describe('first-wave topics', () => {
     ]);
   });
 
-  it('are switched off by default', () => {
-    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(false);
-  });
-
-  it('flag off: unknown to the worker, exactly as before', () => {
-    for (const id of ids) {
-      expect(isKnownTopicId(id)).toBe(false);
-      expect(topicById(id)).toBeUndefined();
-      expect(isKnownTopicId(id, false)).toBe(false);
-    }
-    // The five are unaffected.
-    for (const t of TOPICS) {
+  it('are switched on', () => {
+    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(true);
+    for (const t of FIRST_WAVE_TOPICS) {
       expect(isKnownTopicId(t.id)).toBe(true);
       expect(topicById(t.id)).toEqual(t);
+    }
+  });
+
+  it('flag off: unknown to the worker, exactly as before they existed', () => {
+    for (const id of ids) {
+      expect(isKnownTopicId(id, false)).toBe(false);
+      expect(topicById(id, false)).toBeUndefined();
+    }
+    // The five are known either way.
+    for (const t of TOPICS) {
+      expect(isKnownTopicId(t.id)).toBe(true);
+      expect(isKnownTopicId(t.id, false)).toBe(true);
+      expect(topicById(t.id, false)).toEqual(t);
     }
   });
 

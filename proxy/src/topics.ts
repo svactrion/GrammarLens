@@ -51,11 +51,12 @@ export const TOPICS: readonly TopicInfo[] = [
 
 /**
  * The first-wave practice topics (UI polish SPEC §1.11; mirrors
- * `kFirstWaveTopics` in `lib/data/topics.dart`). Written but switched off:
- * with {@link FIRST_WAVE_TOPICS_ENABLED} false the worker treats their ids
- * as unknown, exactly as before they existed. They are practice topics
- * only and never part of the shared Daily Test ({@link TOPICS} stays the
- * five). Nothing here is deployed by this change.
+ * `kFirstWaveTopics` in `lib/data/topics.dart`). Switched on for 1.5.0
+ * ({@link FIRST_WAVE_TOPICS_ENABLED}; owner decision 2026-11-19,
+ * docs/1.5.0-topics-progress.md T-87): the practice route accepts their
+ * ids. With the switch false the worker treats the ids as unknown, exactly
+ * as before they existed. They are practice topics only and never part of
+ * the shared Daily Test ({@link TOPICS} stays the five).
  */
 export const FIRST_WAVE_TOPICS: readonly TopicInfo[] = [
   {
@@ -90,9 +91,11 @@ export const FIRST_WAVE_TOPICS: readonly TopicInfo[] = [
   },
 ];
 
-/** The first-wave topics' switch. Off until the question-quality check
- *  and the owner's review (SPEC §1.11). */
-export const FIRST_WAVE_TOPICS_ENABLED = false;
+/** The first-wave topics' switch: on (owner decision 2026-11-19, after the
+ *  question-quality measurement, docs/1.5.0-topics-report.md "Decision").
+ *  It takes effect with the owner's deploy; an app before 1.5.0 never sends
+ *  these ids. */
+export const FIRST_WAVE_TOPICS_ENABLED = true;
 
 const BY_ID = new Map(TOPICS.map((t) => [t.id, t]));
 const FIRST_WAVE_BY_ID = new Map(FIRST_WAVE_TOPICS.map((t) => [t.id, t]));

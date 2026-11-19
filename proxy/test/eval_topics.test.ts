@@ -99,13 +99,13 @@ describe('the topics measurement: generation through the live practice path', ()
     }
   });
 
-  it('the switch is a parameter of the measurement: the constant stays off and the route still refuses the ids', () => {
-    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(false);
+  it('the switch is a parameter of the measurement: with it off a first-wave id is unknown; the constant is on since phase D', () => {
+    expect(FIRST_WAVE_TOPICS_ENABLED).toBe(true);
     for (const topic of FIRST_WAVE_TOPICS) {
       const request = { deviceId: 'measurement', topicId: topic.id, count: 5 };
-      expect(() => buildBody({ op: 'generate_practice_set', request })).toThrow('Unknown topicId.');
-      expect(() => buildGeneratePracticeSetBodyFor(request, PRODUCTION_PRACTICE)).toThrow('Unknown topicId.');
       expect(() => buildGeneratePracticeSetBodyFor(request, PRODUCTION_PRACTICE, false)).toThrow('Unknown topicId.');
+      // The route's request is the one the measurement sent with the switch passed on.
+      expect(buildBody({ op: 'generate_practice_set', request })).toEqual(buildGeneratePracticeSetBodyFor(request, PRODUCTION_PRACTICE, true));
     }
   });
 
