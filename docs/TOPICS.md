@@ -334,6 +334,69 @@ After the owner's run the sheet is labelled in the owner's Cowork chat; a
 later prompt folds the labels in. The owner then decides, topic by topic,
 what goes to phase D, and whether the candidate becomes the scoring prompt.
 
+## Phase C4 — the scoring prompt, second attempt (later prompt)
+
+Where things stand (2026-11-19). The final configuration ran and is
+labelled (`proxy/eval/out/topics-final-2026-11-19T04-12-48-488Z`; the
+measurement has spent $2.52 of $15.00). The generation changes worked: no
+item without a blank, no resembling questions in the new topics, 3 defects
+in 225 questions. All five new topics pass the defect and the agreement
+criteria; Prepositions, Comparatives & Superlatives and Conditionals fail
+false "correct" by one or two answers each. The first scoring candidate was
+worse than the production prompt on every count.
+
+**Owner decisions of 2026-11-19 (record them under the next T numbers):**
+
+- **The first candidate is dropped**, in whole and in its verdict rule.
+- **The scoring criteria are read on all labelled answers together.** At
+  45 to 49 wrong answers a topic, "at most 2 %" allows not one answer, so a
+  single run cannot show a pass. False "correct" and agreement are
+  properties of the scorer, and the production scoring prompt is the same in
+  every run, so each topic's scoring numbers are pooled over the first run,
+  the Conditionals re-measurement and the final run. The defect criterion
+  stays on the final configuration's questions.
+- **One more round for the scorer, with no new labels:** two small, separate
+  sentences, each tried alone and both together, against the 1,190 labelled
+  answers.
+
+This session: build, prove with a dry run, write the owner's commands, stop.
+**No API call**, no deploy, the production prompt and the flags unchanged.
+
+1. Three candidates beside the production scoring prompt, none of them live:
+   - **S**, the spelling sentence alone (a misspelling in the very form an
+     item tests is a mistake; the keyboard variants stay acceptable);
+   - **T**, a sentence on conditional types alone, for what the scorer
+     accepted in every run: an answer whose two clauses belong to different
+     conditional types where the sentence's own time words do not call for
+     it. It must not make the scorer reject a correct third conditional
+     whose result carries a phrase such as "by now", which the production
+     prompt did twice;
+   - **ST**, both.
+   Each sentence is general, short, and uses no example that occurs in the
+   labelled answers (check that, as before).
+2. `topics rescore` for these candidates (one command for all three, a dry
+   run first): every labelled answer of the three runs scored with each
+   candidate, the same answers per call as in the stored runs. The $15.00
+   cap is on the measurement as a whole.
+3. The report gets a section for this round, written by the command when the
+   run is done: for the production prompt and each candidate, per topic and
+   pooled over the runs, agreement, false "correct" and false "needs work";
+   the three criteria per new topic on the pooled reading, with pass or
+   fail; and the count of verdicts each candidate changed, split into
+   towards the label and away from it. A file in the run folder (not in the
+   repository) lists every changed verdict with both scorers' words.
+4. From the code, with no change: what the app shows when the scorer returns
+   no usable verdict for one answer of a set (it happened for 3 of 651
+   answers in the final run). In the progress doc.
+5. In `proxy/eval/README.md`, "Owner checklist — scoring prompt, second
+   round", in the style of the earlier ones (a new separate key; the dry
+   run; the run; what "done" looks like; revoke the key). After the run the
+   owner brings the last line to his Cowork chat, where the report's new
+   section is read.
+6. Unit tests (no network), `npm run typecheck` clean, the dry run's numbers
+   in the progress doc. No question text, no answer text and no sheet key in
+   any commit. Commit, push, **stop**.
+
 ## Phase D — release prep (only on the owner's go, later prompt)
 
 App: `kFirstWaveTopicsEnabled = true` for the passing topics; Topic Practice
