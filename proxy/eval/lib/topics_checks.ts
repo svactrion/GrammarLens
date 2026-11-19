@@ -478,7 +478,7 @@ export function checkLengthLevel(item: TopicItem, answers: ItemAnswers): CheckFl
 export const HINT_CARDS: Readonly<Record<string, readonly string[]>> = {
   gerundVsInfinitive: ['+ -ing: enjoy, avoid, finish, keep', '+ to: want, decide, hope, plan', 'Meaning changes: stop, remember, try', 'After a preposition: always -ing'],
   modalVerbs: ['modal + base verb: no "to", no "-s"', 'must: obligation · should: advice', 'may / might / could: possibility', "mustn't ≠ don't have to"],
-  modalPastForms: ['modal + have + past participle', "must / can't have: sure it did / didn't", 'might / could have: maybe it did', "should have: right, but it didn't happen"],
+  modalPastForms: ['could / would: the past of can / will', 'Reported: "I can" → she said she could', 'modal + have + past participle: past events', 'must have: sure · should have: regret'],
   tenseSelection: ['Past simple: finished time (ago, in 2020)', 'Present perfect: up to now (since, for, yet)', 'Past perfect: before another past event', 'Continuous: in progress at that moment'],
   articles: ['a / an: one of many, or first mention', 'an before a vowel sound: an hour', 'the: specific, known, or the only one', 'No article: general plural or uncountable'],
   conditionals: ['If + present, will + verb: real future', 'If + past, would + verb: unreal now', 'If + had + p.p., would have + p.p.: past', 'No "will" or "would" in the if-part'],

@@ -307,9 +307,10 @@ void main() {
       expect(kTopicHints.keys.toSet(), TopicId.values.toSet());
     });
 
-    test("are the owner's, verbatim (2026-10-12)", () {
+    test("are the owner's, verbatim (2026-10-12; Modal Past Forms 1.5.0)", () {
       // The five Daily Test topics' cards; the first-wave topics' cards
-      // (switched off, UI polish §1.11) are checked for shape below.
+      // (UI polish §1.11) are checked for shape below. Modal Past Forms
+      // covers both uses since 1.5.0 (owner decision 2026-11-19).
       expect({
         for (final t in kTopics) t.id: kTopicHints[t.id],
       }, {
@@ -326,10 +327,10 @@ void main() {
           "mustn't ≠ don't have to",
         ],
         TopicId.modalPastForms: [
-          'modal + have + past participle',
-          "must / can't have: sure it did / didn't",
-          'might / could have: maybe it did',
-          "should have: right, but it didn't happen",
+          'could / would: the past of can / will',
+          'Reported: "I can" → she said she could',
+          'modal + have + past participle: past events',
+          'must have: sure · should have: regret',
         ],
         TopicId.tenseSelection: [
           'Past simple: finished time (ago, in 2020)',
