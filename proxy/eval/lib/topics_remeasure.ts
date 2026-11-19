@@ -284,10 +284,18 @@ export function withoutRemeasurements(report: string): string {
   return `${report.replace(BLOCK, '').replace(pointer, '').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
 }
 
+/** The heading of a later section, by its id: a re-measured topic's id, or
+ * one of the two sections of the final configuration. */
+export function laterSectionName(id: string): string {
+  if (id === 'final') return 'Final configuration';
+  if (id === 'rescore') return 'The scoring prompt candidate on the labelled answers';
+  return `Re-measurement: ${title(id)}`;
+}
+
 function assemble(base: string, blocks: readonly { topicId: string; text: string }[]): string {
   if (blocks.length === 0) return base;
-  const names = blocks.map((b) => title(b.topicId));
-  const pointer = `${POINTER_START}\n**Measured again after a fix: ${names.join(', ')}.** The result that counts for ${names.length === 1 ? 'that topic' : 'those topics'} is in ${names.map((x) => `"Re-measurement: ${x}"`).join(' and ')} at the end of this report; the rows of the first run below are kept as they were measured.\n${POINTER_END}`;
+  const names = blocks.map((b) => `"${laterSectionName(b.topicId)}"`);
+  const pointer = `${POINTER_START}\n**Measured again after this run: see ${names.join(', ')} at the end of this report.** A later section is the result that counts for what it measures again; the rows of the first run below are kept as they were measured.\n${POINTER_END}`;
   const lines = base.trimEnd().split('\n');
   const status = lines.findIndex((line) => line.startsWith('**Status:'));
   const withPointer = status < 0 ? [pointer, '', ...lines] : [...lines.slice(0, status + 1), '', pointer, ...lines.slice(status + 1)];

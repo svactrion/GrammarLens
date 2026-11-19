@@ -1,9 +1,9 @@
-import { topicById } from '../../src/topics';
+import { FIRST_WAVE_TOPICS, TOPICS, topicById, type TopicInfo } from '../../src/topics';
 import { keyFactory } from './datasets';
 import { seededRandom, shuffle, toCsv } from './labels';
 import type { AnswerVerdict } from './topics_analysis';
 import { HINT_CARDS, duplicateGroups, duplicatePairs, type ItemCheckRecord } from './topics_checks';
-import { measuredTopics, type AnswerProblem, type TopicAnswer, type TopicItem } from './topics_measurement';
+import type { AnswerProblem, TopicAnswer, TopicItem } from './topics_measurement';
 
 /**
  * Phase B of the 1.5.0 first-wave topics measurement (docs/TOPICS.md): the
@@ -74,6 +74,13 @@ export interface TopicSheet {
 
 const title = (topicId: string) => topicById(topicId, true)?.title ?? topicId;
 
+/** The topics [items] has questions of, in the tables' order: the
+ * first-wave topics, then the live ones. */
+export function topicsOf(items: readonly { topicId: string }[]): TopicInfo[] {
+  const present = new Set(items.map((i) => i.topicId));
+  return [...FIRST_WAVE_TOPICS, ...TOPICS].filter((t) => present.has(t.id));
+}
+
 function indented(text: string): string[] {
   return text.split(/\r?\n/).map((line) => `    ${line}`);
 }
@@ -102,7 +109,7 @@ export function buildTopicSheet(items: readonly TopicItem[], answers: readonly T
     return { item, lettered, row: { key, itemId: item.id, topicId: item.topicId, set: item.set, index: item.index, letters } };
   });
 
-  const topics = measuredTopics().filter((t) => items.some((i) => i.topicId === t.topic.id));
+  const topics = topicsOf(items).map((topic) => ({ topic }));
   const text: string[] = [
     'FIRST-WAVE TOPICS: THE LABEL SHEET, THE QUESTIONS',
     '',
@@ -361,7 +368,7 @@ export function renderDetails(input: DetailsInput): string {
 
   out.push('################################################################', 'RESEMBLING QUESTIONS, SIDE BY SIDE', '################################################################', '');
   const pairs = duplicatePairs(input.items);
-  for (const t of measuredTopics()) {
+  for (const t of topicsOf(input.items).map((topic) => ({ topic }))) {
     const mine = input.items.filter((i) => i.topicId === t.topic.id);
     const myPairs = pairs.filter((p) => p.a.topicId === t.topic.id);
     const groups = duplicateGroups(mine, myPairs).sort((a, b) => b.length - a.length);

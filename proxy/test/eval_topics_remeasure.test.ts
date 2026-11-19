@@ -267,7 +267,7 @@ describe('a re-measurement: kept in the report', () => {
     const lines = report.split('\n');
     const status = lines.findIndex((l) => l.startsWith('**Status:'));
     expect(lines[status + 2]).toBe('<!-- topics-remeasurement:pointer:start -->');
-    expect(lines[status + 3]).toBe('**Measured again after a fix: Conditionals.** The result that counts for that topic is in "Re-measurement: Conditionals" at the end of this report; the rows of the first run below are kept as they were measured.');
+    expect(lines[status + 3]).toBe('**Measured again after this run: see "Re-measurement: Conditionals" at the end of this report.** A later section is the result that counts for what it measures again; the rows of the first run below are kept as they were measured.');
     expect(remeasurementBlocks(report)).toEqual([{ topicId: 'conditionals', text: `<!-- topics-remeasurement:conditionals:start -->\n${sectionText}\n<!-- topics-remeasurement:conditionals:end -->` }]);
     expect(report.endsWith('<!-- topics-remeasurement:conditionals:end -->\n')).toBe(true);
   });
@@ -285,7 +285,7 @@ describe('a re-measurement: kept in the report', () => {
   it('another topic\'s section stands beside it, and the line under the status names both', () => {
     const both = withRemeasurement(withRemeasurement(first, 'conditionals', sectionText), 'comparativesSuperlatives', '# Re-measurement: Comparatives & Superlatives\n\nIts own.');
     expect(remeasurementBlocks(both).map((b) => b.topicId)).toEqual(['conditionals', 'comparativesSuperlatives']);
-    expect(both).toContain('**Measured again after a fix: Conditionals, Comparatives & Superlatives.**');
+    expect(both).toContain('**Measured again after this run: see "Re-measurement: Conditionals", "Re-measurement: Comparatives & Superlatives" at the end of this report.**');
     expect(withoutRemeasurements(both)).toBe(first);
   });
 
@@ -295,7 +295,7 @@ describe('a re-measurement: kept in the report', () => {
     const carried = carryRemeasurements(old, rewritten);
     expect(withoutRemeasurements(carried)).toBe(rewritten);
     expect(remeasurementBlocks(carried)).toEqual(remeasurementBlocks(old));
-    expect(carried).toContain('**Measured again after a fix: Conditionals.**');
+    expect(carried).toContain('**Measured again after this run: see "Re-measurement: Conditionals" at the end of this report.**');
     // A report that never had one is written as it is.
     expect(carryRemeasurements(first, rewritten)).toBe(rewritten);
   });

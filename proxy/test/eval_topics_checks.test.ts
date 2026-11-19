@@ -22,6 +22,7 @@ import {
   summarizeChecks,
   type ItemAnswers,
 } from '../eval/lib/topics_checks';
+import { finalTopics } from '../eval/lib/topics_final';
 import { CONTROL_TOPIC_ID, builtAnswersFrom, measuredTopics, topicItemsFrom, type TopicItem } from '../eval/lib/topics_measurement';
 
 type Raw = { type: 'fill_in_blank' | 'error_correction' | 'sentence_writing'; context?: string; instruction: string; hint?: string };
@@ -244,7 +245,11 @@ describe('topics checks: length and level', () => {
 
 describe('topics checks: the hint card', () => {
   it("the cards are the app's, line for line", () => {
-    const measured = measuredTopics().map((m) => m.topic.id);
+    // Every topic the measurement can meet: the first run's six, and since the
+    // final configuration the other four live topics.
+    const measured = finalTopics().map((m) => m.topic.id);
+    expect(measured).toHaveLength(10);
+    expect(measuredTopics().every((m) => measured.includes(m.topic.id))).toBe(true);
     expect(Object.keys(HINT_CARDS).sort()).toEqual([...measured].sort());
     for (const [topicId, lines] of Object.entries(HINT_CARDS)) {
       const start = hintsSource.indexOf(`TopicId.${topicId}: [`);

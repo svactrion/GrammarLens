@@ -5,6 +5,7 @@ import {
   buildGeneratePracticeSetBodyFor,
   buildScoreAnswersBodyFor,
   type AnthropicRequestBody,
+  type ScoringVariant,
 } from '../../src/anthropic';
 import { FIRST_WAVE_TOPICS, topicById, type TopicInfo } from '../../src/topics';
 import { validateScoreAnswers } from '../../src/validation';
@@ -514,8 +515,11 @@ export interface ScoringCall {
  * call, never an old record read as this one. Every request is checked with
  * the proxy's own `validateScoreAnswers`.
  */
-export function scoringCalls(answers: readonly TopicAnswer[], ratio?: number): ScoringCall[] {
-  const model = pricedModel(PRODUCTION_SCORING.model);
+export function scoringCalls(answers: readonly TopicAnswer[], ratio?: number, variant: ScoringVariant = PRODUCTION_SCORING, idPrefix = 'tscore'): ScoringCall[] {
+  // [variant] and [idPrefix]: the same calls with another scoring prompt
+  // (the 2026-11 candidate), under ids of their own.
+  const model = pricedModel(variant.model);
+  const group_ = variant === PRODUCTION_SCORING ? 'C8' : `C8 ${variant.prompt}`;
   const bySet = new Map<string, TopicAnswer[]>();
   for (const a of answers) {
     const key = `${a.topicId}.${a.set}`;
@@ -525,10 +529,10 @@ export function scoringCalls(answers: readonly TopicAnswer[], ratio?: number): S
   for (const [key, inSet] of bySet) {
     for (const group of groupAnswers(inSet, TOPICS_SEED + Number.parseInt(fnv1a(key).slice(0, 6), 16))) {
       const request = validateScoreAnswers(scoringRequest(group));
-      const body = buildScoreAnswersBodyFor(request, PRODUCTION_SCORING);
+      const body = buildScoreAnswersBodyFor(request, variant);
       const answerIds = group.map((a) => a.id);
       calls.push({
-        call: planned(`tscore_${fnv1a(answerIds.join('|'))}`, 'scoring', 'C8', model, body, SCORING_OUTPUT_TOKENS_PER_ANSWER * group.length, ratio),
+        call: planned(`${idPrefix}_${fnv1a(answerIds.join('|'))}`, 'scoring', group_, model, body, SCORING_OUTPUT_TOKENS_PER_ANSWER * group.length, ratio),
         answerIds,
       });
     }

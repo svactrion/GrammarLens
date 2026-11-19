@@ -41,6 +41,13 @@
  *                                      a re-measurement of one topic in a run folder of its own
  *                                      (topics-TOPIC-…); the $15 cap counts what the measurement's
  *                                      earlier runs spent
+ *   npm run eval -- topics final --dry-run | topics final run [--out DIR]
+ *                                      the configuration that will ship, measured as a whole: all ten
+ *                                      topics with the final request, the guard applied, every built
+ *                                      answer scored with the production prompt and the candidate
+ *   npm run eval -- topics rescore --dry-run | topics rescore [--out DIR]
+ *                                      the labelled answers of the earlier runs scored with the
+ *                                      candidate prompt, and its section of the report
  *   npm run eval -- topics analyze --out DIR
  *                                      phase B, no API call: docs/1.5.0-topics-report.md, and in the
  *                                      run folder the blind label sheet and the details file; a
@@ -60,6 +67,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { appendFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildBody, type AnthropicRequestBody } from '../src/anthropic';
+import { topicById } from '../src/topics';
 import { sharedCheckRequest, type QuestionDecision } from '../src/shared_check';
 import { dailyPlan, sharedDailyTestRequest, type SharedQuestion } from '../src/shared_daily_test';
 import { analyze, benchmarkJsonWork, reviewedSets } from './lib/analysis';
@@ -180,6 +188,21 @@ import { checkItems, gateSet, renderCheckSummary, summarizeChecks, type ItemChec
 import { contentLeaks, renderTopicsReport, scoredAnswers, wallSeconds, type PhaseCParts, type SetSummary, type TopicsRunData } from './lib/topics_analysis';
 import { phaseCParts, renderTopicsSecondLook, secondLookHasVerdicts } from './lib/topics_labels';
 import { carryRemeasurements, renderRemeasurement, withRemeasurement, type RunForSection } from './lib/topics_remeasure';
+import {
+  finalGenerationCalls,
+  finalScoringCalls,
+  finalTopics,
+  guardedSet,
+  isLabelledSet,
+  planFinalDryRun,
+  renderFinalDryRun,
+  renderFinalSection,
+  renderRescoreSection,
+  rescoreCalls,
+  type GuardedSet,
+  type RescoreSource,
+  type RescoredRun,
+} from './lib/topics_final';
 import { SHEET_SEED, buildTopicSheet, readTopicLabels, renderDetails, renderSheetStatus, sheetHeaderProblem, type ReadSheet, type SheetMapping } from './lib/topics_sheet';
 import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
@@ -1440,6 +1463,10 @@ async function topicsFolderSpends(except?: string): Promise<{ name: string; spen
  * folder needs no flag and cannot pick the wrong plan. */
 interface TopicsRunInfo {
   only?: string;
+  /** `final`: the final configuration's run; `rescore`: the candidate on
+   * the labelled answers of the runs named in [sources]. */
+  kind?: 'final' | 'rescore';
+  sources?: string[];
 }
 
 async function readTopicsRunInfo(dir: string): Promise<TopicsRunInfo | null> {
@@ -1613,10 +1640,17 @@ async function otherSheetKeys(dir: string): Promise<Set<string>> {
 async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, reportArg?: string): Promise<void> {
   if (!outDir) throw new Error('topics analyze needs --out DIR (the run folder, e.g. eval/out/topics-…).');
   const dir = path.resolve(ROOT, outDir);
-  const data = await loadTopicsRun(dir);
-  // A re-measurement folder says so itself (`run.json`).
-  const only = (await readTopicsRunInfo(dir))?.only;
+  // A folder says itself what it is (`run.json`): a re-measurement of one
+  // topic, the final configuration, or the candidate's rescoring.
+  const info = await readTopicsRunInfo(dir);
   const reportFile = reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT);
+  if (info?.kind === 'rescore') return writeRescoreSection(dir, reportFile);
+  const isFinal = info?.kind === 'final';
+  const all = await loadTopicsRun(dir);
+  // The final run generates more sets than it labels: the sheet, the details
+  // file and the labelled figures are about the labelled sets.
+  const data: TopicsRunData = isFinal ? { ...all, items: all.items.filter((i) => isLabelledSet(i.topicId, i.set)), checks: all.checks.filter((c) => isLabelledSet(c.topicId, c.set)) } : all;
+  const only = isFinal ? 'final' : info?.only;
   // Nothing written here may hold a key, should one be in the environment.
   const envKey = process.env.ANTHROPIC_API_KEY?.trim();
   const write = async (file: string, text: string) => {
@@ -1700,7 +1734,23 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
     const firstDir = path.join(ROOT, 'eval/out', TOPICS_FIRST_RUN.folder);
     const first = firstDir === dir ? null : await loadRunForSection(firstDir);
     if (first === null) console.log(`The first run's folder (eval/out/${TOPICS_FIRST_RUN.folder}) is not there: the section has no comparison columns.`);
-    const section = renderRemeasurement({
+    const candidateFile = path.join(dir, 'scoring-calls-candidate.json');
+    const section = isFinal
+      ? renderFinalSection({
+          data: all,
+          guard: await readJsonFile<{ topicId: string; set: number; received: number | null; removed: number; rejected: boolean }[]>(path.join(dir, 'guard.json')),
+          production: scored.verdicts,
+          candidate: scoredAnswers({ records: all.records, answers: all.answers, scoringCalls: (await exists(candidateFile)) ? await readJsonFile<{ customId: string; answerIds: string[] }[]>(candidateFile) : [] }).verdicts,
+          labels: complete ? sheetState.labels : null,
+          first: first?.data ?? null,
+          runDir,
+          generatedAt,
+          wallSeconds: wallSeconds(log),
+          priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+          sheet: sheetMeta,
+          findings: await findingsOf(path.join(ROOT, 'eval/data/topics/final-findings.md')),
+        })
+      : renderRemeasurement({
       topicId: only,
       run: { data, verdicts: scored.verdicts, labels: complete ? sheetState.labels : null, runDir },
       first,
@@ -1716,7 +1766,7 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
     ];
     if (leaks.length > 0) throw new Error(`The section would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
     await write(reportFile, withRemeasurement(oldReport, only, section));
-    console.log(`Written: the "Re-measurement" section of ${path.relative(path.join(ROOT, '..'), reportFile)} (${section.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
+    console.log(`Written: the "${isFinal ? 'Final configuration' : 'Re-measurement'}" section of ${path.relative(path.join(ROOT, '..'), reportFile)} (${section.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
     return;
   }
 
@@ -1730,6 +1780,205 @@ async function topicsAnalyze(outDir: string | undefined, rebuildSheet = false, r
   if (leaks.length > 0) throw new Error(`The report would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
   await write(reportFile, oldReport === null ? report : carryRemeasurements(oldReport, report));
   console.log(`Written: ${path.relative(path.join(ROOT, '..'), reportFile)} (${report.split('\n').length} lines); in the run folder: sheet/questions.txt, sheet/labels.csv, private/sheet-mapping.json, private/details.txt.`);
+}
+
+// ---------------------------------------------------------------------------
+// The final configuration (docs/TOPICS.md, phase C3)
+
+/** The labelled runs the candidate scores again: the first run and every
+ * re-measurement whose sheet is filled, in the folders' order. Read-only. */
+async function rescoreSources(): Promise<{ source: RescoreSource; run: RunForSection; name: string }[]> {
+  const out = path.join(ROOT, 'eval/out');
+  let names: string[] = [];
+  try {
+    names = (await readdir(out)).filter((n) => n.startsWith('topics-')).sort();
+  } catch {
+    // no eval/out
+  }
+  const found: { source: RescoreSource; run: RunForSection; name: string }[] = [];
+  for (const folder of names) {
+    const dir = path.join(out, folder);
+    const info = await readTopicsRunInfo(dir);
+    if (info?.kind !== undefined) continue;
+    const run = await loadRunForSection(dir);
+    if (run === null || run.labels === null) continue;
+    const scoring = await readJsonFile<{ customId: string; answerIds: string[] }[]>(path.join(dir, 'scoring-calls.json'));
+    found.push({
+      source: { tag: String.fromCharCode(97 + found.length), folder, answers: run.data.answers, scoringCalls: scoring },
+      run,
+      name: info?.only ? `${topicById(info.only, true)?.title ?? info.only} re-measurement` : 'First run',
+    });
+  }
+  return found;
+}
+
+/** Both commands' calls and estimates, side by side: they draw on the same
+ * cap. No API call and no key needed. */
+async function topicsFinalDryRun(which: 'final' | 'rescore'): Promise<void> {
+  const ratio = charactersPerToken();
+  const sources = (await rescoreSources()).map((s) => s.source);
+  const summary = renderFinalDryRun(planFinalDryRun(ratio), rescoreCalls(sources, ratio), sources, priorTopicsSpend(await topicsFolderSpends()), ratio, which);
+  console.log(summary.text);
+  console.log('');
+  console.log(process.env.ANTHROPIC_API_KEY?.trim() ? 'API key: found in the environment (not shown)' : 'API key: not in the environment (the dry run does not need it; the run does)');
+  if (!summary.withinLimit) process.exitCode = 1;
+}
+
+/** Opens (or resumes) a run folder of [kind], refusing a folder that is
+ * something else. The cap counts what every other topics run has spent. */
+async function openKindRun(outDir: string | undefined, kind: 'final' | 'rescore', extra: Record<string, unknown> = {}): Promise<{ run: MeasureRun; prior: number; rel: string }> {
+  const key = measureKey();
+  if (outDir !== undefined) {
+    const dir = path.resolve(ROOT, outDir);
+    if ((await exists(path.join(dir, 'records.json'))) && (await readTopicsRunInfo(dir))?.kind !== kind) throw new Error(`${outDir} is not a "topics ${kind}" run folder.`);
+  }
+  const prior = priorTopicsSpend(await topicsFolderSpends(outDir === undefined ? undefined : path.resolve(ROOT, outDir)));
+  const run = await MeasureRun.open(outDir, key, { prefix: `topics-${kind}`, capUsd: TOPICS_SPEND_CAP_USD, fits: (spent, estimate) => fitsTopicsCap(prior + spent, estimate) });
+  await run.writeSafe(path.join(run.dir, 'run.json'), `${JSON.stringify({ kind, ...extra }, null, 2)}\n`);
+  const rel = path.relative(ROOT, run.dir);
+  await run.log(`topics ${kind} in ${rel}; cap ${money(run.capUsd)} of measured spend on the measurement as a whole, of which earlier runs spent ${money(prior)} (a call is made while spent + estimate × ${TOPICS_CAP_MARGIN} stays within it); ${run.records.length} records already there; spent so far in this folder ${money(run.spent())}`);
+  return { run, prior, rel };
+}
+
+/**
+ * `topics final run`: the final request for all ten topics, the worker's
+ * guard on every response, the checks on all 60 sets; answers and scoring
+ * for the labelled sets, every built answer scored with the production
+ * prompt and with the candidate. Resumable like every topics run.
+ */
+async function runTopicsFinal(outDir: string | undefined): Promise<void> {
+  const { run, prior, rel } = await openKindRun(outDir, 'final');
+  const ratio = charactersPerToken();
+
+  // 1. Generation, and the guard on each response.
+  const generation = finalGenerationCalls(ratio);
+  await run.runPlanned(generation, 'generation');
+  const guarded: GuardedSet[] = [];
+  for (const { topic, sets } of finalTopics()) {
+    for (let set = 1; set <= sets; set++) {
+      const record = run.record(generationId(topic.id, set));
+      if (record?.status === 'ok') guarded.push(guardedSet(topic.id, set, record.content));
+    }
+  }
+  const gates = guarded.map((g) => g.gate);
+  const items: TopicItem[] = gates.flatMap((g) => g.items);
+  const removed = guarded.reduce((n, g) => n + g.removed, 0);
+  await run.log(`generation: ${gates.length} of ${generation.length} sets generated; the guard removed ${removed} items without a blank from ${guarded.filter((g) => g.removed > 0).length} sets; ${items.length} questions served`);
+
+  // 2. The answer writer, for the sets that are labelled.
+  const writerCalls = gates.filter((g) => g.items.length > 0 && isLabelledSet(g.topicId, g.set)).map((g) => ({ gate: g, call: answerWriterCall(g.topicId, g.set, g.items, ratio) }));
+  await run.runPlanned(writerCalls.map((w) => w.call), 'answers');
+  const answers: TopicAnswer[] = [];
+  const answerProblems: AnswerProblem[] = [];
+  for (const { gate, call } of writerCalls) {
+    const record = run.record(call.customId);
+    if (record?.status !== 'ok') continue;
+    const built = builtAnswersFrom(gate.items, record.content);
+    answers.push(...built.answers);
+    answerProblems.push(...built.problems);
+  }
+  await run.log(`answers: ${answers.length} built for ${new Set(answers.map((a) => a.itemId)).size} questions of ${writerCalls.length} sets; ${answerProblems.length} notes on the writer's entries (answer-problems.json)`);
+
+  // 3. Scoring, twice: the production prompt, then the candidate.
+  const scoring = finalScoringCalls(answers, ratio);
+  await run.runPlanned(scoring.production.map((s) => s.call), 'scoring, production prompt');
+  await run.runPlanned(scoring.candidate.map((s) => s.call), 'scoring, candidate prompt');
+
+  // 4. The checks on every set, and what the analysis reads.
+  const checks = checkItems(items, answers);
+  const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
+  const calls = (list: typeof scoring.production) => list.map((s) => ({ customId: s.call.customId, answerIds: s.answerIds }));
+  await run.writeSafe(path.join(run.dir, 'sets.json'), json(gates.map((g) => ({ topicId: g.topicId, set: g.set, passed: g.passed, problems: g.problems, items: g.items.length, labelled: isLabelledSet(g.topicId, g.set) }))));
+  await run.writeSafe(path.join(run.dir, 'guard.json'), json(guarded.map((g) => ({ topicId: g.gate.topicId, set: g.gate.set, received: g.received, removed: g.removed, rejected: g.rejected }))));
+  await run.writeSafe(path.join(run.dir, 'items.json'), json(items));
+  await run.writeSafe(path.join(run.dir, 'answers.json'), json(answers));
+  await run.writeSafe(path.join(run.dir, 'answer-problems.json'), json(answerProblems));
+  await run.writeSafe(path.join(run.dir, 'scoring-calls.json'), json(calls(scoring.production)));
+  await run.writeSafe(path.join(run.dir, 'scoring-calls-candidate.json'), json(calls(scoring.candidate)));
+  await run.writeSafe(path.join(run.dir, 'checks.json'), json(checks));
+
+  const plannedNow = [...generation, ...writerCalls.map((w) => w.call), ...scoring.production.map((s) => s.call), ...scoring.candidate.map((s) => s.call)];
+  const ids = new Set(plannedNow.map((c) => c.customId));
+  const mine = run.records.filter((r) => ids.has(r.customId));
+  const failed = mine.filter((r) => r.status !== 'ok' && r.status !== 'skipped_budget').length;
+  const skipped = mine.filter((r) => r.status === 'skipped_budget').length;
+  const report = [
+    renderStageReport('Final configuration — measured against the estimate', plannedNow, mine),
+    '',
+    `Sets generated: ${gates.length} of ${generation.length}. The guard removed ${removed} items. Questions served: ${items.length}. Built answers: ${answers.length}; scoring calls: ${scoring.production.length} with each prompt.`,
+    '',
+    '## Automatic checks (questions with at least one flag)',
+    '',
+    renderCheckSummary(summarizeChecks(checks)),
+  ].join('\n');
+  await run.writeSafe(path.join(run.dir, 'run-report.md'), `${report}\n`);
+  run.printSafe(`\n${report}\n`);
+  const complete = failed === 0 && skipped === 0 && gates.length === generation.length && writerCalls.every((w) => run.record(w.call.customId)?.status === 'ok');
+  await run.log(
+    complete
+      ? `topics final done: ${mine.length} calls ok; spent ${money(run.spent())} in this run, ${money(prior + run.spent())} with the earlier runs, of ${money(run.capUsd)}; folder ${rel}`
+      : `topics final incomplete: ${failed} calls failed, ${skipped} skipped for the cap, ${generation.length - gates.length} sets not generated; spent ${money(run.spent())} in this run, ${money(prior + run.spent())} with the earlier runs, of ${money(run.capUsd)}; run again with --out ${rel} to retry what failed`,
+  );
+  if (!complete) process.exitCode = 1;
+}
+
+/**
+ * `topics rescore`: the labelled answers of the earlier runs, scored again
+ * with the candidate prompt in a folder of its own; then its section of the
+ * report. Only reads the earlier folders.
+ */
+async function runTopicsRescore(outDir: string | undefined, reportArg: string | undefined): Promise<void> {
+  const sources = await rescoreSources();
+  if (sources.length === 0) throw new Error('No labelled topics run under eval/out/ to score again.');
+  const { run, prior, rel } = await openKindRun(outDir, 'rescore', { sources: sources.map((s) => s.source.folder) });
+  const calls = rescoreCalls(sources.map((s) => s.source), charactersPerToken());
+  await run.runPlanned(calls.map((c) => c.call), `scoring ${sources.reduce((n, s) => n + s.source.answers.length, 0)} labelled answers with the candidate prompt`);
+  const ids = new Set(calls.map((c) => c.call.customId));
+  const mine = run.records.filter((r) => ids.has(r.customId));
+  const failed = mine.filter((r) => r.status !== 'ok' && r.status !== 'skipped_budget').length;
+  const skipped = mine.filter((r) => r.status === 'skipped_budget').length;
+  const complete = failed === 0 && skipped === 0 && mine.length === calls.length;
+  await run.log(
+    complete
+      ? `topics rescore done: ${mine.length} calls ok; spent ${money(run.spent())} in this run, ${money(prior + run.spent())} with the earlier runs, of ${money(run.capUsd)}; folder ${rel}`
+      : `topics rescore incomplete: ${failed} calls failed, ${skipped} skipped for the cap; spent ${money(run.spent())} in this run, ${money(prior + run.spent())} with the earlier runs, of ${money(run.capUsd)}; run again with --out ${rel} to retry what failed`,
+  );
+  if (!complete) {
+    process.exitCode = 1;
+    return;
+  }
+  await writeRescoreSection(run.dir, reportArg ? path.resolve(ROOT, reportArg) : path.join(ROOT, '..', TOPICS_REPORT));
+}
+
+/** The rescore's section of the report, from its folder and the sources'
+ * folders (read-only). Counts and rates only. */
+async function writeRescoreSection(dir: string, reportFile: string): Promise<void> {
+  const sources = await rescoreSources();
+  const records = await readJsonFile<MeasureRecord[]>(path.join(dir, 'records.json'));
+  const calls = rescoreCalls(sources.map((s) => s.source), charactersPerToken());
+  const runs: RescoredRun[] = sources.map(({ source, run, name }) => ({
+    name,
+    answers: source.answers,
+    labels: run.labels ?? [],
+    production: run.verdicts,
+    candidate: scoredAnswers({ records, answers: source.answers, scoringCalls: calls.filter((c) => c.source === source.tag).map((c) => ({ customId: c.call.customId, answerIds: c.answerIds })) }).verdicts,
+  }));
+  const section = renderRescoreSection({
+    runs,
+    generatedAt: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`,
+    runDir: path.relative(path.join(ROOT, '..'), dir),
+    calls: records.length,
+    failed: records.filter((r) => r.status !== 'ok').length,
+    spendUsd: records.reduce((n, r) => n + r.costUsd, 0),
+    priorSpendUsd: priorTopicsSpend(await topicsFolderSpends(dir)),
+  });
+  const leaks = sources.flatMap(({ run }) => contentLeaks(section, run.data.items, run.data.answers));
+  if (leaks.length > 0) throw new Error(`The section would contain generated content (${leaks.slice(0, 5).join('; ')}); not written.`);
+  const envKey = process.env.ANTHROPIC_API_KEY?.trim();
+  if (envKey && section.includes(envKey)) throw new Error('refusing to write a file that contains the API key');
+  if (!(await exists(reportFile))) throw new Error(`${path.relative(ROOT, reportFile)} is not there: analyse the first run first.`);
+  await writeFile(reportFile, withRemeasurement(await readFile(reportFile, 'utf8'), 'rescore', section));
+  console.log(`Written: the "scoring prompt candidate" section of ${path.relative(path.join(ROOT, '..'), reportFile)} (${section.split('\n').length} lines).`);
 }
 
 async function main(): Promise<void> {
@@ -1748,6 +1997,9 @@ async function main(): Promise<void> {
   const onlyIndex = rest.indexOf('--only');
   const only = onlyIndex >= 0 ? rest[onlyIndex + 1] : undefined;
   if (onlyIndex >= 0 && (only === undefined || only.startsWith('--'))) throw new Error('--only needs a topic id, e.g. --only conditionals.');
+  const reportOption = rest.indexOf('--report') >= 0 ? rest[rest.indexOf('--report') + 1] : undefined;
+  if (command === 'topics' && rest[0] === 'final') return rest.includes('--dry-run') ? topicsFinalDryRun('final') : rest.includes('run') ? runTopicsFinal(out) : Promise.reject(new Error('Usage: topics final --dry-run | topics final run [--out DIR]'));
+  if (command === 'topics' && rest[0] === 'rescore') return rest.includes('--dry-run') ? topicsFinalDryRun('rescore') : runTopicsRescore(out, reportOption);
   if (command === 'topics' && rest.includes('--dry-run')) return topicsDryRun(only);
   const reportIndex = rest.indexOf('--report');
   if (command === 'topics' && rest.includes('analyze')) return topicsAnalyze(out, rest.includes('--rebuild-sheet'), reportIndex >= 0 ? rest[reportIndex + 1] : undefined);
@@ -1760,7 +2012,7 @@ async function main(): Promise<void> {
   if (command === 'measure' && rest.includes('analyze')) return analyzeMeasurement(out);
   if (command === 'measure' && rest.includes('dt-more')) return runDtMore(out);
   console.log(
-    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run [--only TOPIC] | topics run [--only TOPIC] [--out DIR] | topics analyze --out DIR',
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets | topics --dry-run [--only TOPIC] | topics run [--only TOPIC] [--out DIR] | topics final --dry-run | topics final run [--out DIR] | topics rescore [--dry-run] [--out DIR] | topics analyze --out DIR',
   );
   process.exitCode = 1;
 }
