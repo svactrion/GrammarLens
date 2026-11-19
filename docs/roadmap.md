@@ -451,11 +451,35 @@ Owner decisions so far:
   $0.24; the first run's $0.76 counts as spent). Also found, from the code:
   a fill-in-the-blank practice item without a blank is shown with one answer
   box and nothing on the live path stops it; a guard in the Worker is
-  proposed, not built. **Next: the owner's Conditionals run** from his
-  Terminal (`proxy/eval/README.md`, "Owner checklist — Conditionals
-  re-measurement"), then its 30-question sheet, then the labels folded in.
-  Still open with the owner: Comparatives & Superlatives, the scoring
-  prompt, set variety, which topics go on. The topics stay switched off.
+  proposed, not built. *(Superseded, kept as written:* **Next: the owner's
+  Conditionals run** from his Terminal (`proxy/eval/README.md`, "Owner
+  checklist — Conditionals re-measurement"), then its 30-question sheet,
+  then the labels folded in. Still open with the owner: Comparatives &
+  Superlatives, the scoring prompt, set variety, which topics go on.*)*
+  **The Conditionals re-measurement is done and labelled (owner,
+  2026-11-19): the note kept mixed conditionals out, and the topic fails by
+  one answer** (0 of 27 defective questions after the gate; agreement 71 of
+  74; false "correct" 1 of 41, where the 2 % line allows none); half of its
+  fill-in-the-blank items had no blank and one scenario came back in all six
+  sets. **Owner decisions (2026-11-19) and phase C3 done up to its stop
+  (2026-11-19, no API call), all in the Worker's source, not deployed:** the
+  practice route removes a fill-in-the-blank item without a blank and serves
+  the rest; the generation prompt asks for 1 to 4 blanks written as
+  underscores; every practice set of all ten topics gets a scenario theme
+  from the Daily Test's 14, stepped per device from what the quota check
+  already reads (set variety option A; no app change, no new data); and a
+  scoring prompt **candidate** (the verdict follows the scorer's own
+  correction; a misspelling in the tested form is a mistake) stands beside
+  the production prompt, not live, until the owner says so. The
+  configuration is measured once more as a whole: `topics rescore` (the 539
+  labelled answers with the candidate; dry run 146 calls, about $0.18) and
+  `topics final run` (all ten topics with the final request, both scoring
+  prompts; dry run 465 calls, about $2.28); the measurement has spent $0.89
+  of $15.00. **Next: the owner's two runs** from his Terminal
+  (`proxy/eval/README.md`, "Owner checklist — final configuration"), then
+  the sheet (at most 225 questions), then the labels folded in; then the
+  owner decides topic by topic what goes to release prep and whether the
+  candidate becomes the scoring prompt. The topics stay switched off.
   Record and decisions:
   [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**

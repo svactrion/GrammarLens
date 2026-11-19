@@ -14736,3 +14736,70 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   run is the owner's, from his Terminal (`proxy/eval/README.md`, "Owner
   checklist — Conditionals re-measurement").
 - Record and decisions T-34 to T-44: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase C3: the Conditionals result, the final configuration in the Worker's source, its measurement's tooling; no API call)
+
+- **[Measured]** The owner ran the Conditionals re-measurement
+  (`proxy/eval/out/topics-conditionals-2026-11-19T03-29-29-295Z`, 35 calls,
+  $0.13; the measurement has spent $0.89 of $15.00) and its 30 questions
+  were labelled in his Cowork chat. **Result: 0 of 27 defective questions
+  after the gate (pass), agreement 71 of 74, 95.9 % (pass), false "correct"
+  1 of 41, 2.4 % (fail): the topic fails by one answer.** The generation
+  note kept mixed conditionals out (none by either count, against 4 and 5 in
+  the first run). Not in the criteria: 3 of its 6 fill-in-the-blank items
+  had no blank, and one scenario came back in all six sets.
+- **[Decision]** Owner, 2026-11-19 (`docs/TOPICS.md`, "Phase C3"): items
+  without a blank get a Worker guard and a prompt line; set variety option A
+  for all ten topics, now; Comparatives & Superlatives is not waved through:
+  the scoring prompt gets the two proposed changes as a candidate; the
+  configuration that will ship is measured once more as a whole, the five
+  live topics included.
+- **[Engineering]** In the Worker's source, not deployed:
+  - the practice route removes a `fill_in_blank` item that has no blank and
+    serves the rest (`practice_filter.ts`); only an emptied set is refused;
+    counts only are logged;
+  - the generation prompt's line on blanks: "A fill_in_blank item has 1 to 4
+    blanks, and each blank is written as a run of underscores (____).";
+  - every practice set gets a scenario theme (`practice_theme.ts`): one of
+    the Daily Test's 14, stepped from the device id, the day and the
+    device's request count, which the quota check already reads; the last
+    line of the user prompt: `Scenario theme for this set: "<theme>". Set
+    every item in a different everyday situation within that theme.` The app
+    sends what it sent; a client cannot name the theme;
+  - a scoring prompt candidate beside the production prompt (the production
+    prompt plus two paragraphs: a misspelling in the tested form is a
+    mistake; the verdict follows the scorer's own correction), selectable by
+    the measurement only.
+  `FIRST_WAVE_TOPICS_ENABLED` and `kFirstWaveTopicsEnabled` stay `false`;
+  the app was not changed.
+- **[Engineering]** `npm run eval -- topics final --dry-run | topics final
+  run` (all ten topics, 6 sets each with the final request and a theme per
+  set, the guard applied, the checks on all 60 sets, answers and scoring for
+  the five new topics on 6 sets and the five live ones on 3, every built
+  answer scored with both prompts) and `topics rescore [--dry-run]` (the 464
+  + 75 labelled answers scored again with the candidate, and its section of
+  the report). `topics analyze` on the final folder writes the blind sheet
+  and a "Final configuration" section after the earlier ones.
+- **[Cost]** The dry runs: `topics final` 465 calls, estimated $2.28;
+  `topics rescore` 146 calls, estimated $0.18; together $2.46, the
+  measurement then at about $3.36 of $15.00. The worst case (every call
+  writing all its `max_tokens`) is over the cap for the first time; the
+  check before each call holds the cap.
+- **[Finding]** From the app's code, unchanged: a practice set that arrives
+  a question short works (the screen takes its count from the set), the
+  loading line names the requested number and can be one too high, and an
+  empty set would break the screen, so the guard refuses a response it has
+  emptied. Proposed for the app, not built: treat an empty practice set as a
+  failed generation.
+- **[Verified]** `npm run typecheck` clean; `npm test` 706 passed (34 new,
+  no network). A released app's request still works through the route;
+  consecutive requests of one device get different themes; the scoring
+  route sends the production prompt. Both commands and the analysis were
+  rehearsed on a local stand-in for `fetch`. The earlier run folders'
+  records, sheets and labels are unchanged.
+- **[Not verified]** Whether the line on blanks, the themes and the
+  candidate do what they are for: no API call was made. The two runs are the
+  owner's (`proxy/eval/README.md`, "Owner checklist — final configuration").
+- **[Legal]** No change needed: the app sends what it sent, nothing new is
+  stored, no service is added.
+- Record and decisions T-45 to T-62: `docs/1.5.0-topics-progress.md`.

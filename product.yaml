@@ -18,6 +18,9 @@ versions:
 
 recent:
   - version:
+    date: 2026-11-19
+    notes: "First-wave practice topics: the Conditionals re-measurement is labelled; its fix kept mixed conditionals out and the topic now fails by a single answer (false 'correct' 1 of 41). On the owner's decisions the proxy's source now holds the practice path as it is meant to ship, for all ten topics: a guard that removes a fill-in-the-blank question without a blank, a prompt line asking for 1 to 4 blanks, and a scenario theme per practice set so that two sets of one topic differ (no app change, no new data sent); and a scoring prompt candidate beside the production prompt, not live. Nothing is deployed. Two measurement runs of this configuration are ready for the owner (dry runs: 465 calls about $2.28, and 146 calls about $0.18; $0.89 of the $15 cap spent so far). No API call made. The topics stay switched off; not on main, not shipped."
+  - version:
     date: 2026-11-18
     notes: "First-wave practice topics, Conditionals: the owner decided to fix it and measure it again. The proxy's source now adds one generation-only sentence to the Conditionals practice request (first, second and third conditional only, no mixed conditional); no other topic's request changes, nothing is deployed, and the note is not in the app. The re-measurement of that topic alone is ready to run under the same $15 cap (dry run: 36 calls, about $0.24; the first run's $0.76 counts as spent). Also found: a fill-in-the-blank practice item without a blank is shown with one answer box and nothing on the live path stops it; a guard is proposed, not built. No API call made. The topics stay switched off; not on main, not shipped."
   - version:
@@ -29,16 +32,14 @@ recent:
   - version:
     date: 2026-11-18
     notes: "First-wave practice topics (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives): the question-quality measurement's tooling built in proxy/eval on branch ui-polish-widgets (sets through the live practice path, an answer key and typical mistakes written per question, scoring with the production model, automatic checks per question). The dry run: 198 calls, about $1.30, hard cap $15. No API call made; the paid run is the owner's, from his Terminal. The topics stay switched off; not on main, not shipped."
-  - version:
-    date: 2026-11-18
-    notes: "Fix round 5 of the UI polish on branch ui-polish-widgets, after the owner's third device pass: the free rest scene's panel is the ticket deck the owner chose (today's used ticket and a deck of the app's tickets on the Premium card); the Premium rest scene has its own done tiles and step card again; both panels end just above the nav bar; Profile's month progress card shows the medals on the bar; the paywall closes only with its X (no swipe or system back). Not on main, not shipped, waiting for the owner's fourth device pass."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
   - "Home-screen widgets (1.5.0) and daily reminder notifications: built on branch widgets-notifications and integrated with the UI polish on branch ui-polish-widgets, not on main, not shipped, not checked on a device; owner: extension signing, App Group registration, device check (DEVICE-CHECKS.md)"
   - "P15: outage detection"
   - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4 and 5 done there after the owner's device passes; not on main, not shipped, waiting for the owner's fourth device pass, DEVICE-CHECKS.md), then a new feature as a 4th navbar tab"
-  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement is run, labelled and reported (docs/1.5.0-topics-report.md, docs/1.5.0-topics-progress.md): Passive Voice, Prepositions and Relative Clauses pass the owner's criteria, Conditionals and Comparatives & Superlatives do not yet; Conditionals has its fix in the proxy's source (a generation note, not deployed) and waits for the owner's re-measurement run, its label sheet and the result; still open with the owner: Comparatives & Superlatives, the scoring-prompt sentence, the set-variety option (docs/1.5.0-topics-set-variety.md), a guard for fill-in-the-blank items without a blank, and which topics go on; then release prep on the owner's go"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): code on branch ui-polish-widgets, hidden until the question-quality check and owner review; the measurement is run, labelled and reported (docs/1.5.0-topics-report.md, docs/1.5.0-topics-progress.md): Passive Voice, Prepositions and Relative Clauses pass the owner's criteria, Conditionals and Comparatives & Superlatives do not yet; Conditionals was measured again with its fix and fails by a single answer; next the owner's two runs of the final configuration (all ten topics with the final request, both scoring prompts; the labelled answers again with the scoring prompt candidate), its label sheet and the result; then the owner decides topic by topic what goes on and whether the candidate becomes the scoring prompt; then release prep on the owner's go"
+  - "Practice path changes for all ten topics, in the proxy's source and not deployed: a guard that removes a fill-in-the-blank question without a blank, the prompt's line on blanks, a scenario theme per practice set (set variety option A, docs/1.5.0-topics-set-variety.md); a scoring prompt candidate that is not live. Measured in the final configuration's runs; the deploy and the choice of scoring prompt are the owner's, after the result"
 
 monetization:
   model: subscription
@@ -61,4 +62,4 @@ links:
   app_store: https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346
   site_page: https://ahmettayfur.com/products/grammarlens/
 
-updated_at: 2026-11-18
+updated_at: 2026-11-19

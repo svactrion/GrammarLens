@@ -594,3 +594,156 @@ included). To check the sheet at any time, run the command of step 8 again:
 a sheet that exists is never rewritten. When it prints `30 of 30 rows
 labelled, 0 not started, 0 with something to fix`, tell Claude Code to fold
 the labels in (the last step of Phase C2 in `docs/TOPICS.md`).
+
+---
+
+# The final configuration (phase C3)
+
+What and why: `docs/TOPICS.md`, "Phase C3"; the record and the decisions:
+`docs/1.5.0-topics-progress.md`. The Worker's source now holds the practice
+path as it is meant to ship: a guard that removes a fill-in-the-blank item
+without a blank, the prompt's line on blanks, a scenario theme per set, and
+(for Conditionals) its note; and beside the production scoring prompt a
+**candidate** that is not live. Two commands measure this:
+
+- **`topics rescore`**: the answers that already have labels (464 of the
+  first run, 75 of the Conditionals re-measurement) scored again with the
+  candidate prompt. It needs no new labels and writes its own section of the
+  report.
+- **`topics final run`**: all ten topics, 6 sets each with the final
+  request; answers, scoring and labels for the five new topics on all 6 sets
+  and for the five live topics on 3; every built answer scored with the
+  production prompt and with the candidate.
+
+Nothing is deployed and the first-wave topics stay switched off. The earlier
+run folders are only read.
+
+**They call the Anthropic API and cost money: about $2.46 together** (`topics
+rescore` 146 calls, about $0.18; `topics final run` up to 465 calls, about
+$2.28). The $15.00 cap is on the measurement as a whole, which has spent
+$0.89 so far.
+
+## Owner checklist — final configuration
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+these two runs, for example "grammarlens-final", **in the Default
+workspace**. Not an earlier run's key, and not the Worker's live key: do not
+use it and do not revoke it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics final --dry-run
+```
+
+It shows both commands. It must say **465 calls** for `topics final`, **146
+calls** for `topics rescore`, **together $2.46: within the dry-run limit**,
+`earlier runs spent $0.89`, and end with `API key: found in the environment
+(not shown)`. If the last line says the key is not in the environment,
+repeat step 3.
+
+### 5. `topics rescore` (about 5 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics rescore
+```
+
+One line per call (counts, tokens and cost only). **Done** looks like this,
+followed by a line that the report's section was written:
+
+```text
+2026-11-19T10:05:12.000Z topics rescore done: 146 calls ok; spent $0.20 in this run, $1.09 with the earlier runs, of $15.00; folder eval/out/topics-rescore-2026-11-19T10-00-01-000Z
+Written: the "scoring prompt candidate" section of docs/1.5.0-topics-report.md (20 lines).
+```
+
+If the last line says `topics rescore incomplete`, run the same folder
+again; finished calls are not repeated:
+
+```bash
+caffeinate -i npm run eval -- topics rescore --out "$(ls -d eval/out/topics-rescore-* | tail -n 1)"
+```
+
+### 6. `topics final run` (about 15 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics final run
+```
+
+**Done** looks like:
+
+```text
+2026-11-19T10:25:40.000Z topics final done: 440 calls ok; spent $1.30 in this run, $2.39 with the earlier runs, of $15.00; folder eval/out/topics-final-2026-11-19T10-10-05-000Z
+```
+
+The number of calls is at most 465 (fewer when questions have no second
+correct answer, or the guard removed an item). If the last line says `topics
+final incomplete`, run the same folder again:
+
+```bash
+caffeinate -i npm run eval -- topics final run --out "$(ls -d eval/out/topics-final-* | tail -n 1)"
+```
+
+If either command still says `incomplete` after a second try, stop and tell
+Claude Code the last ten lines of that folder's `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Write the label sheet (no key needed, no API call)
+
+```bash
+npm run eval -- topics analyze --out "$(ls -d eval/out/topics-final-* | tail -n 1)"
+```
+
+It must print `The label sheet written: … questions, …` (at most 225
+questions: the questions the Worker would serve, so fewer if the guard
+removed any) and `0 of … rows labelled`. It writes, in the run folder:
+`sheet/questions.txt` (to read), `sheet/labels.csv` (to fill), and
+`private/sheet-mapping.json` and `private/details.txt`, which **nobody opens
+before the sheet is filled**; the run's own files stay closed as well. It
+also adds a "Final configuration" section at the end of
+`docs/1.5.0-topics-report.md` (counts only, safe to read). The report then
+shows as changed in git (from this step and from step 5): leave it, Claude
+Code commits it in the next step.
+
+### 9. Tell Claude in the Cowork chat that the sheet is ready
+
+Give it the final run folder's path and say: **"The final configuration's
+sheet is ready: read `sheet/questions.txt`, fill `sheet/labels.csv`, as
+before; do not open the `private` folder or any other file of that folder."**
+The rules are the ones of the earlier sheets (`multi:` and `minor:` notes
+included); the sheet now has the five live topics too, with their hint
+cards at the top. To check the sheet at any time, run the command of step 8
+again: a sheet that exists is never rewritten. When it prints that every row
+is labelled with nothing to fix, tell Claude Code to fold the labels in.
