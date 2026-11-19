@@ -338,7 +338,7 @@ describe('POST /v1/score-answers', () => {
   });
 
   it('instructs the model not to score keyboard-variant characters as grammar mistakes, on any keyboard (1.4.0 D3)', async () => {
-    mockAnthropicSuccess({ feedback: [] });
+    mockAnthropicSuccess({ feedback: [{ itemId: 'q1', isCorrect: true }] });
 
     await post('/v1/score-answers', {
       deviceId: 'd1',

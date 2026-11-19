@@ -76,7 +76,8 @@ describe('token usage logging', () => {
     anthropicResponds({ items: [] }, { input_tokens: 900, output_tokens: 1700 });
     await post('/v1/generate-practice-set', { deviceId: 'd1', topicId: 'articles', count: 3 });
 
-    anthropicResponds({ feedback: [] }, { input_tokens: 1100, output_tokens: 400 });
+    // A verdict for each answer sent: an incomplete response is asked for again (test/score_retry.test.ts).
+    anthropicResponds({ feedback: [{ itemId: 'q1', isCorrect: true }, { itemId: 'q2', isCorrect: false }] }, { input_tokens: 1100, output_tokens: 400 });
     await post('/v1/score-answers', {
       deviceId: 'd1',
       items: [
@@ -116,7 +117,7 @@ describe('token usage logging', () => {
       'PROMPT-SECRET-3307',
       'GENERATED-SECRET-7712',
     ];
-    anthropicResponds({ feedback: [{ explanation: secrets[3] }] }, { input_tokens: 10, output_tokens: 20 });
+    anthropicResponds({ feedback: [{ itemId: 'q1', isCorrect: false, explanation: secrets[3] }] }, { input_tokens: 10, output_tokens: 20 });
     const scored = await post('/v1/score-answers', {
       deviceId: secrets[0],
       items: [{ id: 'q1', type: 'sentence_writing', prompt: secrets[2], userAnswer: secrets[1] }],
@@ -283,7 +284,7 @@ describe('token usage logging', () => {
     it('times each call on its own', async () => {
       anthropicTakes(800, { items: [] });
       await post('/v1/generate-practice-set', { deviceId: 'd1', topicId: 'articles', count: 3 });
-      anthropicTakes(4_000, { feedback: [] });
+      anthropicTakes(4_000, { feedback: [{ itemId: 'q1', isCorrect: true }] });
       await post('/v1/score-answers', {
         deviceId: 'd1',
         items: [{ id: 'q1', type: 'fill_in_blank', prompt: 'p', userAnswer: 'a' }],
