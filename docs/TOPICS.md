@@ -248,6 +248,92 @@ After the owner's run the sheet (30 questions) is labelled in the owner's
 Cowork chat as before; a later prompt folds the labels in, with the same
 three criteria.
 
+## Phase C3 — the final configuration and its measurement (later prompt)
+
+Where things stand (2026-11-19). The Conditionals re-measurement ran
+(`proxy/eval/out/topics-conditionals-2026-11-19T03-29-29-295Z`, 35 calls,
+$0.13; the measurement as a whole has spent $0.89 of $15.00) and its sheet
+is filled: 30 of 30 rows, 3 questions labelled `defect`, all three a
+fill-in-the-blank item without a blank, 1 built answer `unsure`. The note
+kept mixed conditionals out. The run also showed two things the criteria do
+not catch: half of that topic's fill-in-the-blank items came without a
+blank (the gate stops them in the measurement; nothing stops them on the
+live path), and one scenario came back in all six sets.
+
+**Owner decisions of 2026-11-19 (record them under the next T numbers):**
+
+- **Items without a blank:** both measures. The Worker removes a
+  fill-in-the-blank item that has no blank from a practice response and
+  serves the rest; and the generation prompt says that such an item has
+  1 to 4 blanks, each written as underscores.
+- **Set variety: option A of `docs/1.5.0-topics-set-variety.md`, for all ten
+  topics, now.** The Worker gives each practice set a scenario theme from
+  the Daily Test's 14 approved themes, stepped per device from what the
+  quota check already reads; one line in the user prompt; no app change, no
+  new data sent.
+- **Comparatives & Superlatives is not waved through.** The scoring prompt
+  gets the two changes phase C proposed, as a candidate: the verdict follows
+  the scorer's own correction (when its corrected answer changes the
+  learner's answer in the structure the item tests, the answer is not
+  correct), and a misspelling in the form the item tests is a mistake. The
+  candidate becomes the production prompt only on the owner's word, after
+  the numbers below.
+- Because every topic's request changes, **the configuration that will ship
+  is measured once more as a whole**, the five live topics included.
+
+This session: build, prove with a dry run, write the owner's commands, stop.
+**No API call**, no deploy, the production flags stay off.
+
+1. Fold the labels of the Conditionals re-measurement into the report (its
+   section, the three criteria, its second-look file), as phase C2 planned.
+2. The Worker (source and tests only):
+   - the guard on the practice route, and what the app does with a practice
+     set that arrives a question short (read the app's code; if it would
+     break or mislead, say so and propose, do not change the app here);
+   - the generation prompt's line on blanks (all topics);
+   - the theme for a practice set (all ten topics), with tests that a
+     released app's request still works and that consecutive requests of
+     one device get different themes;
+   - the scoring prompt candidate beside the production prompt, selectable
+     by the measurement, not live.
+   Since the Conditionals note of phase C2 stays, say in the progress doc
+   what each topic's request now adds to the one measured in the first run.
+3. The measurement, `topics final --dry-run` and `topics final run [--out
+   DIR]`, a run folder of its own:
+   - generation with the final request for all ten topics, 6 sets each, the
+     themes stepped as one device's consecutive requests would get them;
+   - the automatic checks on all 60 sets (duplicates above all, against the
+     first run's numbers; and how many items the guard would remove);
+   - answers, scoring and labels for the five new topics on all 6 sets
+     (150 questions) and for the five live topics on 3 sets each
+     (75 questions);
+   - every built answer scored twice, with the production scoring prompt
+     and with the candidate.
+   And `topics rescore`: the labelled answers of the first run (464) and of
+   the Conditionals re-measurement (75) scored with the candidate, compared
+   with their labels and with the production prompt's stored verdicts:
+   agreement, false "correct", false "needs work", per topic, before and
+   after. The $15.00 cap is on the measurement as a whole; the dry run's
+   estimate for both commands together must leave it room.
+4. `topics analyze --out DIR` on the final folder: the blind sheet (225
+   questions, the same three files, the same blindness), the private files,
+   and once the sheet is filled a "Final configuration" section of the
+   report: the three criteria per new topic with both scoring prompts, the
+   live topics for reference, the duplicates before and after the themes.
+   The earlier sections stay as they are.
+5. In `proxy/eval/README.md`, "Owner checklist — final configuration": the
+   key into the environment of that Terminal only; the dry run; `topics
+   rescore`; `topics final run`; what "done" looks like for each; the
+   `topics analyze` command that writes the sheet; then: tell Claude in the
+   Cowork chat that the sheet is ready.
+6. Unit tests (no network), `npm run typecheck` clean, the dry run's numbers
+   in the progress doc. No question text, no answer text and no sheet key in
+   any commit. Commit, push, **stop**.
+
+After the owner's run the sheet is labelled in the owner's Cowork chat; a
+later prompt folds the labels in. The owner then decides, topic by topic,
+what goes to phase D, and whether the candidate becomes the scoring prompt.
+
 ## Phase D — release prep (only on the owner's go, later prompt)
 
 App: `kFirstWaveTopicsEnabled = true` for the passing topics; Topic Practice
