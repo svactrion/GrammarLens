@@ -395,7 +395,7 @@ shows under the per-blank notes.
 export const SCORING_CANDIDATE_SPELLING_RULE = `
 A misspelling in the very form an item tests is a mistake, not a keyboard
 variant. When the item tests a form whose spelling is part of the rule (for
-example the doubled consonant in "hotter", y changing to i in "easier", an
+example the doubled consonant in "hotter", y changing to i in "luckier", an
 irregular past form) and the learner chose the right form but misspelt it,
 mark isCorrect: false, give the correct spelling in correctedAnswer and name
 the spelling rule in the explanation. The character variants described above
