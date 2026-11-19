@@ -14927,3 +14927,62 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   time. Nothing is deployed; both first-wave switches are false.
 - **[Legal]** No change needed.
 - Record and decisions T-71 to T-86: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase D: the owner's decision, the topics switched on in the app and in the Worker's source, three small fixes; nothing deployed)
+
+- **[Measured]** The owner ran the scoring prompt's second round: 960 calls,
+  $1.31; the measurement is closed at $3.83 of $15.00. Production · S · T ·
+  ST, false "correct": Conditionals 5 · 4 · 2 · 5 of 132, Comparatives &
+  Superlatives 2 · 3 · 3 · 4 of 95, Prepositions 1 · 2 · 3 · 2 of 96;
+  everything labelled 14 · 13 · 15 · 16 of 661, agreement 1137 · 1130 ·
+  1132 · 1134 of 1163. T helps Conditionals and costs the other topics; no
+  candidate is better overall.
+- **[Owner decisions]** All five first-wave topics ship in 1.5.0 with the
+  production scoring prompt as it is; no candidate becomes the production
+  prompt. Passive Voice, Prepositions and Relative Clauses meet all three
+  criteria on the pooled reading; Comparatives & Superlatives (2 of 95) and
+  Conditionals (5 of 132) are over the false "correct" line and ship on the
+  owner's acceptance, not as a pass. Three small fixes ship with it; the
+  Modal Past Forms hint card is rewritten; four things wait until after
+  1.5.0 (T-87 to T-92).
+- **[Engineering, Worker, not deployed]** `FIRST_WAVE_TOPICS_ENABLED = true`.
+  The scoring route asks the scorer once more when a response leaves an
+  answer without a usable verdict or carries an entry that belongs to no
+  answer (`proxy/src/score_retry.ts`); a second incomplete response is a 502,
+  so the app keeps the answers on the screen instead of showing a result a
+  question short. Not repeated when the first call took more than 18 s (the
+  app waits 40 s). The quota is counted once. Log line `score_incomplete`,
+  counts only.
+- **[Engineering, app]** `kFirstWaveTopicsEnabled = true`: ten cards on
+  Topic Practice, all ten in Home's showcase. A weak spot keeps its own
+  topic on Review and on Home (`topicOfWeakSpot`; five lookups knew only the
+  Daily Test's five and fell back to Gerund vs. Infinitive). The copy that
+  counts topics already took the real number: it says 10 in the eight
+  languages. The Daily Test keeps its five topics.
+- **[Fix, app]** The practice loading screen says "Writing your questions on
+  <topic>…", with no number, in the eight languages (a set can arrive a
+  question short). An empty practice set is a failed generation: the app's
+  general sentence, no session counted.
+- **[Copy]** The Modal Past Forms hint card (English, as every card): "could
+  / would: the past of can / will", "Reported: "I can" → she said she
+  could", "modal + have + past participle: past events", "must have: sure ·
+  should have: regret". The harness's copy is in step.
+- **[Docs]** `docs/1.5.0-topics-report.md`: the closing "Decision" section
+  (the report's tooling keeps it last). `proxy/README.md`: "Owner checklist —
+  deploy for 1.5.0 (first-wave topics)": what goes live, the checks right
+  after, how to go back. `DEVICE-CHECKS.md`: "First-wave topics (1.5.0) —
+  after the Worker's deploy", T-1 to T-8. Two dated notes in the spec.
+- **[Verified]** The proxy: typecheck clean, `npm test` 737 passed (30
+  files); `wrangler deploy --dry-run` builds 104.46 KiB and uploads nothing.
+  The app: `flutter analyze` no issues, `flutter test` 2890 passed. Swift
+  RunnerTests: 23 tests, 0 failures (iPhone 18 Pro simulator). `flutter
+  build ios --release --no-codesign`: built, 50.4 MB, arm64, with the widget
+  extension, 1.4.0 (7).
+- **[Not verified]** Nothing on a device, nothing against the live Worker,
+  no screen looked at in a simulator. Nothing was deployed; no API call; no
+  version bump; not merged into `main`.
+- **[Legal]** No change needed: no new data, no new service.
+- **[Next, the owner's]** The deploy, then the device checks, then the merge
+  and the 1.5.0 build.
+- Record and decisions T-87 to T-110: `docs/1.5.0-topics-progress.md`.
+

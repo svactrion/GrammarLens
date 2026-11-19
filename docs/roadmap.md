@@ -516,13 +516,48 @@ Owner decisions so far:
   and writes the report's section "The scoring prompt, second round". Also
   found, from the code: when the scorer leaves an answer of a set out (3 of
   1,190 in the measurement), the app shows a result without that question
-  and says nothing; a check in the Worker is proposed, not built. **Next:
-  the owner's run** from his Terminal (`proxy/eval/README.md`, "Owner
-  checklist — scoring prompt, second round"), then the section read in the
-  Cowork chat, then his decisions: the scoring prompt, topic by topic what
-  goes to release prep, the two earlier findings and the deploy of the
-  practice path. The topics stay switched off. Record and decisions:
-  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md).
+  and says nothing; a check in the Worker is proposed, not built.
+  *(Superseded, kept as written:* **Next: the owner's run** from his
+  Terminal (`proxy/eval/README.md`, "Owner checklist — scoring prompt,
+  second round"), then the section read in the Cowork chat, then his
+  decisions: the scoring prompt, topic by topic what goes to release prep,
+  the two earlier findings and the deploy of the practice path. The topics
+  stay switched off.*)* **The second round ran (owner, 2026-11-19; 960
+  calls, $1.31; the measurement is closed at $3.83 of $15.00):** T alone
+  brings Conditionals under the line (2 of 132) and puts Prepositions and
+  Comparatives & Superlatives over it; no candidate is better than the
+  production prompt overall. **Owner decisions (2026-11-19), his go for
+  release prep: all five first-wave topics ship in 1.5.0 with the production
+  scoring prompt as it is.** Passive Voice, Prepositions and Relative
+  Clauses meet all three criteria on the pooled reading; Comparatives &
+  Superlatives (2 of 95) and Conditionals (5 of 132) are over the false
+  "correct" line and ship on his acceptance, not as a pass (the 2 % line is
+  finer than the measurement resolves; the weakest new topic is well under
+  Articles, which is live; the scorer can be improved on the server after
+  the release). No candidate becomes the production prompt. **Phase D done
+  up to its stop (2026-11-19; nothing deployed, no API call, no version
+  bump, not merged):** the five topics are switched on in the app (Topic
+  Practice with ten cards; a new topic's weak spot keeps its topic on Review
+  and Home; copy that counts topics says 10 in every language) and in the
+  Worker's source; three small fixes (the Worker asks the scorer once more
+  when an answer comes back without a verdict, then answers with an error
+  instead of a short result; the practice loading screen names no number of
+  questions; an empty practice set is a failed generation); the Modal Past
+  Forms hint card covers both could / would as the past of can / will and
+  modal + have + past participle; the report has its closing "Decision"
+  section. Flutter 2890 tests, Swift 23, the proxy 737 and typecheck pass; a
+  release build succeeds (1.4.0 (7)). **Next, the owner's, in this order:**
+  1. deploy the Worker (`proxy/README.md`, "Owner checklist — deploy for
+  1.5.0"; with it the theme per set, the line on blanks, the guard and the
+  Conditionals note go live for every version); 2. the device checks on the
+  release build (`docs/design/ui-polish/handoff/DEVICE-CHECKS.md`,
+  "First-wave topics", with the fourth pass); 3. the merge into `main` and
+  the 1.5.0 build (the version bump belongs there). **After 1.5.0:**
+  repeated scoring to verify T; the wording that makes a correction item's
+  sentence clearly wrong; Articles' scoring; mixed Modal Past Forms
+  questions. Record and decisions:
+  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md); the decision:
+  [`1.5.0-topics-report.md`](1.5.0-topics-report.md), "Decision".
 - **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
   - **A fourth onboarding goal, School & university** (stored and reported
     as `school`, a new value of the `learning_goal` user property). It is
