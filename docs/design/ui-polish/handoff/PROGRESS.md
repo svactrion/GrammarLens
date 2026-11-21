@@ -2663,6 +2663,17 @@ not open the app there). All of it is in `DEVICE-CHECKS.md`.
 
 ## Final summary
 
+**Merged into `main` (2026-11-21).** On the owner's word of 2026-11-21,
+after his device checks of 19 to 21 November, `ui-polish-widgets` was
+merged into `main` (`423560e`, no conflict) and the version set to
+`1.5.0+8` (`a266f60`); all checks pass on `main`. Not built for the store,
+not uploaded, not submitted. The owner's result is recorded at the top of
+[`DEVICE-CHECKS.md`](DEVICE-CHECKS.md); the release preparation in
+[`docs/1.5.0-release-progress.md`](../../../1.5.0-release-progress.md) and
+the owner's steps in
+[`docs/1.5.0-release-steps.md`](../../../1.5.0-release-steps.md). The
+summary below is kept as written before the merge.
+
 **Status: B0–B11 done, fix round 1 done, fix round 2 done** on branch
 `ui-polish` (pushed), **integrated with the widgets and reminders on
 branch `ui-polish-widgets`** (pushed; "Integration" above), **and fix rounds

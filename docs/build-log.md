@@ -15036,3 +15036,53 @@ The full record, every decision and every gap: `PROGRESS.md` there.
 - **[Disk]** 18 GiB free before, 17 GiB after the builds and the walks.
 - Record and decisions F6-1 to F6-14:
   `docs/design/ui-polish/handoff/PROGRESS.md`, "Fix round 6".
+
+## 2026-11-21 (1.5.0 release preparation, part 1: merged into `main`, version `1.5.0+8`; not built for the store, not submitted)
+
+- **[Owner]** Reported his device checks of 19 to 21 November and gave
+  his word for the merge and the version bump: the day's step plays
+  before the rest scene; Review's inline mistakes on the new topics seen
+  (2026-11-19); the reminders arrive and the widgets work; the Daily Test
+  card's companion stays as specified; everything else works, not
+  itemised. Recorded at the top of
+  `docs/design/ui-polish/handoff/DEVICE-CHECKS.md` (on the branch, before
+  the merge).
+- **[Merge]** `ui-polish-widgets` merged into `main` with `--no-ff`
+  (`423560e`), no conflict: `main` had nothing the branch lacked (the
+  November fixes, `8d4183b` and the lira symbol, were already in it).
+  The branch stays.
+- **[Version]** `1.5.0+8` (`a266f60`). The built product reads 1.5.0 (8)
+  for the app and for the widget extension. 1.4.1's two fixes ship inside
+  1.5.0.
+- **[Verified on `main`]** `flutter analyze` clean; `flutter test` 2925
+  passed; Swift tests 23 passed; the simulator build with `xcodebuild`
+  and `flutter build ios --release --no-codesign` (50.3 MB, with the
+  extension) succeed; `preflight.sh` passes. `main` pushed.
+- **[Tool]** `scripts/release_ipa_check.sh` also checks the widget
+  extension: present, the same version and build as the app, and the App
+  Group in both signatures (`080f3d1`; tested on IPAs made from the
+  release build, not on a store IPA).
+- **[Read]** Against 1.4.0's source (`c37757a`): no new Dart, pod or Swift
+  package; new are the widget target, the App Group entitlement on both
+  targets and the `grammarlens` URL scheme. Nothing of a new kind is
+  collected, sent or shared (local reminders, widgets fed on the device);
+  `product.yaml` `legal` unchanged.
+- **[iPad tour, simulator]** iPad Pro 13-inch and iPad mini, light and
+  dark, English (and Turkish and Arabic on the 13-inch), the practice on a
+  local stand-in (no AI call); driver `tool/ui_polish/ipad_tour_driver.dart`
+  (`064d630`). No blocking finding, so no fix. For the owner: sheets (N01,
+  the length picker) and the mountain intro keep their old colours when
+  the system appearance changes while they are open; Welcome and the Day 0
+  results use the full iPad width; on a second day N01 opens before the
+  day's step walks. Upside-down portrait not walked.
+- **[Owner's correction during the run]** Fewer simulators: the mini got
+  one fresh-install walk only; the other walks ran on the 13-inch only; no
+  further build; simulators shut down, the stand-in stopped.
+- **[Disk]** 11 GiB free at the start, 15 after the allowed deletions,
+  6.5 at the end: the two iPad simulators' new data (about 7.5 GB) is not
+  an allowed deletion.
+- **[Not done]** No `flutter build ipa`, no upload, no TestFlight, no App
+  Store Connect call, no deploy, nothing under `proxy/`, no API call, no
+  signing change. Store texts and screenshots not started.
+- Record and decisions R-1 to R-8: `docs/1.5.0-release-progress.md`; the
+  owner's steps: `docs/1.5.0-release-steps.md`.
