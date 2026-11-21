@@ -138,8 +138,7 @@ final _practiceItems = [
     ('i4', 'If I ___ you, I would ask her.'),
     ('i5', 'We ___ dinner when the phone rang.'),
   ])
-    PracticeItem(
-        id: id, type: PracticeItemType.fillInBlank, instruction: text),
+    PracticeItem(id: id, type: PracticeItemType.fillInBlank, instruction: text),
 ];
 
 final _result = ScoringResult(topicId: _topic.id.name, feedback: const [
@@ -303,7 +302,6 @@ final List<_Screen> _screens = [
     build: () => AvatarPickerScreen(
           currentAvatar: Avatar.values.first,
           onAvatarChanged: (_) {},
-          heroTag: 'final_pass_avatar',
         ),
     after: null,
   ),
@@ -356,7 +354,8 @@ final List<_Screen> _screens = [
   (
     name: 'medal_celebration_welcome',
     scrolls: false,
-    build: () => Scaffold(body: MedalCelebration.welcome(onClose: () {}, l10n: en)),
+    build: () =>
+        Scaffold(body: MedalCelebration.welcome(onClose: () {}, l10n: en)),
     after: null,
   ),
 ];
@@ -442,18 +441,11 @@ void main() {
                 final key = GlobalKey();
                 final errors = <String>[];
                 final previous = FlutterError.onError;
-                FlutterError.onError = (d) => errors.add(d
-                    .exceptionAsString()
-                    .split('\n')
-                    .first);
+                FlutterError.onError =
+                    (d) => errors.add(d.exceptionAsString().split('\n').first);
                 try {
-                  await pumpScreen(
-                      tester,
-                      screen,
-                      tall ? Size(size.width, 2600) : size,
-                      textSize,
-                      b,
-                      key);
+                  await pumpScreen(tester, screen,
+                      tall ? Size(size.width, 2600) : size, textSize, b, key);
                 } finally {
                   FlutterError.onError = previous;
                 }
@@ -461,9 +453,8 @@ void main() {
                 void visit(RenderObject o) {
                   if (o is RenderParagraph && o.didExceedMaxLines) {
                     final text = o.text.toPlainText();
-                    cut.add(text.length > 60
-                        ? '${text.substring(0, 60)}…'
-                        : text);
+                    cut.add(
+                        text.length > 60 ? '${text.substring(0, 60)}…' : text);
                   }
                   o.visitChildren(visit);
                 }
@@ -496,14 +487,15 @@ void main() {
             '${tall ? '_full' : ''}';
         testWidgets(file, (tester) async {
           final key = GlobalKey();
-          await pumpScreen(tester, screen, Size(390, tall ? 2000 : 844),
-              textSize, b, key);
+          await pumpScreen(
+              tester, screen, Size(390, tall ? 2000 : 844), textSize, b, key);
           await tester.runAsync(() async {
             final img = await (key.currentContext!.findRenderObject()
                     as RenderRepaintBoundary)
                 .toImage(pixelRatio: 3);
             final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
-            File('$out/$file.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+            File('$out/$file.png')
+                .writeAsBytesSync(bytes!.buffer.asUint8List());
           });
           expect(tester.takeException(), isNull);
         });

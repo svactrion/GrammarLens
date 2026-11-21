@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -80,18 +81,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final (access, used, type) in [
-    (true, 0, FilledButton),
-    (false, StorageService.freeDailyPracticeLimit, OutlinedButton),
+  for (final (access, used, name) in [
+    (true, 0, 'no offer'),
+    (false, StorageService.freeDailyPracticeLimit, 'under the offer'),
   ]) {
     testWidgets(
         '"Back to topics" is in the fixed bar, in view without scrolling '
-        '(${type == FilledButton ? 'filled' : 'outlined, under the offer'})',
-        (tester) async {
+        '($name)', (tester) async {
       await pump(tester, access: access, used: used);
       final footer = find.byKey(ResultsScreen.footerKey);
       final button = find.descendant(
-          of: footer, matching: find.widgetWithText(type, 'Back to topics'));
+          of: footer,
+          matching: find.widgetWithText(PressableButton, 'Back to topics'));
       expect(button, findsOneWidget);
       expect(tester.getRect(button).bottom, lessThanOrEqualTo(667));
       // Scrolling the results does not move it.

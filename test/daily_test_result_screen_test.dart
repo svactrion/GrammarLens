@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/rays.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/app_colors.dart';
 
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -22,7 +25,6 @@ import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/medal_celebration.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_milestone.dart';
 import 'package:grammar_lens/widgets/feedback_text.dart';
-import 'package:grammar_lens/widgets/result_score_band.dart';
 
 import 'support/l10n_support.dart';
 
@@ -123,6 +125,22 @@ DailyTestQuestion _question({
       acceptedAnswers: acceptedAnswers,
     );
 
+/// The answer rows of "Your answers" (V10).
+final _rows = find.byWidgetPredicate((w) =>
+    w.key is ValueKey<String> &&
+    (w.key! as ValueKey<String>).value.startsWith('daily_result_row_'));
+
+/// Opens every answer row (V10's rows start closed; their explanation is
+/// inside).
+Future<void> expandAnswers(WidgetTester tester) async {
+  for (var i = 0; i < _rows.evaluate().length; i++) {
+    final row = find.byKey(DailyTestResultScreen.rowKey(i));
+    await tester.ensureVisible(row);
+    await tester.tap(find.descendant(of: row, matching: find.byType(InkWell)));
+    await tester.pumpAndSettle();
+  }
+}
+
 void main() {
   late _FakeStorageService storageService;
   late DailyTestService dailyTestService;
@@ -196,13 +214,18 @@ void main() {
 
       // Nothing has been scrolled: the button is in view and disabled.
       void expectButtonInView() {
-        final rect = tester.getRect(find.byType(FilledButton));
+        final rect =
+            tester.getRect(find.byKey(DailyTestResultScreen.primaryKey));
         expect(rect.bottom, lessThanOrEqualTo(568));
         expect(rect.top, greaterThanOrEqualTo(0));
       }
 
       expect(find.text('Saving your results…'), findsOneWidget);
-      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      expect(
+          tester
+              .widget<PressableButton>(
+                  find.byKey(DailyTestResultScreen.primaryKey))
+              .onPressed,
           isNull);
       expectButtonInView();
 
@@ -210,7 +233,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('See your climb'), findsNothing);
       expect(find.text('Try saving again'), findsOneWidget);
-      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      expect(
+          tester
+              .widget<PressableButton>(
+                  find.byKey(DailyTestResultScreen.primaryKey))
+              .onPressed,
           isNotNull);
       expectButtonInView();
 
@@ -218,7 +245,11 @@ void main() {
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
       expect(find.text('See your climb'), findsOneWidget);
-      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      expect(
+          tester
+              .widget<PressableButton>(
+                  find.byKey(DailyTestResultScreen.primaryKey))
+              .onPressed,
           isNotNull);
       expectButtonInView();
       expect(storageService.completeDailyTestCalls, 1);
@@ -340,6 +371,7 @@ void main() {
       useTallView(tester);
       await pumpResult(
           tester, DailyTestSet(day: '2026-01-01', questions: explained));
+      await expandAnswers(tester);
 
       expect(text(q1Why), findsOneWidget);
       expect(text(q4Why), findsOneWidget);
@@ -351,6 +383,7 @@ void main() {
       useTallView(tester);
       await pumpResult(
           tester, DailyTestSet(day: '2026-01-01', questions: explained));
+      await expandAnswers(tester);
 
       expect(text(q3Why), findsOneWidget);
       expect(text("Not quite — here's the correct answer."), findsNothing);
@@ -362,6 +395,7 @@ void main() {
       useTallView(tester);
       await pumpResult(
           tester, DailyTestSet(day: '2026-01-01', questions: explained));
+      await expandAnswers(tester);
 
       expect(text(q2Comment), findsOneWidget);
       expect(text(q2Why), findsNothing);
@@ -381,6 +415,7 @@ void main() {
         ]),
         answersOverride: {'k1': 'cookıng'},
       );
+      await expandAnswers(tester);
 
       // The note's two sentences and the explanation make three, so
       // FeedbackText (1.4.0 B9) lays them out as three paragraphs
@@ -406,6 +441,7 @@ void main() {
       // older cached set parses to.
       await pumpResult(
           tester, DailyTestSet(day: '2026-01-01', questions: questions));
+      await expandAnswers(tester);
 
       expect(tester.takeException(), isNull);
       expect(text("Not quite — here's the correct answer."), findsOneWidget);
@@ -427,6 +463,7 @@ void main() {
         tester,
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
+      await expandAnswers(tester);
 
       expect(storageService.insertedErrors, hasLength(2));
       expect(
@@ -441,6 +478,7 @@ void main() {
         tester,
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
+      await expandAnswers(tester);
 
       expect(
         storageService.insertedErrors
@@ -456,6 +494,7 @@ void main() {
         tester,
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
+      await expandAnswers(tester);
 
       final q2Entry = storageService.insertedErrors
           .firstWhere((e) => e.prompt == 'Question q2');
@@ -470,6 +509,7 @@ void main() {
         tester,
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
+      await expandAnswers(tester);
 
       final q3Entry = storageService.insertedErrors
           .firstWhere((e) => e.prompt == 'Question q3');
@@ -488,6 +528,7 @@ void main() {
         tester,
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
+      await expandAnswers(tester);
 
       final q3Entry = storageService.insertedErrors
           .firstWhere((e) => e.prompt == 'Question q3');
@@ -540,6 +581,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await expandAnswers(tester);
 
       expect(find.text('Correct'), findsOneWidget);
       expect(find.text('Needs work'), findsNothing);
@@ -561,6 +603,7 @@ void main() {
         ]),
         answersOverride: {'a1': 'Should'},
       );
+      await expandAnswers(tester);
 
       expect(find.text('Correct'), findsOneWidget);
       expect(find.text('Needs work'), findsNothing);
@@ -582,6 +625,7 @@ void main() {
       );
 
       await pumpResult(tester, completedSet);
+      await expandAnswers(tester);
 
       expect(storageService.insertedErrors, isEmpty);
       expect(storageService.completeDailyTestCalls, 0);
@@ -617,8 +661,8 @@ void main() {
     }
 
     testWidgets(
-        'a completion that just earned the badge shows the one-time '
-        'celebration, exactly once', (tester) async {
+        'a completion that just earned the badge shows the results first; '
+        'their button opens the one-time celebration (A1)', (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
 
@@ -627,6 +671,10 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
+      expect(find.text('Welcome to the climb'), findsNothing);
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Welcome to the climb'), findsOneWidget);
       // The copy states the step rule: one answered question earns the day's
       // step, so it must not promise progress for every completed test.
@@ -651,27 +699,31 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      expect(find.text('Start my climb'), findsOneWidget);
+      expect(find.text('Climb my first step'), findsOneWidget);
       expect(find.text('See your climb'), findsNothing);
       expect(find.text('Back to Home'), findsNothing);
-      expect(find.text('Continue'), findsNothing);
+      // A1: no layer over the results yet; the footer holds only the climb
+      // button.
+      expect(celebrationFinder, findsNothing);
       expect(
-        find.descendant(
-          of: find.byType(FilledButton),
-          matching: find.byIcon(Icons.emoji_events_rounded),
-        ),
-        findsNWidgets(1),
-      );
+          find.descendant(
+              of: find.byKey(const Key('resultFooter')),
+              matching: find.text('Continue')),
+          findsNothing);
       expect(
-        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        tester
+            .widget<PressableButton>(
+                find.byKey(DailyTestResultScreen.primaryKey))
+            .onPressed,
         isNotNull,
       );
     });
 
     testWidgets(
-        'N15: the celebration opens over the results when the save lands; '
-        'nothing in the list moves, and one tap shows the results',
-        (tester) async {
+        'A1: the save lands and the results stay alone; "Climb my first '
+        'step" opens the celebration over them, nothing in the list moves, '
+        'and closing it goes on', (tester) async {
+      var left = 0;
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       final pending = Completer<void>();
@@ -683,37 +735,46 @@ void main() {
           answers: answers,
           dailyTestService: dailyTestService,
           analyticsService: analyticsService,
+          onDone: () => left++,
         ),
       ));
       await tester.pump();
+      // V10's rows enter one after another; let them land first.
+      await tester.pump(const Duration(seconds: 1));
       expect(celebrationFinder, findsNothing);
-      final resultCards = find.byType(Card);
-      expect(resultCards, findsNWidgets(4));
+      expect(_rows, findsNWidgets(4));
+
+      pending.complete();
+      await tester.pumpAndSettle();
+      // The save landed: still the results alone (V10 before V11).
+      expect(celebrationFinder, findsNothing);
+      final resultCards = _rows;
       final before = [
         for (final e in resultCards.evaluate())
           tester.getTopLeft(find.byWidget(e.widget))
       ];
-
-      pending.complete();
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       // A layer, not a list item: the results stay where they were.
       expect(celebrationFinder, findsOneWidget);
       final after = [
-        for (final e in find.byType(Card).evaluate().take(4))
+        for (final e in _rows.evaluate().take(4))
           tester.getTopLeft(find.byWidget(e.widget))
       ];
       expect(after, before);
       // The four results; the layer has no card (N28).
-      expect(find.byType(Card), findsNWidgets(4));
+      expect(_rows, findsNWidgets(4));
       final medal = tester.widget<MedalBadge>(find.descendant(
           of: celebrationFinder, matching: find.byType(MedalBadge)));
       expect(medal.asset, MedalArt.welcome);
       expect(medal.disc, MedalCelebration.disc);
 
+      expect(left, 0);
       await closeCelebration(tester);
-      expect(find.byType(Card), findsNWidgets(4));
-      expect(find.text('Start my climb'), findsOneWidget);
+      // Closing the badge goes on (V12 in the Day-0 flow).
+      expect(left, 1);
     });
 
     testWidgets('an ordinary completion (not the first ever) shows nothing',
@@ -726,7 +787,7 @@ void main() {
       );
 
       expect(find.text('Welcome to the climb'), findsNothing);
-      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsNothing);
       expect(find.text('See your climb'), findsOneWidget);
     });
 
@@ -785,14 +846,18 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
       expect(find.text('Welcome to the climb'), findsNothing);
-      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsNothing);
 
       storageService.failCompletionWith = null;
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
 
+      expect(find.text('Welcome to the climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsOneWidget);
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Welcome to the climb'), findsOneWidget);
-      expect(find.text('Start my climb'), findsOneWidget);
     });
 
     testWidgets('does not gate or delay the way out once saved',
@@ -805,9 +870,12 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(find.text('Welcome to the climb'), findsNothing);
       expect(
-        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        tester
+            .widget<PressableButton>(
+                find.byKey(DailyTestResultScreen.primaryKey))
+            .onPressed,
         isNotNull,
       );
     });
@@ -836,23 +904,16 @@ void main() {
   });
 
   testWidgets(
-      'shows its score via the shared ResultScoreBand widget '
-      '(docs/design-audit.md, Batch 0/4 — both result screens must agree '
-      'by construction, not by each independently matching the other)',
-      (tester) async {
+      'V10: the score ring and the strip show the result; the tiles count the '
+      'points, the step and the weak spots', (tester) async {
     await pumpResult(
       tester,
       DailyTestSet(day: '2026-01-01', questions: questions),
     );
 
-    expect(find.byType(ResultScoreBand), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(ResultScoreBand),
-        matching: find.text('1/4 correct · 1 skipped'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('1/4'), findsOneWidget);
+    expect(find.text('Your answers'), findsOneWidget);
+    expect(_rows, findsNWidgets(4));
   });
 
   group('analytics (docs/analytics-plan.md E1/E3)', () {
@@ -1079,7 +1140,7 @@ void main() {
 
   group('N28, N36: the celebration layer and "Start my climb" (Batch 5)', () {
     final burst = find.byType(ConfettiBurst);
-    final button = find.byType(FilledButton);
+    final button = find.byKey(DailyTestResultScreen.primaryKey);
     var left = 0;
 
     setUp(() => left = 0);
@@ -1102,9 +1163,9 @@ void main() {
     }
 
     /// Pumps a Day-0 style result screen (left through [onDone]) whose save
-    /// earns the badge, and lets everything settle. The celebration opens
-    /// with its own burst (N15); unless [keepCelebration], it is closed
-    /// here, so what follows sees only the button's burst.
+    /// earns the badge, and lets everything settle: the results, with
+    /// "Climb my first step" (A1: no layer yet). With [keepCelebration] the
+    /// button is tapped, so the celebration is open (with its own burst).
     Future<void> pumpEarned(
       WidgetTester tester, {
       Brightness brightness = Brightness.light,
@@ -1128,14 +1189,18 @@ void main() {
       if (muteTickers) app = TickerMode(enabled: false, child: app);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      if (!keepCelebration && celebrationFinder.evaluate().isNotEmpty) {
-        await closeCelebration(tester);
+      expect(celebrationFinder, findsNothing);
+      if (keepCelebration &&
+          find.text('Climb my first step').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Climb my first step'));
+        await tester.pumpAndSettle();
       }
     }
 
     testWidgets(
-        'earning the badge opens the layer with one burst from its medal; '
-        'once it is closed nothing plays', (tester) async {
+        'earning the badge, the results\' button opens the layer with one '
+        'burst from its medal; closing it leaves and nothing plays',
+        (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1149,6 +1214,10 @@ void main() {
           onDone: () => left++,
         ),
       ));
+      await tester.pumpAndSettle();
+      expect(celebrationFinder, findsNothing);
+      expect(burst, findsNothing);
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       await tester.pump();
       expect(celebrationFinder, findsOneWidget);
@@ -1159,26 +1228,36 @@ void main() {
       expect(origin.dx, closeTo(medal.center.dx, 1));
       expect(origin.dy, closeTo(medal.center.dy, 1));
       await tester.pumpAndSettle();
+      expect(left, 0);
       await closeCelebration(tester);
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 500));
         expect(burst, findsNothing);
       }
-      expect(left, 0);
+      expect(left, 1);
     });
 
     testWidgets(
-        'N36: "Start my climb" plays no confetti: it leaves at once, once',
-        (tester) async {
+        'N36, A1: "Climb my first step" opens the badge (no confetti of its '
+        'own); the badge\'s close leaves once, and the button does nothing '
+        'after that', (tester) async {
       tallView(tester);
       await pumpEarned(tester);
-      expect(find.text('Start my climb'), findsOneWidget);
-      await tester.tap(find.text('Start my climb'));
+      expect(find.text('Climb my first step'), findsOneWidget);
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
-      expect(burst, findsNothing);
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(left, 0);
+      // The only burst is the badge's own.
+      expect(burst, findsOneWidget);
+      expect(find.descendant(of: celebrationFinder, matching: burst),
+          findsOneWidget);
+      await tester.pumpAndSettle();
+      await closeCelebration(tester);
       expect(left, 1);
       await tester.tap(button, warnIfMissed: false);
       await tester.pump(const Duration(seconds: 3));
+      expect(celebrationFinder, findsNothing);
       expect(left, 1);
     });
 
@@ -1191,7 +1270,8 @@ void main() {
         final material = tester.widget<Material>(find
             .descendant(of: celebrationFinder, matching: find.byType(Material))
             .first);
-        expect(material.color, MedalCelebration.scrim);
+        expect(material.color,
+            AppColors.of(tester.element(celebrationFinder)).navyDeep);
         expect(
             tester
                 .widget<MedalBadge>(find.descendant(
@@ -1200,29 +1280,20 @@ void main() {
             MedalCelebration.disc);
         final title = tester.widget<Text>(find.text('Welcome to the climb'));
         expect(title.style!.color, Colors.white);
-        final rays = tester.widget<CustomPaint>(find.descendant(
-            of: celebrationFinder,
-            matching: find.byWidgetPredicate(
-                (w) => w is CustomPaint && w.painter is CelebrationRays)));
-        expect((rays.painter! as CelebrationRays).colour,
-            MedalCelebration.welcomeOrange);
+        final rays = tester.widget<Rays>(find.descendant(
+            of: celebrationFinder, matching: find.byType(Rays)));
+        expect(rays.color.r, closeTo(MedalCelebration.welcomeOrange.r, .01));
         await tester.pumpWidget(const SizedBox());
       }
     });
 
-    testWidgets('N28: the rays turn slowly for a while, then rest',
+    testWidgets('V11: the rays stand still with the ambient loops off',
         (tester) async {
       tallView(tester);
       await pumpEarned(tester, keepCelebration: true);
-      double turn() => (tester
-              .widget<CustomPaint>(find.descendant(
-                  of: celebrationFinder,
-                  matching: find.byWidgetPredicate(
-                      (w) => w is CustomPaint && w.painter is CelebrationRays)))
-              .painter! as CelebrationRays)
-          .turn;
-      // pumpAndSettle in pumpEarned ran them to the end: they rest there.
-      expect(turn(), closeTo(MedalCelebration.raysAngle, 1e-9));
+      expect(
+          find.descendant(of: celebrationFinder, matching: find.byType(Rays)),
+          findsOneWidget);
       expect(tester.hasRunningAnimations, isFalse);
     });
 
@@ -1241,7 +1312,8 @@ void main() {
       await tester.pump(MedalCelebration.close);
       await tester.pump();
       expect(celebrationFinder, findsNothing);
-      expect(find.text('Start my climb'), findsOneWidget);
+      // Closing the badge goes on (A1).
+      expect(left, 1);
     });
 
     testWidgets(
@@ -1268,8 +1340,7 @@ void main() {
       await tester.pump(MedalCelebration.close);
       await tester.pump();
       expect(celebrationFinder, findsNothing);
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump();
+      // Closing the badge left at once (A1); nothing played.
       expect(burst, findsNothing);
       expect(left, 1);
     });
@@ -1282,13 +1353,14 @@ void main() {
       await pumpEarned(tester);
       expect(burst, findsNothing);
       expect(celebrationFinder, findsNothing);
-      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsNothing);
 
       storageService.failCompletionWith = null;
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
-      await closeCelebration(tester);
-      expect(find.text('Start my climb'), findsOneWidget);
+      expect(celebrationFinder, findsNothing);
+      await climbThroughWelcome(tester);
+      expect(left, 1);
     });
 
     testWidgets('the layer fades in over 200 ms instead of jumping',
@@ -1304,6 +1376,8 @@ void main() {
           analyticsService: analyticsService,
         ),
       ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       await tester.pump();
       double opacity() =>
@@ -1337,8 +1411,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('from Home: "Start my climb" pops the route at once',
-        (tester) async {
+    testWidgets(
+        'from Home: "Climb my first step" opens the badge, and its close '
+        'pops the route at once', (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1361,8 +1436,7 @@ void main() {
       ));
       await tester.tap(find.text('open results'));
       await tester.pumpAndSettle();
-      await closeCelebration(tester);
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
       await tester.pumpAndSettle();
       expect(find.text('open results'), findsOneWidget);
       expect(find.text('Daily Test Results'), findsNothing);
@@ -1398,12 +1472,12 @@ void main() {
       expect(
           find.descendant(
               of: celebrationFinder,
-              matching: find.text('October · Green Slope')),
+              matching: find.textContaining('Green Slope')),
           findsOneWidget);
       final medal = tester.widget<MedalBadge>(find.descendant(
           of: celebrationFinder, matching: find.byType(MedalBadge)));
       expect(medal.asset, MedalArt.monthly('green_slope', MedalTier.gold));
-      await closeCelebration(tester, title: 'Gold medal earned');
+      await closeCelebration(tester, title: 'GOLD MEDAL');
       await tester.pump(const Duration(seconds: 3));
     });
 
@@ -1417,19 +1491,20 @@ void main() {
         expect(
             find.descendant(
                 of: celebrationFinder,
-                matching: find.text('October · Green Slope')),
+                matching: find.textContaining('Green Slope')),
             findsOneWidget);
         expect(
             find.descendant(
                 of: celebrationFinder,
-                matching: find.text(en.medalTapToContinue)),
+                matching: find.byKey(MedalCelebration.continueKey)),
             findsOneWidget);
         final medal = tester.widget<MedalBadge>(find.descendant(
             of: celebrationFinder, matching: find.byType(MedalBadge)));
         expect(medal.asset, MedalArt.monthly('green_slope', tier));
         expect(medal.earned, isTrue);
 
-        await closeCelebration(tester, title: '${tier.label(en)} medal earned');
+        await closeCelebration(tester,
+            title: '${tier.label(en).toUpperCase()} MEDAL');
         expect(find.text('See your climb'), findsOneWidget);
         await tester.pump(const Duration(seconds: 3));
         expect(celebrationFinder, findsNothing);
@@ -1440,7 +1515,7 @@ void main() {
         (tester) async {
       monthAfter(MonthlyMedalRules.threshold(2026, 11, MedalTier.silver));
       await pumpResult(tester, setOn('2026-11-18'));
-      expect(find.text('November · Ember Peak'), findsOneWidget);
+      expect(find.textContaining('Ember Peak'), findsOneWidget);
       expect(
           tester
               .widget<MedalBadge>(find.descendant(
@@ -1497,7 +1572,7 @@ void main() {
       await pumpResult(tester, setOn('2026-10-20'));
       expect(celebrationFinder, findsOneWidget);
       expect(burst, findsNothing);
-      await closeCelebration(tester, title: 'Bronze medal earned');
+      await closeCelebration(tester, title: 'BRONZE MEDAL');
     });
 
     testWidgets('with motion the burst comes from the medal at the opening',
@@ -1518,7 +1593,7 @@ void main() {
       expect(find.descendant(of: celebrationFinder, matching: burst),
           findsOneWidget);
       await tester.pumpAndSettle();
-      await closeCelebration(tester, title: 'Gold medal earned');
+      await closeCelebration(tester, title: 'GOLD MEDAL');
     });
   });
 
@@ -1551,7 +1626,7 @@ void main() {
         'rule_version': 1,
       });
       // Not again: the result stays, nothing re-reports.
-      await closeCelebration(tester, title: 'Silver medal earned');
+      await closeCelebration(tester, title: 'SILVER MEDAL');
       await tester.pump(const Duration(seconds: 5));
       expect(analyticsSink.named('save_point_reached'), hasLength(1));
       expect(analyticsSink.named('medal_tier_reached'), hasLength(1));

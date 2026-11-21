@@ -40,21 +40,30 @@ enum ClimbZoomTrigger {
 /// (`ClimbTheme.kcBackdropFor`, M22). Only the start of the zoom; the daily
 /// framing is [ClimbCamera].
 abstract final class ClimbOverview {
-  /// Points per image width in K-c, the same at every width.
-  static double get scale =>
-      ClimbCamera.windowHeight / ClimbRoute.sceneSize.height;
+  /// Points per image width in K-c in the full window, the same at every
+  /// width.
+  static double get scale => scaleFor(ClimbCamera.fullWindowHeight);
 
-  /// The empty band on each side of the image in a [width]-point window.
-  static double band(double width) =>
-      (width - ClimbRoute.sceneSize.width * scale) / 2;
+  /// Points per image width in K-c in a [windowHeight]-point window.
+  static double scaleFor(double windowHeight) =>
+      windowHeight / ClimbRoute.sceneSize.height;
+
+  /// The empty band on each side of the image in a [width]-point window
+  /// ([windowHeight] tall).
+  static double band(double width,
+          {double windowHeight = ClimbCamera.fullWindowHeight}) =>
+      (width - ClimbRoute.sceneSize.width * scaleFor(windowHeight)) / 2;
 
   /// Where the blurred backdrop goes in the scene layer (the image's own
   /// points in the daily framing): exactly the window at K-c, so the
   /// transform that brings the layer to K-c makes it fill the window.
   static Rect backdropRect(ClimbCamera camera) {
-    final s0 = scale / camera.scale;
-    return Rect.fromLTWH(-band(camera.width) / s0, 0, camera.width / s0,
-        ClimbCamera.windowHeight / s0);
+    final s0 = scaleFor(camera.windowHeight) / camera.scale;
+    return Rect.fromLTWH(
+        -band(camera.width, windowHeight: camera.windowHeight) / s0,
+        0,
+        camera.width / s0,
+        camera.windowHeight / s0);
   }
 
   static ImageProvider Function(ClimbTheme, Brightness)? _backdropForTesting;
@@ -76,9 +85,10 @@ abstract final class ClimbOverview {
   /// progress [t]: 0 is K-c, 1 the daily framing (the identity). Scale and
   /// translation are interpolated together, in window coordinates.
   static Matrix4 transform(ClimbCamera camera, Offset offset, double t) {
-    final s0 = scale / camera.scale;
+    final s0 = scaleFor(camera.windowHeight) / camera.scale;
     // A daily point p (window) is at s0 · (p + offset) + (band, 0) in K-c.
-    final tx0 = s0 * offset.dx + band(camera.width);
+    final tx0 =
+        s0 * offset.dx + band(camera.width, windowHeight: camera.windowHeight);
     final ty0 = s0 * offset.dy;
     final s = s0 + (1 - s0) * t;
     return Matrix4.diagonal3Values(s, s, 1)

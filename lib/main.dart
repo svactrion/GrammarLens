@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'services/analytics_service.dart';
+import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'utils/app_orientation.dart';
 import 'utils/early_error_reporting.dart';
@@ -30,9 +31,16 @@ Future<void> main() async {
   // The splash draws at once; Firebase and RevenueCat start with it, and
   // the app itself is built only after both have finished (LaunchGate), so
   // nothing in it can reach them unconfigured.
+  // V01: the full icon assembly on the first launch only (no profile yet);
+  // a fast local read, started before the first frame.
+  final firstLaunch = StorageService()
+      .getUserProfile()
+      .then((profile) => profile == null)
+      .catchError((Object _) => false);
   runApp(LaunchGate(
     initialize: () => _initializeLaunchServices(earlyErrors),
     app: (_) => const GrammarLensApp(),
+    firstLaunch: firstLaunch,
   ));
 }
 

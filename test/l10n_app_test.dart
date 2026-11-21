@@ -119,7 +119,7 @@ void main() {
     final context = tester.element(find.byType(FloatingNavShell));
     expect(Localizations.localeOf(context), const Locale('tr'));
     expect(sink.userProperties['ui_language'], 'tr');
-    expect(find.text('Ana Sayfa'), findsOneWidget);
+    expect(find.text('Tırmanış'), findsOneWidget);
     // Feature names are translated (owner, 2026-11-02).
     expect(find.text('Tekrar'), findsOneWidget);
   });

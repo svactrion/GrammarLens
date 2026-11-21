@@ -158,16 +158,29 @@ void main() {
     final (storage, sink) = await pumpProfile(tester, sampleMode: true);
     expect(storage.calls, ['getCurrentMonthlyMedalProgress']);
     expect(sink.events, isEmpty);
-    // The running month's points, now on the progress card (1.2.0 Batch 7;
-    // it was the bar's "N points" label).
+    // The running month's points, on the progress card (1.2.0 Batch 7;
+    // fix round 5: "N / 300" at its top right).
     expect(
-        find.textContaining(
-            'Monthly total: ${_UntouchedStorage.running.score} / '),
+        find.textContaining('${_UntouchedStorage.running.score} / ',
+            findRichText: true),
         findsOneWidget);
     expect(find.byType(MonthlyMedalCollection), findsOneWidget);
-    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsOneWidget);
+    // The shelf holds the newest three (V23); the collection holds the
+    // whole sample, for PF02.
+    final collection = tester
+        .widget<MonthlyMedalCollection>(find.byType(MonthlyMedalCollection));
+    expect(collection.welcomeBadge, isNotNull);
+    final months = {for (final m in collection.shelf()) (m.year, m.month)};
     for (final r in DebugSampleCollection.sample(now).results) {
-      expect(find.byKey(MonthlyMedalCollection.slotKey(r.year, r.month)),
+      if (r.tier != null) expect(months, contains((r.year, r.month)));
+    }
+    final slots = collection.shelfSlots();
+    expect(slots, hasLength(MonthlyMedalCollection.shelfMax));
+    for (final s in slots) {
+      expect(
+          find.byKey(s == null
+              ? MonthlyMedalCollection.welcomeSlotKey
+              : MonthlyMedalCollection.slotKey(s.year, s.month)),
           findsOneWidget);
     }
     expect(

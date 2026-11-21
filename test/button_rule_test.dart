@@ -22,6 +22,7 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 
 /// The owner's button rule (2026-10-06, final screens Part A1): orange for
@@ -102,18 +103,12 @@ void main() {
   for (final brightness in Brightness.values) {
     final theme = buildAppTheme(brightness);
     final orange = theme.colorScheme.primary;
-    final navy =
-        (brightness == Brightness.dark ? AppPalette.dark : AppPalette.light)
-            .button;
 
     void expectOrange(WidgetTester tester, String label) {
       expect(_fill(tester, label), orange, reason: label);
       expect(_edge(tester, label)?.style ?? BorderStyle.none, BorderStyle.none,
           reason: '$label has no navy edge');
     }
-
-    void expectNavy(WidgetTester tester, String label) =>
-        expect(_fill(tester, label), navy, reason: label);
 
     testWidgets('${brightness.name}: the length picker starts in orange',
         (tester) async {
@@ -131,12 +126,19 @@ void main() {
       ));
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-      expectOrange(tester, 'Start 5 questions');
+      // R02: the pressable orange Start.
+      expect(
+          tester
+              .widget<PressableButton>(find.ancestor(
+                  of: find.text('Start 5 questions'),
+                  matching: find.byType(PressableButton)))
+              .tone,
+          ButtonTone.orange);
     });
 
     testWidgets(
         '${brightness.name}: Review\'s empty state goes to the Daily '
-        'Test in orange', (tester) async {
+        'Test in navy (RV05)', (tester) async {
       await tester.pumpWidget(MaterialApp(
         theme: theme,
         home: ReviewScreen(
@@ -149,12 +151,15 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expectOrange(tester, 'Go to Daily Test');
+      // UI polish RV05: the board's navy button.
+      final cta = tester.widget<PressableButton>(find.ancestor(
+          of: find.text('Take today’s Daily Test'),
+          matching: find.byType(PressableButton)));
+      expect(cta.tone, ButtonTone.navy);
     });
 
     for (final (access, used, label) in [
       (true, 0, 'Practice this'),
-      (false, 0, 'Start free practice'),
       (false, StorageService.freeDailyPracticeLimit, 'Practice with Premium'),
     ]) {
       testWidgets('${brightness.name}: the weak spot\'s "$label" is orange',
@@ -178,7 +183,14 @@ void main() {
           ),
         ));
         await tester.pumpAndSettle();
-        expectOrange(tester, label);
+        if (access) {
+          // R03: Premium's "Practice this" is the orange PressableButton.
+          final button = tester.widget<PressableButton>(find.ancestor(
+              of: find.text(label), matching: find.byType(PressableButton)));
+          expect(button.tone, ButtonTone.orange);
+        } else {
+          expectOrange(tester, label);
+        }
       });
     }
 
@@ -217,22 +229,26 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     }
 
+    // UI polish V10: the results' one button is the navy 3D button in
+    // every case (the board), replacing the owner's 1.2.0 orange/navy split
+    // for this screen.
     testWidgets(
-        '${brightness.name}: Daily Test results: "See your climb" '
-        'orange, "Back to Home" and "Continue" navy', (tester) async {
+        '${brightness.name}: Daily Test results: one navy button whatever it '
+        'says', (tester) async {
+      PressableButton primary() => tester.widget<PressableButton>(
+          find.byKey(DailyTestResultScreen.primaryKey));
       await pumpResult(tester, answers: const {'q1': 'an'});
-      expectOrange(tester, 'See your climb');
+      expect(primary().label, 'See your climb');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {});
-      expectNavy(tester, 'Back to Home');
+      expect(primary().label, 'Back to Home');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {'q1': 'an'}, isDay0: true);
-      expectNavy(tester, 'Continue');
-    });
-
-    testWidgets(
-        '${brightness.name}: Daily Test results: "Start my climb" '
-        'orange', (tester) async {
+      expect(primary().label, 'Continue');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {'q1': 'an'}, welcome: true);
-      expectOrange(tester, 'Start my climb');
+      expect(primary().label, 'Climb my first step');
+      expect(primary().tone, ButtonTone.navy);
     });
 
     testWidgets(
@@ -241,7 +257,14 @@ void main() {
       await tester
           .pumpWidget(MaterialApp(theme: theme, home: const AiConsentScreen()));
       await tester.pumpAndSettle();
-      expectNavy(tester, 'Agree and continue');
+      // V17: the pressable navy Agree.
+      expect(
+          tester
+              .widget<PressableButton>(find.ancestor(
+                  of: find.text('Agree and continue'),
+                  matching: find.byType(PressableButton)))
+              .tone,
+          ButtonTone.navy);
     });
   }
 }

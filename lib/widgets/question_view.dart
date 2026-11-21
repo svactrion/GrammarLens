@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/scheduler.dart';
 
+import '../app_colors.dart';
 import '../l10n/l10n.dart';
+import '../motion.dart';
 import '../models/practice_item.dart';
 import '../data/topic_hints.dart';
 import '../models/topic.dart';
@@ -252,6 +254,15 @@ String questionTypeLabel(PracticeItemType type, AppLocalizations l10n) =>
 /// **Keyboard control.** While the answer has focus, "Review answer" (or
 /// "Read full question" when the question does not fit) closes the
 /// keyboard without touching the answer, giving the space back.
+/// A checked answer's look (UI polish V08 / V09 / Q04): the box turns green
+/// or the wrong-answer orange and becomes read-only; a multi-blank question
+/// colours each box by its own result ([blanks]), one after another.
+class AnswerGrade {
+  final bool correct;
+  final List<bool>? blanks;
+  const AnswerGrade({required this.correct, this.blanks});
+}
+
 class QuestionView extends StatefulWidget {
   final PracticeItem item;
   final int index;
@@ -287,7 +298,12 @@ class QuestionView extends StatefulWidget {
     this.showTopicHint = false,
     this.maxLength,
     this.counterThreshold = 0,
+    this.grade,
   });
+
+  /// Set once the answer is checked (the Daily Test's per-question
+  /// feedback); null while it can still be edited.
+  final AnswerGrade? grade;
 
   static const questionCardKey = ValueKey('question_card');
   static const topicTagKey = ValueKey('question_topic_tag');
@@ -587,6 +603,7 @@ class _QuestionViewState extends State<QuestionView>
                                 key: ValueKey('blank_boxes_${widget.item.id}'),
                                 item: widget.item,
                                 drafts: widget.drafts,
+                                grade: widget.grade,
                                 noArticleButton:
                                     widget.topic?.id == TopicId.articles,
                                 onChanged: () => widget.onChanged(
@@ -631,6 +648,10 @@ class _QuestionViewState extends State<QuestionView>
                 (key: _secondaryTextKey, text: item.instruction),
             ],
             onTapBlank: _focusBlank,
+            colors: widget.drafts.boxCount(item.id) > 1
+                ? blankColors(theme.brightness)
+                : null,
+            focusedBlank: _focusedBox,
             child: text,
           )
         : text;
@@ -695,13 +716,18 @@ class _QuestionViewState extends State<QuestionView>
           borderSide: BorderSide(color: color, width: width),
         );
     final maxLength = widget.maxLength;
-    return DecoratedBox(
+    final grade = widget.grade;
+    final c = AppColors.of(context);
+    final gradeColor =
+        grade == null ? null : (grade.correct ? c.green : c.wrong);
+    final field = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
         boxShadow: palette.cardShadow,
       ),
       child: TextField(
         key: QuestionView.answerFieldKey,
+        readOnly: grade != null,
         controller: widget.drafts.controllerFor(widget.item.id),
         focusNode: widget.drafts.focusNode,
         scrollController: widget.drafts.scrollController,
@@ -728,14 +754,29 @@ class _QuestionViewState extends State<QuestionView>
         decoration: InputDecoration(
           hintText: context.l10n.questionAnswerHint,
           filled: true,
-          fillColor: colorScheme.surfaceContainerHigh,
+          fillColor: grade == null
+              ? colorScheme.surfaceContainerHigh
+              : (grade.correct ? c.greenSoft : c.cream),
           contentPadding: QuestionView.answerPadding,
           isDense: true,
+          suffixIcon: grade == null
+              ? null
+              : Icon(grade.correct ? Icons.check_rounded : Icons.close_rounded,
+                  color: grade.correct ? c.greenText : c.redText,
+                  semanticLabel: grade.correct
+                      ? context.l10n.checkCorrectSemantics
+                      : context.l10n.checkWrongSemantics),
           // The Q3 edge (3:1), 1.5 pt as in the mockup; the link colour
-          // while typing.
-          enabledBorder: border(palette.inputBorder, 1.5),
-          border: border(palette.inputBorder, 1.5),
-          focusedBorder: border(colorScheme.secondary, 2),
+          // while typing; once checked, green or the wrong-answer orange.
+          enabledBorder: gradeColor != null
+              ? border(gradeColor, 2.5)
+              : border(palette.inputBorder, 1.5),
+          border: gradeColor != null
+              ? border(gradeColor, 2.5)
+              : border(palette.inputBorder, 1.5),
+          focusedBorder: gradeColor != null
+              ? border(gradeColor, 2.5)
+              : border(colorScheme.secondary, 2),
         ),
         buildCounter: maxLength == null
             ? null
@@ -753,6 +794,18 @@ class _QuestionViewState extends State<QuestionView>
                       ),
         onChanged: widget.onChanged,
       ),
+    );
+    if (grade == null || grade.correct) return field;
+    // V09: a wrong answer's box shakes ±6 px once (300 ms).
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('shake_${widget.item.id}'),
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.orInstant(context, const Duration(milliseconds: 300)),
+      builder: (context, t, child) => Transform.translate(
+        offset: Offset(6 * math.sin(t * math.pi * 4) * (1 - t), 0),
+        child: child,
+      ),
+      child: field,
     );
   }
 }
@@ -954,26 +1007,72 @@ class _BlankTapLayer extends StatefulWidget {
   final ValueChanged<int> onTapBlank;
   final Widget child;
 
+  /// Q04: on a multi-blank question, the blanks' colours and the blank
+  /// whose box has focus. When the focus moves to a box, its blank
+  /// "breathes" once (1 → 1.06 → 1, 200 ms) in its colour; not under
+  /// Reduce Motion.
+  final List<Color>? colors;
+  final int? focusedBlank;
+
   const _BlankTapLayer({
     required this.blocks,
     required this.onTapBlank,
     required this.child,
+    this.colors,
+    this.focusedBlank,
   });
 
   static const double minTarget = 44;
 
   static const blankTargetKeyPrefix = 'question_blank_target_';
+  static const breatheKey = ValueKey('question_blank_breathe');
+  static const breathe = Duration(milliseconds: 200);
 
   @override
   State<_BlankTapLayer> createState() => _BlankTapLayerState();
 }
 
-class _BlankTapLayerState extends State<_BlankTapLayer> {
+class _BlankTapLayerState extends State<_BlankTapLayer>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _stackKey = GlobalKey();
 
   /// Each blank's tap areas (one per line it is on), in this layer's
   /// coordinates.
   List<({int blank, Rect rect})> _targets = const [];
+
+  /// Each blank's drawn boxes (one per line), for the breathe.
+  List<({int blank, Rect rect})> _drawn = const [];
+
+  late final AnimationController _breathe;
+
+  /// The blank breathing (the last one focused).
+  int? _breathing;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathe =
+        AnimationController(vsync: this, duration: _BlankTapLayer.breathe);
+  }
+
+  @override
+  void didUpdateWidget(_BlankTapLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final focused = widget.focusedBlank;
+    if (focused != null &&
+        focused != oldWidget.focusedBlank &&
+        widget.colors != null &&
+        !AppMotion.reduced(context)) {
+      _breathing = focused;
+      _breathe.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _breathe.dispose();
+    super.dispose();
+  }
 
   void _measure() {
     if (!mounted) return;
@@ -993,13 +1092,19 @@ class _BlankTapLayerState extends State<_BlankTapLayer> {
         for (final box in paragraph.getBoxesForSelection(
             TextSelection(baseOffset: match.start, extentOffset: match.end))) {
           final drawn = MatrixUtils.transformRect(toStack, box.toRect());
-          found.add((blank: blank, rect: _grow(drawn)));
+          found.add((blank: blank, rect: drawn));
         }
         blank++;
       }
     }
-    final targets = _split(found);
-    if (!_same(targets, _targets)) setState(() => _targets = targets);
+    final targets =
+        _split([for (final f in found) (blank: f.blank, rect: _grow(f.rect))]);
+    if (!_same(targets, _targets) || !_same(found, _drawn)) {
+      setState(() {
+        _targets = targets;
+        _drawn = found;
+      });
+    }
   }
 
   static Rect _grow(Rect drawn) => Rect.fromCenter(
@@ -1068,10 +1173,48 @@ class _BlankTapLayerState extends State<_BlankTapLayer> {
   @override
   Widget build(BuildContext context) {
     SchedulerBinding.instance.addPostFrameCallback((_) => _measure());
+    final colors = widget.colors;
+    final breathing = _breathing;
     return Stack(
       key: _stackKey,
       children: [
         widget.child,
+        if (colors != null && breathing != null)
+          for (final drawn in _drawn)
+            if (drawn.blank == breathing)
+              Positioned.fromRect(
+                rect: drawn.rect.inflate(2),
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _breathe,
+                    builder: (context, _) {
+                      final t = _breathe.value;
+                      if (!_breathe.isAnimating) return const SizedBox();
+                      final swell = math.sin(t * math.pi);
+                      final color = colors[breathing % colors.length];
+                      return Transform.scale(
+                        key: _BlankTapLayer.breatheKey,
+                        scale: 1 + .06 * swell,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: .22 * swell),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          // The blank's underline, swelling with it.
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: SizedBox(
+                              height: 3,
+                              width: double.infinity,
+                              child: ColoredBox(color: color),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
         for (final (i, target) in _targets.indexed)
           Positioned.fromRect(
             rect: target.rect,
@@ -1102,6 +1245,7 @@ class _BlankBoxes extends StatelessWidget {
   final AnswerDrafts drafts;
   final bool noArticleButton;
   final VoidCallback onChanged;
+  final AnswerGrade? grade;
 
   const _BlankBoxes({
     super.key,
@@ -1109,6 +1253,7 @@ class _BlankBoxes extends StatelessWidget {
     required this.drafts,
     required this.noArticleButton,
     required this.onChanged,
+    this.grade,
   });
 
   @override
@@ -1132,7 +1277,16 @@ class _BlankBoxes extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final palette = AppPalette.of(context);
-    final color = blankColors(theme.brightness)[index];
+    final grade = this.grade;
+    final c = AppColors.of(context);
+    final boxCorrect = grade == null
+        ? null
+        : (grade.blanks != null && index < grade.blanks!.length
+            ? grade.blanks![index]
+            : grade.correct);
+    final color = boxCorrect == null
+        ? blankColors(theme.brightness)[index]
+        : (boxCorrect ? c.green : c.wrong);
     final controller = drafts.controllersFor(item.id)[index];
     final noArticle = drafts.noArticleFor(item.id, index);
     final radius = BorderRadius.circular(17);
@@ -1153,6 +1307,7 @@ class _BlankBoxes extends StatelessWidget {
             ),
             child: TextField(
               key: QuestionView.blankBoxKey(index),
+              readOnly: grade != null,
               controller: controller,
               focusNode: drafts.focusNodes[index],
               scrollController: drafts.scrollControllers[index],

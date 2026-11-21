@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
 import 'models/app_text_size.dart';
 
 // The whole ColorScheme is hand-built rather than derived via
@@ -817,8 +818,16 @@ ThemeData buildAppTheme(
     extensions: <ThemeExtension<dynamic>>[
       isDark ? SemanticColors.dark : SemanticColors.light,
       palette,
+      // The UI polish palette (SPEC §3.1).
+      isDark ? AppColors.dark : AppColors.light,
     ],
     scaffoldBackgroundColor: pageBg,
+    // SPEC §3.6 (v11, fix round 3 B5): every switch (N03, V24f / V24's
+    // reminder row, R08, Profile) has a white thumb in both states and both
+    // themes (the device drew it black), full size when off too; the track
+    // navy when on (V24f's row sets green, as on its board), the track
+    // token (#E3DACB in light) when off, no outline.
+    switchTheme: appSwitchTheme(isDark ? AppColors.dark : AppColors.light),
     appBarTheme: AppBarTheme(
       backgroundColor: pageBg,
       foregroundColor: pageFg,
@@ -928,3 +937,21 @@ ThemeData buildAppTheme(
     ),
   );
 }
+
+/// The app's switch (SPEC §3.6, v11): [buildAppTheme]'s `switchTheme`.
+SwitchThemeData appSwitchTheme(AppColors c) => SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      // A transparent icon keeps the thumb full size when off (Material 3
+      // draws a small outlined thumb otherwise).
+      thumbIcon: const WidgetStatePropertyAll(
+          Icon(Icons.circle, color: Colors.transparent)),
+      // A map, not a closure: two builds of the theme stay equal, so
+      // MaterialApp's AnimatedTheme does not animate on every rebuild.
+      trackColor: WidgetStateProperty<Color?>.fromMap({
+        WidgetState.disabled: c.track.withValues(alpha: .5),
+        WidgetState.selected: c.navy,
+        WidgetState.any: c.track,
+      }),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      trackOutlineWidth: const WidgetStatePropertyAll(0),
+    );

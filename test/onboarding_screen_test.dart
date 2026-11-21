@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/screens/lucky_wheel_screen.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/avatar_carousel.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
-import 'support/l10n_support.dart';
-
-/// Onboarding in two steps (the 1.2.0 additional screens package): the
-/// companion and the required name, then the optional goal.
+/// Onboarding in three steps (UI polish V03–V05): the buddy on the
+/// turntable (or the wheel), the required name, the optional goal.
+/// (Replaces the 1.2.0 two-step tests: the carousel and the combined
+/// companion + name step are gone.)
 void main() {
   setUpAll(() async {
     final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
@@ -24,13 +27,11 @@ void main() {
     WidgetTester tester, {
     ValueChanged<UserProfile>? onComplete,
     Size size = const Size(390, 844),
-    double keyboard = 0,
     Brightness brightness = Brightness.light,
     AppTextSize textSize = AppTextSize.medium,
   }) async {
     tester.view.physicalSize = size * 3;
     tester.view.devicePixelRatio = 3;
-    tester.view.viewInsets = FakeViewPadding(bottom: keyboard * 3);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
       theme: buildAppTheme(brightness, textSize: textSize),
@@ -39,376 +40,338 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder continueButton() => find.byKey(OnboardingScreen.continueKey);
-  Finder startButton() => find.byKey(OnboardingScreen.startKey);
-  bool enabled(WidgetTester tester, Finder button) =>
-      tester.widget<FilledButton>(button).onPressed != null;
+  bool enabled(WidgetTester tester, Key key) =>
+      tester.widget<PressableButton>(find.byKey(key)).onPressed != null;
 
-  Future<void> enterName(WidgetTester tester, String name) async {
-    await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), name);
-    await tester.pump();
-  }
-
-  Future<void> toGoalStep(WidgetTester tester, {String name = 'Ada'}) async {
-    await enterName(tester, name);
-    await tester.tap(continueButton());
+  Future<void> toNameStep(WidgetTester tester) async {
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
     await tester.pumpAndSettle();
   }
 
-  Future<void> chooseGoalAndStart(WidgetTester tester,
-      [LearningGoal goal = LearningGoal.examPrep]) async {
-    await tester.ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
-    await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
+  Future<void> toGoalStep(WidgetTester tester, {String name = 'Ada'}) async {
+    await toNameStep(tester);
+    await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), name);
     await tester.pump();
-    await tester.tap(startButton());
-    await tester.pump();
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
+    await tester.pumpAndSettle();
   }
 
-  /// The avatar whose semantics node sits at the carousel's centre: the one
-  /// selected, read as a screen reader would.
-  String centeredAvatarLabel(WidgetTester tester) {
-    final center = tester.getCenter(find.byType(PageView)).dx;
-    for (final avatar in Avatar.values) {
-      final finder = find.bySemanticsLabel(avatar.semanticLabel);
-      if (finder.evaluate().isEmpty) continue;
-      final rect = tester.getRect(finder);
-      if (rect.left <= center && center <= rect.right) {
-        return avatar.semanticLabel;
-      }
-    }
-    throw StateError('no centered avatar found');
-  }
-
-  group('step 1: companion and name', () {
-    testWidgets(
-        'the carousel sits above the name — face and name are one identity '
-        'step — with no Done button of its own', (tester) async {
-      await pump(tester);
-      expect(find.text('Step 1 of 2'), findsOneWidget);
-      expect(find.text('Meet your learning companion.'), findsOneWidget);
-      expect(
-          tester.getTopLeft(find.byType(PageView)).dy,
-          lessThan(
-              tester.getTopLeft(find.byKey(OnboardingScreen.nameFieldKey)).dy));
-      expect(find.widgetWithText(FilledButton, 'Done'), findsNothing);
-    });
-
-    testWidgets(
-        'every avatar is reachable with Next (16, then the loop back), the '
-        'caption names it with no position, and the one chosen is saved',
+  group('step 1: choose your buddy (V03)', () {
+    testWidgets('Fox is in front first: "Climb with Fox", 1 / 9, its traits',
         (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
-      final seen = <String>{};
-      for (var i = 0; i < Avatar.count; i++) {
-        seen.add(centeredAvatarLabel(tester));
-        // Only the name: the carousel loops, so a position meant nothing.
-        final caption =
-            tester.widget<Text>(find.byKey(AvatarCarousel.captionKey)).data;
-        expect(caption, centeredAvatarLabel(tester));
-        expect(find.bySemanticsLabel('$caption, selected'), findsOneWidget);
-        await tester.tap(find.byKey(AvatarCarousel.nextKey));
-        await tester.pumpAndSettle();
-      }
-      expect(seen, Avatar.values.map((a) => a.semanticLabel).toSet());
-
-      await tester.tap(find.byKey(AvatarCarousel.previousKey));
-      await tester.pumpAndSettle();
-      final chosen = centeredAvatarLabel(tester);
-      await toGoalStep(tester);
-      await chooseGoalAndStart(tester);
-      expect(completed!.avatar!.semanticLabel, chosen);
-      expect(Avatar.fromJson(completed!.avatar!.toJson()), completed!.avatar);
-    });
-
-    testWidgets(
-        'a swipe changes the avatar that is saved, not one re-rolled at the '
-        'end', (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
-      final before = centeredAvatarLabel(tester);
-      await tester.drag(find.byType(PageView), const Offset(-300, 0));
-      await tester.pumpAndSettle();
-      final after = centeredAvatarLabel(tester);
-      expect(after, isNot(before));
-      await toGoalStep(tester);
-      await chooseGoalAndStart(tester);
-      expect(completed!.avatar!.semanticLabel, after);
-    });
-
-    testWidgets(
-        'never touching the carousel still saves a real avatar (PRD v2 '
-        '§13.5)', (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
-      await toGoalStep(tester);
-      await chooseGoalAndStart(tester);
-      expect(Avatar.values, contains(completed!.avatar));
-    });
-
-    testWidgets(
-        'the name is required: Continue is disabled while it is empty or '
-        'only spaces, enabled and orange once there is one', (tester) async {
       await pump(tester);
-      expect(enabled(tester, continueButton()), isFalse);
-      await enterName(tester, '   ');
-      expect(enabled(tester, continueButton()), isFalse);
-      await tester.tap(continueButton());
-      await tester.pumpAndSettle();
-      expect(find.text('Step 1 of 2'), findsOneWidget);
+      expect(find.text('Choose your climbing buddy'), findsOneWidget);
+      expect(find.text('Climb with Fox'), findsOneWidget);
+      expect(find.text('1 / 9'), findsOneWidget);
+      expect(find.text('Curious'), findsOneWidget);
+      expect(find.text('Try my luck'), findsOneWidget);
+    });
 
-      await enterName(tester, 'Ada');
-      expect(enabled(tester, continueButton()), isTrue);
-      final theme = buildAppTheme(Brightness.light);
-      final style = tester.widget<FilledButton>(continueButton()).style!;
-      expect(style.backgroundColor!.resolve({}), theme.colorScheme.primary);
-      expect(style.foregroundColor!.resolve({}), theme.colorScheme.onPrimary);
-      expect(tester.getSize(continueButton()).height, greaterThanOrEqualTo(54));
-      expect((style.shape!.resolve({})! as RoundedRectangleBorder).borderRadius,
-          BorderRadius.circular(17));
+    testWidgets('› and a drag turn the ring; the front hero is the one saved',
+        (tester) async {
+      UserProfile? saved;
+      await pump(tester, onComplete: (p) => saved = p);
+      await tester.tap(find.byKey(BuddyPicker.nextKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Climb with Panda'), findsOneWidget);
+      // A drag to the right brings the hero on the left (the next one) to
+      // the front: the ring turns with the finger.
+      await tester.drag(find.byKey(BuddyPicker.ringKey), const Offset(120, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Climb with Koala'), findsOneWidget);
+      await tester.tap(find.byKey(BuddyPicker.previousKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Climb with Panda'), findsOneWidget);
+      await tester.tap(find.byKey(BuddyPicker.confirmKey));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), 'Ada');
+      await tester.pump();
+      await tester.tap(find.byKey(OnboardingScreen.continueKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
+      await tester.pump();
+      expect(saved!.avatar, Avatar.panda);
+    });
+
+    testWidgets('the ring loops: ‹ from Fox is Crab', (tester) async {
+      await pump(tester);
+      await tester.tap(find.byKey(BuddyPicker.previousKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Climb with Crab'), findsOneWidget);
     });
 
     testWidgets(
-        'the name is trimmed, keeps its Unicode, and stops at 40 characters '
-        'with no counter (O2)', (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
+        '"Try my luck" opens the wheel; its result, confirmed, is the buddy',
+        (tester) async {
+      UserProfile? saved;
+      await pump(tester, onComplete: (p) => saved = p);
+      await tester.tap(find.byKey(BuddyPicker.tryLuckKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(LuckyWheelScreen), findsOneWidget);
+      expect(find.text('Let a buddy pick you'), findsOneWidget);
+      await tester.tap(find.byKey(LuckyWheelScreen.spinKey));
+      await tester.pumpAndSettle();
+      final title = tester
+          .widgetList<Text>(find.textContaining('picked you!'))
+          .single
+          .data!;
+      final hero =
+          Avatar.values.firstWhere((a) => title.startsWith(a.semanticLabel));
+      expect(hero, isNot(Avatar.fox));
+      await tester.tap(find.byKey(LuckyWheelScreen.confirmKey));
+      await tester.pumpAndSettle();
+      // On to the name step with the wheel's buddy.
+      await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), 'Ada');
+      await tester.pump();
+      await tester.tap(find.byKey(OnboardingScreen.continueKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
+      await tester.pump();
+      expect(saved!.avatar, hero);
+    });
+
+    testWidgets('"All buddies" brings the landed hero to the front of the ring',
+        (tester) async {
+      await pump(tester);
+      await tester.tap(find.byKey(BuddyPicker.tryLuckKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(LuckyWheelScreen.spinKey));
+      await tester.pumpAndSettle();
+      final title = tester
+          .widgetList<Text>(find.textContaining('picked you!'))
+          .single
+          .data!;
+      final hero =
+          Avatar.values.firstWhere((a) => title.startsWith(a.semanticLabel));
+      await tester.tap(find.byKey(LuckyWheelScreen.allBuddiesKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Climb with ${hero.semanticLabel}'), findsOneWidget);
+    });
+  });
+
+  group('step 2: the name (V04)', () {
+    testWidgets('the buddy asks in its bubble; Continue waits for a name',
+        (tester) async {
+      await pump(tester);
+      await toNameStep(tester);
+      // V04 (v11): the companion asks in its bubble (fix round 3, C2).
+      expect(find.text('Hi! What should I call you?'), findsOneWidget);
+      expect(enabled(tester, OnboardingScreen.continueKey), isFalse);
+      await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), '   ');
+      await tester.pump();
+      expect(enabled(tester, OnboardingScreen.continueKey), isFalse);
+      await tester.enterText(find.byKey(OnboardingScreen.nameFieldKey), 'Ada');
+      await tester.pump();
+      expect(enabled(tester, OnboardingScreen.continueKey), isTrue);
+    });
+
+    testWidgets('the name is trimmed, keeps its Unicode, stops at 40',
+        (tester) async {
+      UserProfile? saved;
+      await pump(tester, onComplete: (p) => saved = p);
+      await toNameStep(tester);
       final field =
           tester.widget<TextField>(find.byKey(OnboardingScreen.nameFieldKey));
       expect(field.maxLength, UserProfile.maxNameLength);
-      await enterName(tester, 'x' * 60);
-      expect(field.controller!.text.length, 40);
-      expect(find.textContaining('/ 40'), findsNothing);
-
-      await toGoalStep(tester, name: '  Çağrı İnce Öztürk  ');
-      await chooseGoalAndStart(tester);
-      expect(completed!.name, 'Çağrı İnce Öztürk');
+      await tester.enterText(
+          find.byKey(OnboardingScreen.nameFieldKey), '  Zeynep Ünlü  ');
+      await tester.pump();
+      await tester.tap(find.byKey(OnboardingScreen.continueKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
+      await tester.pump();
+      expect(saved!.name, 'Zeynep Ünlü');
     });
 
-    testWidgets(
-        'a tap outside the name field closes the keyboard, keeps the name and '
-        'the companion, and leaves step 1', (tester) async {
-      await pump(tester, keyboard: 336);
-      await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
-      await enterName(tester, 'Ada');
+    testWidgets('Back returns to the buddy with the same hero in front',
+        (tester) async {
+      await pump(tester);
+      await tester.tap(find.byKey(BuddyPicker.nextKey));
       await tester.pumpAndSettle();
-      final companion = centeredAvatarLabel(tester);
-      expect(tester.testTextInput.isVisible, isTrue);
-
-      // The companion area and the heading: no control there.
-      await tester.tapAt(tester.getCenter(find.byType(PageView)));
+      await toNameStep(tester);
+      await tester.tap(find.byKey(OnboardingScreen.backKey));
       await tester.pumpAndSettle();
-      expect(tester.testTextInput.isVisible, isFalse);
-      await tester.tap(find.text('Meet your learning companion.'));
-      await tester.pumpAndSettle();
-      expect(centeredAvatarLabel(tester), companion);
-      expect(
-          tester
-              .widget<TextField>(find.byKey(OnboardingScreen.nameFieldKey))
-              .controller!
-              .text,
-          'Ada');
-      expect(find.text('Step 1 of 2'), findsOneWidget);
-
-      // With the keyboard closed the carousel works as before.
-      await tester.tap(find.byKey(AvatarCarousel.nextKey));
-      await tester.pumpAndSettle();
-      final next = centeredAvatarLabel(tester);
-      expect(next, isNot(companion));
-      await tester.drag(find.byType(PageView), const Offset(300, 0));
-      await tester.pumpAndSettle();
-      expect(centeredAvatarLabel(tester), isNot(next));
-    });
-
-    testWidgets(
-        "the keyboard's Done closes the keyboard only; Continue is the one way "
-        'to step 2', (tester) async {
-      UserProfile? completed;
-      await pump(tester, keyboard: 336, onComplete: (p) => completed = p);
-      await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
-      await enterName(tester, 'Ada');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(tester.testTextInput.isVisible, isFalse);
-      expect(find.text('Step 1 of 2'), findsOneWidget);
-      expect(completed, isNull);
-
-      await tester.tap(continueButton());
-      await tester.pumpAndSettle();
-      expect(find.text('Step 2 of 2'), findsOneWidget);
-    });
-
-    testWidgets(
-        'with the keyboard open the name field and Continue are above it; the '
-        'companion scrolls away instead', (tester) async {
-      await pump(tester, size: const Size(375, 667), keyboard: 260);
-      await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
-      await enterName(tester, 'Ada');
-      await tester.pumpAndSettle();
-      const keyboardTop = 667.0 - 260;
-      expect(tester.getRect(continueButton()).bottom,
-          lessThanOrEqualTo(keyboardTop));
-      expect(tester.getRect(find.byKey(OnboardingScreen.nameFieldKey)).bottom,
-          lessThanOrEqualTo(keyboardTop));
-      expect(tester.takeException(), isNull);
+      expect(find.text('Climb with Panda'), findsOneWidget);
     });
   });
 
-  group('step 2: goal', () {
+  group('step 3: the goal (V05)', () {
     testWidgets(
-        'the copy says why it is asked, with no promise of personalized '
-        'lessons; the old line is gone', (tester) async {
+        'asks by name, four cards with no preselection; Continue waits for '
+        'one; Skip is always there', (tester) async {
       await pump(tester);
       await toGoalStep(tester);
-      expect(find.text('HELP SHAPE GRAMMARLENS'), findsOneWidget);
-      expect(
-          find.text('Choose what matters most to you. Your answer helps us '
-              'decide what to improve next.'),
-          findsOneWidget);
-      expect(find.text('This helps us suggest where to start.'), findsNothing);
-      expect(find.textContaining('suggest'), findsNothing);
-      expect(find.text('Everyday confidence'), findsOneWidget);
-      expect(find.text('General fluency'), findsNothing);
-      expect(find.text('One more thing, Ada.'), findsOneWidget);
+      // The greeting moved to V04 (SPEC v11); V05's board has no chip.
+      expect(find.textContaining('Nice to meet you'), findsNothing);
+      expect(find.text('What brings you to English, Ada?'), findsOneWidget);
+      for (final goal in LearningGoal.values) {
+        expect(find.byKey(OnboardingScreen.goalKey(goal)), findsOneWidget);
+      }
+      expect(enabled(tester, OnboardingScreen.startKey), isFalse);
+      expect(enabled(tester, OnboardingScreen.skipGoalKey), isTrue);
     });
 
-    testWidgets(
-        'no goal is preselected: Start stays disabled until one is chosen; '
-        'Skip is always there', (tester) async {
+    for (final size in [const Size(390, 844), const Size(428, 926)]) {
+      testWidgets(
+          'fix round 2 (SPEC §1.14): four goals in the board\'s order and copy; '
+          'School & university has the lilac tile and the book; all four and '
+          'Continue fit the first view at $size', (tester) async {
+        expect(LearningGoal.values, [
+          LearningGoal.examPrep,
+          LearningGoal.work,
+          LearningGoal.school,
+          LearningGoal.general,
+        ]);
+        expect(LearningGoal.school.toJson(), 'school');
+        expect(LearningGoalInfo.fromStored('school'), LearningGoal.school);
+        {
+          await pump(tester, size: size);
+          await toGoalStep(tester);
+          for (final (title, detail) in [
+            ('Exam prep', 'IELTS, TOEFL or another English exam'),
+            ('Work', 'Emails, reports and professional English'),
+            ('School & university', 'Homework, essays and academic writing'),
+            ('Everyday English', 'Write with confidence every day'),
+          ]) {
+            expect(find.text(title), findsOneWidget);
+            expect(find.text(detail), findsOneWidget);
+          }
+          final tops = [
+            for (final g in LearningGoal.values)
+              tester.getTopLeft(find.byKey(OnboardingScreen.goalKey(g))).dy
+          ];
+          expect(tops, orderedEquals([...tops]..sort()));
+          final school =
+              find.byKey(OnboardingScreen.goalKey(LearningGoal.school));
+          expect(
+              find.descendant(
+                  of: school, matching: find.byIcon(Icons.menu_book_rounded)),
+              findsOneWidget);
+          const c = AppColors.light;
+          final tile = tester.widget<Container>(find
+              .ancestor(
+                  of: find.descendant(
+                      of: school,
+                      matching: find.byIcon(Icons.menu_book_rounded)),
+                  matching: find.byType(Container))
+              .first);
+          expect((tile.decoration! as BoxDecoration).color, c.lilac);
+          final last = tester.getBottomLeft(
+              find.byKey(OnboardingScreen.goalKey(LearningGoal.general)));
+          expect(last.dy, lessThanOrEqualTo(size.height));
+          expect(tester.getBottomLeft(find.byKey(OnboardingScreen.startKey)).dy,
+              lessThanOrEqualTo(size.height));
+        }
+        await tester
+            .tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.school)));
+        await tester.pumpAndSettle();
+        expect(find.text('“School & university it is! Let’s ace it.”'),
+            findsOneWidget);
+      });
+    }
+
+    testWidgets('choosing a card shows the buddy\'s reaction inside it',
+        (tester) async {
       await pump(tester);
       await toGoalStep(tester);
-      for (final goal in LearningGoal.values) {
-        expect(tester.getSemantics(find.byKey(OnboardingScreen.goalKey(goal))),
-            isSemantics(hasCheckedState: true, isChecked: false));
-        expect(
-            tester.getSize(find.byKey(OnboardingScreen.goalKey(goal))).height,
-            greaterThanOrEqualTo(91));
-      }
-      expect(enabled(tester, startButton()), isFalse);
-      expect(
-          tester
-              .widget<TextButton>(find.byKey(OnboardingScreen.skipGoalKey))
-              .onPressed,
-          isNotNull);
       await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
-      await tester.pump();
-      expect(enabled(tester, startButton()), isTrue);
-      expect(
-          tester.getSemantics(
-              find.byKey(OnboardingScreen.goalKey(LearningGoal.work))),
-          isSemantics(hasCheckedState: true, isChecked: true));
+      await tester.pumpAndSettle();
+      expect(find.text('“Work it is! I’ll cheer you on.”'), findsOneWidget);
+      expect(enabled(tester, OnboardingScreen.startKey), isTrue);
     });
+
+    testWidgets('the copy promises no personalised content (SPEC §1.12)',
+        (tester) async {
+      await pump(tester);
+      await toGoalStep(tester);
+      expect(find.textContaining('personal'), findsNothing);
+      expect(find.text('Pick one. It helps us decide what to improve next.'),
+          findsOneWidget);
+    });
+
+    for (final goal in LearningGoal.values) {
+      testWidgets('${goal.name}: Continue finishes with the goal and the buddy',
+          (tester) async {
+        UserProfile? saved;
+        await pump(tester, onComplete: (p) => saved = p);
+        await toGoalStep(tester);
+        await tester.ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
+        await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(OnboardingScreen.startKey));
+        await tester.pump();
+        expect(saved!.learningGoal, goal);
+        expect(saved!.avatar, Avatar.fox);
+        expect(saved!.name, 'Ada');
+      });
+    }
 
     testWidgets('Skip finishes with no goal (stored as skipped)',
         (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
+      UserProfile? saved;
+      await pump(tester, onComplete: (p) => saved = p);
       await toGoalStep(tester);
+      await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
       await tester.pump();
-      expect(completed!.learningGoal, isNull);
-      expect(completed!.toMap()['learning_goal'], 'skipped');
+      expect(saved!.learningGoal, isNull);
+      expect(saved!.toMap()['learning_goal'], 'skipped');
     });
 
     testWidgets(
-        'Back returns to step 1 with the name, the companion and the goal '
-        'as they were', (tester) async {
-      UserProfile? completed;
-      await pump(tester, onComplete: (p) => completed = p);
-      await tester.tap(find.byKey(AvatarCarousel.nextKey));
-      await tester.pumpAndSettle();
-      final avatar = centeredAvatarLabel(tester);
-      await toGoalStep(tester, name: 'Ada');
-      await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
-      await tester.pump();
-
-      await tester.tap(find.byKey(OnboardingScreen.backKey));
-      await tester.pumpAndSettle();
-      expect(find.text('Step 1 of 2'), findsOneWidget);
-      expect(
-          tester
-              .widget<TextField>(find.byKey(OnboardingScreen.nameFieldKey))
-              .controller!
-              .text,
-          'Ada');
-      expect(centeredAvatarLabel(tester), avatar);
-
-      await tester.tap(continueButton());
-      await tester.pumpAndSettle();
-      expect(enabled(tester, startButton()), isTrue,
-          reason: 'the goal is still chosen');
-      await tester.tap(startButton());
-      await tester.pump();
-      expect(completed!.learningGoal, LearningGoal.work);
-      expect(completed!.avatar!.semanticLabel, avatar);
-    });
-
-    testWidgets(
-        'the privacy line says what really happens: the name stays, the goal '
-        'goes with usage data; the AI facts are one tap away', (tester) async {
+        'the privacy line stays (the goal is reported with usage data); the '
+        'AI facts are one tap away', (tester) async {
       await pump(tester);
       await toGoalStep(tester);
-      expect(
-          onboardingPrivacyNote(en),
-          'Your name stays on this device. Your goal is sent with app usage '
-          'data, never with your name. Usage and crash data is collected.');
-      await tester.ensureVisible(find.text(onboardingPrivacyNote(en)));
-      expect(find.text(onboardingPrivacyNote(en)), findsOneWidget);
-      expect(find.textContaining('never sent'), findsNothing);
-      expect(find.textContaining('goal stay'), findsNothing);
-
+      expect(find.text(onboardingPrivacyNoteEnglish), findsOneWidget);
       await tester.ensureVisible(find.byKey(OnboardingScreen.dataLinkKey));
       await tester.tap(find.byKey(OnboardingScreen.dataLinkKey));
       await tester.pumpAndSettle();
-      final sheet =
-          onboardingDataFacts(en).map((f) => '${f.$1} ${f.$2}').join();
-      expect(sheet, contains('Anthropic (Claude)'));
-      expect(sheet,
-          contains('In practice sessions (Topic Practice or a weak spot)'));
-      expect(sheet, contains('We ask for your permission first.'));
-      expect(sheet, contains('It does not personalize your lessons.'));
-      for (final (heading, _) in onboardingDataFacts(en)) {
-        expect(
-            find.descendant(
-                of: find.byType(Dialog),
-                matching: find.textContaining(heading, findRichText: true)),
-            findsOneWidget);
-      }
+      expect(find.text('Your data & AI'), findsOneWidget);
+      await tester.tap(find.byKey(OnboardingScreen.gotItKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Your data & AI'), findsNothing);
+    });
+
+    testWidgets('Back returns to the name step with the name kept',
+        (tester) async {
+      await pump(tester);
+      await toGoalStep(tester, name: 'Ada');
+      await tester.tap(find.byKey(OnboardingScreen.backKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Ada'), findsOneWidget);
     });
   });
 
-  for (final width in [320.0, 360.0, 390.0, 430.0]) {
+  for (final width in [320.0, 390.0]) {
     for (final brightness in Brightness.values) {
       testWidgets(
-          '$width pt, Large text, ${brightness.name}: both steps, keyboard '
-          'open on step 1, no overflow, no ellipsis', (tester) async {
-        final height = width < 360 ? 568.0 : 844.0;
-        final keyboard = width < 360 ? 260.0 : 336.0;
+          '$width pt, Large text, ${brightness.name}: every step without '
+          'overflow', (tester) async {
         await pump(tester,
-            size: Size(width, height),
-            keyboard: keyboard,
+            size: Size(width, 700),
             brightness: brightness,
             textSize: AppTextSize.large);
-        await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
-        await enterName(tester, 'Maximiliana Alexandrina Konstantinou');
-        await tester.pumpAndSettle();
-        expect(tester.getRect(continueButton()).bottom,
-            lessThanOrEqualTo(height - keyboard));
         expect(tester.takeException(), isNull);
-
-        await tester.tap(continueButton());
+        await toNameStep(tester);
+        expect(tester.takeException(), isNull);
+        await tester.enterText(
+            find.byKey(OnboardingScreen.nameFieldKey), 'Ada');
+        await tester.pump();
+        await tester.tap(find.byKey(OnboardingScreen.continueKey));
         await tester.pumpAndSettle();
-        tester.view.viewInsets = FakeViewPadding.zero;
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(
-            find.byKey(OnboardingScreen.goalKey(LearningGoal.general)));
+        await tester
+            .tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.examPrep)));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        for (final text in tester.widgetList<Text>(find.byType(Text))) {
-          expect(text.overflow, isNot(TextOverflow.ellipsis),
-              reason: text.data);
-        }
       });
     }
   }
 }
+
+/// The privacy line in English (the onboarding test pins its wording to
+/// what the app does).
+const onboardingPrivacyNoteEnglish =
+    'Your name stays on this device. Your goal is sent with app usage data, '
+    'never with your name. Usage and crash data is collected.';

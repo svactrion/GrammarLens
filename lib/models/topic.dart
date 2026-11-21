@@ -6,6 +6,15 @@ enum TopicId {
   modalPastForms,
   tenseSelection,
   articles,
+
+  // The first-wave practice topics (UI polish SPEC §1.11): in Topic
+  // Practice since 1.5.0 ([kFirstWaveTopicsEnabled]); never in the Daily
+  // Test.
+  conditionals,
+  passiveVoice,
+  prepositions,
+  relativeClauses,
+  comparativesSuperlatives,
 }
 
 /// A grammar topic. Its title and description are interface text, in the

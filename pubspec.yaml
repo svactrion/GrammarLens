@@ -68,6 +68,13 @@ flutter:
     # The medals (Batch 5, N1–N3, N23): 12 monthly (theme × tier) and the
     # Welcome badge, composed by tool/medals/export_medal_assets.py.
     - assets/medals/
+    # UI polish (docs/design/ui-polish/handoff/ASSETS.md): the nine heroes'
+    # pose images (`<hero>_<pose>.webp`), the expression-kit props, and the
+    # new objects (podium, clay star, lens, campfire logs, medal shelf v2,
+    # summit flag v2).
+    - assets/companions/
+    - assets/companions/props/
+    - assets/ui/
   fonts:
     - family: NunitoSans
       fonts:

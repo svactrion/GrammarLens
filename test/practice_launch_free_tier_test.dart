@@ -17,6 +17,7 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'support/paywall_close.dart';
 
 /// Proves `launchPracticeSet`'s entitlement/quota gate (added this batch to
 /// close the free-tier "Practice this" leak — see docs/build-log.md) from
@@ -176,8 +177,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 1.2.0 (N3): the free user's button is "Start free practice".
-      await tester.tap(find.text('Start free practice'));
+      // UI polish R03: the free user practises through today's ticket.
+      await tester.tap(find.text('Use today’s ticket'));
       await tester.pumpAndSettle();
 
       expect(find.text('How many questions?'), findsNothing);
@@ -216,7 +217,13 @@ void main() {
       expect(claude.generateCalls, 0);
       expect(find.byType(PracticeScreen), findsNothing);
       expect(find.byType(PremiumScreen), findsOneWidget);
-    });
+      // Fix round 5, item 4: it closes only with its X.
+      PremiumScreen.resetExitReminder();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byType(TopicPracticeScreen), findsOneWidget);
+    }, variant: iOSOnly);
 
     testWidgets(
         'via WeakSpotDetailScreen — the locked row replaces the button '
@@ -250,7 +257,13 @@ void main() {
       expect(claude.generateCalls, 0);
       expect(find.byType(PracticeScreen), findsNothing);
       expect(find.byType(PremiumScreen), findsOneWidget);
-    });
+      // Fix round 5, item 4: it closes only with its X.
+      PremiumScreen.resetExitReminder();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
+    }, variant: iOSOnly);
   });
 
   testWidgets(
@@ -279,7 +292,7 @@ void main() {
     // batch. `_FakeStorageService.getPracticeLength` returns `.standard`,
     // so the picker's confirm button reads its question count (5).
     expect(find.text('How many questions?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Start 5 questions'));
+    await tester.tap(find.text('Start 5 questions'));
     await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsNothing);

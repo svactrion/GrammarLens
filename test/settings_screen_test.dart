@@ -3,6 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/medals_layer.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/widgets/profile_stage.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -22,10 +27,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/utils/app_links.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
-
-import 'support/l10n_support.dart';
 
 import 'support/recording_analytics_sink.dart';
 
@@ -183,8 +185,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// PF04: the pencil opens the name sheet.
   Future<void> tapEdit(WidgetTester tester) async {
-    await tester.tap(find.text('Edit'));
+    await tester.tap(find.byKey(ProfileStage.pencilKey));
     await tester.pumpAndSettle();
   }
 
@@ -282,15 +285,22 @@ void main() {
     );
 
     expect(find.text('Medal collection'), findsOneWidget);
-    // Nothing earned yet (1.2.0: the count beside the title replaced the
-    // "Your medals will appear here once earned." caption); the strip holds
-    // the running month and the faded Welcome badge.
-    expect(find.text('0 earned'), findsOneWidget);
-    expect(find.text(en.medalInProgress), findsOneWidget);
-    expect(
-      find.bySemanticsLabel('Welcome badge, locked.'),
-      findsOneWidget,
-    );
+    // Nothing earned yet: the shelf holds the running month's locked slot
+    // only (V23). PF02 (fix round 2, item 6): the tier counters read 0 and
+    // an unearned Welcome badge has no cell (it sits at the month it is
+    // earned).
+    expect(find.byKey(MonthlyMedalCollection.lockedKey), findsOneWidget);
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
+    await tester.tap(find.byKey(SettingsScreen.seeAllMedalsKey));
+    await tester.pumpAndSettle();
+    for (final chip in ['0 Gold', '0 Silver', '0 Bronze', '0 Welcome']) {
+      expect(
+          find.descendant(
+              of: find.byKey(MedalsLayer.countersKey),
+              matching: find.text(chip)),
+          findsOneWidget);
+    }
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
   });
 
   testWidgets(
@@ -340,7 +350,7 @@ void main() {
     storage.resultsCompleters[0].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 10 / 300 points'), findsOneWidget);
+    expect(find.text('10 / 300', findRichText: true), findsOneWidget);
 
     // Tab re-entry #1 (`false` -> `true`, the only transition that
     // triggers another load per `didUpdateWidget`): the older of the two
@@ -360,7 +370,7 @@ void main() {
     storage.resultsCompleters[2].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 90 / 300 points'), findsOneWidget);
+    expect(find.text('90 / 300', findRichText: true), findsOneWidget);
 
     // ...then the older, now-stale read (#1) resolves after it. Without
     // the generation token, this stale result would win simply by
@@ -371,12 +381,12 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Monthly total: 90 / 300 points'),
+      find.text('90 / 300', findRichText: true),
       findsOneWidget,
       reason: 'the more-recently-started read must still win',
     );
     expect(
-      find.text('Monthly total: 40 / 300 points'),
+      find.text('40 / 300', findRichText: true),
       findsNothing,
       reason: 'a stale read finishing later must not overwrite a newer one',
     );
@@ -385,8 +395,8 @@ void main() {
   testWidgets('Save is disabled once the name is cleared', (tester) async {
     await pumpSettings(tester);
     await tapEdit(tester);
-    FilledButton saveButton() =>
-        tester.widget(find.widgetWithText(FilledButton, 'Save'));
+    PressableButton saveButton() =>
+        tester.widget(find.byKey(SettingsScreen.saveNameKey));
 
     expect(saveButton().onPressed, isNotNull);
 
@@ -405,21 +415,21 @@ void main() {
         learningGoal: LearningGoal.work,
       ).copyWith(avatar: koala),
     );
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, koala);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(stage.hero, koala);
   });
 
   testWidgets(
       'a legacy profile with no avatar yet still shows a real one, not the '
       'placeholder — the picker has no empty state either', (tester) async {
     await pumpSettings(tester); // default profile has avatar: null
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, isNotNull);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(Avatar.values, contains(stage.hero));
   });
 
   testWidgets('tapping the avatar row opens the avatar picker', (tester) async {
     await pumpSettings(tester);
-    await tester.tap(find.byType(AvatarTile));
+    await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
     expect(find.byType(AvatarPickerScreen), findsOneWidget);
   });
@@ -469,29 +479,29 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(AvatarTile));
+    await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    // UI polish R06: turn the ring one step and save with "Save <Hero>"
+    // (the carousel's autosave is gone).
+    await tester.tap(find.byKey(BuddyPicker.nextKey));
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(milliseconds: 600)); // past the debounce
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
 
     expect(saved, isNotNull);
-    expect(saved!.avatar, isNotNull);
-
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    expect(saved!.avatar, isNot(Avatar.values[3]));
 
     // The name was never touched — this is the point of the decoupling:
     // the name row is still closed, showing the saved name.
     expect(find.byType(TextField), findsNothing);
     expect(tester.widget<Text>(find.byKey(SettingsScreen.nameKey)).data, 'Ada');
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, saved!.avatar);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(stage.hero, saved!.avatar);
   });
 
   testWidgets(
-      'sections appear in order: avatar, name, medals, progress, appearance, '
+      'sections appear in order: companion, name, stats, medals, progress, appearance, '
       'data, credits, developer', (tester) async {
     await pumpSettings(tester);
     // Tall enough that the lazy list builds every section at once, so their
@@ -505,9 +515,9 @@ void main() {
     }
 
     final ordered = [
-      top(find.text('Your companion')),
-      top(find.text('Change your avatar')),
-      top(find.text('Your name')),
+      top(find.byType(CompanionView).first),
+      top(find.byKey(SettingsScreen.nameKey)),
+      top(find.text('points this month')),
       top(find.text('Medal collection')),
       top(find.byKey(MonthlyProgressCard.cardKey)),
       top(find.text('Appearance')),

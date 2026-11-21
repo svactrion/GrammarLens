@@ -109,7 +109,7 @@ void main() {
 
     // Evening, yesterday's test done.
     expect(_greeting('Good evening, Ada'), findsOneWidget);
-    expect(find.textContaining('New test tomorrow'), findsOneWidget);
+    expect(find.text('Review answers'), findsOneWidget);
     // Old unfinished Daily Test sets are cleaned up once, at launch.
     expect(storage.staleCleanups, 1);
     final launch = (
@@ -141,8 +141,8 @@ void main() {
     // New day is shown, not yesterday's state.
     expect(_greeting('Good morning, Ada'), findsOneWidget);
     expect(_greeting('Good evening, Ada'), findsNothing);
-    expect(find.textContaining('New test tomorrow'), findsNothing);
-    expect(find.text('Start daily test'), findsOneWidget);
+    expect(find.text('Review answers'), findsNothing);
+    expect(find.text('Start today’s test'), findsOneWidget);
 
     // One resume, one of each job — no doubled work between the app-level
     // observer (finalization) and Home's (day/greeting/climb).

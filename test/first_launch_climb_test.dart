@@ -2,6 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
+import 'package:grammar_lens/screens/first_climb_screen.dart';
+import 'package:grammar_lens/motion.dart';
+import 'package:grammar_lens/screens/mountain_intro_screen.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:grammar_lens/app.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -120,6 +128,19 @@ class _Day0Storage extends StorageService {
   Future<String> getOrCreateDeviceId() async => 'test-device';
 }
 
+/// V13 v12: the paywall has no "Maybe later"; the close button is the way
+/// out, and the first close of a session asks once (V13b): "Continue with
+/// free" then closes it.
+Future<void> closePaywall(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Close'));
+  await tester.pumpAndSettle();
+  final free = find.byKey(PremiumScreen.exitContinueFreeKey);
+  if (free.evaluate().isNotEmpty) {
+    await tester.tap(free);
+    await tester.pumpAndSettle();
+  }
+}
+
 void main() {
   late _Day0Storage storage;
   late RecordingAnalyticsSink sink;
@@ -157,14 +178,19 @@ void main() {
   Future<void> completeOnboarding(WidgetTester tester) async {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
-    // Two steps (1.2.0): the name, then the goal.
+    // UI polish: buddy (V03), name (V04), goal (V05); getting ready (V05b)
+    // runs by itself; this month's mountain (V06) starts the test.
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
+    await tester.tap(find.byKey(OnboardingScreen.startKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(MountainIntroScreen.startKey));
     await tester.pumpAndSettle();
   }
 
@@ -175,20 +201,43 @@ void main() {
       if (i == 0 && answerFirst) {
         await tester.enterText(find.byType(TextField).first, 'wrong');
         await tester.pump();
-        await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        await tester.tap(find.byKey(DailyTestScreen.checkKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(DailyTestScreen.continueKey));
       } else {
-        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+        await tester.tap(find.byKey(DailyTestScreen.skipKey));
       }
       await tester.pumpAndSettle();
     }
-    // Batch 5 (N15): the answered test earns the Welcome badge, whose
-    // celebration opens over the results the moment the save lands; one
-    // tap closes it and the results, with "Start my climb", show.
-    if (answerFirst) await closeCelebration(tester);
+    // Fix round 3 (A1, SPEC §4 v11): the answered test earns the Welcome
+    // badge; the results show first, and their "Climb my first step" opens
+    // the badge (climbThroughWelcome).
+  }
+
+  /// V12 (UI polish): after "Climb my first step" the first climb's camera
+  /// plays full screen; it is the first run's zoom now (PROGRESS.md D5-3).
+  /// [skip] taps it to its end. Then Continue leads to Home.
+  Future<void> passFirstClimb(WidgetTester tester, {bool skip = false}) async {
+    await tester.pump();
+    expect(find.byType(FirstClimbScreen), findsOneWidget);
+    if (skip) {
+      await tester.tap(find.byKey(FirstClimbScreen.sceneKey));
+      await tester.pump();
+    }
+    final total = FirstClimbScreen.total +
+        AppMotion.slow +
+        const Duration(milliseconds: 100);
+    for (var t = Duration.zero;
+        t < total;
+        t += const Duration(milliseconds: 25)) {
+      await tester.pump(const Duration(milliseconds: 25));
+    }
+    await tester.tap(find.byKey(FirstClimbScreen.continueKey));
   }
 
   final burst = find.byType(ConfettiBurst);
-  final resultsTitle = find.text('Daily Test Results');
+  // V10: the results screen, found by its one button.
+  final resultsTitle = find.byKey(DailyTestResultScreen.primaryKey);
 
   final mountain = find.byType(MonthlyMountain, skipOffstage: false);
 
@@ -233,7 +282,8 @@ void main() {
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await tester.pump();
       expect(burst, findsNothing);
 
@@ -264,7 +314,8 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await tester.pump();
       expect(burst, findsNothing);
       final seen = await observeHome(tester);
@@ -282,7 +333,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: false);
       expect(storage.steps, 0);
-      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsNothing);
 
       setReduceMotion(tester, false);
       await tester.pump();
@@ -308,9 +359,11 @@ void main() {
         if (i == 0) {
           await tester.enterText(find.byType(TextField).first, 'wrong');
           await tester.pump();
-          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
         } else {
-          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
         }
         // The last tap opens the result screen, whose saving progress bar
         // never settles, so plain pumps from here on.
@@ -321,8 +374,9 @@ void main() {
       expect(storage.completionCalls, 1);
 
       // While saving the one button reads "Saving your results…" and is off.
-      final saving = find.widgetWithText(FilledButton, 'Saving your results…');
-      expect(tester.widget<FilledButton>(saving).onPressed, isNull);
+      final saving =
+          find.widgetWithText(PressableButton, 'Saving your results…');
+      expect(tester.widget<PressableButton>(saving).onPressed, isNull);
       await tester.tap(saving, warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 200));
       expect(resultsTitle, findsOneWidget);
@@ -332,14 +386,15 @@ void main() {
       storage.saveGate!.complete();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
-      // The save landed: the Welcome celebration first (N15).
-      await closeCelebration(tester);
-      final climb = find.widgetWithText(FilledButton, 'Start my climb');
-      expect(tester.widget<FilledButton>(climb).onPressed, isNotNull);
+      // The save landed: the results with "Climb my first step" (A1: the
+      // badge comes after them).
+      final climb = find.widgetWithText(PressableButton, 'Climb my first step');
+      expect(tester.widget<PressableButton>(climb).onPressed, isNotNull);
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(climb);
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await tester.pump();
       // N36: no confetti of its own.
       expect(burst, findsNothing);
@@ -397,7 +452,8 @@ void main() {
       setReduceMotion(tester, false);
       await tester.pump();
 
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await tester.pump();
       // Not over the results, not over the confetti.
       await tester.pump(const Duration(milliseconds: 1500));
@@ -424,12 +480,12 @@ void main() {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
       expect(premium, findsNothing);
       // Home may already be under the first-day paywall.
       expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
@@ -441,7 +497,7 @@ void main() {
       }
       expect(sink.named('paywall_viewed'), hasLength(1));
       expect(sink.named('paywall_dismissed').single.parameters,
-          {'source': 'day0_after_climb', 'method': 'maybe_later'});
+          {'source': 'day0_after_climb', 'method': 'close_button'});
     });
 
     testWidgets(
@@ -468,7 +524,8 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester);
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty,
           limit: const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -498,7 +555,11 @@ void main() {
     });
   });
 
-  group('first run zoom (Batch 6, M2, M14)', () {
+  // UI polish V12: the first run's zoom is the full-screen first climb
+  // when the Day-0 test earned a step; Home then only walks the step (as on
+  // any later day) and the paywall follows. With no step, Home's in-card
+  // zoom plays as before.
+  group('first run zoom (Batch 6, M2, M14; V12)', () {
     final premium = find.byType(PremiumScreen);
     MonthlyMountain mtn(WidgetTester tester) =>
         tester.widget<MonthlyMountain>(mountain);
@@ -510,32 +571,28 @@ void main() {
     }
 
     testWidgets(
-        'Home first draws the whole mountain (K-c) on the step before; the '
-        'zoom ends before the step, and the paywall comes last',
-        (tester) async {
+        'the first climb plays the camera and claims the flag; Home does not '
+        'zoom again: the step, then the paywall', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await climbThroughWelcome(tester);
+      await tester.pump();
+      expect(find.byType(FirstClimbScreen), findsOneWidget);
+      expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
+      expect(find.text('Step 1 of 31'), findsOneWidget);
+      await passFirstClimb(tester);
       await untilMountain(tester);
-      expect(mtn(tester).zoom, isNotNull);
-      expect(mtn(tester).zoom!.value, 0);
+      expect(mtn(tester).zoom, isNull);
       expect(mtn(tester).completedDays, 0);
-      // While the zoom is on, the step waits.
-      var zoomEnded = false;
-      for (var i = 0; i < 400; i++) {
+      for (var i = 0; i < 400 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
-        if (premium.evaluate().isNotEmpty) break;
-        final m = mtn(tester);
-        if (m.zoom != null) expect(m.completedDays, 0);
-        if (m.zoom == null) zoomEnded = true;
+        if (mountain.evaluate().isNotEmpty) expect(mtn(tester).zoom, isNull);
       }
-      expect(zoomEnded, isTrue);
       expect(premium, findsOneWidget);
       expect(mtn(tester).completedDays, 1);
-      expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
       expect(sink.named('month_zoom_ended').single.parameters, {
         'theme_id': 'green_slope',
         'outcome': 'completed',
@@ -544,9 +601,8 @@ void main() {
     });
 
     testWidgets(
-        'Batch 5 (N15) with M14, end to end: the Welcome celebration over the '
-        'results, then the results, Start my climb, Home, the zoom, the '
-        'step and Premium, in that order', (tester) async {
+        'end to end (A1): the results, then the Welcome badge, the first '
+        'climb, Home, the step and Premium, in that order', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       setReduceMotion(tester, false);
@@ -555,82 +611,69 @@ void main() {
         if (i == 0) {
           await tester.enterText(find.byType(TextField).first, 'wrong');
           await tester.pump();
-          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
         } else {
-          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
         }
         await tester.pumpAndSettle();
       }
       final order = <String>[];
-      // 1. The celebration, over the results, with its own burst (the
-      // first day's only confetti).
-      expect(celebrationFinder, findsOneWidget);
+      // Fix round 3 (A1): the results first, no layer over them.
+      expect(celebrationFinder, findsNothing);
       expect(resultsTitle, findsOneWidget);
-      expect(mountain, findsNothing);
-      order.add('celebration');
-      await closeCelebration(tester);
-      // 2. The results, their button "Start my climb".
-      expect(resultsTitle, findsOneWidget);
-      expect(
-          find.widgetWithText(FilledButton, 'Start my climb'), findsOneWidget);
+      expect(find.widgetWithText(PressableButton, 'Climb my first step'),
+          findsOneWidget);
       order.add('results');
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(celebrationFinder, findsOneWidget);
+      expect(find.byType(FirstClimbScreen), findsNothing);
+      order.add('badge');
+      await closeCelebration(tester);
       await tester.pump();
       // N36: one confetti on the first day, the layer's; none here.
       expect(burst, findsNothing);
-      order.add('start my climb');
+      expect(find.byType(FirstClimbScreen), findsOneWidget);
+      expect(mountain, findsNothing);
+      order.add('first climb');
+      await passFirstClimb(tester);
       await untilMountain(tester);
       order.add('home');
-      expect(mtn(tester).zoom, isNotNull);
-      expect(mtn(tester).completedDays, 0);
-      var zoomEnded = false, stepped = false;
+      var stepped = false;
       for (var i = 0; i < 400 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
-        final m = mtn(tester);
-        if (!zoomEnded && m.zoom == null) {
-          zoomEnded = true;
-          order.add('zoom');
-        }
-        if (!stepped && m.completedDays == 1) {
+        if (!stepped && mtn(tester).completedDays == 1) {
           stepped = true;
           order.add('step');
         }
       }
       expect(premium, findsOneWidget);
       order.add('premium');
+      // SPEC §4 (v11): V10 Results → V11 Welcome badge → V12 First step.
       expect(order, [
-        'celebration',
         'results',
-        'start my climb',
+        'badge',
+        'first climb',
         'home',
-        'zoom',
         'step',
         'premium',
       ]);
     });
 
     testWidgets(
-        'a tap on the mountain skips the zoom; the step and the '
-        'paywall still follow', (tester) async {
+        'a tap on the first climb skips its camera; Continue, the step and '
+        'the paywall still follow', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
-      await untilMountain(tester);
-      // Into the zoom (after the scroll and the pause).
-      // Into the zoom: the scroll and the pause, frame by frame.
-      for (var i = 0; i < 40; i++) {
-        await tester.pump(const Duration(milliseconds: 25));
-      }
-      expect(mtn(tester).zoom!.value, greaterThan(0));
-      // The card's upper part: the lower one may be under the tab bar.
-      final card = tester.getRect(mountain);
-      await tester.tapAt(card.topCenter + const Offset(0, 60));
-      await tester.pump();
-      expect(mtn(tester).zoom, isNull);
-      for (var i = 0; i < 160 && premium.evaluate().isEmpty; i++) {
+      await climbThroughWelcome(tester);
+      await passFirstClimb(tester, skip: true);
+      for (var i = 0; i < 300 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
       }
       expect(premium, findsOneWidget);
@@ -640,55 +683,52 @@ void main() {
     });
 
     testWidgets(
-        'opening the Daily Test (its result) during the zoom ends it; '
-        'after it closes, the step and the paywall follow', (tester) async {
+        'no step (all skipped): Home\'s in-card zoom plays; opening the Daily '
+        'Test result during it ends it, and the paywall follows',
+        (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
-      await takeDailyTest(tester, answerFirst: true);
+      await takeDailyTest(tester, answerFirst: false);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Continue'));
       await untilMountain(tester);
+      expect(find.byType(FirstClimbScreen), findsNothing);
       // Into the zoom: the scroll and the pause, frame by frame.
       for (var i = 0; i < 40; i++) {
         await tester.pump(const Duration(milliseconds: 25));
       }
       expect(mtn(tester).zoom!.value, greaterThan(0));
-      final today = find.text('Review results');
+      final today = find.text('Review answers');
       await tester.ensureVisible(today);
       await tester.pump();
-      expect(mtn(tester).zoom, isNotNull);
       await tester.tap(today);
       await tester.pumpAndSettle();
       expect(resultsTitle, findsOneWidget);
       expect(mtn(tester).zoom, isNull);
-      expect(premium, findsNothing);
-      await tester.pageBack();
+      await tester.tap(find.byKey(DailyTestResultScreen.primaryKey));
       for (var i = 0; i < 200 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
       }
       expect(premium, findsOneWidget);
-      expect(mtn(tester).completedDays, 1);
+      expect(mtn(tester).completedDays, 0);
       expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
           'daily_test_opened');
     });
 
     testWidgets(
-        'Reduce Motion: a cross-fade, not a zoom, and the chain '
+        'Reduce Motion: the first climb shows its end at once, and the chain '
         'goes on', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Start my climb'));
-      await untilMountain(tester);
-      var crossFaded = false;
+      await climbThroughWelcome(tester);
+      await tester.pump();
+      expect(find.text('First step done! 30 to the summit.'), findsOneWidget);
+      await passFirstClimb(tester);
       for (var i = 0; i < 120 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
-        if (mountain.evaluate().isNotEmpty && mtn(tester).zoomCrossFade) {
-          crossFaded = true;
-        }
       }
-      expect(crossFaded, isTrue);
       expect(premium, findsOneWidget);
       expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
           'reduce_motion');

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/climb_theme.dart';
 import '../../theme.dart';
 import '../../l10n/l10n.dart';
+import '../speech_bubble.dart';
+import 'climb_camera.dart';
 
 /// The Monthly Climb card on Home (1.1.0 design decision K3, Batch 3c
 /// a–c): a thin frame around the mountain and the score bar, "Mountain of
@@ -23,7 +25,11 @@ class ClimbCard extends StatelessWidget {
   final Widget mountain;
 
   /// Under the window, inside the frame (`ClimbScoreBar`).
-  final Widget scoreBar;
+  final Widget? scoreBar;
+
+  /// A line over the mountain window (V14 / V15: "Step 2 opens tomorrow"
+  /// / "Step 2 is one test away!"), or null.
+  final String? bubble;
 
   final DateTime month;
   final int steps;
@@ -34,14 +40,25 @@ class ClimbCard extends StatelessWidget {
   /// fade in at the zoom's end. Null: always shown.
   final Animation<double>? chipOpacity;
 
+  /// The mountain window's height (the bubble sits at 44 % of it): Home's
+  /// fitted window (INTEGRATE 3b), else the full one.
+  final double windowHeight;
+
+  /// Below this window height (an iPhone SE's fitted window) the bubble
+  /// has no room between the chips and the pawn and is left out; the Daily
+  /// Test card above says the same.
+  static const bubbleMinWindow = 240.0;
+
   const ClimbCard({
     super.key,
     required this.mountain,
-    required this.scoreBar,
+    this.scoreBar,
+    this.bubble,
     required this.month,
     required this.steps,
     required this.days,
     this.chipOpacity,
+    this.windowHeight = ClimbCamera.fullWindowHeight,
   });
 
   static const chipsKey = ValueKey('climb_card_chips');
@@ -200,8 +217,23 @@ class ClimbCard extends StatelessWidget {
                               ),
                             ]),
                       )),
+                  if (bubble != null && windowHeight >= bubbleMinWindow)
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      top: windowHeight * .44,
+                      child: Center(
+                        child: IgnorePointer(
+                          child: SpeechBubble(
+                            text: bubble!,
+                            pointer: BubblePointer.bottomStart,
+                            compact: true,
+                          ),
+                        ),
+                      ),
+                    ),
                 ]),
-                scoreBar,
+                if (scoreBar != null) scoreBar!,
               ],
             ),
           ),

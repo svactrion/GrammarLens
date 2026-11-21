@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "writtenAt": 1795001400,
+  "rtl": false,
+  "entries": [
+    {
+      "validFrom": 1795001400,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "GÜNLÜK TEST",
+        "title": "2. adım seni bekliyor",
+        "subtitle": "5 soru · 2 dk",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "2. adıma bir test kaldı",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test bekliyor",
+        "button": "Başla",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://daily-test",
+        "label": "GÜNÜN İPUCU · GERUND VS. INFINITIVE",
+        "lead": "",
+        "rule": "After a preposition",
+        "example": "always -ing",
+        "examples": [
+          "+ -ing: enjoy, avoid, finish, keep",
+          "+ to: want, decide, hope, plan"
+        ],
+        "footer": "Her gün yeni bir ipucu",
+        "boxUrl": "grammarlens://daily-test",
+        "boxLabel": "GÜNLÜK TEST",
+        "button": "Başla",
+        "doneLabel": "Tamam",
+        "next": {},
+        "boxImage": "avatar_14.png",
+        "done": false
+      }
+    },
+    {
+      "validFrom": 1795035600,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2,
+        "steps": 30,
+        "label": "GÜNLÜK TEST",
+        "title": "2. adım seni bekliyor",
+        "subtitle": "5 soru · 2 dk",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "2. adıma bir test kaldı",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test bekliyor",
+        "button": "Başla",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://daily-test",
+        "label": "GÜNÜN İPUCU · MODAL VERBS",
+        "lead": "",
+        "rule": "modal + base verb",
+        "example": "no \"to\", no \"-s\"",
+        "examples": [
+          "must: obligation · should: advice",
+          "may / might / could: possibility"
+        ],
+        "footer": "Her gün yeni bir ipucu",
+        "boxUrl": "grammarlens://daily-test",
+        "boxLabel": "GÜNLÜK TEST",
+        "button": "Başla",
+        "doneLabel": "Tamam",
+        "next": {},
+        "boxImage": "avatar_14.png",
+        "done": false
+      }
+    }
+  ]
+}

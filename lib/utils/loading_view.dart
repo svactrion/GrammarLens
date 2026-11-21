@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../models/avatar.dart';
+import '../models/topic.dart';
+import '../widgets/practice_preparing.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
 import 'content_width.dart';
@@ -93,10 +97,12 @@ class _LoadingViewState extends State<LoadingView>
   }
 }
 
-/// A page's loading state with the page's own header kept in place (final
-/// screens A3): [header] at the top of the page, as the loaded page draws
-/// it, and [LoadingView] under it. Replaces a centred app bar title that
-/// the loaded page does not have, so nothing jumps when it arrives.
+/// A page's loading state. With a [topic] it is V18, the practice being
+/// prepared, the same for topic and weak-spot practice: no page title, as
+/// on the board (fix round 3, B7: the weak spot's name sat at the top left
+/// as a big title). Without one, the page's own [header] stays in place
+/// (final screens A3) over [LoadingView], so nothing jumps when the page
+/// arrives.
 class PageLoading extends StatelessWidget {
   /// The status bar only, for a page whose back button is in the page
   /// (Topic Practice); null for `BrandScaffold`'s own app bar with just its
@@ -105,11 +111,22 @@ class PageLoading extends StatelessWidget {
   final Widget header;
   final String message;
 
+  /// V18: the practice being prepared for [topic] (the thinking companion,
+  /// question skeletons and the topic's hint cards) instead of a spinner.
+  final Topic? topic;
+  final Avatar? hero;
+
+  /// V18: how many questions are being written, for its message.
+  final int? questionCount;
+
   const PageLoading({
     super.key,
     this.appBar,
     required this.header,
     required this.message,
+    this.topic,
+    this.hero,
+    this.questionCount,
   });
 
   @override
@@ -123,8 +140,16 @@ class PageLoading extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            header,
-            Expanded(child: LoadingView(message: message)),
+            if (topic == null) header,
+            Expanded(
+              child: topic == null
+                  ? LoadingView(message: message)
+                  : PracticePreparing(
+                      topic: topic!,
+                      hero: hero,
+                      message: message,
+                      questionCount: questionCount),
+            ),
           ],
         ),
       ),

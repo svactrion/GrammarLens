@@ -147,12 +147,21 @@ class ConfettiBurst extends StatefulWidget {
   final int seed;
   final VoidCallback? onFinished;
 
+  /// How long it falls (UI polish: 1.5 s on the wheel, 2.5 s on the badge
+  /// and medal screens); [duration] by default.
+  final Duration? length;
+
+  /// How many pieces (V05: 4, V05b: 6); 40 by default.
+  final int count;
+
   const ConfettiBurst({
     super.key,
     required this.origin,
     required this.colors,
     this.seed = 1,
     this.onFinished,
+    this.length,
+    this.count = 40,
   });
 
   @override
@@ -167,13 +176,13 @@ class _ConfettiBurstState extends State<ConfettiBurst>
   @override
   void initState() {
     super.initState();
-    _particles = buildConfettiParticles(seed: widget.seed);
-    _controller =
-        AnimationController(vsync: this, duration: ConfettiBurst.duration)
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) widget.onFinished?.call();
-          })
-          ..forward();
+    _particles = buildConfettiParticles(count: widget.count, seed: widget.seed);
+    _controller = AnimationController(
+        vsync: this, duration: widget.length ?? ConfettiBurst.duration)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) widget.onFinished?.call();
+      })
+      ..forward();
   }
 
   @override
@@ -194,7 +203,7 @@ class _ConfettiBurstState extends State<ConfettiBurst>
                 particles: _particles,
                 colors: widget.colors,
                 origin: widget.origin,
-                duration: ConfettiBurst.duration,
+                duration: widget.length ?? ConfettiBurst.duration,
               ),
             ),
           ),

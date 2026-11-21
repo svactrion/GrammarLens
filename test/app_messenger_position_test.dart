@@ -62,8 +62,9 @@ void main() {
         ),
       );
 
-  Rect message(WidgetTester tester) => tester.getRect(find.descendant(
-      of: find.byType(SnackBar), matching: find.byType(Material)).first);
+  Rect message(WidgetTester tester) => tester.getRect(find
+      .descendant(of: find.byType(SnackBar), matching: find.byType(Material))
+      .first);
 
   Rect bar(WidgetTester tester) =>
       tester.getRect(find.byKey(FloatingNavShell.barKey));
@@ -193,13 +194,16 @@ void main() {
   for (final width in const [320.0, 390.0]) {
     testWidgets(
         '${width.toInt()} pt, Large text: a long message wraps and stays '
-        'clear of the nav bar; Dismiss is at least 44 pt', (tester) async {
+        'clear of the nav bar; its action is at least 44 pt', (tester) async {
       phone(tester);
       tester.view.physicalSize = Size(width, 844) * 3;
       await tester.pumpWidget(app(textSize: AppTextSize.large));
       await tester.pump();
-      AppMessenger.show('Could not change this setting: the database is '
-          'locked by another operation, please try again in a moment.');
+      AppMessenger.show(
+          'Could not change this setting: the database is '
+          'locked by another operation, please try again in a moment.',
+          actionLabel: 'Undo',
+          onAction: () {});
       await tester.pumpAndSettle();
       final text = tester.getRect(find.textContaining('Could not change'));
       expect(text.height, greaterThan(40), reason: 'wraps');
@@ -207,7 +211,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       final dismiss = tester.getSize(find.ancestor(
-          of: find.text('Dismiss'), matching: find.byType(TextButton)));
+          of: find.text('Undo'), matching: find.byType(TextButton)));
       expect(dismiss.height, greaterThanOrEqualTo(44));
       expect(dismiss.width, greaterThanOrEqualTo(44));
     });

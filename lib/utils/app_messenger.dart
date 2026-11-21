@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../app_colors.dart';
+import '../motion.dart';
+import '../theme.dart';
 import '../widgets/floating_nav_shell.dart';
+import 'haptics.dart';
 
-import '../l10n/l10n.dart';
+/// A message's status (SY02): the icon on the left of the capsule.
+enum MessageKind { info, success, warning, error }
 
 /// Every transient status message in the app (errors, and short
 /// confirmations like "Profile saved.") goes through this single helper
@@ -30,10 +35,14 @@ class AppMessenger {
   static final GlobalKey<ScaffoldMessengerState> key =
       GlobalKey<ScaffoldMessengerState>();
 
-  static const Duration _duration = Duration(seconds: 6);
+  /// SY02: a message stays 3 s, then slides away.
+  static const Duration _duration = Duration(seconds: 3);
 
-  /// Shows [message] for a fixed duration with a Dismiss action that
-  /// actually closes it. Always clears whatever's currently showing (and
+  /// Shows [message] in the one snackbar of the app (SY02): a dark capsule
+  /// with the [kind]'s status icon on the left and at most one action
+  /// ([actionLabel] / [onAction]); 3 s, then it slides down; a swipe down
+  /// dismisses it at once. Success plays a light haptic, an error a
+  /// warning. Always clears whatever's currently showing (and
   /// anything queued behind it) first, so calling this again — even with
   /// the same message — replaces rather than stacks. A no-op if the
   /// messenger isn't attached yet (shouldn't happen once wired into
@@ -45,19 +54,34 @@ class AppMessenger {
   /// waits one frame, so a Save that closes the editor (Profile's name)
   /// places it for the keyboard that is going away, not the one still
   /// on screen.
-  static void show(String message) {
+  static void show(
+    String message, {
+    MessageKind kind = MessageKind.info,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     final messenger = key.currentState;
     if (messenger == null) return;
     messenger.clearSnackBars();
+    switch (kind) {
+      case MessageKind.success:
+        HapticMap.light();
+      case MessageKind.error:
+        HapticMap.warning();
+      case MessageKind.info:
+      case MessageKind.warning:
+        break;
+    }
+    void go() => _show(message, kind, actionLabel, onAction);
     if (MediaQuery.viewInsetsOf(messenger.context).bottom > 0) {
       final generation = _generation;
       SchedulerBinding.instance
         ..addPostFrameCallback((_) {
-          if (generation == _generation) _show(message);
+          if (generation == _generation) go();
         })
         ..ensureVisualUpdate();
     } else {
-      _show(message);
+      go();
     }
   }
 
@@ -65,29 +89,46 @@ class AppMessenger {
   /// the screen changes before it shows.
   static int _generation = 0;
 
-  static void _show(String message) {
+  static void _show(String message, MessageKind kind, String? actionLabel,
+      VoidCallback? onAction) {
     final messenger = key.currentState;
     if (messenger == null) return;
     messenger.clearSnackBars();
-    final bottom = _bottomMargin(messenger.context);
+    final context = messenger.context;
+    final c = AppColors.of(context);
+    final bottom = _bottomMargin(context);
+    final reduced = AppMotion.reduced(context);
     messenger.showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: _SnackContent(
+          message: message,
+          kind: kind,
+          actionLabel: actionLabel,
+          onAction: onAction == null
+              ? null
+              : () {
+                  messenger.hideCurrentSnackBar();
+                  onAction();
+                },
+        ),
+        backgroundColor: c.toast,
+        elevation: 0,
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 10, 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         duration: _duration,
+        dismissDirection: DismissDirection.down,
         margin: bottom == null
             ? null
             : EdgeInsets.fromLTRB(
                 _inset.left, _inset.top, _inset.right, bottom),
-        // A SnackBar with an action defaults `persist` to true — it would
-        // otherwise never auto-dismiss on its own no matter what
-        // [_duration] says, which was the original bug: a Dismiss action
-        // was added to fix "can't read it in 4s" without realizing it
-        // silently disabled the duration entirely.
+        // The action is inside the content (one action at most, SY02), so
+        // the bar keeps its own timeout.
         persist: false,
-        action: SnackBarAction(
-          label: messenger.context.l10n.commonDismiss,
-          onPressed: messenger.hideCurrentSnackBar,
-        ),
+      ),
+      snackBarAnimationStyle: AnimationStyle(
+        duration: reduced ? AppMotion.fast : AppMotion.base,
+        curve: AppMotion.enter,
+        reverseDuration: reduced ? AppMotion.fast : AppMotion.base,
       ),
     );
   }
@@ -164,4 +205,73 @@ class _ClearingNavigatorObserver extends NavigatorObserver {
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
       AppMessenger.clear();
+}
+
+/// The capsule's content: the status icon, the message, the action.
+class _SnackContent extends StatelessWidget {
+  final String message;
+  final MessageKind kind;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _SnackContent({
+    required this.message,
+    required this.kind,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final (IconData icon, Color color) = switch (kind) {
+      MessageKind.success => (Icons.check_rounded, c.green),
+      MessageKind.warning => (Icons.priority_high_rounded, c.orange),
+      MessageKind.error => (Icons.close_rounded, c.red),
+      MessageKind.info => (Icons.info_outline_rounded, c.navy),
+    };
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          // SY03: the warning's "!" in dark ink on the orange disc (white
+          // is 2.5:1 there).
+          child: Icon(icon,
+              size: 17,
+              color: kind == MessageKind.warning ? c.onOrange : c.onNavy),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            message,
+            style: theme.textTheme.bodyMedium!
+                .withWeight(FontWeight.w800)
+                .copyWith(color: c.onToast),
+          ),
+        ),
+        if (actionLabel != null && onAction != null) ...[
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              foregroundColor: c.gold,
+              minimumSize: const Size(44, 44),
+            ),
+            child: Text(
+              actionLabel!,
+              style: theme.textTheme.labelLarge!
+                  .withWeight(FontWeight.w900)
+                  .copyWith(
+                      color: c.gold,
+                      decoration: TextDecoration.underline,
+                      decorationColor: c.gold),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }

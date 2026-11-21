@@ -18,7 +18,7 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/weak_spot_card.dart';
+import 'package:grammar_lens/widgets/review_parts.dart';
 
 import 'support/l10n_support.dart';
 
@@ -133,13 +133,13 @@ void main() {
     testWidgets('Free (available and used): the daily card, no suggestion',
         (tester) async {
       await pump(tester, storage: _Storage(_three), subs: _Subs(false));
-      expect(find.byKey(DailyPracticeCard.availableKey), findsOneWidget);
+      expect(find.byKey(ReviewScreen.ticketKey), findsOneWidget);
       expect(focus, findsNothing);
       await pump(tester,
           storage:
               _Storage(_three, freeUsed: StorageService.freeDailyPracticeLimit),
           subs: _Subs(false));
-      expect(find.byKey(DailyPracticeCard.usedKey), findsOneWidget);
+      expect(find.byKey(ReviewScreen.ticketKey), findsOneWidget);
       expect(focus, findsNothing);
       expect(find.text('SUGGESTED FOCUS'), findsNothing);
     });
@@ -152,14 +152,14 @@ void main() {
               _Storage(_three, freeUsed: StorageService.freeDailyPracticeLimit),
           subs: _Subs(true));
       expect(focus, findsOneWidget);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
-      expect(find.byKey(DailyPracticeCard.usedKey), findsNothing);
+      expect(find.byKey(ReviewScreen.ticketKey), findsNothing);
       expect(find.textContaining('tomorrow'), findsNothing);
       expect(find.text('SUGGESTED FOCUS'), findsOneWidget);
       expect(find.text('Modal Past Form'), findsNWidgets(2)); // card + list
       expect(find.text('Saved 2 times · Most repeated'), findsOneWidget);
       expect(find.text('Practice this weak spot'), findsOneWidget);
-      expect(find.textContaining('Premium'), findsNothing);
+      // R12: "Premium" only as the header's chip.
+      expect(find.textContaining('Premium'), findsOneWidget);
     });
 
     testWidgets('"Saved 1 time" for one', (tester) async {
@@ -180,11 +180,11 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(focus, findsNothing);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
+      expect(find.byKey(ReviewScreen.ticketKey), findsNothing);
       pending.complete(true);
       await tester.pumpAndSettle();
       expect(focus, findsOneWidget);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
+      expect(find.byKey(ReviewScreen.ticketKey), findsNothing);
     });
   });
 
@@ -201,12 +201,13 @@ void main() {
       await pump(tester,
           storage: storage, subs: _Subs(true), size: const Size(390, 3000));
       expect(storage.reads, contains(StorageService.allWeakSpots));
-      expect(find.byType(WeakSpotCard), findsNWidgets(10));
+      expect(find.byType(ReviewSpotCard), findsNWidgets(10));
       expect(find.descendant(of: focus, matching: find.text('Older One')),
           findsOneWidget);
       expect(
           find.descendant(
-              of: find.byType(WeakSpotCard), matching: find.text('Older One')),
+              of: find.byType(ReviewSpotCard),
+              matching: find.text('Older One')),
           findsNothing);
     });
 
@@ -220,9 +221,11 @@ void main() {
           .whereType<String>()
           .firstWhere((t) => t == 'Modal Past Form');
       expect(title(), 'Modal Past Form');
-      await tester.tap(find.byTooltip('Sort weak spots'));
+      await tester.ensureVisible(find.byKey(ReviewScreen.sortKey));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
+      await tester.tap(find.byKey(ReviewScreen.sortKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('review_sort_frequent')));
       await tester.pumpAndSettle();
       expect(title(), 'Modal Past Form');
     });
@@ -296,7 +299,7 @@ void main() {
       expect(find.byType(TopicPracticeScreen), findsOneWidget);
 
       await pump(tester, storage: _Storage(const []), subs: _Subs(false));
-      expect(find.text('No weak spots yet.'), findsOneWidget);
+      expect(find.text('No weak spots yet!'), findsOneWidget);
       expect(find.text('Your next step starts with practice.'), findsNothing);
     });
 
@@ -324,7 +327,7 @@ void main() {
       await pump(tester, storage: storage, subs: _Subs(true));
       expect(find.text('Your suggestion could not be loaded.'), findsOneWidget);
       expect(find.text('Your next step starts with practice.'), findsNothing);
-      expect(find.byType(WeakSpotCard), findsNWidgets(3));
+      expect(find.byType(ReviewSpotCard), findsNWidgets(3));
       storage.failAll = false;
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
@@ -340,16 +343,20 @@ void main() {
         _spot('weak_spot_$i', 1 + i % 3, DateTime(2026, 10, 20 - i)),
     ];
     await pump(tester, storage: _Storage(spots), subs: _Subs(true));
-    await tester.tap(find.byTooltip('Sort weak spots'));
+    await tester.ensureVisible(find.byKey(ReviewScreen.sortKey));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
+    await tester.tap(find.byKey(ReviewScreen.sortKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('review_sort_frequent')));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 500));
     await tester.pumpAndSettle();
     final scrollable = find.byType(Scrollable).first;
     await tester.drag(scrollable, const Offset(0, -500));
     await tester.pumpAndSettle();
     final offset = tester.state<ScrollableState>(scrollable).position.pixels;
     expect(offset, greaterThan(0));
-    final card = find.byType(WeakSpotCard).hitTestable().first;
+    final card = find.byType(ReviewSpotCard).hitTestable().first;
     await tester.tap(card);
     await tester.pumpAndSettle();
     expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
@@ -366,52 +373,7 @@ void main() {
     expect(find.text(ReviewSortOrder.frequent.label(en)), findsOneWidget);
   });
 
-  group('the same size as the Free card (owner, 2026-10-06)', () {
-    for (final width in const [320.0, 360.0, 390.0, 430.0]) {
-      for (final size in AppTextSize.values) {
-        testWidgets(
-            '${width.toInt()} pt, ${size.name}: Free available and Premium '
-            'have equal bounds; the list starts at the same place',
-            (tester) async {
-          await pump(tester,
-              storage: _Storage(_three),
-              subs: _Subs(false),
-              size: Size(width, 1600),
-              textSize: size);
-          final free =
-              tester.getRect(find.byKey(DailyPracticeCard.availableKey));
-          final freeList = tester.getRect(find.byType(WeakSpotCard).first).top;
-          await pump(tester,
-              storage: _Storage(_three),
-              subs: _Subs(true),
-              size: Size(width, 1600),
-              textSize: size);
-          final premium =
-              tester.getRect(find.byKey(SuggestedFocusCard.cardKey));
-          expect(premium, free);
-          expect(tester.getRect(find.byType(WeakSpotCard).first).top, freeList);
-          expect(tester.takeException(), isNull);
-        });
-      }
-    }
-
-    testWidgets('the loading and failed cards hold the same height as well',
-        (tester) async {
-      await pump(tester, storage: _Storage(_three), subs: _Subs(false));
-      final free = tester.getRect(find.byKey(DailyPracticeCard.availableKey));
-      final pending = _Storage(_three)..pendingAll = Completer<void>();
-      await pump(tester, storage: pending, subs: _Subs(true), settle: false);
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 50));
-      }
-      expect(tester.getRect(focus), free);
-      pending.pendingAll!.complete();
-      await tester.pumpAndSettle();
-      await pump(tester,
-          storage: _Storage(_three)..failAll = true, subs: _Subs(true));
-      expect(tester.getRect(focus), free);
-    });
-
+  group('the Suggested Focus card (R12)', () {
     testWidgets(
         '320 pt, Large, a long title: wraps and is read in full; the card '
         'grows rather than cutting it', (tester) async {

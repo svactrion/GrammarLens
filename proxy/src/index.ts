@@ -2,8 +2,11 @@ import { requireAppToken } from './auth';
 import { callAnthropic } from './anthropic';
 import { logUnhandledError } from './error_log';
 import { filterLegacyDailyTest, logLegacyFilter } from './legacy_daily_test';
+import { filterPracticeSet, logPracticeFilter } from './practice_filter';
+import { practiceTheme } from './practice_theme';
 import { reserveQuota } from './quota';
 import { checkScoreFeedback, logScoreFeedback } from './score_feedback';
+import { SCORE_RETRY_MAX_FIRST_MS, isCompleteScore, logScoreIncomplete, scoreVerdictGaps } from './score_retry';
 import { runSharedGeneration } from './shared_generation';
 import { SHARED_SET_PATH, handleSharedSetRead } from './shared_read';
 import { ProxyError, type Env } from './types';
@@ -48,8 +51,18 @@ async function handleOperation(
     case 'generate_practice_set': {
       const req = validateGeneratePracticeSet(body);
       deviceId = req.deviceId;
-      await reserveQuota(env, deviceId);
-      result = await callAnthropic(env, { op, request: req });
+      const quota = await reserveQuota(env, deviceId);
+      // The set's scenario theme, stepped per device from what the quota
+      // check just read: nothing new is sent by the app or stored here.
+      const theme = practiceTheme(deviceId, quota.day, quota.deviceCount);
+      // A fill_in_blank item without a blank is removed and the rest served
+      // (owner decision 2026-11-19); counts only are logged.
+      const checked = filterPracticeSet(await callAnthropic(env, { op, request: { ...req, theme } }));
+      logPracticeFilter(checked);
+      if (checked.rejected) {
+        throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+      }
+      result = checked.content;
       break;
     }
     case 'generate_daily_test': {
@@ -70,9 +83,29 @@ async function handleOperation(
       const req = validateScoreAnswers(body);
       deviceId = req.deviceId;
       await reserveQuota(env, deviceId);
+      // Every answer must come back with a verdict (owner decision
+      // 2026-11-19): an incomplete response is asked for once more, and a
+      // second one is an upstream error, so the app keeps the answers on
+      // the screen instead of showing a result a question short.
+      const startedAt = Date.now();
+      let content = await callAnthropic(env, { op, request: req });
+      const first = scoreVerdictGaps(req, content);
+      if (!isCompleteScore(first)) {
+        const inTime = Date.now() - startedAt <= SCORE_RETRY_MAX_FIRST_MS;
+        logScoreIncomplete(first, 1, inTime ? 'retry' : 'failed_no_time');
+        if (!inTime) {
+          throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+        }
+        content = await callAnthropic(env, { op, request: req });
+        const second = scoreVerdictGaps(req, content);
+        if (!isCompleteScore(second)) {
+          logScoreIncomplete(second, 2, 'failed');
+          throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+        }
+      }
       // The structured fields (1.4.0 D11) are checked against the request
       // and repaired before they go out; counts only are logged.
-      const checked = checkScoreFeedback(req, await callAnthropic(env, { op, request: req }));
+      const checked = checkScoreFeedback(req, content);
       logScoreFeedback(checked);
       result = checked.content;
       break;

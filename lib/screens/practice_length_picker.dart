@@ -1,9 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../motion.dart';
+import '../utils/haptics.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/pressable_button.dart';
 import '../models/practice_length.dart';
 import '../spacing.dart';
 import '../theme.dart';
@@ -57,19 +61,10 @@ Future<PracticeLength?> showPracticeLengthPicker({
   required BuildContext context,
   required PracticeLength initial,
 }) {
-  final colorScheme = Theme.of(context).colorScheme;
-  return showModalBottomSheet<PracticeLength>(
+  // R02: the shared sheet (card colour, scrim, 450 ms easeOutCubic).
+  return showAppSheet<PracticeLength>(
     context: context,
-    isScrollControlled: true,
-    // The palette's card surface (final screens A3; was pure white).
-    backgroundColor: colorScheme.surfaceContainerHigh,
-    // A pure black scrim over the orange page reads as a muddy brown
-    // (docs/design-audit.md §2) — tinted off the page's own foreground
-    // color instead, at a mid opacity.
-    barrierColor: colorScheme.onSurface.withValues(alpha: 0.42),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+    showGrabber: false,
     builder: (sheetContext) => _PracticeLengthSheet(initial: initial),
   );
 }
@@ -96,7 +91,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
   void _onSliderChanged(double value) {
     final next = PracticeLength.values[value.round()];
     if (next == _selected) return;
-    HapticFeedback.selectionClick();
+    HapticMap.selection();
     setState(() => _selected = next);
   }
 
@@ -141,18 +136,17 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
               data: SliderThemeData(
                 trackHeight: 8,
                 trackShape: const RoundedRectSliderTrackShape(),
-                activeTrackColor: colorScheme.secondary,
+                // R02: the orange knob and filled track, dots at the stops.
+                activeTrackColor: AppColors.of(context).orange,
                 // The empty part of the track (final screens A3): `outline`,
-                // 3.32:1 on the light sheet and 4.50:1 on the dark one (it
-                // was the sheet's own colour, 1.03:1). Its stop dots take
-                // the sheet colour, the same contrast the other way round.
+                // 3.32:1 on the light sheet and 4.50:1 on the dark one.
                 inactiveTrackColor: colorScheme.outline,
-                thumbColor: colorScheme.secondary,
-                activeTickMarkColor: colorScheme.onSecondary,
-                inactiveTickMarkColor: colorScheme.surfaceContainerHigh,
+                thumbColor: AppColors.of(context).orange,
+                activeTickMarkColor: AppColors.of(context).onOrange,
+                inactiveTickMarkColor: AppColors.of(context).card,
                 thumbShape: _DragHandleThumbShape(
                   radius: _kSliderThumbRadius,
-                  chevronColor: colorScheme.onSecondary,
+                  chevronColor: AppColors.of(context).onOrange,
                 ),
                 overlayShape: SliderComponentShape.noOverlay,
                 // The selection card above already shows the picked value
@@ -182,14 +176,12 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: Spacing.xl),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: forwardButtonStyle(context),
-                onPressed: () => Navigator.of(context).pop(_selected),
-                child: Text(
-                    context.l10n.lengthPickerStart(_selected.questionCount)),
-              ),
+            PressableButton(
+              label: context.l10n.lengthPickerStart(_selected.questionCount),
+              tone: ButtonTone.orange,
+              haptic: ButtonHaptic.medium,
+              crossFadeLabel: true,
+              onPressed: () => Navigator.of(context).pop(_selected),
             ),
           ],
         ),
@@ -287,11 +279,11 @@ class _SelectionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       // Card color is fixed regardless of selection — only the dial and
-      // text inside change.
-      padding: const EdgeInsets.all(20),
+      // text inside change. R02: radius 26, padding 18 / 22.
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -308,7 +300,7 @@ class _SelectionCard extends StatelessWidget {
             ratio: practiceLengthDialRatio(selected),
             reduceMotion: reduceMotion,
           ),
-          const SizedBox(width: Spacing.lg),
+          const SizedBox(width: 22),
           Expanded(
             child: AnimatedSwitcher(
               key: const Key('lengthTextSwitcher'),
@@ -352,9 +344,13 @@ class _SelectionCard extends StatelessWidget {
 /// Deliberately not rebuilt via a keyed swap ([AnimatedSwitcher]) the way
 /// the card's text is — this widget's own State has to survive a selection
 /// change for [didUpdateWidget] to tween the ring smoothly between two
-/// ratios. The count text still gets the same discrete-swap treatment as
-/// before, just scoped to this widget's own internal [AnimatedSwitcher]
-/// instead of the whole card.
+/// ratios.
+///
+/// R02 (UI polish fix round 1): the board's ring — 104 pt, a thick navy arc
+/// on a pale track around a white disc, the count large in the middle. The
+/// ring fills to the new value in 250 ms and the count rolls like an
+/// odometer (up for a longer session, down for a shorter one), live while
+/// the knob is dragged from stop to stop. Reduce Motion: both just change.
 class _LengthDial extends StatefulWidget {
   final int questionCount;
   final double ratio;
@@ -372,8 +368,12 @@ class _LengthDial extends StatefulWidget {
 
 class _LengthDialState extends State<_LengthDial>
     with SingleTickerProviderStateMixin {
-  static const _size = 84.0;
-  static const _strokeWidth = 8.0;
+  /// The board's 104 pt ring (a 100 viewBox: radius 42, stroke 9).
+  static const _size = 104.0;
+  static const _strokeWidth = 9.4;
+
+  /// Whether the last change made the count larger: the number rolls up.
+  bool _rollUp = true;
 
   late final AnimationController _controller;
   late final CurvedAnimation _curve;
@@ -384,7 +384,7 @@ class _LengthDialState extends State<_LengthDial>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: AppMotion.base,
       // Starts "complete" so the very first frame shows widget.ratio
       // directly rather than animating in from zero on mount.
       value: 1,
@@ -396,6 +396,9 @@ class _LengthDialState extends State<_LengthDial>
   @override
   void didUpdateWidget(covariant _LengthDial oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.questionCount != widget.questionCount) {
+      _rollUp = widget.questionCount > oldWidget.questionCount;
+    }
     if (oldWidget.ratio == widget.ratio) return;
     final currentRatio = _ratioTween.evaluate(_curve);
     _ratioTween = Tween<double>(begin: currentRatio, end: widget.ratio);
@@ -418,9 +421,10 @@ class _LengthDialState extends State<_LengthDial>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final trackColor = colorScheme.onSecondaryContainer.withValues(alpha: 0.22);
+    final trackColor = colorScheme.onSecondaryContainer.withValues(alpha: 0.16);
     final fillColor = colorScheme.secondary;
     final textColor = colorScheme.onSecondaryContainer;
+    final discColor = AppColors.of(context).card;
 
     return SizedBox(
       width: _size,
@@ -438,20 +442,35 @@ class _LengthDialState extends State<_LengthDial>
                   strokeWidth: _strokeWidth,
                   trackColor: trackColor,
                   fillColor: fillColor,
+                  discColor: discColor,
                 ),
               ),
             ),
           ),
           AnimatedSwitcher(
             key: const Key('lengthNumberSwitcher'),
-            duration: widget.reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 180),
+            duration: widget.reduceMotion ? Duration.zero : AppMotion.base,
+            transitionBuilder: (child, animation) {
+              // The new count comes in from below when it grows (from
+              // above when it shrinks); the old one leaves the other way.
+              final incoming = child.key == ValueKey(widget.questionCount);
+              final dir = _rollUp ? 1.0 : -1.0;
+              return ClipRect(
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(0, incoming ? dir : -dir),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                      parent: animation, curve: AppMotion.enter)),
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+              );
+            },
             child: Text(
               '${widget.questionCount}',
               key: ValueKey(widget.questionCount),
-              style: TextStyle(fontSize: 28, color: textColor)
-                  .withWeight(FontWeight.w700),
+              style: TextStyle(fontSize: 35, color: textColor)
+                  .withWeight(FontWeight.w900),
             ),
           ),
         ],
@@ -466,11 +485,15 @@ class _DialPainter extends CustomPainter {
   final Color trackColor;
   final Color fillColor;
 
+  /// The disc inside the ring (R02: white on the light theme).
+  final Color discColor;
+
   const _DialPainter({
     required this.ratio,
     required this.strokeWidth,
     required this.trackColor,
     required this.fillColor,
+    required this.discColor,
   });
 
   @override
@@ -478,6 +501,8 @@ class _DialPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = (size.shortestSide - strokeWidth) / 2;
     final arcRect = Rect.fromCircle(center: center, radius: radius);
+
+    canvas.drawCircle(center, radius, Paint()..color = discColor);
 
     canvas.drawCircle(
       center,
@@ -510,7 +535,8 @@ class _DialPainter extends CustomPainter {
   bool shouldRepaint(covariant _DialPainter oldDelegate) =>
       oldDelegate.ratio != ratio ||
       oldDelegate.trackColor != trackColor ||
-      oldDelegate.fillColor != fillColor;
+      oldDelegate.fillColor != fillColor ||
+      oldDelegate.discColor != discColor;
 }
 
 /// A big, unmissable drag handle — a filled circle with a soft drop shadow

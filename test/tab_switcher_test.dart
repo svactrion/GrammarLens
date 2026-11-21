@@ -15,7 +15,8 @@ import 'package:grammar_lens/widgets/tab_switcher.dart';
 
 /// 1.2.0 Batch 9: the one tab switcher. Batch 6's fade-through for every
 /// switch (this file began as Batch 6's `tab_fade_through_test.dart`), and
-/// the slide only from Home's "Go to Review" card.
+/// the slide only from Home's way to Review (the free ticket since the UI
+/// polish, V14).
 class _Tab extends StatefulWidget {
   final String name;
   final VoidCallback? onTap;
@@ -322,9 +323,9 @@ void main() {
         tester.widget<TabSwitcher>(find.byType(TabSwitcher)).index;
 
     testWidgets(
-        'Home\'s "Go to Review" card slides; the nav bar and Review\'s "Go to '
-        'Daily Test" fade', (tester) async {
-      // A weak spot: Home shows its "Go to Review" card.
+        'Home\'s free ticket slides to Review; the nav bar and Review\'s "Go '
+        'to Daily Test" fade', (tester) async {
+      // A weak spot: Home's ticket names it.
       await pumpApp(tester, spots: [
         WeakSpot(
             topicId: 'tenses',
@@ -339,12 +340,12 @@ void main() {
       await tester.pump();
       expect((index(tester), transition(tester)), (1, TabTransition.fade));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Home').last);
+      await tester.tap(find.text('Climb').last);
       await tester.pumpAndSettle();
       expect((index(tester), transition(tester)), (0, TabTransition.fade));
 
-      // Home's card: the slide, the nav bar's selection at once.
-      final card = find.byKey(HomeScreen.reviewCalloutKey);
+      // Home's ticket: the slide, the nav bar's selection at once.
+      final card = find.byKey(HomeScreen.ticketKey);
       await tester.scrollUntilVisible(card, 300,
           scrollable: find
               .descendant(
@@ -363,13 +364,13 @@ void main() {
           reason: 'Review comes in from the right');
       await tester.pumpAndSettle();
 
-      // Review's empty state (no weak spot): "Go to Daily Test", a fade. A
+      // Review's empty state (no weak spot): its Daily Test button, a fade. A
       // fresh app, so nothing loaded above carries over.
       await tester.pumpWidget(const SizedBox());
       await pumpApp(tester);
       await tester.tap(find.text('Review').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Go to Daily Test'));
+      await tester.tap(find.text('Take today’s Daily Test'));
       await tester.pump();
       expect((index(tester), transition(tester)), (0, TabTransition.fade));
       await tester.pumpAndSettle();

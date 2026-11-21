@@ -567,13 +567,19 @@ void main() {
     test('a request that answers in time is unaffected', () async {
       final client = MockClient((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        return http.Response(jsonEncode({'items': []}), 200);
+        return http.Response(
+            jsonEncode({
+              'items': [
+                {'id': 'q1', 'type': 'fill_in_blank', 'instruction': 'A ___.'},
+              ]
+            }),
+            200);
       });
 
       final result = await withTimeout(client, const Duration(seconds: 5))
           .generatePracticeSet(kTopics.first, deviceId: 'device-1');
 
-      expect(result.items, isEmpty);
+      expect(result.items, hasLength(1));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/l10n/l10n.dart';
+import 'package:grammar_lens/models/reminder_settings.dart';
 import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
@@ -251,7 +252,8 @@ void main() {
       expect(profile, isNotNull);
       expect(profile!.name, 'Ada');
       expect(profile.learningGoal, LearningGoal.work);
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
 
       final topicStats = await storageService.getTopicStats();
       expect(topicStats['articleUsage']?.practiced, 42);
@@ -392,7 +394,8 @@ void main() {
       expect(profile, isNotNull);
       expect(profile!.name, 'Ada');
       expect(profile.learningGoal, LearningGoal.work);
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
 
       expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
       // Nothing of the old values remains anywhere in the row.
@@ -452,7 +455,8 @@ void main() {
 
       final profile = await StorageService(dbName: dbName).getUserProfile();
       expect(profile!.name, 'Ada');
-      expect(profile.avatar, Avatar.values[2]);
+      expect(
+          profile.avatar, Avatar.fox); // avatar_03 (Elephant) is retired: Fox
       expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
     });
 
@@ -973,7 +977,7 @@ void main() {
       expect(await storage.getLanguage(), AppLanguage.ptBR);
 
       final db = await databaseFactory.openDatabase(path);
-      expect(await db.getVersion(), 26);
+      expect(await db.getVersion(), 27);
       await db.update('language_settings', {'language': 'fr'});
       await db.close();
       expect(await StorageService(dbName: dbName).getLanguage(),
@@ -984,6 +988,50 @@ void main() {
       final storage = StorageService(dbName: dbName);
       await storage.setLanguage(AppLanguage.en);
       expect(await storage.getLanguage(), AppLanguage.en);
+    });
+  });
+
+  group('v26 -> v27: reminder_settings (TASK-widgets W4)', () {
+    const dbName = 'test_migration_v26.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    test(
+        'a v26 database gains the table; no row reads as all off, 20:00, '
+        'not asked; settings round-trip; an unknown ask reads as not asked',
+        () async {
+      final seed = await databaseFactory.openDatabase(path);
+      await seed.execute(
+          'CREATE TABLE language_settings (id INTEGER PRIMARY KEY, language TEXT)');
+      await seed.setVersion(26);
+      await seed.close();
+
+      final storage = StorageService(dbName: dbName);
+      expect(await storage.getReminderSettings(), const ReminderSettings());
+      final on = const ReminderSettings()
+          .turnedOn(minutes: ReminderSettings.lunch)
+          .withKind(ReminderKind.newMountain, false);
+      await storage.setReminderSettings(on);
+      expect(await storage.getReminderSettings(), on);
+
+      final db = await databaseFactory.openDatabase(path);
+      expect(await db.getVersion(), 27);
+      await db.update('reminder_settings', {'ask': 'later'});
+      await db.close();
+      final read = await StorageService(dbName: dbName).getReminderSettings();
+      expect(read.ask, ReminderAsk.notAsked);
+      expect(read.minutes, ReminderSettings.lunch);
+    });
+
+    test('a fresh install creates the table', () async {
+      final storage = StorageService(dbName: dbName);
+      await storage.setReminderSettings(
+          const ReminderSettings(ask: ReminderAsk.declined));
+      expect((await storage.getReminderSettings()).ask, ReminderAsk.declined);
     });
   });
 }

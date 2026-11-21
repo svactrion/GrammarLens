@@ -152,14 +152,14 @@ export function sFreeBody(items: readonly { id: string; type: string; prompt: st
  * same question (the model would otherwise read one against the other), in a
  * shuffled order fixed by [seed] so every cell scores the same calls.
  */
-export function groupAnswers(answers: readonly LabelledAnswer[], seed: number): LabelledAnswer[][] {
+export function groupAnswers<T extends { item: { id: string } }>(answers: readonly T[], seed: number): T[][] {
   const pending = shuffle(answers, seededRandom(seed));
-  const calls: LabelledAnswer[][] = [];
+  const calls: T[][] = [];
   while (pending.length > 0) {
-    const call: LabelledAnswer[] = [];
+    const call: T[] = [];
     const used = new Set<string>();
     for (let i = 0; i < pending.length && call.length < ANSWERS_PER_CALL; ) {
-      const a = pending[i] as LabelledAnswer;
+      const a = pending[i] as T;
       if (used.has(a.item.id)) {
         i++;
         continue;
@@ -175,7 +175,7 @@ export function groupAnswers(answers: readonly LabelledAnswer[], seed: number): 
 
 /** The request a scoring call sends: each answer as its own item, the id made
  * unique per answer so the feedback maps back. */
-export function scoringRequest(call: readonly LabelledAnswer[]): ScoreAnswersRequest {
+export function scoringRequest(call: readonly Pick<LabelledAnswer, 'id' | 'item' | 'userAnswer'>[]): ScoreAnswersRequest {
   return {
     deviceId: 'measurement',
     items: call.map((a) => ({ id: a.id, type: a.item.type, prompt: a.item.prompt, userAnswer: a.userAnswer })),
@@ -253,7 +253,9 @@ export const CHECK_OUTPUT_TOKENS: Readonly<Record<CheckerModel, number>> = {
 // ---------------------------------------------------------------------------
 // The plan
 
-export type Stage = 'generation' | 's_free' | 'daily_test' | 'gate' | 'scoring' | 'scoring_repeat';
+/** `answers` is the 1.5.0 topics measurement's answer writer
+ * (`topics_measurement.ts`); the 1.4.0 plan never makes one. */
+export type Stage = 'generation' | 's_free' | 'daily_test' | 'gate' | 'scoring' | 'scoring_repeat' | 'answers';
 
 export interface PlannedCall {
   customId: string;

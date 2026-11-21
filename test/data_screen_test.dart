@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/screens/ai_consent_screen.dart';
@@ -51,11 +53,9 @@ Future<void> openReset(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// The dialog's own "Reset progress data" (the page's button has the same
-/// label).
-Finder confirmReset() => find.descendant(
-    of: find.byType(AlertDialog),
-    matching: find.widgetWithText(FilledButton, 'Reset progress data'));
+/// R08: the companion dialog's own "Reset progress data" (the page's button
+/// has the same label).
+Finder confirmReset() => find.byKey(DataScreen.resetConfirmKey);
 
 void main() {
   Future<void> pumpData(
@@ -83,8 +83,7 @@ void main() {
 
     expect(find.text('Data'), findsOneWidget); // page title
     expect(find.text('Reset progress'), findsOneWidget);
-    expect(
-        find.text('Clear your practice history and saved weak spots.'),
+    expect(find.text('Clear your practice history and saved weak spots.'),
         findsOneWidget);
     expect(find.text('Your name, goal and theme stay as they are.'),
         findsOneWidget);
@@ -98,10 +97,13 @@ void main() {
 
     await openReset(tester);
     expect(find.text('Reset your progress?'), findsOneWidget);
+    // R08: the companion dialog's body holds both sentences.
     expect(
-        find.text('This clears your practice history and saved weak spots.'),
+        find.textContaining(
+            'This clears your practice history and saved weak spots.'),
         findsOneWidget);
-    expect(find.text('Your name, goal and theme will stay as they are.'),
+    expect(
+        find.textContaining('Your name, goal and theme will stay as they are.'),
         findsOneWidget);
 
     await tester.tap(find.text('Keep my progress'));
@@ -150,44 +152,18 @@ void main() {
       });
 
       testWidgets(
-          'in the dialog, Reset is destructive and Cancel is a neutral text '
-          'button, not primary', (tester) async {
+          'R08: the companion asks (a heavy haptic); keeping is the primary '
+          'button, the reset the quiet one under it', (tester) async {
         await pumpData(tester, _FakeStorageService(), brightness: brightness);
-        final scheme = buildAppTheme(brightness).colorScheme;
-
+        HapticMap.log = [];
         await openReset(tester);
-
-        final reset = tester.widget<FilledButton>(confirmReset());
-        expect(fill(reset), scheme.destructive);
-        expect(label(reset), scheme.onDestructive);
-
-        final cancel = tester.widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Keep my progress'));
-        expect(label(cancel), scheme.onSurface);
-        expect(label(cancel), isNot(scheme.primary));
-        expect(border(cancel), scheme.onSurfaceVariant);
-        expect(border(cancel), isNot(scheme.primary));
-        expect(fill(cancel), isNull);
-        // Nothing else in the dialog is a filled button but Reset.
-        expect(
-          find.descendant(
-              of: find.byType(AlertDialog),
-              matching: find.byType(FilledButton)),
-          findsOneWidget,
-        );
-      });
-
-      testWidgets('Cancel stays above Reset, both full width', (tester) async {
-        await pumpData(tester, _FakeStorageService(), brightness: brightness);
-        await openReset(tester);
-
-        final cancel = tester
-            .getRect(find.widgetWithText(OutlinedButton, 'Keep my progress'));
-        final reset = tester.getRect(confirmReset());
-        expect(cancel.bottom, lessThan(reset.top));
-        expect(cancel.width, reset.width);
-        // The app's button height (48 since 1.2.0, 52 before).
-        expect(cancel.height, 48);
+        expect(HapticMap.log, contains('heavy'));
+        final keep =
+            tester.widget<PressableButton>(find.byKey(DataScreen.keepKey));
+        expect(keep.label, 'Keep my progress');
+        expect(keep.tone, ButtonTone.navy);
+        expect(tester.getRect(find.byKey(DataScreen.keepKey)).bottom,
+            lessThanOrEqualTo(tester.getRect(confirmReset()).top));
       });
     });
   }
@@ -238,8 +214,8 @@ void main() {
 
       expect(find.text('AI feedback'), findsOneWidget);
       expect(find.text('Allow AI feedback'), findsOneWidget);
-      expect(find.text('Off · Practice sessions need permission'),
-          findsOneWidget);
+      expect(
+          find.text('Off · Practice sessions need permission'), findsOneWidget);
       expect(find.text('Daily Test works without this permission.'),
           findsOneWidget);
       expect(tester.getTopLeft(find.text('AI feedback')).dy,

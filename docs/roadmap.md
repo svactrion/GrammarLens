@@ -12,7 +12,7 @@
 | 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). **The first public release (owner, 2026-10-16): build 6 is in App Store review; 1.0.0 will never be released.** *(Superseded, kept as written: "TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07).")* Proxy rule for the multi-blank boxes deployed (recorded 2026-10-16). **Released 2026-11-02 (owner): approved by App Review on 2026-11-02, Release pressed in App Store Connect the same day at 22:35 local (19:35 UTC; manual release). Build 6 (`1.3.0+6`), served by proxy Worker version `18d87c6b-5f7b-4290-a08b-f07a32565511` (deployed 2026-11-02 18:10 UTC: D3, D11, P14).** Smoke test on TestFlight build 6 passed before the release (build log 2026-11-02). Checklist: "1.3.0 release checklist" below |
 | 1.4.0 | Seven interface languages (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback; AI translation, no native review); questions and AI feedback stay English; language-neutral proxy prompts with a practice model measurement; the audit fixes and the hint card fix; partial answers on multi-blank questions with per-blank results (B8, replaces Q3), AI feedback formatted for reading (B9) and the word-level difference between "You wrote" and "Corrected" with the quote chip (B10; all three added 2026-10-31). P14 is deployed server side right after 1.3.0 is live. The home-screen widget moved to 1.5.0 (owner, 2026-11-02). Plan: [`docs/1.4.0-plan.md`](1.4.0-plan.md) | **Released 2026-11-07 (owner, recorded 2026-11-10): build 7 (`1.4.0+7`) approved by App Review and released on 2026-11-07; live.** *(Superseded, kept as written:)* **Submitted for App Store review 2026-11-05, 20:3x local (owner): build 7 (`1.4.0+7`), release manual; not approved yet, not live.** Eight localizations and 112 screenshots uploaded by Codex through the App Store Connect API, with read-back (`screenshots/1.4.0/asc/read-back.md`, `header-v5-read-back.md`); age rating re-answered to 4+; Coarse Location added to App Privacy (Analytics, not linked, no tracking); Mac and Apple Vision availability kept; Notes for Review updated (build log 2026-11-05). *(Kept as written:)* In progress (scope decided by the owner, 2026-10-23; B1, B8, B9 and B10 built 2026-10-23/31; B9, B10, B10.1 and B10.2 checked on the owner's device 2026-10-31, B8's rows on a fresh multi-blank Practice and B1's device check still open; the rest planned, not started) |
 | 1.4.1 | Small fixes on `main`: the paywall's derived-price lira symbol and the storage reset gate fix (section "1.4.1 (planned)") | **Planned (owner, 2026-11-05): done on `main`, not shipped;** no version bump yet, not built |
-| 1.5.0 | The home-screen widget (WidgetKit): the avatar, this month's Monthly Climb step and whether today's Daily Test is done, no streak, its text in the seven languages (1.4.0 plan D5 and B7, carried over unchanged) | **Planned (owner, 2026-11-02): moved out of 1.4.0;** not started |
+| 1.5.0 | The home-screen widget (WidgetKit): the avatar, this month's Monthly Climb step and whether today's Daily Test is done, no streak, its text in the seven languages (1.4.0 plan D5 and B7, carried over unchanged) | **Built on branch `widgets-notifications` (2026-11-17), with the daily reminders, and integrated with the UI polish on branch `ui-polish-widgets` (2026-11-17); not on `main`, not shipped, not checked on a device** (task `docs/design/ui-polish/handoff/TASK-widgets.md`, log `PROGRESS-widgets.md`; integration `INTEGRATE.md`, record in `PROGRESS.md` "Integration", the owner's checklist `DEVICE-CHECKS.md`). *(Kept as written:)* Planned (owner, 2026-11-02): moved out of 1.4.0; not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -312,6 +312,291 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   wording. *(Split from the uploads item above, 2026-10-16.)* Live on the
   site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
   `e87b2f2`, `de5aa31`, `7e8ae6c`.
+
+#### UI polish + 4th tab (planned, opened 2026-11-17)
+
+**Status (2026-11-18): the UI polish is built on branch `ui-polish`**
+(batches B0–B11, fix round 1, and fix round 2 after the owner's first
+device test on his iPhone 14 Plus), **integrated with the widgets and
+reminders on branch `ui-polish-widgets`** (`INTEGRATE.md`), **and fix round
+3 is done there** (`FIX3.md`, SPEC v11, after the owner's device test of
+the integrated build: the Day 0 order, N01 on the first rest scene, the
+full-bleed rest scenes, the new name screen, the paywall order, the summit
+flag, one practice loading screen, the expression kit everywhere, dark
+mode), **and fix round 4 is done there** (`FIX4.md`, SPEC v12, after the
+owner's second device pass: V24f on one screen with the campfire by the
+companion, the compact paywall footer without "Maybe later", widgets v12
+with the user's own mistake and designed dark variants, Profile's month
+progress card, props by each hero's head, forward-button haptics, centred
+loading screens with an honest checklist, Turkish capitals), **and fix
+round 5 is done there** (`FIX5.md`, SPEC v13, after the owner's third
+device pass: V24f's ticket-deck panel chosen by the owner, V24 on its own
+board again, both panels ending just above the nav bar, Profile's month
+progress card with the medals on the bar, a paywall that closes only with
+its X), **and fix round 6 is done there** (`FIX6.md`, SPEC v14, after the
+owner's device check of 2026-11-19: with the practice allowance used
+before the Daily Test, Home plays the day's step, lets the pawn rest for a
+second and then fades to the rest scene, where it used to show the rest
+scene at once; Review's inline mistake strikes the wrong word in place on
+multi-blank answers; Review's list is fresh after a ticket practice; the
+Daily Test card's hop was measured and runs as specified, unchanged);
+**not on `main`, not shipped, waiting for the owner's next device check**
+(the morning after, before that day's Daily Test). Fix rounds 3 to 6 were
+built and checked on the simulator and in tests only; the checks, in
+order, start with "Fix round 6 — the next morning" in
+[`DEVICE-CHECKS.md`](design/ui-polish/handoff/DEVICE-CHECKS.md). The run's
+record, decisions to review and gaps:
+[`docs/design/ui-polish/handoff/PROGRESS.md`](design/ui-polish/handoff/PROGRESS.md).
+The 4th tab is still open.
+
+Opened by the owner on 2026-11-17. Design
+canvas: claude.ai artifact "GrammarLens — Tüm Ekranlar ve Senaryolar", page
+"Yeni tasarım — gruplar" (v9 on 2026-11-17; every screen grouped by area, each with a
+motion + haptics note for Claude Code). Asset briefs:
+`docs/design/ui-polish/asset-requests.md` (round 1, delivered) and
+`asset-requests-round2.md`. **Design final (v9, 2026-11-17); handed to Claude
+Code** as an offline package in `docs/design/ui-polish/handoff/` (`SPEC.md`,
+`TASK.md`, `ASSETS.md`, app-ready assets, every board as HTML and a static
+render). Implementation ran on branch `ui-polish` (status above).
+
+Owner decisions so far:
+- **Heroes: 9, each with 6 pose images** (Fox, Panda, Koala, Frog, Bird,
+  Giraffe, Cat, Sloth, Crab). All 54 poses delivered 2026-11-17 (Crab's six
+  last, from `asset-requests-crab.md`) and placed on the design canvas; the
+  files are in the owner's generated-assets folder, not yet copied into the
+  repo. The
+  expression kit (motion + shared props) layers on top of the poses and covers
+  the states that have no pose (wrong-answer "oops"). **Retired heroes
+  (owner, 2026-11-17):** users on Snail, Elephant, Bee, Chick, Turtle,
+  Penguin or Hedgehog move to Fox on first launch of the new build; the
+  seven leave the app (saved format `avatar_XX` unchanged).
+- **Companion picker: B1 turntable** (all 9 on a rotating stage, the front
+  one on the podium), used in onboarding and in Profile. A second button
+  opens a wheel of fortune that picks a buddy at random. *Proposed, not
+  decided:* the label "Try my luck", the rule that it never lands on the
+  current buddy, and the result line "<Buddy> picked you!". The other picker
+  trials (A, B2, B3) are dropped.
+- **Daily Test card: one fixed skeleton for loading / waiting / done**
+  (350 × 256; rows 28 · 100 · 52), so finishing the test changes only colours
+  and slot contents, never the card's size or alignment.
+- **Onboarding "getting ready" step** with a 0 → 100 bar whose three stops are
+  the app's real work (profile + buddy saved, today's Daily Test downloaded,
+  the month's mountain opened); in-between values are smoothing only.
+- Daily Test gets per-question feedback (graded on device from the set);
+  practice keeps batched AI evaluation at the end of the session.
+- Paywall: plans as a vertical list, hidden on first view (shown on scroll);
+  closing opens a pop-up with a sad companion, no discount.
+- **New practice topics, first wave — added on the backend together with the
+  UI work:** Conditionals, Passive Voice, Prepositions (time/place and
+  dependent prepositions), Relative Clauses, Comparatives & Superlatives. Each
+  goes through the question-quality check before it ships. Second wave
+  (later, not scheduled): Reported Speech, Quantifiers, used to / be used to,
+  Future Forms, Question Tags, wish / if only.
+- **Split out (owner, 2026-11-17):** the home-screen widgets (small +
+  medium) and the daily reminder notification are a separate task after the
+  UI polish run (they need an Xcode target, an App Group and a new package).
+  **Built (2026-11-17) on branch `widgets-notifications`** (from
+  `ui-polish`): "Climb" (small + medium) and "Tip" (medium) widgets, the
+  daily reminder (N01, N02, N03, V24's switch), without a new package (the
+  app's own bridge); **integrated with the UI polish on branch
+  `ui-polish-widgets`** (2026-11-17: V24f got the reminder row, the widgets
+  use Nunito Sans); not on `main`, not checked on a device. Task and log:
+  [`TASK-widgets.md`](design/ui-polish/handoff/TASK-widgets.md),
+  [`PROGRESS-widgets.md`](design/ui-polish/handoff/PROGRESS-widgets.md).
+- **First-wave topics in the UI polish run (owner, 2026-11-17):** app and
+  proxy code written but switched off; no deploy, no paid measurement; they
+  ship only after the question-quality check and the owner's review.
+- **First-wave topics ship in 1.5.0 (owner, 2026-11-18;
+  [`TOPICS.md`](TOPICS.md)):** before the switch, a quality measurement, the
+  owner's review of a sample, then release prep. **Phase A done
+  (2026-11-18): the measurement's tooling is built in `proxy/eval` on branch
+  `ui-polish-widgets`; no API call was made.** 6 Topic Practice sets per
+  new topic and 3 of `articles` as a control through the live practice
+  path, an answer key and typical mistakes written per question, scoring
+  with the production model, five automatic checks per question. The dry
+  run: 198 calls, about $1.30, hard cap $15.00. **The owner's paid run is
+  done (2026-11-18):** 189 calls, all ok, $0.76; 32 of 33 sets passed the
+  gate; 464 built answers for 164 of the 165 questions. **Phase B done
+  (2026-11-18, no API call):** the report
+  [`1.5.0-topics-report.md`](1.5.0-topics-report.md) (counts and rates
+  only), and in the run folder, outside the repository, a blind label sheet
+  with all 165 questions and their built answers and a details file for
+  after the labels. Owner decisions of 2026-11-18: every question is
+  labelled, not a sample; the built answers are labelled too; the sheet is
+  blind. First reading, no verdict yet: every resembling pair of questions
+  is across sets (Conditionals 15 of 30 questions, Prepositions 11, the
+  control 0), and on the live path two Topic Practice requests for one
+  topic are the same request byte for byte (no seed, no earlier question,
+  no list to avoid); the scorer agreed with the built answers on 96.4 % in
+  the new topics. *(Superseded, kept as written:* **Next: the labels** (in
+  the owner's Cowork chat, Claude first, the owner spot-checks), then phase
+  C.*)* **Labels done and phase C done (2026-11-18, no API call):** all 165
+  questions and 464 built answers labelled by Claude in the owner's Cowork
+  chat and checked by the owner; owner decision: a question with more than
+  one right answer is not a defect for that reason. **Against the owner's
+  three criteria (at most 5 % defective questions after the gate, scoring
+  agreement at least 95 %, false "correct" at most 2 %): Passive Voice,
+  Prepositions and Relative Clauses pass all three; Conditionals fails two
+  (agreement 75 of 80, false "correct" 2 of 46; its one cause is the mixed
+  conditional, which the topic's description and hint card do not cover);
+  Comparatives & Superlatives fails one by a single answer (false "correct"
+  1 of 47, a misspelt superlative the scorer accepted).** The control
+  (Articles, live) fails two of the three in the same sample. Proposed, not
+  built: a generation note that keeps mixed conditionals out and a
+  re-measurement of Conditionals alone; one sentence in the scoring prompt,
+  checked against the labelled answers; and for set variety a scenario theme
+  the Worker gives each set
+  ([`1.5.0-topics-set-variety.md`](1.5.0-topics-set-variety.md)).
+  *(Superseded in part, kept as written:* **Next: the owner's decisions**
+  (which topics go on to release prep, the fixes, the set-variety
+  option).*)* **Owner decision (2026-11-18): Conditionals is fixed as
+  proposed and measured again; phase C2 done up to its stop (2026-11-18, no
+  API call):** the Worker's source adds one generation-only sentence to the
+  Conditionals practice request (the first, second and third conditional, no
+  mixed conditional; no other topic's request changes, not deployed), and
+  `topics --dry-run | run --only conditionals` measures that topic alone in
+  a run of its own under the same $15.00 cap (dry run: 36 calls, about
+  $0.24; the first run's $0.76 counts as spent). Also found, from the code:
+  a fill-in-the-blank practice item without a blank is shown with one answer
+  box and nothing on the live path stops it; a guard in the Worker is
+  proposed, not built. *(Superseded, kept as written:* **Next: the owner's
+  Conditionals run** from his Terminal (`proxy/eval/README.md`, "Owner
+  checklist — Conditionals re-measurement"), then its 30-question sheet,
+  then the labels folded in. Still open with the owner: Comparatives &
+  Superlatives, the scoring prompt, set variety, which topics go on.*)*
+  **The Conditionals re-measurement is done and labelled (owner,
+  2026-11-19): the note kept mixed conditionals out, and the topic fails by
+  one answer** (0 of 27 defective questions after the gate; agreement 71 of
+  74; false "correct" 1 of 41, where the 2 % line allows none); half of its
+  fill-in-the-blank items had no blank and one scenario came back in all six
+  sets. **Owner decisions (2026-11-19) and phase C3 done up to its stop
+  (2026-11-19, no API call), all in the Worker's source, not deployed:** the
+  practice route removes a fill-in-the-blank item without a blank and serves
+  the rest; the generation prompt asks for 1 to 4 blanks written as
+  underscores; every practice set of all ten topics gets a scenario theme
+  from the Daily Test's 14, stepped per device from what the quota check
+  already reads (set variety option A; no app change, no new data); and a
+  scoring prompt **candidate** (the verdict follows the scorer's own
+  correction; a misspelling in the tested form is a mistake) stands beside
+  the production prompt, not live, until the owner says so. The
+  configuration is measured once more as a whole: `topics rescore` (the 539
+  labelled answers with the candidate; dry run 146 calls, about $0.18) and
+  `topics final run` (all ten topics with the final request, both scoring
+  prompts; dry run 465 calls, about $2.28); the measurement has spent $0.89
+  of $15.00. *(Superseded, kept as written:* **Next: the owner's two runs**
+  from his Terminal (`proxy/eval/README.md`, "Owner checklist — final
+  configuration"), then the sheet (at most 225 questions), then the labels
+  folded in.*)* **The final configuration is run and labelled (owner,
+  2026-11-19; the measurement has spent $2.52 of $15.00) and reported
+  (2026-11-19, no API call).** With the production scoring prompt, against
+  the owner's three criteria: **Passive Voice and Relative Clauses pass all
+  three (for the second time); Prepositions and Comparatives &
+  Superlatives fail on false "correct" by one answer each (1 of 48);
+  Conditionals fails on false "correct" by two (2 of 45), all of them
+  answers that mix two conditional types.** The changes to the practice path
+  did what they were for: no fill-in-the-blank item without a blank in 300,
+  no question of a new topic resembling another (15, 11, 7, 7 and 2 before),
+  3 defects in 225 questions. Live topics for reference: Gerund vs.
+  Infinitive and Tense Selection pass; Modal Verbs, Modal Past Forms and
+  Articles do not (Articles: false "correct" 3 of 24). **The scoring prompt
+  candidate is recommended against:** on the 1,163 labelled answers both
+  prompts scored, agreement 97.8 % → 96.8 %, false "correct" 14 → 16, false
+  "needs work" 12 → 21; it stays the measurement's variant. Also found, from
+  the code: Modal Past Forms is described to the generator as will → would,
+  can → could, while its hint card teaches modal + have + past participle;
+  and the practice prompt does not require a correction's sentence to be
+  really wrong, as the Daily Test's prompt does (a wording is proposed).
+  *(Superseded, kept as written:* **Next: the owner's decisions**, topic by
+  topic what goes to release prep, and the candidate, the two findings and
+  the deploy of the practice path.*)* **Owner decisions (2026-11-19) and
+  phase C4 done up to its stop (2026-11-19, no API call):** the first
+  scoring candidate is dropped, in whole and in its verdict rule; the two
+  scoring criteria are read on all labelled answers pooled over the three
+  runs, the defect criterion on the final configuration's questions; and the
+  scorer gets one more round with no new labels. On the pooled reading the
+  production scoring prompt stands today at: **Passive Voice, Prepositions
+  and Relative Clauses pass all three; Conditionals fails on false "correct"
+  (5 of 132, 3.8 %) and Comparatives & Superlatives by one answer (2 of 95,
+  2.1 %).** Three candidates stand beside the production prompt, none live:
+  S (a short paragraph on spelling), T (one on conditional types), ST
+  (both). `topics rescore` scores the 1,190 labelled answers with each (dry
+  run 960 calls, about $1.19; the measurement has spent $2.52 of $15.00)
+  and writes the report's section "The scoring prompt, second round". Also
+  found, from the code: when the scorer leaves an answer of a set out (3 of
+  1,190 in the measurement), the app shows a result without that question
+  and says nothing; a check in the Worker is proposed, not built.
+  *(Superseded, kept as written:* **Next: the owner's run** from his
+  Terminal (`proxy/eval/README.md`, "Owner checklist — scoring prompt,
+  second round"), then the section read in the Cowork chat, then his
+  decisions: the scoring prompt, topic by topic what goes to release prep,
+  the two earlier findings and the deploy of the practice path. The topics
+  stay switched off.*)* **The second round ran (owner, 2026-11-19; 960
+  calls, $1.31; the measurement is closed at $3.83 of $15.00):** T alone
+  brings Conditionals under the line (2 of 132) and puts Prepositions and
+  Comparatives & Superlatives over it; no candidate is better than the
+  production prompt overall. **Owner decisions (2026-11-19), his go for
+  release prep: all five first-wave topics ship in 1.5.0 with the production
+  scoring prompt as it is.** Passive Voice, Prepositions and Relative
+  Clauses meet all three criteria on the pooled reading; Comparatives &
+  Superlatives (2 of 95) and Conditionals (5 of 132) are over the false
+  "correct" line and ship on his acceptance, not as a pass (the 2 % line is
+  finer than the measurement resolves; the weakest new topic is well under
+  Articles, which is live; the scorer can be improved on the server after
+  the release). No candidate becomes the production prompt. **Phase D done
+  up to its stop (2026-11-19; nothing deployed, no API call, no version
+  bump, not merged):** the five topics are switched on in the app (Topic
+  Practice with ten cards; a new topic's weak spot keeps its topic on Review
+  and Home; copy that counts topics says 10 in every language) and in the
+  Worker's source; three small fixes (the Worker asks the scorer once more
+  when an answer comes back without a verdict, then answers with an error
+  instead of a short result; the practice loading screen names no number of
+  questions; an empty practice set is a failed generation); the Modal Past
+  Forms hint card covers both could / would as the past of can / will and
+  modal + have + past participle; the report has its closing "Decision"
+  section. Flutter 2890 tests, Swift 23, the proxy 737 and typecheck pass; a
+  release build succeeds (1.4.0 (7)). **Next, the owner's, in this order:**
+  1. deploy the Worker (`proxy/README.md`, "Owner checklist — deploy for
+  1.5.0"; with it the theme per set, the line on blanks, the guard and the
+  Conditionals note go live for every version); 2. the device checks on the
+  release build (`docs/design/ui-polish/handoff/DEVICE-CHECKS.md`,
+  "First-wave topics", with the fourth pass); 3. the merge into `main` and
+  the 1.5.0 build (the version bump belongs there). **After 1.5.0:**
+  repeated scoring to verify T; the wording that makes a correction item's
+  sentence clearly wrong; Articles' scoring; mixed Modal Past Forms
+  questions. Record and decisions:
+  [`1.5.0-topics-progress.md`](1.5.0-topics-progress.md); the decision:
+  [`1.5.0-topics-report.md`](1.5.0-topics-report.md), "Decision".
+  **The Worker is deployed for 1.5.0 (owner, 2026-11-19):** new version
+  `a3f736ef-0877-4200-b0b2-a996ef20cca0`; the earlier one,
+  `18d87c6b-5f7b-4290-a08b-f07a32565511`, is the rollback point; `/health`
+  answered `ok` and a Conditionals practice request `200`. The owner
+  installed the build of `ui-polish-widgets` over his test build; on the
+  phone the ten topic cards show, practice sets of the new topics generate
+  and are scored, and their weak spots appear in Review. The other device
+  checks are open. **Fix round 6 (2026-11-19) is done on
+  `ui-polish-widgets`** after that check (the day's step before the rest
+  scene; Review's inline mistake; the card companion's hop measured), and
+  waits for the owner's next check; then the merge into `main` and the
+  1.5.0 build. Recorded by the owner for the version after 1.5.0, with the
+  4th tab, no work yet: a Premium user reaches the topics only through the
+  row of cards at the bottom of Home (the button under it opens Review's
+  mistake); a free user who has done the Daily Test and the day's practice
+  sees nothing of the topics on offer; on Topic Practice the "Picked for
+  you" card leaves nine cards in the grid, so the last row has one
+  (accepted for now).
+- **Fix round 2 decisions (owner, 2026-11-17, SPEC v10):**
+  - **A fourth onboarding goal, School & university** (stored and reported
+    as `school`, a new value of the `learning_goal` user property). It is
+    still stored only and changes no content.
+  - **Free users' rest scene leads to Premium** (V24f → V24s → V13r →
+    PW05r): a dream bubble with the day's weak spot, a Premium card with
+    "Wake <Hero> up". The paywall never opens by itself and has its own
+    source, `rest_scene`. After a trial starts, the user goes straight
+    into that weak spot's practice. Premium users keep the plain rest
+    scene. The "Remind me tomorrow" row belongs to the notifications task.
+  - **Getting ready lasts at least 4 s**: each stop at least 1.2 s, then
+    0.6 s of celebration; the bar still never passes unfinished work.
+- After the UI polish: decide a new feature for a 4th navbar tab.
 
 #### 1.4.1 (planned)
 

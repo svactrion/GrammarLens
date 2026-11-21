@@ -139,7 +139,11 @@ final _sites = <_Site>[
       onSelectThemeMode: (_) {},
       textSize: AppTextSize.large,
       onSelectTextSize: (_) {},
-      profile: const UserProfile(name: 'Ada', learningGoal: LearningGoal.work),
+      // Fix round 5 (F5-9): a named hero. Without one Profile shows a
+      // random hero, and a long name in the ribbon's line ends in "…" by
+      // design, so the check failed one run in nine.
+      profile: const UserProfile(
+          name: 'Ada', learningGoal: LearningGoal.work, avatar: Avatar.fox),
       storageService: _Storage(),
       onProfileUpdated: (_) {},
       onResetOnboarding: () {},
@@ -181,15 +185,15 @@ final _sites = <_Site>[
           _Subscriptions(offering: buildDebugFixtureOffering()),
     ),
     after: (tester) async {
-      // The prices loaded: both plan cards, then the comparison table open.
+      // The prices loaded: both plan cards, then the comparison table (on
+      // the page since the UI polish, V13c).
       expect(find.byKey(const ValueKey('planCard_Annual')), findsOneWidget);
       expect(find.byKey(const ValueKey('planCard_Monthly')), findsOneWidget);
-      await tester.tap(find.byKey(PremiumScreen.compareToggleKey));
-      await tester.pumpAndSettle();
-      // At 320 pt the table is the stacked layout (no strip header): its
-      // first row, in this language, is on screen.
+      expect(find.byKey(PremiumScreen.compareKey), findsOneWidget);
+      // V13c (fix round 2): the board's table, its heading in this
+      // language.
       final l10n = tester.element(find.byType(PremiumScreen)).l10n;
-      expect(find.text(l10n.paywallRowDailyTest), findsWidgets);
+      expect(find.text(l10n.paywallCompareTitle), findsOneWidget);
     },
   ),
   _Site(

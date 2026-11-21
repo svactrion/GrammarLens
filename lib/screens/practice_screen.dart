@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../models/avatar.dart';
+import '../motion.dart';
+import '../utils/haptics.dart';
+import '../widgets/companion_dialog.dart';
+import '../widgets/practice_reviewing.dart';
 import '../models/practice_set.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -9,9 +15,7 @@ import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/blank_assembly.dart';
-import '../utils/loading_view.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../widgets/question_view.dart';
@@ -40,6 +44,13 @@ class PracticeScreen extends StatefulWidget {
   /// Shown when the answers are kept on the device because the permission
   /// to send them is missing at Submit: `practiceNotSent` in the strings.
 
+  static const leaveKey = ValueKey('practice_leave');
+  static const keepGoingKey = ValueKey('practice_keep_going');
+  static const evaluatedLineKey = ValueKey('practice_evaluated_line');
+
+  /// V20 v12: how long the ticked checklist shows before the results.
+  static const resultBeat = Duration(milliseconds: 400);
+
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
 }
@@ -50,6 +61,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
   int _currentIndex = 0;
   bool _submitting = false;
 
+  /// V20 v12: the result has arrived (the checklist's last item ticks).
+  bool _resultReady = false;
+
+  /// The user's buddy (the leave dialog, the AI wait); read once.
+  Avatar? _hero;
+
   /// The proxy's limit on one answer (`proxy/src/validation.ts`,
   /// `MAX_TEXT_LENGTH`): a longer one would fail the whole scoring call.
   /// The count shows only past [_answerCounterFrom] (owner decision O6).
@@ -59,6 +76,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
   @override
   void initState() {
     super.initState();
+    widget.storageService.getUserProfile().then((profile) {
+      if (mounted && profile?.avatar != null) {
+        setState(() => _hero = profile!.avatar);
+      }
+    }, onError: (_) {});
     _drafts = AnswerDrafts.items(widget.practiceSet.items);
   }
 
@@ -114,24 +136,22 @@ class _PracticeScreenState extends State<PracticeScreen> {
     _advance();
   }
 
+  /// R10 (practice): the companion asks before the session is left; the
+  /// answers so far are lost, as before.
   Future<void> _confirmExit() async {
-    final shouldLeave = await showDialog<bool>(
+    final answered = _answers.values.where((a) => a.trim().isNotEmpty).length;
+    final result = await showCompanionDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.practiceLeaveTitle),
-        content: Text(dialogContext.l10n.commonProgressLost),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          DestructiveDialogActions(
-            cancelLabel: dialogContext.l10n.commonCancel,
-            confirmLabel: dialogContext.l10n.commonLeave,
-            onCancel: () => Navigator.of(dialogContext).pop(false),
-            onConfirm: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
+      hero: _hero ?? Avatar.fox,
+      title: context.l10n.practiceLeaveTitle,
+      body: context.l10n
+          .leaveProgressBody(answered, widget.practiceSet.items.length),
+      primaryLabel: context.l10n.leaveKeepGoing,
+      secondaryLabel: context.l10n.commonLeave,
+      primaryKey: PracticeScreen.keepGoingKey,
+      secondaryKey: PracticeScreen.leaveKey,
     );
-    if (shouldLeave == true && mounted) {
+    if (result == CompanionDialogResult.secondary && mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
@@ -180,6 +200,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
         answers: _answers,
         blankAnswers: blankAnswers,
       );
+      if (!mounted) return;
+      // V20: the result is ready: the last item ticks (v12), then the
+      // results.
+      HapticMap.success();
+      setState(() => _resultReady = true);
+      await Future<void>.delayed(
+          AppMotion.orInstant(context, PracticeScreen.resultBeat));
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -247,7 +274,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
             ),
             Expanded(
               child: _submitting
-                  ? LoadingView(message: context.l10n.practiceReviewing)
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
+                      child: PracticeReviewing(
+                        done: _resultReady,
+                        hero: _hero,
+                        topic: widget.topic.title(context.l10n),
+                        answers: [
+                          for (final item in widget.practiceSet.items)
+                            _answers[item.id] ?? '',
+                        ],
+                      ),
+                    )
                   : GestureDetector(
                       // Tapping outside the text field is the standard
                       // mobile way to dismiss the keyboard.
@@ -274,6 +312,35 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       ),
                     ),
             ),
+            // V19: answers are evaluated together at the end. Hidden with
+            // the keyboard up and on phones under 740 pt tall, so the
+            // question and the open hint card stay whole (as the Daily
+            // Test's buddy row, D4-5).
+            if (!_submitting &&
+                MediaQuery.viewInsetsOf(context).bottom == 0 &&
+                MediaQuery.sizeOf(context).height >= 740)
+              Padding(
+                key: PracticeScreen.evaluatedLineKey,
+                padding: EdgeInsets.fromLTRB(hPad, 6, hPad, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.auto_awesome_rounded,
+                        size: 15, color: AppColors.of(context).muted),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        context.l10n.practiceEvaluatedAtEnd,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(color: AppColors.of(context).muted),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (!_submitting)
               PracticeStepFooter(
                 horizontalPadding: hPad,

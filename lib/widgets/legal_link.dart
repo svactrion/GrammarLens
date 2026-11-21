@@ -37,8 +37,20 @@ class LegalLink extends StatelessWidget {
   /// tall and wide.
   final bool flush;
 
+  /// A shorter name shown instead of [label] (V13 v12's footer: "Terms",
+  /// "Privacy"); VoiceOver and the failure message keep [label].
+  final String? shortLabel;
+
+  /// Replaces the link's own style (the footer's one).
+  final ButtonStyle? style;
+
   const LegalLink(
-      {super.key, required this.label, required this.url, this.flush = false});
+      {super.key,
+      required this.label,
+      required this.url,
+      this.flush = false,
+      this.shortLabel,
+      this.style});
 
   Future<void> _open(BuildContext context) => openLegalLink(
       label: label,
@@ -47,18 +59,27 @@ class LegalLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
+    final button = TextButton(
       // Explicit color for the same reason the Premium screen's Restore
       // Purchases button needs one: an unstyled TextButton takes
       // colorScheme.primary, which is the page's own orange in light mode.
-      style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.secondary,
-        padding: flush ? EdgeInsets.zero : null,
-        minimumSize: flush ? const Size(44, 44) : null,
-        tapTargetSize: flush ? MaterialTapTargetSize.shrinkWrap : null,
-      ),
+      style: style ??
+          TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.secondary,
+            padding: flush ? EdgeInsets.zero : null,
+            minimumSize: flush ? const Size(44, 44) : null,
+            tapTargetSize: flush ? MaterialTapTargetSize.shrinkWrap : null,
+          ),
       onPressed: url.isEmpty ? null : () => _open(context),
-      child: Text(label),
+      child: Text(shortLabel ?? label),
+    );
+    if (shortLabel == null) return button;
+    return Semantics(
+      button: true,
+      enabled: url.isNotEmpty,
+      label: label,
+      excludeSemantics: true,
+      child: button,
     );
   }
 }

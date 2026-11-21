@@ -488,7 +488,7 @@ void main() {
                 final band = ClimbOverview.band(window.width);
                 final kcW = window.width - 2 * band;
                 notes.add('window ${_r(window)}; K-c image '
-                    '${_f(kcW)} × ${_f(ClimbCamera.windowHeight)} pt '
+                    '${_f(kcW)} × ${_f(ClimbCamera.fullWindowHeight)} pt '
                     '(${_f(kcW * 2 / _assetWidth, 2)} × the asset in px); '
                     'side bands ${_f(band)} pt each '
                     '(${_f(band * 2 * 100 / window.width, 0)} % of the window)');
@@ -657,9 +657,9 @@ void main() {
 
               case 'avatar_picker':
                 await tester.pumpWidget(app(AvatarPickerScreen(
-                    currentAvatar: Avatar.values.first,
-                    onAvatarChanged: (_) {},
-                    heroTag: 'avatar')));
+                  currentAvatar: Avatar.values.first,
+                  onAvatarChanged: (_) {},
+                )));
                 await precache([for (final a in Avatar.values) a.assetPath]);
                 await tester.pumpAndSettle();
                 final tiles = find.byType(AvatarTile);

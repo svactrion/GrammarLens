@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../models/avatar.dart';
+import '../motion.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/pressable_button.dart';
 import '../models/error_entry.dart';
 import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
@@ -15,8 +20,6 @@ import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/mistake_breakdown.dart';
-import '../widgets/premium_offer_card.dart';
-import '../widgets/result_score_band.dart';
 import 'premium_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
@@ -58,9 +61,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
   // might be paying is worse than one that doesn't show.
   bool _showUpsell = false;
 
+  /// The user's buddy, cheering (V21); read once.
+  Avatar? _hero;
+
   @override
   void initState() {
     super.initState();
+    widget.storageService.getUserProfile().then((profile) {
+      if (mounted && profile?.avatar != null) {
+        setState(() => _hero = profile!.avatar);
+      }
+    }, onError: (_) {});
     _saveErrors();
     _recordCompletion();
     _loadUpsell();
@@ -149,86 +160,95 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Widget build(BuildContext context) {
     final result = widget.result;
     final theme = Theme.of(context);
-    final semantic = theme.extension<SemanticColors>()!;
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
     final itemsById = {
       for (final item in widget.practiceSet.items) item.id: item,
     };
     final scoreText = result.skippedCount > 0
-        ? context.l10n.resultsScoreSkipped(
+        ? l10n.resultsScoreSkipped(
             result.correctCount, result.totalCount, result.skippedCount)
-        : context.l10n.resultsScore(result.correctCount, result.totalCount);
+        : l10n.resultsScore(result.correctCount, result.totalCount);
     return BrandScaffold(
-      title: PageTitle(context.l10n.resultsTitle),
-      bandBottom: ResultScoreBand.sized(context, text: scoreText),
-      // "Back to topics" stays in view however far the results are
-      // scrolled, as on Daily Test results (final screens A3). A free user
-      // out of today's practice sees the offer card at the end of the list
-      // and this as a secondary (outlined) button; everyone else gets the
-      // filled one, the screen's only action. Navy either way: an exit.
+      title: PageTitle(l10n.resultsTitle),
       bottomBar: BrandBottomBar(
         key: ResultsScreen.footerKey,
-        child: _showUpsell
-            ? OutlinedButton(
-                onPressed: _backToTopics,
-                child: Text(context.l10n.resultsBackToTopics),
-              )
-            : FilledButton(
-                onPressed: _backToTopics,
-                child: Text(context.l10n.resultsBackToTopics),
-              ),
+        child: PressableButton(
+          label: l10n.resultsBackToTopics,
+          tone: ButtonTone.navy,
+          haptic: ButtonHaptic.light,
+          onPressed: _backToTopics,
+        ),
       ),
       children: [
-        for (final item in result.feedback) ...[
-          Card(
-            color: item.isSkipped
-                ? semantic.skippedBackground
-                : item.isCorrect
-                    ? semantic.correctBackground
-                    : semantic.incorrectBackground,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
+        // V21: the companion cheers beside the score.
+        Row(children: [
+          CompanionView(
+              hero: _hero ?? Avatar.fox,
+              mood: CompanionMood.cheer,
+              size: 76,
+              decorative: true),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  label: scoreText,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      l10n.practiceResultsCorrect(
+                          result.correctCount, result.totalCount),
+                      style: theme.textTheme.headlineMedium!
+                          .withWeight(FontWeight.w900)
+                          .copyWith(color: c.text),
+                    ),
+                  ),
+                ),
+                if (result.skippedCount > 0)
+                  ExcludeSemantics(
+                    child: Text(scoreText,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: c.muted)),
+                  ),
+                Text(widget.topic.title(l10n),
+                    style: theme.textTheme.labelLarge!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(color: c.orangeText)),
+              ],
+            ),
+          ),
+        ]),
+        const SizedBox(height: 18),
+        for (final (i, item) in result.feedback.indexed) ...[
+          // Feedback cards come in from below, 60 ms apart.
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: AppMotion.reduced(context) ? 1 : 0, end: 1),
+            duration: AppMotion.orInstant(
+                context, AppMotion.slow + AppMotion.stagger * i),
+            curve: Interval(
+                (AppMotion.stagger.inMilliseconds * i) /
+                    (AppMotion.slow.inMilliseconds +
+                        AppMotion.stagger.inMilliseconds * i),
+                1,
+                curve: AppMotion.enter),
+            builder: (context, t, child) => Opacity(
+              opacity: t,
+              child: Transform.translate(
+                  offset: Offset(0, 24 * (1 - t)), child: child),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: lipCard(c, radius: 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        item.isSkipped
-                            ? Icons.remove_circle_outline_rounded
-                            : item.isCorrect
-                                ? Icons.check_circle_rounded
-                                : Icons.cancel_rounded,
-                        size: 20,
-                        color: item.isSkipped
-                            ? semantic.onSkippedBackground
-                            : item.isCorrect
-                                ? semantic.onCorrectBackground
-                                : semantic.onIncorrectBackground,
-                      ),
-                      const SizedBox(width: 8),
-                      // Flexible: at 320 pt with Large text and a 2.0 system
-                      // scale the label is wider than the card and would
-                      // overflow; it wraps instead.
-                      Flexible(
-                        child: Text(
-                          item.isSkipped
-                              ? context.l10n.resultSkipped
-                              : item.isCorrect
-                                  ? context.l10n.resultCorrect
-                                  : context.l10n.resultNeedsWork,
-                          style: theme.textTheme.labelLarge
-                              ?.withWeight(FontWeight.w600)
-                              .copyWith(
-                                  color: item.isSkipped
-                                      ? semantic.onSkippedBackground
-                                      : item.isCorrect
-                                          ? semantic.onCorrectBackground
-                                          : semantic.onIncorrectBackground),
-                        ),
-                      ),
-                    ],
+                  _Verdict(
+                    skipped: item.isSkipped,
+                    correct: item.isCorrect,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   MistakeBreakdown(
                     prompt: itemsById[item.itemId]?.fullText,
                     userAnswer: widget.answers[item.itemId],
@@ -243,7 +263,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     Text(
                       humanizeSlug(item.rule!),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: c.muted,
                       ),
                     ),
                   ],
@@ -253,10 +273,107 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
           const SizedBox(height: 14),
         ],
-        // Free user out of today's practice: the offer card at the end of
-        // the list ("Back to topics" is in the bottom bar).
-        if (_showUpsell) PremiumOfferCard(onSeePremium: _openPremium),
+        // Free user out of today's practice (V21): another round is
+        // Premium's.
+        if (_showUpsell)
+          Container(
+            key: const ValueKey('results_more_premium'),
+            padding: const EdgeInsets.all(16),
+            decoration:
+                lipCard(c, color: c.goldSoft, border: c.gold, lip: c.goldDeep),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  CompanionView(
+                      hero: _hero ?? Avatar.fox,
+                      // V21's board: the base pose (fix round 3, B8).
+                      mood: CompanionMood.idle,
+                      size: 48,
+                      decorative: true),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.practiceResultsMore,
+                            style: theme.textTheme.titleSmall!
+                                .withWeight(FontWeight.w900)
+                                .copyWith(color: c.text)),
+                        Text(
+                            l10n.practiceResultsMoreLine(
+                                StorageService.dailySessionLimit),
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: c.muted)),
+                      ],
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                PressableButton(
+                  label: l10n.reviewSeePremium,
+                  tone: ButtonTone.orange,
+                  height: 50,
+                  haptic: ButtonHaptic.medium,
+                  onPressed: _openPremium,
+                ),
+              ],
+            ),
+          ),
       ],
+    );
+  }
+}
+
+/// A feedback card's verdict (V21): Correct (green), Needs work (orange)
+/// or Skipped (grey), with its icon.
+class _Verdict extends StatelessWidget {
+  final bool skipped;
+  final bool correct;
+  const _Verdict({required this.skipped, required this.correct});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final (bg, fg, icon, text) = skipped
+        ? (
+            c.track,
+            c.muted,
+            Icons.remove_circle_outline_rounded,
+            l10n.resultSkipped
+          )
+        : correct
+            ? (
+                c.greenSoft,
+                c.onGreenSoft,
+                Icons.check_circle_rounded,
+                l10n.resultCorrect
+              )
+            : (
+                c.orangeSoft,
+                c.orangeDeep,
+                Icons.error_rounded,
+                l10n.resultNeedsWork
+              );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 16, color: fg),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(text,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge!
+                  .withWeight(FontWeight.w900)
+                  .copyWith(color: fg)),
+        ),
+      ]),
     );
   }
 }

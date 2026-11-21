@@ -272,3 +272,643 @@ The results then go into the build log and §16 of the report, and the owner
 decides the generator (`SHARED_GENERATOR` in `src/shared_daily_test.ts`, one
 line).
 
+
+---
+
+# The first-wave topics measurement (1.5.0)
+
+What and why: `docs/TOPICS.md`; what was built, the dry run's numbers and the
+decisions (T-1 …): `docs/1.5.0-topics-progress.md`. It generates Topic
+Practice sets for the five first-wave topics (6 sets each) and for `articles`
+as a control (3 sets) through the live practice path, has an answer key and
+typical learner mistakes written for every question, scores those answers
+with the production scoring model, and runs automatic checks on every
+question. The first-wave topics stay switched off: nothing here deploys or
+changes the Worker.
+
+**It calls the Anthropic API and costs money: about $1.30 (198 calls), never
+more than $15.00 of measured spend.** Before each call the script checks that
+what is spent plus that call's estimate × 1.25 stays within $15.00; a call
+that would not is skipped and recorded.
+
+## Owner checklist — first-wave topics
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A separate API key (recommended)
+
+In the Anthropic Console (Settings → API keys) create a key only for this
+run, for example "grammarlens-topics", **in the Default workspace** (in
+1.4.0 a key without a workspace was refused on every call). Its spend then
+shows on its own line, and you revoke it when the run is done. Do not use and
+do not revoke the Worker's live key: the app depends on it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. Nothing is printed and the key does not land in your shell history.
+The script reads the key from the environment only (not from `.dev.vars`),
+sends it only to `api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics --dry-run
+```
+
+It must show **198 calls**, **Estimated spend $1.30: within the dry-run
+limit of $12.00**, and end with `API key: found in the environment (not
+shown)`. If the last line says the key is not in the environment, repeat
+step 3. If it says `esbuild: command not found`, run `npm ci` once and
+repeat.
+
+### 5. The run
+
+```bash
+caffeinate -i npm run eval -- topics run
+```
+
+(`caffeinate -i` keeps the Mac awake.) **About 10 minutes.** One line per
+call appears in the Terminal (counts, tokens and cost only, never a
+question or an answer), and the same lines go to
+`eval/out/topics-…/progress.log`.
+
+### 6. What "done" looks like
+
+The last line in the Terminal, and in `progress.log`, reads like:
+
+```text
+2026-11-19T09:12:44.000Z topics run done: 190 calls ok; spent $0.90 of $15.00; folder eval/out/topics-2026-11-19T09-02-10-000Z
+```
+
+The number of calls is between 165 and 198 (a question without a second
+correct answer needs fewer scoring calls). To read the last line again:
+
+```bash
+tail -n 1 "$(ls -d eval/out/topics-* | tail -n 1)/progress.log"
+```
+
+**If the last line says `topics run incomplete`** (some calls failed, or the
+Terminal was closed half way), run the same folder again. Finished calls are
+not repeated and are not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics run --out "$(ls -d eval/out/topics-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines:
+
+```bash
+tail -n 10 "$(ls -d eval/out/topics-* | tail -n 1)/progress.log"
+```
+
+### 7. Afterwards
+
+- Revoke the separate key in the Console, and close this Terminal window (or
+  run `unset ANTHROPIC_API_KEY`).
+- Tell Claude Code, in a new prompt: **"The first-wave topics run is done.
+  Start Phase B of docs/TOPICS.md."** and paste the `topics run done` line
+  (it names the folder and the spend). The run folder stays on this Mac
+  under `proxy/eval/out/`, which is not in the repository; Claude Code reads
+  it from there.
+
+Better not to open the files in the run folder before you have labelled phase
+B's sheet: they show the automatic flags and the scorer's verdicts, which
+should not colour your own.
+
+## Phase B — the report and the label sheet (no API call)
+
+After the run, from `proxy/`:
+
+```bash
+npm run eval -- topics analyze --out eval/out/topics-2026-11-18T16-35-34-632Z
+```
+
+It needs no key and calls nothing. It reads the run folder (and changes none
+of the run's files) and writes:
+
+| File | Where | For whom |
+|---|---|---|
+| `docs/1.5.0-topics-report.md` | the repository | everyone: counts and rates only, safe to read before and while labelling |
+| `sheet/questions.txt` | the run folder | the labellers: read it |
+| `sheet/labels.csv` | the run folder | the labellers: fill it |
+| `private/sheet-mapping.json` | the run folder | **nobody until the sheet is filled** |
+| `private/details.txt` | the run folder | **nobody until the sheet is filled** |
+
+The run's own files (`items.json`, `answers.json`, `checks.json`,
+`records.json`, `run-report.md`) also stay closed until the sheet is filled:
+they show which answer is the key, the automatic flags and the scorer's
+verdicts.
+
+**Labelling.** `sheet/questions.txt` starts with the instructions and the
+six hint cards, then lists the 165 questions in mixed order, each under a
+key, with its built answers under letters. For each question fill its row in
+`sheet/labels.csv`:
+
+| Column | What to write |
+|---|---|
+| `verdict` | `ok` or `defect` |
+| `why` | for a defect, one or more of `several_answers`, `off_topic`, `bad_english`, `hint_wrong`, `level`, `other`, separated by `;` |
+| `note` | anything; needed with `other` |
+| `also_accept` | answers that must count as right and are not among the listed ones, separated by `\|` |
+| `A` … `D` | for each listed answer `right`, `wrong` or `unsure`; a cell that already says `n/a` stays as it is |
+
+Keep the first line and the `key` column as they are, and save as CSV with
+commas (UTF-8).
+
+**Checking the sheet.** Run the same command again at any time: a sheet that
+exists is never rewritten. It prints how many rows are labelled, names every
+row not started, and names every value to fix. When it prints `165 of 165
+rows labelled, 0 not started, 0 with something to fix`, the sheet is done:
+tell Claude Code to start Phase C of `docs/TOPICS.md`.
+
+## Phase C — the labels in the report (no API call)
+
+The same command. Once the sheet is complete (`165 of 165 rows labelled, 0
+not started, 0 with something to fix`) it writes the phase C report:
+
+```bash
+npm run eval -- topics analyze --out eval/out/topics-2026-11-18T16-35-34-632Z
+```
+
+- `docs/1.5.0-topics-report.md`: the owner's three pass criteria per topic
+  with the counts behind each, the defects after the gate, the scorer
+  against the labelled truth, what the automatic checks were worth, and the
+  findings and proposals. The findings are hand-written in
+  `eval/data/topics/phase-c-findings.md` and put into the report as they
+  are: edit that file, not the report.
+- `second-look.md` in the run folder (not in the repository): every answer
+  where the scorer and the labelled truth differ, the answers labelled
+  `unsure`, and the defect questions. Write your verdict after "Owner:"; once
+  one is filled the file is no longer rewritten.
+
+It reads `sheet/labels.csv` and never changes it. The `private` folder and
+the run's own files may be opened now.
+
+---
+
+# The Conditionals re-measurement (phase C2)
+
+What and why: `docs/TOPICS.md`, "Phase C2"; the record and the decisions:
+`docs/1.5.0-topics-progress.md`. In the first run Conditionals failed two of
+the three criteria, and its failures sat on the mixed conditional. The
+Worker's source now adds one sentence to the Conditionals practice request
+(first, second and third conditional, no mixed conditional), and this run
+measures that topic again: 6 sets, the answers, the scoring, the checks, in
+a run folder of its own. The first run's folder is not touched. Nothing is
+deployed and the first-wave topics stay switched off.
+
+**It calls the Anthropic API and costs money: about $0.24 (36 calls).** The
+$15.00 cap is on the measurement as a whole, so this run starts with the
+first run's $0.76 counted as spent.
+
+## Owner checklist — Conditionals re-measurement
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+this run, for example "grammarlens-conditionals", **in the Default
+workspace**. Not the first run's key (its checklist asked you to revoke
+that one), and not the Worker's live key: do not use it and do not revoke
+it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics --dry-run --only conditionals
+```
+
+It must show **Topics: conditionals × 6**, **36 calls**, **Estimated spend
+$0.24**, the line `earlier runs spent $0.76, so this run starts at $0.76
+spent`, and end with `API key: found in the environment (not shown)`. If the
+last line says the key is not in the environment, repeat step 3.
+
+### 5. The run
+
+```bash
+caffeinate -i npm run eval -- topics run --only conditionals
+```
+
+**About two minutes.** One line per call appears (counts, tokens and cost
+only, never a question or an answer); the same lines go to
+`eval/out/topics-conditionals-…/progress.log`.
+
+### 6. What "done" looks like
+
+The last line in the Terminal, and in `progress.log`, reads like:
+
+```text
+2026-11-19T09:12:44.000Z topics run done: 34 calls ok; spent $0.13 in this run, $0.89 with the earlier runs, of $15.00; folder eval/out/topics-conditionals-2026-11-19T09-10-40-000Z
+```
+
+The number of calls is between 30 and 36. To read the last line again:
+
+```bash
+tail -n 1 "$(ls -d eval/out/topics-conditionals-* | tail -n 1)/progress.log"
+```
+
+**If the last line says `topics run incomplete`**, run the same folder
+again. It knows it is the Conditionals run; finished calls are not repeated
+and are not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics run --out "$(ls -d eval/out/topics-conditionals-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines of `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Write the label sheet (no key needed, no API call)
+
+```bash
+npm run eval -- topics analyze --out "$(ls -d eval/out/topics-conditionals-* | tail -n 1)"
+```
+
+It must print `The label sheet written: 30 questions, …` and `Label sheet: 0
+of 30 rows labelled, 30 not started, 0 with something to fix`. It writes, in
+the run folder: `sheet/questions.txt` (to read), `sheet/labels.csv` (to
+fill), and `private/sheet-mapping.json` and `private/details.txt`, which
+**nobody opens before the sheet is filled**; the run's own files
+(`items.json`, `answers.json`, `checks.json`, `records.json`,
+`run-report.md`) stay closed as well. It also adds a "Re-measurement:
+Conditionals" section at the end of `docs/1.5.0-topics-report.md` (counts
+only, safe to read). That file then shows as changed in git: leave it,
+Claude Code commits it in the next step.
+
+### 9. Tell Claude in the Cowork chat that the sheet is ready
+
+Give it the run folder's path and say: **"The Conditionals re-measurement
+sheet is ready: read `sheet/questions.txt`, fill `sheet/labels.csv`, as
+before; do not open the `private` folder or any other file of that folder."**
+The rules are the ones of the first sheet (`multi:` and `minor:` notes
+included). To check the sheet at any time, run the command of step 8 again:
+a sheet that exists is never rewritten. When it prints `30 of 30 rows
+labelled, 0 not started, 0 with something to fix`, tell Claude Code to fold
+the labels in (the last step of Phase C2 in `docs/TOPICS.md`).
+
+---
+
+# The final configuration (phase C3)
+
+What and why: `docs/TOPICS.md`, "Phase C3"; the record and the decisions:
+`docs/1.5.0-topics-progress.md`. The Worker's source now holds the practice
+path as it is meant to ship: a guard that removes a fill-in-the-blank item
+without a blank, the prompt's line on blanks, a scenario theme per set, and
+(for Conditionals) its note; and beside the production scoring prompt a
+**candidate** that is not live. Two commands measure this:
+
+- **`topics rescore`**: the answers that already have labels (464 of the
+  first run, 75 of the Conditionals re-measurement) scored again with the
+  candidate prompt. It needs no new labels and writes its own section of the
+  report.
+- **`topics final run`**: all ten topics, 6 sets each with the final
+  request; answers, scoring and labels for the five new topics on all 6 sets
+  and for the five live topics on 3; every built answer scored with the
+  production prompt and with the candidate.
+
+Nothing is deployed and the first-wave topics stay switched off. The earlier
+run folders are only read.
+
+**They call the Anthropic API and cost money: about $2.46 together** (`topics
+rescore` 146 calls, about $0.18; `topics final run` up to 465 calls, about
+$2.28). The $15.00 cap is on the measurement as a whole, which has spent
+$0.89 so far.
+
+## Owner checklist — final configuration
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+> Done on 2026-11-19, kept as the record. Since Phase C4 `topics rescore`
+> runs the scoring prompt's second round (see "Owner checklist — scoring
+> prompt, second round" below); the folder of step 5 is only read, with
+> `topics analyze --out`.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+these two runs, for example "grammarlens-final", **in the Default
+workspace**. Not an earlier run's key, and not the Worker's live key: do not
+use it and do not revoke it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics final --dry-run
+```
+
+It shows both commands. It must say **465 calls** for `topics final`, **146
+calls** for `topics rescore`, **together $2.46: within the dry-run limit**,
+`earlier runs spent $0.89`, and end with `API key: found in the environment
+(not shown)`. If the last line says the key is not in the environment,
+repeat step 3.
+
+### 5. `topics rescore` (about 5 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics rescore
+```
+
+One line per call (counts, tokens and cost only). **Done** looks like this,
+followed by a line that the report's section was written:
+
+```text
+2026-11-19T10:05:12.000Z topics rescore done: 146 calls ok; spent $0.20 in this run, $1.09 with the earlier runs, of $15.00; folder eval/out/topics-rescore-2026-11-19T10-00-01-000Z
+Written: the "scoring prompt candidate" section of docs/1.5.0-topics-report.md (20 lines).
+```
+
+If the last line says `topics rescore incomplete`, run the same folder
+again; finished calls are not repeated:
+
+```bash
+caffeinate -i npm run eval -- topics rescore --out "$(ls -d eval/out/topics-rescore-* | tail -n 1)"
+```
+
+### 6. `topics final run` (about 15 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics final run
+```
+
+**Done** looks like:
+
+```text
+2026-11-19T10:25:40.000Z topics final done: 440 calls ok; spent $1.30 in this run, $2.39 with the earlier runs, of $15.00; folder eval/out/topics-final-2026-11-19T10-10-05-000Z
+```
+
+The number of calls is at most 465 (fewer when questions have no second
+correct answer, or the guard removed an item). If the last line says `topics
+final incomplete`, run the same folder again:
+
+```bash
+caffeinate -i npm run eval -- topics final run --out "$(ls -d eval/out/topics-final-* | tail -n 1)"
+```
+
+If either command still says `incomplete` after a second try, stop and tell
+Claude Code the last ten lines of that folder's `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Write the label sheet (no key needed, no API call)
+
+```bash
+npm run eval -- topics analyze --out "$(ls -d eval/out/topics-final-* | tail -n 1)"
+```
+
+It must print `The label sheet written: … questions, …` (at most 225
+questions: the questions the Worker would serve, so fewer if the guard
+removed any) and `0 of … rows labelled`. It writes, in the run folder:
+`sheet/questions.txt` (to read), `sheet/labels.csv` (to fill), and
+`private/sheet-mapping.json` and `private/details.txt`, which **nobody opens
+before the sheet is filled**; the run's own files stay closed as well. It
+also adds a "Final configuration" section at the end of
+`docs/1.5.0-topics-report.md` (counts only, safe to read). The report then
+shows as changed in git (from this step and from step 5): leave it, Claude
+Code commits it in the next step.
+
+### 9. Tell Claude in the Cowork chat that the sheet is ready
+
+Give it the final run folder's path and say: **"The final configuration's
+sheet is ready: read `sheet/questions.txt`, fill `sheet/labels.csv`, as
+before; do not open the `private` folder or any other file of that folder."**
+The rules are the ones of the earlier sheets (`multi:` and `minor:` notes
+included); the sheet now has the five live topics too, with their hint
+cards at the top. To check the sheet at any time, run the command of step 8
+again: a sheet that exists is never rewritten. When it prints that every row
+is labelled with nothing to fix, tell Claude Code to fold the labels in.
+
+## After the labels of the final configuration (no API call)
+
+The same `topics analyze` command, once the sheet is complete, folds the
+labels into the "Final configuration" section of the report: the three
+criteria per new topic with both scoring prompts (both held to the answers
+each of them scored), the live topics for reference, both prompts compared
+on everything that is labelled, the duplicates before and after the themes,
+and the findings (hand-written in `eval/data/topics/final-findings.md`:
+edit that file, not the report). In the run folders, never the repository:
+
+- the final folder's `second-look.md`: every answer where the production
+  prompt and the label differ, with both prompts' words, the answers
+  labelled `unsure`, and the defect questions;
+- `changed-verdicts.md` in the final folder and in the rescore folder
+  (`topics analyze --out eval/out/topics-rescore-…` writes that one): every
+  answer the two scoring prompts judged differently, grouped by which prompt
+  the label agrees with.
+
+Each entry ends with an "Owner:" line; once one is filled, the file is no
+longer rewritten.
+
+## The scoring prompt, second round (Phase C4)
+
+Owner decisions of 2026-11-19: the first scoring candidate is dropped, in
+whole and in its verdict rule. The scoring criteria (agreement, false
+"correct") are read on all labelled answers pooled over the first run, the
+Conditionals re-measurement and the final configuration; the defect
+criterion stays on the final configuration's questions. One more round for
+the scorer, with no new labels: three candidates, each the production
+scoring prompt with a short paragraph after it, scored against the 1,190
+built answers that are labelled.
+
+| Candidate | What it adds | In the source |
+|---|---|---|
+| S | a paragraph on spelling: a misspelling in the tested form is a mistake | `SCORING_SYSTEM_PROMPT_CANDIDATE_S` |
+| T | a paragraph on conditional types: each clause is judged against the time the sentence gives it | `SCORING_SYSTEM_PROMPT_CANDIDATE_T` |
+| ST | both | `SCORING_SYSTEM_PROMPT_CANDIDATE_ST` |
+
+None is live: the route sends `SCORING_SYSTEM_PROMPT`, unchanged. The
+wording is in `src/prompts.ts` (`SCORING_ADDITION_SPELLING`,
+`SCORING_ADDITION_CONDITIONALS`).
+
+`topics rescore` scores every stored scoring call of the three labelled runs
+again, once per candidate: the same answers in the same order per call, the
+prompt the only difference (320 calls a candidate, 960 in all). It generates
+nothing and needs no labels of its own. When the run is complete it writes
+
+- the section "The scoring prompt, second round" at the end of
+  `docs/1.5.0-topics-report.md` (counts and rates only): the three criteria
+  per new topic on the pooled reading, for the production prompt and each
+  candidate, with pass or fail; each prompt against the labels per topic and
+  per run; and the verdicts each candidate changed, towards the label and
+  away from it;
+- `changed-verdicts.md` in the round's own run folder (never the
+  repository): every changed verdict, with the question, the label and both
+  scorers' words.
+
+`topics rescore --dry-run` makes no call. Besides the plan it prints, from
+the stored verdicts, the production prompt's pooled criteria as they stand
+before any candidate. `topics analyze --out eval/out/topics-rescore-…`
+writes the section and the file again from a finished folder, without a key.
+
+**It calls the Anthropic API and costs money: about $1.19** (960 calls). The
+$15.00 cap is on the measurement as a whole, which has spent $2.52 so far.
+
+## Owner checklist — scoring prompt, second round
+
+For the macOS Terminal app. Copy one block at a time, paste, press Enter.
+
+### 1. A new separate API key
+
+In the Anthropic Console (Settings → API keys) create a new key only for
+this run, for example "grammarlens-second-round", **in the Default
+workspace**. Not an earlier run's key (those are revoked), and not the
+Worker's live key: do not use it and do not revoke it.
+
+### 2. Go to the proxy folder
+
+```bash
+cd ~/GrammarLens/proxy
+```
+
+Check the branch; it must print `ui-polish-widgets`:
+
+```bash
+git branch --show-current
+```
+
+### 3. Put the key in the environment, for this Terminal window only
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+After Enter the Terminal waits and shows nothing: paste the key, press Enter
+again. The script reads the key from the environment only, sends it only to
+`api.anthropic.com`, and never prints or writes it.
+
+### 4. The dry run (no API call, free)
+
+```bash
+npm run eval -- topics rescore --dry-run
+```
+
+It must say **960 calls** (320 for each of S, T and ST), **Estimated spend
+$1.19: within the dry-run limit**, `earlier runs spent $2.52`, and end with
+`API key: found in the environment (not shown)`. Above that last line it
+shows the production prompt's criteria per new topic as they stand today
+(Passive Voice, Prepositions and Relative Clauses pass; Conditionals and
+Comparatives & Superlatives fail on false "correct"). If the last line says
+the key is not in the environment, repeat step 3.
+
+### 5. The run (about 30 minutes)
+
+```bash
+caffeinate -i npm run eval -- topics rescore
+```
+
+One line per call (counts, tokens and cost only).
+
+### 6. What "done" looks like
+
+The last three lines, with other times and amounts:
+
+```text
+2026-11-19T11:32:10.000Z topics rescore done: 960 calls ok; spent $1.20 in this run, $3.72 with the earlier runs, of $15.00; folder eval/out/topics-rescore-2026-11-19T11-00-01-000Z
+Written in the run folder: changed-verdicts.md.
+Written: the "scoring prompt, second round" section of docs/1.5.0-topics-report.md (94 lines).
+```
+
+If instead a line says `topics rescore incomplete`, run the same folder
+again; finished calls are not repeated and not paid for twice:
+
+```bash
+caffeinate -i npm run eval -- topics rescore --out "$(ls -d eval/out/topics-rescore-* | tail -n 1)"
+```
+
+If it still says `incomplete` after a second try, stop and tell Claude Code
+the last ten lines of that folder's `progress.log`.
+
+### 7. Revoke the key
+
+Revoke the key in the Console, and take it out of this Terminal:
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+### 8. Bring the result to the Cowork chat
+
+Copy the line that starts with `Written: the "scoring prompt, second round"
+section` (the last line of step 6) into your Cowork chat. The section is
+read there: `docs/1.5.0-topics-report.md`, "The scoring prompt, second
+round", from S1 on. It has counts and rates only. The report then shows as
+changed in git: leave it, Claude Code commits it with the reading.
+
+Nobody needs to label anything for this round, and nothing is deployed:
+whether S, T or ST becomes the production scoring prompt is your decision
+after the reading.

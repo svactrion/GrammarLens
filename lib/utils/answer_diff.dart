@@ -47,6 +47,19 @@ class AnswerDiff {
   /// [assembledMinimumMatch] makes [assembled] true.
   final double promptMatchRatio;
 
+  /// The words the two sides share, in order: index pairs into [user] and
+  /// [corrected] (the alignment the painting came from). A pair the bridge
+  /// rule painted is still in it. What lines the two sides up when they
+  /// are shown as one sentence (Review's inline mistake): an answer token
+  /// that is neither painted nor in a pair is not part of the sentence at
+  /// all (in an assembled answer: the instruction on the blank's line, a
+  /// cue in brackets, a blank left empty).
+  final List<(int, int)> matches;
+
+  /// For each token of [user], whether the learner wrote it: false for
+  /// the prompt's own text in an assembled answer, true everywhere else.
+  final List<bool> userIsLearner;
+
   const AnswerDiff({
     required this.user,
     required this.corrected,
@@ -54,6 +67,8 @@ class AnswerDiff {
     required this.changedShare,
     required this.assembled,
     this.promptMatchRatio = 0,
+    this.matches = const [],
+    this.userIsLearner = const [],
   });
 
   List<String> get paintedUser => [
@@ -342,6 +357,10 @@ AnswerDiff diffAnswer({
     changedShare: share,
     assembled: assembled,
     promptMatchRatio: promptMatchRatio,
+    matches: List.unmodifiable(pairs),
+    userIsLearner: List.unmodifiable([
+      for (var i = 0; i < user.length; i++) learner[i] && !neutral[i],
+    ]),
   );
 }
 

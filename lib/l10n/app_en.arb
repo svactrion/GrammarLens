@@ -30,9 +30,9 @@
   "@appLoading": {
     "description": "The app's first frame under the launch splash, while the saved profile is read."
   },
-  "navHome": "Home",
+  "navHome": "Climb",
   "@navHome": {
-    "description": "Bottom navigation: the Home tab."
+    "description": "Bottom navigation: the first tab (Home: the Daily Test and this month's mountain). The UI polish boards name it 'Climb'."
   },
   "featureReview": "Review",
   "@featureReview": {
@@ -65,10 +65,6 @@
   "commonCancel": "Cancel",
   "@commonCancel": {
     "description": "Button that closes an editor without saving."
-  },
-  "commonDone": "Done",
-  "@commonDone": {
-    "description": "Button that closes a picker screen."
   },
   "commonResetting": "Resetting…",
   "@commonResetting": {
@@ -106,6 +102,30 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "medalsAllTitle": "All medals",
+  "@medalsAllTitle": {
+    "description": "PF02's title: the layer with every medal."
+  },
+  "medalsNewestFirst": "Newest first",
+  "@medalsNewestFirst": {
+    "description": "PF02's subtitle: the medals are ordered newest first."
+  },
+  "medalsInProgress": "in progress",
+  "@medalsInProgress": {
+    "description": "PF02: under the running month's medal, which is not final yet."
+  },
+  "medalsTierCount": "{count} {tier}",
+  "@medalsTierCount": {
+    "description": "PF02's counter chip, e.g. '2 Silver'; tier is Gold, Silver, Bronze or Welcome.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "String"
       }
     }
   },
@@ -387,14 +407,6 @@
   "@aiConsentNotNowNote": {
     "description": "AI permission screen: under the buttons, what declining leaves. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
-  "avatarPickerTitle": "Choose your avatar",
-  "@avatarPickerTitle": {
-    "description": "Avatar picker: the title."
-  },
-  "avatarPickerHeading": "Pick your study buddy",
-  "@avatarPickerHeading": {
-    "description": "Avatar picker: the heading above the avatars."
-  },
   "goalExamPrep": "Exam prep",
   "@goalExamPrep": {
     "description": "Learning goal (onboarding): preparing for an English exam. Short title."
@@ -407,17 +419,25 @@
   "@goalWork": {
     "description": "Learning goal (onboarding): English for work. Short title."
   },
-  "goalWorkDetail": "Emails, meetings and professional English",
+  "goalWorkDetail": "Emails, reports and professional English",
   "@goalWorkDetail": {
     "description": "Learning goal (onboarding): the line under 'Work'."
   },
-  "goalGeneral": "Everyday confidence",
-  "@goalGeneral": {
-    "description": "Learning goal (onboarding): general English. Short title."
+  "goalSchool": "School & university",
+  "@goalSchool": {
+    "description": "V05's fourth goal (SPEC §1.14): learning English for school or university."
   },
-  "goalGeneralDetail": "General fluency, no specific goal",
+  "goalSchoolDetail": "Homework, essays and academic writing",
+  "@goalSchoolDetail": {
+    "description": "V05: the School & university card's description."
+  },
+  "goalGeneral": "Everyday English",
+  "@goalGeneral": {
+    "description": "Learning goal: everyday English (onboarding V05, Profile)."
+  },
+  "goalGeneralDetail": "Write with confidence every day",
   "@goalGeneralDetail": {
-    "description": "Learning goal (onboarding): the line under 'Everyday confidence'."
+    "description": "Learning goal 'Everyday English': its description on the goal card."
   },
   "practiceLengthQuick": "Quick",
   "@practiceLengthQuick": {
@@ -451,17 +471,9 @@
   "@reviewSortFrequent": {
     "description": "Review: sort the weak spots by how often the mistake was made."
   },
-  "commonBack": "Back",
-  "@commonBack": {
-    "description": "Tooltip of a back button."
-  },
   "commonContinue": "Continue",
   "@commonContinue": {
     "description": "Button that moves to the next step."
-  },
-  "welcomeTagline": "Practice English grammar with instant, plain-language feedback — no jargon, no judgment, just what to fix and why.",
-  "@welcomeTagline": {
-    "description": "Welcome screen (first launch): the line under the wordmark."
   },
   "welcomeGetStarted": "Get started",
   "@welcomeGetStarted": {
@@ -481,25 +493,13 @@
       }
     }
   },
-  "onboardingCompanionEyebrow": "A little practice. Every day.",
-  "@onboardingCompanionEyebrow": {
-    "description": "Onboarding step 1: the small line above the heading."
-  },
-  "onboardingCompanionTitle": "Meet your learning companion.",
-  "@onboardingCompanionTitle": {
-    "description": "Onboarding step 1: the heading above the avatar carousel."
-  },
-  "onboardingCompanionSubtitle": "Five questions a day. A small step forward, together.",
-  "@onboardingCompanionSubtitle": {
-    "description": "Onboarding step 1: the line under the heading. 'Five' is the Daily Test's question count (DailyTestSet.questionCount), spelled out; test/onboarding_l10n_test.dart fails if the count changes."
-  },
-  "onboardingCarouselHint": "Swipe to choose · Change it later in Profile",
-  "@onboardingCarouselHint": {
-    "description": "Onboarding step 1: under the avatar carousel. 'Profile' must match navProfile."
-  },
-  "onboardingNameQuestion": "What should we call you?",
+  "onboardingNameQuestion": "What should I call you?",
   "@onboardingNameQuestion": {
-    "description": "Onboarding step 1: the name card's question."
+    "description": "Onboarding name step (V04): the buddy's question in its speech bubble."
+  },
+  "onboardingNameAsk": "Hi! What should I call you?",
+  "@onboardingNameAsk": {
+    "description": "V04 (v11): the companion's bubble while the name field is empty (it waves)."
   },
   "onboardingNameHint": "Your name",
   "@onboardingNameHint": {
@@ -509,28 +509,6 @@
   "@onboardingNameNote": {
     "description": "Onboarding step 1: under the name field."
   },
-  "onboardingGoalGreeting": "One more thing, {name}.",
-  "@onboardingGoalGreeting": {
-    "description": "Onboarding step 2: beside the learner's avatar; {name} is the name they typed.",
-    "placeholders": {
-      "name": {
-        "type": "String",
-        "example": "Ada"
-      }
-    }
-  },
-  "onboardingGoalEyebrow": "Help shape GrammarLens",
-  "@onboardingGoalEyebrow": {
-    "description": "Onboarding step 2: the small line above the heading. 'GrammarLens' is the app's name, never translated."
-  },
-  "onboardingGoalTitle": "What brings you to English?",
-  "@onboardingGoalTitle": {
-    "description": "Onboarding step 2: the heading above the learning goals."
-  },
-  "onboardingGoalSubtitle": "Choose what matters most to you. Your answer helps us decide what to improve next.",
-  "@onboardingGoalSubtitle": {
-    "description": "Onboarding step 2: the line under the heading."
-  },
   "onboardingPrivacyNote": "Your name stays on this device. Your goal is sent with app usage data, never with your name. Usage and crash data is collected.",
   "@onboardingPrivacyNote": {
     "description": "Onboarding step 2: the privacy line under the goals. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
@@ -538,14 +516,6 @@
   "onboardingDataLink": "How AI feedback uses your answers",
   "@onboardingDataLink": {
     "description": "Onboarding step 2: the link that opens 'Your data & AI'."
-  },
-  "onboardingStart": "Start my first test",
-  "@onboardingStart": {
-    "description": "Onboarding step 2: the button that saves and starts the first Daily Test."
-  },
-  "onboardingSkipGoal": "Skip goal & start",
-  "@onboardingSkipGoal": {
-    "description": "Onboarding step 2: finishes without a learning goal."
   },
   "onboardingDataTitle": "Your data & AI",
   "@onboardingDataTitle": {
@@ -586,20 +556,6 @@
   "onboardingDataGotIt": "Got it",
   "@onboardingDataGotIt": {
     "description": "'Your data & AI': the button that closes the dialog."
-  },
-  "firstLaunchSaving": "Setting things up…",
-  "@firstLaunchSaving": {
-    "description": "Shown while the new profile is saved at the end of onboarding."
-  },
-  "firstLaunchSaveFailed": "Could not save your profile: {error}",
-  "@firstLaunchSaveFailed": {
-    "description": "Snackbar when saving the new profile failed; {error} is the technical reason.",
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "example": "database is locked"
-      }
-    }
   },
   "featureDailyTest": "Daily Test",
   "@featureDailyTest": {
@@ -771,9 +727,9 @@
   "@hintSliderSemanticsHint": {
     "description": "VoiceOver hint of the hint slider."
   },
-  "dailyTestLeaveTitle": "Leave Daily Test?",
+  "dailyTestLeaveTitle": "Leave today’s test?",
   "@dailyTestLeaveTitle": {
-    "description": "Title of the dialog that asks whether to leave the Daily Test. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "The leave dialog's title on the Daily Test (R10)."
   },
   "dailyTestLeaveTooltip": "Leave Daily Test",
   "@dailyTestLeaveTooltip": {
@@ -1401,9 +1357,9 @@
   "@homeGoToReview": {
     "description": "Home: the callout's link. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
-  "reviewSubtitle": "Turn your mistakes into progress.",
+  "reviewSubtitle": "Your mistakes, turned into practice.",
   "@reviewSubtitle": {
-    "description": "Review tab: the line under the title."
+    "description": "Review's line under its title (V16)."
   },
   "reviewSortTooltip": "Sort weak spots",
   "@reviewSortTooltip": {
@@ -1423,21 +1379,21 @@
   "@commonRetry": {
     "description": "Button that retries a failed load."
   },
-  "reviewEmptyTitle": "No weak spots yet.",
+  "reviewEmptyTitle": "No weak spots yet!",
   "@reviewEmptyTitle": {
-    "description": "Review tab with no weak spots."
+    "description": "Review with no weak spot (RV05): the title."
   },
-  "reviewEmptyBody": "Mistakes from your Daily Test and practice will show up here.",
+  "reviewEmptyBody": "Mistakes from your Daily Test land here, ready to practice.",
   "@reviewEmptyBody": {
-    "description": "Review tab with no weak spots. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "Review with no weak spot (RV05): under the title. 'Daily Test' is the feature name."
   },
-  "reviewGoToDailyTest": "Go to Daily Test",
+  "reviewGoToDailyTest": "Take today’s Daily Test",
   "@reviewGoToDailyTest": {
-    "description": "Review tab with no weak spots: the button. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "Review with no weak spot (RV05): the button. 'Daily Test' is the feature name."
   },
-  "reviewSavedWeakSpots": "Saved weak spots",
+  "reviewSavedWeakSpots": "Weak spots",
   "@reviewSavedWeakSpots": {
-    "description": "Review tab: the heading of the weak-spot list."
+    "description": "Review: the list's heading (V16)."
   },
   "reviewDailyEyebrow": "YOUR DAILY PRACTICE",
   "@reviewDailyEyebrow": {
@@ -1527,6 +1483,15 @@
   "@weakSpotPreparing": {
     "description": "Shown while a practice set is made."
   },
+  "practicePreparingTopic": "Writing your questions on {topic}…",
+  "@practicePreparingTopic": {
+    "description": "V18: shown while a practice set is written; topic is the topic's title. No number of questions: the set may come a question short (1.5.0).",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "weakSpotLoadFailed": "Could not load your recent mistakes.\n{error}",
   "@weakSpotLoadFailed": {
     "description": "Weak spot screen when its mistakes could not be loaded; {error} is the technical reason.",
@@ -1613,9 +1578,9 @@
       }
     }
   },
-  "topicPracticeSubtitle": "Choose a topic to work on.",
+  "topicPracticeSubtitle": "Pick a topic. AI reviews every answer.",
   "@topicPracticeSubtitle": {
-    "description": "Topic Practice: the line under the title."
+    "description": "Topic Practice (R01): the line under the title."
   },
   "topicPracticePremiumAccess": "Premium access",
   "@topicPracticePremiumAccess": {
@@ -1967,38 +1932,6 @@
       }
     }
   },
-  "medalTopReached": "Gold earned. That's this month's top medal.",
-  "@medalTopReached": {
-    "description": "The progress card's line once Gold is reached."
-  },
-  "medalToFirst": "{points} to your first monthly medal",
-  "@medalToFirst": {
-    "description": "The progress card's line before any medal; {points} is medalPoints.",
-    "placeholders": {
-      "points": {
-        "type": "String",
-        "example": "12 points"
-      }
-    }
-  },
-  "medalToNext": "{reached} earned · {points} to {next}",
-  "@medalToNext": {
-    "description": "The progress card's line between medals.",
-    "placeholders": {
-      "reached": {
-        "type": "String",
-        "example": "Bronze"
-      },
-      "points": {
-        "type": "String",
-        "example": "12 points"
-      },
-      "next": {
-        "type": "String",
-        "example": "Silver"
-      }
-    }
-  },
   "medalActiveDays": "{count, plural, =1{1 active day} other{{count} active days}}",
   "@medalActiveDays": {
     "description": "The progress card: days with a step this month.",
@@ -2006,90 +1939,6 @@
       "count": {
         "type": "int",
         "example": "12"
-      }
-    }
-  },
-  "medalGoldReachedSemantics": "Gold reached, {score} of {max} points",
-  "@medalGoldReachedSemantics": {
-    "description": "VoiceOver: the progress card past Gold.",
-    "placeholders": {
-      "score": {
-        "type": "int",
-        "example": "280"
-      },
-      "max": {
-        "type": "int",
-        "example": "300"
-      }
-    }
-  },
-  "medalNextSemantics": "Next medal {tier}, {score} of {goal} points",
-  "@medalNextSemantics": {
-    "description": "VoiceOver: the progress card's goal.",
-    "placeholders": {
-      "tier": {
-        "type": "String",
-        "example": "Silver"
-      },
-      "score": {
-        "type": "int",
-        "example": "120"
-      },
-      "goal": {
-        "type": "int",
-        "example": "180"
-      }
-    }
-  },
-  "medalThresholdSemantics": "{tier} at {points} points",
-  "@medalThresholdSemantics": {
-    "description": "VoiceOver: one medal's threshold on the progress card.",
-    "placeholders": {
-      "tier": {
-        "type": "String",
-        "example": "Bronze"
-      },
-      "points": {
-        "type": "int",
-        "example": "90"
-      }
-    }
-  },
-  "medalProgressSemantics": "{month} progress, {theme}, {days}. {goal}. {toGo}. {thresholds}. Monthly total {score} of {max} points.",
-  "@medalProgressSemantics": {
-    "description": "VoiceOver: the whole progress card.",
-    "placeholders": {
-      "month": {
-        "type": "String",
-        "example": "November"
-      },
-      "theme": {
-        "type": "String",
-        "example": "Red Canyon"
-      },
-      "days": {
-        "type": "String",
-        "example": "12 active days"
-      },
-      "goal": {
-        "type": "String",
-        "example": "Next medal Silver, 120 of 180 points"
-      },
-      "toGo": {
-        "type": "String",
-        "example": "Bronze earned · 60 points to Silver"
-      },
-      "thresholds": {
-        "type": "String",
-        "example": "Bronze at 90 points, Silver at 180 points, Gold at 270 points"
-      },
-      "score": {
-        "type": "int",
-        "example": "120"
-      },
-      "max": {
-        "type": "int",
-        "example": "300"
       }
     }
   },
@@ -2117,21 +1966,35 @@
       }
     }
   },
-  "medalTopLabel": "Top medal ",
-  "@medalTopLabel": {
-    "description": "The progress card's goal line past Gold, before the medal's name (keep the trailing space)."
-  },
-  "medalNextLabel": "Next medal ",
-  "@medalNextLabel": {
-    "description": "The progress card's goal line, before the next medal's name (keep the trailing space)."
-  },
-  "medalGoalPoints": " / {goal} pts",
-  "@medalGoalPoints": {
-    "description": "The progress card's goal after the score (keep the leading space; 'pts' short for points).",
+  "medalBarSemantics": "{score} of {max} points; {thresholds}",
+  "@medalBarSemantics": {
+    "description": "V23 (v13): the screen reader's label for the month progress card's bar: the points of the month's top score, then every medal's threshold (medalBarThreshold, joined by listSeparator).",
     "placeholders": {
-      "goal": {
+      "score": {
         "type": "int",
-        "example": "180"
+        "example": "9"
+      },
+      "max": {
+        "type": "int",
+        "example": "300"
+      },
+      "thresholds": {
+        "type": "String",
+        "example": "Bronze at 75, Silver at 150, Gold at 225"
+      }
+    }
+  },
+  "medalBarThreshold": "{tier} at {points}",
+  "@medalBarThreshold": {
+    "description": "V23 (v13): one medal's threshold in the bar's screen-reader label, e.g. \"Bronze at 75\".",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "75"
       }
     }
   },
@@ -2142,20 +2005,6 @@
       "points": {
         "type": "int",
         "example": "90"
-      }
-    }
-  },
-  "medalMonthlyTotal": "Monthly total: {score} / {max} points",
-  "@medalMonthlyTotal": {
-    "description": "The progress card's last line.",
-    "placeholders": {
-      "score": {
-        "type": "int",
-        "example": "120"
-      },
-      "max": {
-        "type": "int",
-        "example": "300"
       }
     }
   },
@@ -2645,6 +2494,18 @@
   "@paywallRestore": {
     "description": "The paywall's restore button."
   },
+  "paywallRestoreShort": "Restore",
+  "@paywallRestoreShort": {
+    "description": "Paywall footer (V13 v12), one short link on the 'Restore · Terms · Privacy' row: restores earlier purchases. VoiceOver reads paywallRestore."
+  },
+  "paywallTermsShort": "Terms",
+  "@paywallTermsShort": {
+    "description": "Paywall footer (V13 v12), the short link to the Terms of Service on the 'Restore · Terms · Privacy' row. VoiceOver reads commonTermsOfService."
+  },
+  "paywallPrivacyShort": "Privacy",
+  "@paywallPrivacyShort": {
+    "description": "Paywall footer (V13 v12), the short link to the Privacy Policy on the 'Restore · Terms · Privacy' row. VoiceOver reads commonPrivacyPolicy."
+  },
   "paywallRestored": "Purchases restored — full access is active.",
   "@paywallRestored": {
     "description": "After a successful restore."
@@ -2652,10 +2513,6 @@
   "paywallNothingToRestore": "No previous purchases found to restore.",
   "@paywallNothingToRestore": {
     "description": "After a restore that found nothing."
-  },
-  "paywallMaybeLater": "Maybe later",
-  "@paywallMaybeLater": {
-    "description": "The paywall's dismiss button."
   },
   "paywallTrialStarted": "Trial started — Topic Practice is unlocked.",
   "@paywallTrialStarted": {
@@ -2677,28 +2534,6 @@
   "@paywallFailed": {
     "description": "After a purchase that could not start."
   },
-  "paywallRowDailyTest": "Daily Test, refreshed every day",
-  "@paywallRowDailyTest": {
-    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
-  },
-  "paywallRowTopicPractice": "Topic Practice, all five topics",
-  "@paywallRowTopicPractice": {
-    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
-  },
-  "paywallRowWeakSpots": "Practice your weak spots",
-  "@paywallRowWeakSpots": {
-    "description": "Comparison table row."
-  },
-  "paywallRowLengths": "Sessions of {lengths} questions",
-  "@paywallRowLengths": {
-    "description": "Comparison table row; {lengths} joined with paywallListOr.",
-    "placeholders": {
-      "lengths": {
-        "type": "String",
-        "example": "3, 5 or 10"
-      }
-    }
-  },
   "paywallFreePerDay": "{count} a day",
   "@paywallFreePerDay": {
     "description": "The free column's weak-spot value, long form.",
@@ -2709,23 +2544,50 @@
       }
     }
   },
-  "paywallFreePerDayShort": "{count}/day",
-  "@paywallFreePerDayShort": {
-    "description": "The free column's weak-spot value when the long form does not fit.",
+  "paywallCompareTitle": "Free vs Premium",
+  "@paywallCompareTitle": {
+    "description": "V13c's heading above the Free/Premium table."
+  },
+  "paywallCompareAiPractice": "AI practice",
+  "@paywallCompareAiPractice": {
+    "description": "V13c row: AI-graded practice sessions per day."
+  },
+  "paywallCompareWeakSpots": "Weak-spot practice",
+  "@paywallCompareWeakSpots": {
+    "description": "V13c row: practice built from the user's weak spots."
+  },
+  "paywallCompareTopics": "All {count} topics",
+  "@paywallCompareTopics": {
+    "description": "V13c row: every grammar topic; count is the real number of topics.",
     "placeholders": {
       "count": {
-        "type": "int",
-        "example": "1"
+        "type": "int"
       }
     }
   },
-  "paywallHeaderFree": "FREE",
-  "@paywallHeaderFree": {
-    "description": "The comparison table's free column header (uppercase in English)."
+  "paywallCompareLength": "Session length",
+  "@paywallCompareLength": {
+    "description": "V13c row: questions per practice session."
   },
-  "paywallHeaderPremium": "PREMIUM",
-  "@paywallHeaderPremium": {
-    "description": "The comparison table's Premium column header (uppercase in English). 'Premium' is the brand: never translated."
+  "paywallCompareClimb": "Monthly Climb",
+  "@paywallCompareClimb": {
+    "description": "V13c row: the monthly mountain climb."
+  },
+  "paywallCompareNote": "Cancel anytime. Your climb, medals and weak spots stay if you go back to free.",
+  "@paywallCompareNote": {
+    "description": "V13c: the green note under the table."
+  },
+  "paywallCompareValue": "{tier}: {value}",
+  "@paywallCompareValue": {
+    "description": "Screen-reader text for one table cell, e.g. 'Free: 1 a day'.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
   },
   "paywallTierFree": "Free",
   "@paywallTierFree": {
@@ -2831,50 +2693,12 @@
       }
     }
   },
-  "commonDismiss": "Dismiss",
-  "@commonDismiss": {
-    "description": "The action on a snackbar that closes it."
-  },
-  "carouselPrevious": "Previous companion",
-  "@carouselPrevious": {
-    "description": "Tooltip of the avatar carousel's left arrow."
-  },
-  "carouselNext": "Next companion",
-  "@carouselNext": {
-    "description": "Tooltip of the avatar carousel's right arrow."
-  },
-  "carouselSelected": "{avatar}, selected",
-  "@carouselSelected": {
-    "description": "VoiceOver: the avatar shown in the carousel's centre.",
-    "placeholders": {
-      "avatar": {
-        "type": "String",
-        "example": "Fox"
-      }
-    }
-  },
   "avatarKoala": "Koala",
   "@avatarKoala": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
-  "avatarSnail": "Snail",
-  "@avatarSnail": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarElephant": "Elephant",
-  "@avatarElephant": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarBee": "Bee",
-  "@avatarBee": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
   "avatarFrog": "Frog",
   "@avatarFrog": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarChick": "Chick",
-  "@avatarChick": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
   "avatarCrab": "Crab",
@@ -2885,20 +2709,8 @@
   "@avatarCat": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
-  "avatarTurtle": "Turtle",
-  "@avatarTurtle": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarPenguin": "Penguin",
-  "@avatarPenguin": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
   "avatarGiraffe": "Giraffe",
   "@avatarGiraffe": {
-    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
-  },
-  "avatarHedgehog": "Hedgehog",
-  "@avatarHedgehog": {
     "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
   },
   "avatarBird": "Bird",
@@ -2934,5 +2746,2094 @@
         "example": "Ada"
       }
     }
+  },
+  "traitCurious": "Curious",
+  "@traitCurious": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitQuickLearner": "Quick learner",
+  "@traitQuickLearner": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitLovesChallenge": "Loves a challenge",
+  "@traitLovesChallenge": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitCalm": "Calm",
+  "@traitCalm": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitSteady": "Steady",
+  "@traitSteady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitNeverGivesUp": "Never gives up",
+  "@traitNeverGivesUp": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitRelaxed": "Relaxed",
+  "@traitRelaxed": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThoughtful": "Thoughtful",
+  "@traitThoughtful": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitKind": "Kind",
+  "@traitKind": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitCheerful": "Cheerful",
+  "@traitCheerful": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitBouncy": "Bouncy",
+  "@traitBouncy": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitAlwaysReady": "Always ready",
+  "@traitAlwaysReady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitFreeSpirit": "Free spirit",
+  "@traitFreeSpirit": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitEarlyRiser": "Early riser",
+  "@traitEarlyRiser": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitChatty": "Chatty",
+  "@traitChatty": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitGentle": "Gentle",
+  "@traitGentle": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitPatient": "Patient",
+  "@traitPatient": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThinksBig": "Thinks big",
+  "@traitThinksBig": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitClever": "Clever",
+  "@traitClever": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitIndependent": "Independent",
+  "@traitIndependent": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitSlowAndSteady": "Slow and steady",
+  "@traitSlowAndSteady": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitFocused": "Focused",
+  "@traitFocused": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitBrave": "Brave",
+  "@traitBrave": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitTough": "Tough",
+  "@traitTough": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "traitThinksSideways": "Thinks sideways",
+  "@traitThinksSideways": {
+    "description": "A companion's personality chip on the buddy picker (V03, R06, the wheel's result): one short trait, title case in English."
+  },
+  "companionSemantics": "{hero}, your companion",
+  "@companionSemantics": {
+    "description": "VoiceOver label of a companion illustration. {hero} is the animal's name (Fox, Panda, …).",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "dailyCardDone": "Done",
+  "@dailyCardDone": {
+    "description": "Daily Test card (X05): the chip once today's test is finished."
+  },
+  "dailyCardLoading": "Getting today’s test",
+  "@dailyCardLoading": {
+    "description": "Daily Test card (X05): in the button slot while today's test is being downloaded."
+  },
+  "dailyCardScoreSemantics": "{correct} of {total} correct",
+  "@dailyCardScoreSemantics": {
+    "description": "VoiceOver label of the Daily Test card's score ring: {correct} right answers out of {total} questions.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "4"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "ticketEyebrow": "TODAY’S TICKET",
+  "@ticketEyebrow": {
+    "description": "The free practice ticket (X04): the small label at the top, uppercase."
+  },
+  "ticketUsedTitle": "Used today",
+  "@ticketUsedTitle": {
+    "description": "The free practice ticket once today's free practice is used (X04 used state)."
+  },
+  "ticketTearingTitle": "Ticket used!",
+  "@ticketTearingTitle": {
+    "description": "The free practice ticket while it tears (V16b), just before practice starts."
+  },
+  "ticketTearingBody": "Starting your practice…",
+  "@ticketTearingBody": {
+    "description": "The free practice ticket while it tears (V16b): the line under the title."
+  },
+  "ticketStamp": "USED",
+  "@ticketStamp": {
+    "description": "The stamp on a used ticket (X04), uppercase, one short word."
+  },
+  "ticketNext": "NEXT",
+  "@ticketNext": {
+    "description": "Under the time left until the next free ticket, in the used ticket's empty slot (X04), uppercase."
+  },
+  "ticketNextSemantics": "Next ticket in {hours} h {minutes} min",
+  "@ticketNextSemantics": {
+    "description": "VoiceOver: the time left until the next free practice ticket (local midnight).",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "20"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "41"
+      }
+    }
+  },
+  "capsulePoints": "Points this month: {points}",
+  "@capsulePoints": {
+    "description": "VoiceOver label of Home's score capsule (V14): this month's points.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "capsuleToTier": "{points} to {tier}",
+  "@capsuleToTier": {
+    "description": "Home's score capsule (V14): points still needed for the next medal tier, e.g. '66 to Bronze'. {tier} is Bronze / Silver / Gold.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "66"
+      },
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "capsuleTopTier": "Gold reached",
+  "@capsuleTopTier": {
+    "description": "Home's score capsule (V14) once this month's Gold tier is reached."
+  },
+  "errorOfflineTitle": "Can’t reach the mountain right now",
+  "@errorOfflineTitle": {
+    "description": "Error state (R11), no connection: the title."
+  },
+  "errorOfflineBody": "Check your connection. Today’s test will be waiting when you’re back.",
+  "@errorOfflineBody": {
+    "description": "Error state (R11), no connection: the calm explanation."
+  },
+  "errorServerTitle": "Something went wrong on our side",
+  "@errorServerTitle": {
+    "description": "Error state (R11), a server error: the title."
+  },
+  "errorServerBody": "It’s not you. Give it a moment and try again.",
+  "@errorServerBody": {
+    "description": "Error state (R11), a server error: the calm explanation."
+  },
+  "errorQuotaTitle": "That’s all for today",
+  "@errorQuotaTitle": {
+    "description": "Error state (R11), a daily limit reached: the title."
+  },
+  "errorQuotaBody": "Today’s limit is reached. It opens again tomorrow.",
+  "@errorQuotaBody": {
+    "description": "Error state (R11), a daily limit reached: the calm explanation."
+  },
+  "errorTryAgain": "Try again",
+  "@errorTryAgain": {
+    "description": "Error state (R11): the retry button."
+  },
+  "errorProgressSafe": "Your progress is safe on this device.",
+  "@errorProgressSafe": {
+    "description": "Error state (R11): the reassurance under the retry button."
+  },
+  "leaveKeepGoing": "Keep going",
+  "@leaveKeepGoing": {
+    "description": "The leave dialog (R10): the dominant button that stays in the test or practice."
+  },
+  "leaveProgressBody": "You’re {done} of {total} in. Your answers so far won’t be saved.",
+  "@leaveProgressBody": {
+    "description": "The leave dialog (R10): how far the user is, and that leaving loses the answers. {done} questions answered of {total}.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "buddyTitle": "Choose your climbing buddy",
+  "@buddyTitle": {
+    "description": "Buddy picker (V03): the title in onboarding."
+  },
+  "buddySubtitle": "Swipe to meet all {count} · change anytime in Profile",
+  "@buddySubtitle": {
+    "description": "Buddy picker (V03): under the title; {count} is the number of buddies (9).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "buddySpeech": "“Hi! Let’s reach the summit together.”",
+  "@buddySpeech": {
+    "description": "Buddy picker (V03): what the buddy in front says, in quotes."
+  },
+  "buddyClimbWith": "Climb with {hero}",
+  "@buddyClimbWith": {
+    "description": "Buddy picker and wheel (V03, V03b) in onboarding: the main button. {hero} is the buddy's name.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "buddySave": "Save {hero}",
+  "@buddySave": {
+    "description": "Buddy picker and wheel from Profile (R06): the main button. {hero} is the buddy's name.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "buddyTryLuck": "Try my luck",
+  "@buddyTryLuck": {
+    "description": "Buddy picker (V03, R06): the second button; opens the wheel of fortune that picks a buddy at random."
+  },
+  "buddyChangeTitle": "Change your buddy",
+  "@buddyChangeTitle": {
+    "description": "Buddy picker from Profile (R06): the title."
+  },
+  "buddyChangeSubtitle": "Your progress stays the same",
+  "@buddyChangeSubtitle": {
+    "description": "Buddy picker from Profile (R06): under the title."
+  },
+  "buddyPrevious": "Previous buddy",
+  "@buddyPrevious": {
+    "description": "Buddy picker: the ‹ button's VoiceOver label."
+  },
+  "buddyNext": "Next buddy",
+  "@buddyNext": {
+    "description": "Buddy picker: the › button's VoiceOver label."
+  },
+  "buddyPosition": "Buddy {index} of {count}",
+  "@buddyPosition": {
+    "description": "Buddy picker: VoiceOver label of the dots under the name.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "1"
+      },
+      "count": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "wheelReadyTitle": "Let a buddy pick you",
+  "@wheelReadyTitle": {
+    "description": "Wheel of fortune (V03b), before the spin: the title."
+  },
+  "wheelReadySubtitle": "Spin the wheel. Whoever it lands on is your climbing buddy.",
+  "@wheelReadySubtitle": {
+    "description": "Wheel of fortune (V03b), before the spin: under the title."
+  },
+  "wheelSpin": "Spin the wheel",
+  "@wheelSpin": {
+    "description": "Wheel of fortune (V03b): the button that starts the spin."
+  },
+  "wheelSpinning": "Spinning…",
+  "@wheelSpinning": {
+    "description": "Wheel of fortune (V03b) while it spins: the title and the disabled button."
+  },
+  "wheelSpinningSubtitle": "Who will it be?",
+  "@wheelSpinningSubtitle": {
+    "description": "Wheel of fortune (V03b) while it spins: under the title."
+  },
+  "wheelFootReady": "Spin as often as you like · progress stays the same",
+  "@wheelFootReady": {
+    "description": "Wheel of fortune (V03b), before the spin: the small line under the button."
+  },
+  "wheelFootSpinning": "It never lands on your current buddy",
+  "@wheelFootSpinning": {
+    "description": "Wheel of fortune (V03b) while it spins: the small line under the button."
+  },
+  "wheelPicked": "{hero} picked you!",
+  "@wheelPicked": {
+    "description": "Wheel of fortune (V03b) after the spin: the title. {hero} is the buddy it landed on.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Frog"
+      }
+    }
+  },
+  "wheelLandedSubtitle": "Happy with it? You can spin again or go back.",
+  "@wheelLandedSubtitle": {
+    "description": "Wheel of fortune (V03b) after the spin: under the title."
+  },
+  "wheelSpinAgain": "Spin again",
+  "@wheelSpinAgain": {
+    "description": "Wheel of fortune (V03b) after the spin: the second button."
+  },
+  "wheelAllBuddies": "All buddies",
+  "@wheelAllBuddies": {
+    "description": "Wheel of fortune (V03b): the top-left button back to the turntable."
+  },
+  "welcomeTitle": "See your mistakes clearly.",
+  "@welcomeTitle": {
+    "description": "Welcome (V02): the big title."
+  },
+  "welcomeSubtitle": "Five questions a day. Plain-language feedback. A companion who climbs with you.",
+  "@welcomeSubtitle": {
+    "description": "Welcome (V02): under the title."
+  },
+  "welcomeWatch": "WATCH",
+  "@welcomeWatch": {
+    "description": "Welcome (V02): the small label of the demo card where a mistake is found and corrected; uppercase."
+  },
+  "onboardingNiceToMeet": "Nice to meet you, {name}!",
+  "@onboardingNiceToMeet": {
+    "description": "V04 (v11): the companion's greeting 700 ms after the last key; the name shows in orange, cut to 16 characters. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalQuestion": "What brings you to English, {name}?",
+  "@onboardingGoalQuestion": {
+    "description": "Onboarding goal step (V05): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalPickOne": "Pick one. It helps us decide what to improve next.",
+  "@onboardingGoalPickOne": {
+    "description": "Onboarding goal step (V05): under the title. The goal changes no content; it only helps the team."
+  },
+  "onboardingStepShort": "{step} of {total}",
+  "@onboardingStepShort": {
+    "description": "Onboarding goal step (V05): next to the progress bar, e.g. '3 of 4'.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "onboardingSkipForNow": "Skip for now",
+  "@onboardingSkipForNow": {
+    "description": "Onboarding goal step (V05): the text button that continues with no goal."
+  },
+  "goalReactionExam": "“Exam prep it is! Let’s get you ready.”",
+  "@goalReactionExam": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "goalReactionWork": "“Work it is! I’ll cheer you on.”",
+  "@goalReactionWork": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "goalReactionSchool": "“School & university it is! Let’s ace it.”",
+  "@goalReactionSchool": {
+    "description": "V05: the companion's line when School & university is picked."
+  },
+  "goalReactionGeneral": "“Everyday English it is! Let’s talk.”",
+  "@goalReactionGeneral": {
+    "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
+  },
+  "readyTitle": "Getting your climb ready, {name}",
+  "@readyTitle": {
+    "description": "Getting ready (V05b): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "readyRowSaved": "Name and buddy saved",
+  "@readyRowSaved": {
+    "description": "Getting ready (V05b): the first task's row."
+  },
+  "readyRowTest": "Today’s Daily Test downloaded",
+  "@readyRowTest": {
+    "description": "Getting ready (V05b): the second task's row. 'Daily Test' is the feature name."
+  },
+  "readyRowMountain": "{month}’s mountain opened",
+  "@readyRowMountain": {
+    "description": "Getting ready (V05b): the third task's row. {month} is this month's name (November).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      }
+    }
+  },
+  "readyBubbleExam": "Exam prep, here we come!",
+  "@readyBubbleExam": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Exam prep'."
+  },
+  "readyBubbleWork": "Work English, here we come!",
+  "@readyBubbleWork": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Work'."
+  },
+  "readyBubbleSchool": "School English, here we come!",
+  "@readyBubbleSchool": {
+    "description": "V05b: the companion's bubble for the School & university goal."
+  },
+  "readyBubbleGeneral": "Everyday English, here we come!",
+  "@readyBubbleGeneral": {
+    "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Everyday English'."
+  },
+  "readyBubbleNone": "Let’s climb!",
+  "@readyBubbleNone": {
+    "description": "Getting ready (V05b): the buddy's speech bubble when the goal was skipped."
+  },
+  "readyYourClimb": "YOUR CLIMB",
+  "@readyYourClimb": {
+    "description": "Getting ready (V05b): the label of the card that sums up the choices; uppercase."
+  },
+  "readyMountainChip": "{mountain} · {steps} steps",
+  "@readyMountainChip": {
+    "description": "Getting ready (V05b): a chip with this month's mountain and its number of steps (days in the month).",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "steps": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "readyPerDayChip": "{count} questions a day",
+  "@readyPerDayChip": {
+    "description": "Getting ready (V05b): a chip with the number of Daily Test questions (5).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "readyGoalExam": "Exam prep",
+  "@readyGoalExam": {
+    "description": "Getting ready (V05b): the goal chip for 'Exam prep'."
+  },
+  "readyGoalWork": "Work English",
+  "@readyGoalWork": {
+    "description": "Getting ready (V05b): the goal chip for 'Work'."
+  },
+  "readyGoalSchool": "School & university",
+  "@readyGoalSchool": {
+    "description": "V05b: the 'Your climb' card's goal chip for School & university."
+  },
+  "readyGoalGeneral": "Everyday English",
+  "@readyGoalGeneral": {
+    "description": "Getting ready (V05b): the goal chip for 'Everyday English'."
+  },
+  "readyPercentSemantics": "{percent} percent ready",
+  "@readyPercentSemantics": {
+    "description": "Getting ready (V05b): VoiceOver label of the big percentage.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "68"
+      }
+    }
+  },
+  "mountainIntroEyebrow": "{month} · {mountain}",
+  "@mountainIntroEyebrow": {
+    "description": "This month's mountain (V06): the small line above the title, e.g. 'NOVEMBER · EMBER PEAK' (both uppercased by the app).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "NOVEMBER"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "EMBER PEAK"
+      }
+    }
+  },
+  "mountainIntroTitle": "This month’s mountain",
+  "@mountainIntroTitle": {
+    "description": "This month's mountain (V06): the title."
+  },
+  "mountainIntroBody": "A new mountain every month. Each Daily Test is one step up.",
+  "@mountainIntroBody": {
+    "description": "This month's mountain (V06): under the title. 'Daily Test' is the feature name."
+  },
+  "mountainIntroStart": "Take my first step",
+  "@mountainIntroStart": {
+    "description": "This month's mountain (V06): the button that starts the first Daily Test."
+  },
+  "mountainIntroSummit": "Summit · step {count}",
+  "@mountainIntroSummit": {
+    "description": "This month's mountain (V06): the label next to the summit flag; {count} is the last step (the days in the month).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "checkCorrectSemantics": "Correct",
+  "@checkCorrectSemantics": {
+    "description": "Daily Test (V08): VoiceOver label of the check mark on a checked answer."
+  },
+  "checkWrongSemantics": "Not quite",
+  "@checkWrongSemantics": {
+    "description": "Daily Test (V09): VoiceOver label of the cross on a checked answer."
+  },
+  "questionProgressSemantics": "Question {current} of {total}",
+  "@questionProgressSemantics": {
+    "description": "Daily Test (V07): VoiceOver label of the progress bar at the top.",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "pointsChipSemantics": "{points} points",
+  "@pointsChipSemantics": {
+    "description": "The points chip with the star (Daily Test V07, sheets V08/V09): VoiceOver label.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "checkLooksGood": "Looks good! Tap Check.",
+  "@checkLooksGood": {
+    "description": "Daily Test (V07): the buddy's line once an answer is typed."
+  },
+  "checkButton": "Check",
+  "@checkButton": {
+    "description": "Daily Test (V07): the button that grades the answer right away."
+  },
+  "checkNice": "Nice!",
+  "@checkNice": {
+    "description": "Daily Test (V08): the sheet's title after a correct answer when the name is unknown."
+  },
+  "checkNiceName": "Nice, {name}!",
+  "@checkNiceName": {
+    "description": "Daily Test (V08): the sheet's title after a correct answer. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "checkAlmost": "Almost!",
+  "@checkAlmost": {
+    "description": "Daily Test (V09): the sheet's title after a wrong answer."
+  },
+  "checkCorrectAnswer": "Correct answer:",
+  "@checkCorrectAnswer": {
+    "description": "Daily Test (V09): before the correct answer in the sheet."
+  },
+  "checkGoesToWeakSpots": "This goes to your weak spots",
+  "@checkGoesToWeakSpots": {
+    "description": "Daily Test (V09): a wrong answer becomes a weak spot when the test is finished."
+  },
+  "checkSeeResults": "See results",
+  "@checkSeeResults": {
+    "description": "Daily Test: the sheet's button on the last question, to the results."
+  },
+  "checkGotIt": "Got it",
+  "@checkGotIt": {
+    "description": "Daily Test (V09): the sheet's button after a wrong answer."
+  },
+  "checkOops": "Oops! So close.",
+  "@checkOops": {
+    "description": "Daily Test (V09): the buddy's line after a wrong answer."
+  },
+  "dailyResultDone": "Today’s test complete!",
+  "@dailyResultDone": {
+    "description": "Daily Test results (V10): the title before the month's day count is known."
+  },
+  "dailyResultDayComplete": "Day {day} complete!",
+  "@dailyResultDayComplete": {
+    "description": "Daily Test results (V10): the title; {day} is this month's step count after today's test.",
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "dailyResultAnswers": "Answers",
+  "@dailyResultAnswers": {
+    "description": "Daily Test results (V10): the label before the answers strip."
+  },
+  "dailyResultPointsLabel": "points",
+  "@dailyResultPointsLabel": {
+    "description": "Daily Test results (V10): under '+9' in the first tile."
+  },
+  "dailyResultStepLabel": "step ready",
+  "@dailyResultStepLabel": {
+    "description": "Daily Test results (V10): under the number of steps earned (0 or 1) in the second tile."
+  },
+  "dailyResultWeakLabel": "{count, plural, =1{weak spot} other{weak spots}}",
+  "@dailyResultWeakLabel": {
+    "description": "Daily Test results (V10): under the number of wrong answers in the third tile.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "dailyResultYourAnswers": "Your answers",
+  "@dailyResultYourAnswers": {
+    "description": "Daily Test results (V10): the answers card's title."
+  },
+  "dailyResultFirstStep": "Climb my first step",
+  "@dailyResultFirstStep": {
+    "description": "Daily Test results (V10), the first day: the button to the first step on the mountain."
+  },
+  "medalEyebrow": "{tier} medal",
+  "@medalEyebrow": {
+    "description": "Monthly medal (R05): the small line above the title (uppercased by the app). {tier} is Bronze / Silver / Gold.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "medalPointsTitle": "{points} points in {month}!",
+  "@medalPointsTitle": {
+    "description": "Monthly medal (R05): the title. {month} is this month's name.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "75"
+      },
+      "month": {
+        "type": "String",
+        "example": "November"
+      }
+    }
+  },
+  "medalNextLine": "{tier} is next at {points}. Keep climbing {mountain}.",
+  "@medalNextLine": {
+    "description": "Monthly medal (R05): what comes next. {tier} is the next tier, {points} its threshold, {mountain} this month's mountain.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      },
+      "points": {
+        "type": "int",
+        "example": "150"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "badgeEarnedEyebrow": "BADGE EARNED",
+  "@badgeEarnedEyebrow": {
+    "description": "Welcome badge (V11): the small line above the title, uppercase."
+  },
+  "badgeWelcomeName": "Welcome to the climb, {name}!",
+  "@badgeWelcomeName": {
+    "description": "Welcome badge (V11): the title. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "homeDailyTodoLine": "{count} questions · about {minutes} minutes",
+  "@homeDailyTodoLine": {
+    "description": "Home's Daily Test card (X05) before the test: the line under the title.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "homeDailyDoneLine": "+{points} points · step {step} reached",
+  "@homeDailyDoneLine": {
+    "description": "Home's Daily Test card (X05) after the test: today's points and this month's step.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "9"
+      },
+      "step": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "homeDailyStartToday": "Start today’s test",
+  "@homeDailyStartToday": {
+    "description": "Home's Daily Test card (X05): the button that starts today's test."
+  },
+  "homeDailyReviewAnswers": "Review answers",
+  "@homeDailyReviewAnswers": {
+    "description": "Home's Daily Test card (X05) after the test: opens today's results."
+  },
+  "homeClimbNextTomorrow": "Step {step} opens tomorrow",
+  "@homeClimbNextTomorrow": {
+    "description": "Home's mountain card (V14): the bubble once today's test is done.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "homeClimbOneTestAway": "Step {step} is one test away!",
+  "@homeClimbOneTestAway": {
+    "description": "Home's mountain card (V15): the bubble before today's test.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "ticketFreeTitle": "1 free practice",
+  "@ticketFreeTitle": {
+    "description": "The free practice ticket (X04): its title for a free user."
+  },
+  "ticketUsedLine": "Nice work, {name}.",
+  "@ticketUsedLine": {
+    "description": "The used ticket (X04): the line under 'Used today'. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "ticketPickInReview": "Pick a weak spot in Review.",
+  "@ticketPickInReview": {
+    "description": "Home's ticket (V14) when there is no weak spot yet. 'Review' is the feature name."
+  },
+  "ticketUseItOn": "Use it on: {spot}",
+  "@ticketUseItOn": {
+    "description": "Home's ticket (V14): the weak spot it can be used on.",
+    "placeholders": {
+      "spot": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "homeShowcaseLead": "Master any topic with AI feedback.",
+  "@homeShowcaseLead": {
+    "description": "Home's topic showcase (V14) for a free user: the line under the title."
+  },
+  "homePickedForYou": "Picked for you",
+  "@homePickedForYou": {
+    "description": "Home's topic showcase (V14): the label of the weak spot's topic card."
+  },
+  "homePickedLine": "Your weak spot today",
+  "@homePickedLine": {
+    "description": "Home's topic showcase (V14): under the picked topic."
+  },
+  "homeUnlockTopics": "Unlock all {count} topics",
+  "@homeUnlockTopics": {
+    "description": "Home's topic showcase (V14): the button to the paywall; {count} is the number of topics.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "homePracticeTitle": "Practice",
+  "@homePracticeTitle": {
+    "description": "Home's practice card for Premium (H04): the title."
+  },
+  "homeSessionsToday": "Sessions today",
+  "@homeSessionsToday": {
+    "description": "Home's practice card for Premium (H04): before the sessions bar."
+  },
+  "homeSessionsSemantics": "{done} of {total} sessions today",
+  "@homeSessionsSemantics": {
+    "description": "VoiceOver label of the sessions bar (H04).",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "homePracticeWeakSpot": "Practice your weak spot",
+  "@homePracticeWeakSpot": {
+    "description": "Home's practice card for Premium (H04): the button."
+  },
+  "restBubble": "Resting at camp. See you tomorrow!",
+  "@restBubble": {
+    "description": "The rest scene (V24): the buddy's bubble."
+  },
+  "restSeeYou": "See you tomorrow, {name}",
+  "@restSeeYou": {
+    "description": "The rest scene (V24): the chip at the top. {name} is the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "restTitle": "All done for today",
+  "@restTitle": {
+    "description": "The rest scene (V24): the panel's title."
+  },
+  "restSessionsLine": "{done}/{total} sessions",
+  "@restSessionsLine": {
+    "description": "The rest scene (V24), Premium: the practice tile's line.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "restCountdownSemantics": "Next Daily Test in {hours} h {minutes} min",
+  "@restCountdownSemantics": {
+    "description": "The rest scene (V24): VoiceOver label of the countdown. 'Daily Test' is the feature name.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "24"
+      }
+    }
+  },
+  "firstClimbMountain": "{mountain} · {days} steps to the summit",
+  "@firstClimbMountain": {
+    "description": "The first climb (V12): the chip at the top. {mountain} is this month's mountain's name.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "firstClimbStep": "Step {step} of {days}",
+  "@firstClimbStep": {
+    "description": "The first climb (V12): the chip that pops when the companion reaches the step.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "1"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "firstClimbBubble": "First step done! {left} to the summit.",
+  "@firstClimbBubble": {
+    "description": "The first climb (V12): the companion's bubble once the camera has opened back up. {left} is the steps left.",
+    "placeholders": {
+      "left": {
+        "type": "int",
+        "example": "29"
+      }
+    }
+  },
+  "firstClimbSemantics": "{hero} climbed to step {step} of {days}.",
+  "@firstClimbSemantics": {
+    "description": "The first climb (V12): what VoiceOver reads for the mountain scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "step": {
+        "type": "int",
+        "example": "1"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "monthRecapTitle": "{tier} on {mountain}!",
+  "@monthRecapTitle": {
+    "description": "The month recap (R04): the title when a medal was earned. {tier} is Bronze/Silver/Gold, {mountain} last month's mountain.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Green Slope"
+      }
+    }
+  },
+  "monthRecapClimbed": "You climbed {mountain}",
+  "@monthRecapClimbed": {
+    "description": "The month recap (R04): the title when no medal was earned.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Green Slope"
+      }
+    }
+  },
+  "monthRecapDays": "{steps} / {days} days",
+  "@monthRecapDays": {
+    "description": "The month recap (R04): the chip on the mountain, days climbed of the month's days.",
+    "placeholders": {
+      "steps": {
+        "type": "int",
+        "example": "24"
+      },
+      "days": {
+        "type": "int",
+        "example": "31"
+      }
+    }
+  },
+  "monthRecapToTier": "to {tier}",
+  "@monthRecapToTier": {
+    "description": "The month recap (R04): under the points still missing to the next medal.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Gold"
+      }
+    }
+  },
+  "monthRecapLine": "{tier} {points}",
+  "@monthRecapLine": {
+    "description": "The month recap (R04): a medal line's label on the points bar.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "78"
+      }
+    }
+  },
+  "monthRecapBarSemantics": "{score} points. Bronze at {bronze}, Silver at {silver}, Gold at {gold}.",
+  "@monthRecapBarSemantics": {
+    "description": "VoiceOver label of the month recap's points bar (R04).",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "228"
+      },
+      "bronze": {
+        "type": "int",
+        "example": "78"
+      },
+      "silver": {
+        "type": "int",
+        "example": "155"
+      },
+      "gold": {
+        "type": "int",
+        "example": "233"
+      }
+    }
+  },
+  "monthRecapSeeNew": "See my new mountain",
+  "@monthRecapSeeNew": {
+    "description": "The month recap (R04): the button to the new month's mountain."
+  },
+  "monthNewEyebrow": "{month} · {mountain}",
+  "@monthNewEyebrow": {
+    "description": "The new mountain (R04b): above the title (uppercased by the app).",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "monthNewTitle": "A new mountain!",
+  "@monthNewTitle": {
+    "description": "The new mountain (R04b): the title."
+  },
+  "monthNewBody": "{days} steps to the summit. Bronze at {bronze} points, Silver {silver}, Gold {gold}.",
+  "@monthNewBody": {
+    "description": "The new mountain (R04b): under the title; the thresholds come from the medal rules.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "30"
+      },
+      "bronze": {
+        "type": "int",
+        "example": "75"
+      },
+      "silver": {
+        "type": "int",
+        "example": "150"
+      },
+      "gold": {
+        "type": "int",
+        "example": "225"
+      }
+    }
+  },
+  "monthNewStart": "Start climbing",
+  "@monthNewStart": {
+    "description": "The new mountain (R04b): the button that closes it."
+  },
+  "reviewTicketPick": "Pick a weak spot below. AI feedback included.",
+  "@reviewTicketPick": {
+    "description": "Review's free ticket (V16): its line."
+  },
+  "reviewTicketWaiting": "Waiting for your first weak spot.",
+  "@reviewTicketWaiting": {
+    "description": "Review's ticket with no weak spot yet (RV05)."
+  },
+  "reviewSpotNew": "new",
+  "@reviewSpotNew": {
+    "description": "Review: the chip on a weak spot saved once (V16)."
+  },
+  "reviewSpotMeta": "{times} · {recency}",
+  "@reviewSpotMeta": {
+    "description": "Review: a weak spot's line, e.g. '1 time · today'.",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "1 time"
+      },
+      "recency": {
+        "type": "String",
+        "example": "today"
+      }
+    }
+  },
+  "reviewPracticeWithTicket": "Practice with my ticket",
+  "@reviewPracticeWithTicket": {
+    "description": "Review: the button on the first weak spot while the free ticket is unused (V16)."
+  },
+  "reviewPremiumMore": "Premium: up to {count} sessions a day",
+  "@reviewPremiumMore": {
+    "description": "Review after the free ticket is used (V22): under 'Want more practice today?'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "reviewSortRecentLine": "Newest mistakes first",
+  "@reviewSortRecentLine": {
+    "description": "The sort sheet (RV06): under 'Recent'."
+  },
+  "reviewSortFrequentLine": "The ones you miss most",
+  "@reviewSortFrequentLine": {
+    "description": "The sort sheet (RV06): under 'Most frequent'."
+  },
+  "weakSpotUseTicket": "Use today’s ticket",
+  "@weakSpotUseTicket": {
+    "description": "The weak spot screen (R03): the free ticket's title."
+  },
+  "weakSpotTicketLine": "Free practice with AI feedback",
+  "@weakSpotTicketLine": {
+    "description": "The weak spot screen (R03): the free ticket's line."
+  },
+  "weakSpotYourMistake": "Your mistake",
+  "@weakSpotYourMistake": {
+    "description": "The weak spot screen (R03): the heading over the latest mistake."
+  },
+  "weakSpotRemember": "Remember: {rule}",
+  "@weakSpotRemember": {
+    "description": "The weak spot screen (R03): the companion's one-line rule.",
+    "placeholders": {
+      "rule": {
+        "type": "String",
+        "example": "Superlatives take the"
+      }
+    }
+  },
+  "mistakeWrongSemantics": "you wrote {text}",
+  "@mistakeWrongSemantics": {
+    "description": "VoiceOver: a struck-through wrong word in an inline mistake (V16, R03).",
+    "placeholders": {
+      "text": {
+        "type": "String",
+        "example": "a"
+      }
+    }
+  },
+  "mistakeRightSemantics": "correct: {text}",
+  "@mistakeRightSemantics": {
+    "description": "VoiceOver: a corrected word in an inline mistake (V16, R03).",
+    "placeholders": {
+      "text": {
+        "type": "String",
+        "example": "the"
+      }
+    }
+  },
+  "topicConditionalsTitle": "Conditionals",
+  "@topicConditionalsTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicPassiveTitle": "Passive Voice",
+  "@topicPassiveTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicPrepositionsTitle": "Prepositions",
+  "@topicPrepositionsTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicRelativeTitle": "Relative Clauses",
+  "@topicRelativeTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicComparativesTitle": "Comparatives & Superlatives",
+  "@topicComparativesTitle": {
+    "description": "A first-wave topic's title (switched off; English everywhere, like every topic title)."
+  },
+  "topicConditionalsDescription": "If-sentences: real, unreal and past.",
+  "@topicConditionalsDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicPassiveDescription": "When the action matters more than who did it.",
+  "@topicPassiveDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicPrepositionsDescription": "At, on, in — and the verbs that need one.",
+  "@topicPrepositionsDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicRelativeDescription": "Who, which, that, whose — joining ideas.",
+  "@topicRelativeDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "topicComparativesDescription": "Taller, more useful, the best.",
+  "@topicComparativesDescription": {
+    "description": "A first-wave topic's line (switched off)."
+  },
+  "practiceDidYouKnow": "Did you know?",
+  "@practiceDidYouKnow": {
+    "description": "Practice being prepared (V18): above the rotating hint card (uppercased by the app)."
+  },
+  "practiceEvaluatedAtEnd": "AI reviews all your answers when you finish",
+  "@practiceEvaluatedAtEnd": {
+    "description": "Practice question (V19): the line under the card saying answers are evaluated together at the end."
+  },
+  "practiceReviewingTitle": "AI is checking your answers",
+  "@practiceReviewingTitle": {
+    "description": "AI evaluation in progress (V20): the title."
+  },
+  "practiceReviewingCount": "{topic} · {count, plural, =1{1 answer} other{{count} answers}}",
+  "@practiceReviewingCount": {
+    "description": "AI evaluation (V20): under the title.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "Articles"
+      },
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "practiceReviewingRead": "Reading your answers",
+  "@practiceReviewingRead": {
+    "description": "AI evaluation (V20): checklist item 1."
+  },
+  "practiceReviewingRules": "Checking the grammar rules",
+  "@practiceReviewingRules": {
+    "description": "AI evaluation (V20): checklist item 2."
+  },
+  "practiceReviewingWrite": "Writing your feedback",
+  "@practiceReviewingWrite": {
+    "description": "AI evaluation (V20): checklist item 3."
+  },
+  "practiceReviewingOnItsWay": "Your feedback is on its way",
+  "@practiceReviewingOnItsWay": {
+    "description": "AI evaluation (V20): above the indeterminate bar (uppercased by the app)."
+  },
+  "practiceResultsCorrect": "{correct}/{total} correct",
+  "@practiceResultsCorrect": {
+    "description": "Practice results (V21): the title.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "practiceResultsRight": "Correct",
+  "@practiceResultsRight": {
+    "description": "Practice results (V21): a right answer's label."
+  },
+  "practiceResultsNeedsWork": "Needs work",
+  "@practiceResultsNeedsWork": {
+    "description": "Practice results (V21): a wrong answer's label."
+  },
+  "practiceResultsMore": "Want another round today?",
+  "@practiceResultsMore": {
+    "description": "Practice results for a free user (V21): above the Premium line."
+  },
+  "practiceResultsMoreLine": "Premium: up to {count} sessions a day, every topic.",
+  "@practiceResultsMoreLine": {
+    "description": "Practice results for a free user (V21).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "dailyLimitCount": "{done} of {total} practice sessions done",
+  "@dailyLimitCount": {
+    "description": "Practice limit reached (P08): under the full counter.",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallHeadlineName": "Turn today’s mistake into progress, {name}.",
+  "@paywallHeadlineName": {
+    "description": "Paywall (V13): the headline with the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "paywallComparePlans": "Compare plans",
+  "@paywallComparePlans": {
+    "description": "V13 (v11): the hint under the first view; tapping it scrolls to Free vs Premium (13 → 13c → 13a)."
+  },
+  "paywallSelectedPlan": "{plan} plan",
+  "@paywallSelectedPlan": {
+    "description": "Paywall (V13c): the selected plan's name above the pinned button once the plans have scrolled away.",
+    "placeholders": {
+      "plan": {
+        "type": "String",
+        "example": "Annual"
+      }
+    }
+  },
+  "paywallTimelineTitle": "How your free trial works",
+  "@paywallTimelineTitle": {
+    "description": "Paywall: the trial timeline's heading."
+  },
+  "paywallTimelineToday": "Today: everything in Premium unlocks. Nothing to pay.",
+  "@paywallTimelineToday": {
+    "description": "Paywall trial timeline: the first step."
+  },
+  "paywallTimelineEnd": "Day {days}: the trial ends and the plan starts. Cancel before then to pay nothing.",
+  "@paywallTimelineEnd": {
+    "description": "Paywall trial timeline: the last step; {days} is the trial's length in days.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallExitTitle": "Leaving already, {name}?",
+  "@paywallExitTitle": {
+    "description": "Paywall exit pop-up (V13b): the title, once per session.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "paywallExitTitleNoName": "Leaving already?",
+  "@paywallExitTitleNoName": {
+    "description": "Paywall exit pop-up (V13b): the title when no name is known."
+  },
+  "paywallExitBody": "Your weak spots are waiting. Premium turns each one into practice with AI feedback.",
+  "@paywallExitBody": {
+    "description": "Paywall exit pop-up (V13b): the line under the title. No discount."
+  },
+  "paywallExitContinueFree": "Continue with free",
+  "@paywallExitContinueFree": {
+    "description": "Paywall exit pop-up (V13b): the secondary button; closes the paywall."
+  },
+  "paywallOnTitle": "Premium is on!",
+  "@paywallOnTitle": {
+    "description": "After a purchase or trial start (PW05): the title."
+  },
+  "paywallOnTopics": "All {count} topics in Topic Practice",
+  "@paywallOnTopics": {
+    "description": "PW05: the first unlocked thing. 'Topic Practice' is the feature name.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallOnSessions": "Up to {count} practice sessions a day",
+  "@paywallOnSessions": {
+    "description": "PW05: the second unlocked thing.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallOnFeedback": "AI feedback on every weak spot",
+  "@paywallOnFeedback": {
+    "description": "PW05: the third unlocked thing."
+  },
+  "paywallOnTrialEnds": "Your free trial ends on {date}.",
+  "@paywallOnTrialEnds": {
+    "description": "PW05: the trial's end date, written plainly.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "24 November 2026"
+      }
+    }
+  },
+  "profileChange": "Change",
+  "@profileChange": {
+    "description": "Profile (V23): the button on the companion's stage (→ change your buddy)."
+  },
+  "profileClimbingWith": "Climbing with {hero}",
+  "@profileClimbingWith": {
+    "description": "Profile (V23): under the name on the ribbon.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "profileClimbingWithSince": "Climbing with {hero} · since {date}",
+  "@profileClimbingWithSince": {
+    "description": "Profile (V23): under the name on the ribbon once a Daily Test has been completed; {date} is the month of the first completion, short (\"Nov 2026\").",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "date": {
+        "type": "String",
+        "example": "Nov 2026"
+      }
+    }
+  },
+  "profileShelfToNext": "{points} to {tier}",
+  "@profileShelfToNext": {
+    "description": "Profile (V23): the medal shelf's line under the running month; {points} is medalThresholdPoints (\"66 pts\"), {tier} the next medal.",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "66 pts"
+      },
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "settingsEditName": "Edit your name",
+  "@settingsEditName": {
+    "description": "Profile (V23): the pencil's VoiceOver label (→ PF04)."
+  },
+  "profileStatPoints": "points this month",
+  "@profileStatPoints": {
+    "description": "Profile (V23): a stat tile's label under this month's points."
+  },
+  "profileStatStep": "step",
+  "@profileStatStep": {
+    "description": "Profile (V23): a stat tile's label under this month's step."
+  },
+  "profileStatWeakSpots": "weak spots",
+  "@profileStatWeakSpots": {
+    "description": "Profile (V23): a stat tile's label under the number of weak spots."
+  },
+  "profileSeeAll": "See all",
+  "@profileSeeAll": {
+    "description": "Profile (V23): opens every medal (PF02)."
+  },
+  "profileMedalsClose": "Close",
+  "@profileMedalsClose": {
+    "description": "The medals layer (PF02): the close button's label."
+  },
+  "profileMedalThisMonth": "This month",
+  "@profileMedalThisMonth": {
+    "description": "The medals layer (PF02): the current month's grey slot."
+  },
+  "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "A snackbar's undo action (SY02), e.g. after 'Name saved'."
+  },
+  "widgetStepWaiting": "Step {step} is waiting",
+  "@widgetStepWaiting": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): the title. {step} is the step today's test reaches.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestLength": "{count} questions · {minutes} min",
+  "@widgetTestLength": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): how long today's test is.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetDoneToday": "Done today",
+  "@widgetDoneToday": {
+    "description": "Home-screen widgets (W01): today's Daily Test is done (the small widget's label, the medium widget's chip, the tip's box)."
+  },
+  "widgetNextTestIn": "Next test in {hours} h",
+  "@widgetNextTestIn": {
+    "description": "Home-screen widgets, test done (W01): whole hours until the next Daily Test (local midnight), rounded up, 1 to 24. 'h' is the short form of hours.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "widgetStepOneTestAway": "Step {step} is one test away",
+  "@widgetStepOneTestAway": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the title.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestWaiting": "Test waiting",
+  "@widgetTestWaiting": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the status chip."
+  },
+  "widgetStart": "Start",
+  "@widgetStart": {
+    "description": "Home-screen widgets (W01): the button that opens today's Daily Test."
+  },
+  "widgetTipLabelGeneral": "TIP OF THE DAY · {topic}",
+  "@widgetTipLabelGeneral": {
+    "description": "Home-screen tip widget (W01): the label when the user has no weak spot yet (a general topic tip). {topic} is the topic's English name in capitals.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "ARTICLES"
+      }
+    }
+  },
+  "widgetTipFooterGeneral": "A new tip every day",
+  "@widgetTipFooterGeneral": {
+    "description": "Home-screen tip widget (W01): the line at the bottom of a general tip (no weak spot yet)."
+  },
+  "widgetWeakSpotFooter": "Your weak spot · a new one daily",
+  "@widgetWeakSpotFooter": {
+    "description": "Home-screen tip widget (W01 v12), the line at the bottom: the widget shows one of the user's weak spots, a different one each day."
+  },
+  "widgetDoneShort": "Done",
+  "@widgetDoneShort": {
+    "description": "Home-screen tip widget (W01 v12), the Daily Test box once today's test is done: one short word with a check mark."
+  },
+  "widgetNextInShort": "next in {hours} h",
+  "@widgetNextInShort": {
+    "description": "Home-screen tip widget (W01 v12), the Daily Test box once today's test is done, under 'Done': whole hours until the next Daily Test, 1 to 24. 'h' is the short form of hours.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "reminderDailyTitleAt": "{buddy} is waiting at {place}",
+  "@reminderDailyTitleAt": {
+    "description": "Daily Test reminder notification (N02): the title. {buddy} is the companion's name, {place} the last save point the user reached on this month's mountain (e.g. First Camp).",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "place": {
+        "type": "String",
+        "example": "First Camp"
+      }
+    }
+  },
+  "reminderDailyTitleOn": "{buddy} is waiting on {mountain}",
+  "@reminderDailyTitleOn": {
+    "description": "Daily Test reminder notification (N02): the title before any save point is reached. {buddy} is the companion's name, {mountain} this month's mountain.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "mountain": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "reminderDailyBody": "Today’s {count} questions take about {minutes} minutes. Step {step} is one test away.",
+  "@reminderDailyBody": {
+    "description": "Daily Test reminder notification (N02): the text. {step} is the step today's test reaches.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      },
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "reminderMedalTitle": "So close to {tier}",
+  "@reminderMedalTitle": {
+    "description": "Close-to-a-medal reminder notification (N02): the title. {tier} is the medal's name (Bronze, Silver, Gold).",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
+  "reminderMedalBody": "{points, plural, =1{Just 1 point to go this month.} other{Just {points} points to go this month.}}",
+  "@reminderMedalBody": {
+    "description": "Close-to-a-medal reminder notification (N02): the text. {points} is 1 to 5.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "reminderTicketTitle": "Your free ticket is back",
+  "@reminderTicketTitle": {
+    "description": "Free-ticket reminder notification (N02): the title."
+  },
+  "reminderTicketBody": "Practise “{topic}” with AI feedback.",
+  "@reminderTicketBody": {
+    "description": "Free-ticket reminder notification (N02): the text. {topic} is the user's most frequent weak spot (English, as Review shows it).",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "The With Superlatives"
+      }
+    }
+  },
+  "reminderTicketBodyGeneral": "Practise a weak spot with AI feedback.",
+  "@reminderTicketBodyGeneral": {
+    "description": "Free-ticket reminder notification (N02): the text when the user has no weak spot yet."
+  },
+  "reminderMountainTitle": "A new mountain: {mountain}",
+  "@reminderMountainTitle": {
+    "description": "New-mountain reminder notification (first day of a month): the title. {mountain} is the new month's mountain.",
+    "placeholders": {
+      "mountain": {
+        "type": "String",
+        "example": "Glacier Peak"
+      }
+    }
+  },
+  "reminderMountainBody": "{buddy} is at the start. Step 1 is one test away.",
+  "@reminderMountainBody": {
+    "description": "New-mountain reminder notification: the text. {buddy} is the companion's name.",
+    "placeholders": {
+      "buddy": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "softAskBubble": "Want me to nudge you tomorrow?",
+  "@softAskBubble": {
+    "description": "Reminder question sheet (N01): the companion's bubble."
+  },
+  "softAskTitle": "When do you have 2 minutes?",
+  "@softAskTitle": {
+    "description": "Reminder question sheet (N01): the heading above the time choices."
+  },
+  "softAskMorning": "Morning",
+  "@softAskMorning": {
+    "description": "Reminder question sheet (N01): the 08:30 choice."
+  },
+  "softAskLunch": "Lunch break",
+  "@softAskLunch": {
+    "description": "Reminder question sheet (N01): the 12:30 choice."
+  },
+  "softAskEvening": "Evening",
+  "@softAskEvening": {
+    "description": "Reminder question sheet (N01): the 20:00 choice."
+  },
+  "softAskPick": "Pick a time",
+  "@softAskPick": {
+    "description": "Reminder question sheet (N01): the choice that opens a time wheel."
+  },
+  "softAskNote": "One reminder a day, only if you haven’t practiced yet.",
+  "@softAskNote": {
+    "description": "Reminder question sheet (N01): the promise under the choices."
+  },
+  "softAskTurnOn": "Turn on reminders",
+  "@softAskTurnOn": {
+    "description": "Reminder question sheet (N01): the main button; iOS asks for permission next."
+  },
+  "softAskNotNow": "Not now",
+  "@softAskNotNow": {
+    "description": "Reminder question sheet (N01): the text button; the question is not asked again on its own."
+  },
+  "notifTitle": "Notifications",
+  "@notifTitle": {
+    "description": "Notification settings (N03): the page title and its row in Profile's settings."
+  },
+  "notifDailyTitle": "Daily Test reminder",
+  "@notifDailyTitle": {
+    "description": "Notification settings (N03): the Daily Test reminder's switch."
+  },
+  "notifDailyBody": "Only if you haven’t done today’s test.",
+  "@notifDailyBody": {
+    "description": "Notification settings (N03): the Daily Test reminder's line."
+  },
+  "notifDailyTime": "Every day at {time}",
+  "@notifDailyTime": {
+    "description": "Notification settings (N03): the chip with the reminder's time; a tap opens the time wheel. {time} is like 20:00.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "20:00"
+      }
+    }
+  },
+  "notifTicketTitle": "Free ticket is back",
+  "@notifTicketTitle": {
+    "description": "Notification settings (N03): the free-ticket switch (free users only)."
+  },
+  "notifTicketBody": "When your free practice resets.",
+  "@notifTicketBody": {
+    "description": "Notification settings (N03): the free-ticket switch's line."
+  },
+  "notifMedalTitle": "Close to a medal",
+  "@notifMedalTitle": {
+    "description": "Notification settings (N03): the close-to-a-medal switch."
+  },
+  "notifMedalBody": "When you’re {points} points or less away.",
+  "@notifMedalBody": {
+    "description": "Notification settings (N03): the close-to-a-medal switch's line. {points} is 5.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "notifMountainTitle": "New mountain",
+  "@notifMountainTitle": {
+    "description": "Notification settings (N03): the new-mountain switch."
+  },
+  "notifMountainBody": "On the first day of each month.",
+  "@notifMountainBody": {
+    "description": "Notification settings (N03): the new-mountain switch's line."
+  },
+  "notifPromise": "I’ll never send more than one reminder a day.",
+  "@notifPromise": {
+    "description": "Notification settings (N03): the companion's promise under the switches."
+  },
+  "notifDeniedTitle": "Notifications are off for GrammarLens",
+  "@notifDeniedTitle": {
+    "description": "Notification settings (N03): shown when iOS notifications are off for the app."
+  },
+  "notifDeniedBody": "Turn them on in iOS Settings to get your reminders.",
+  "@notifDeniedBody": {
+    "description": "Notification settings (N03): how to turn iOS notifications back on."
+  },
+  "notifDeniedSnack": "Notifications are off in iOS Settings.",
+  "@notifDeniedSnack": {
+    "description": "Snackbar after turning reminders on while iOS notifications are off for the app."
+  },
+  "notifOpenSettings": "Open Settings",
+  "@notifOpenSettings": {
+    "description": "Opens this app's page in iOS Settings (N03, and the snackbar's action)."
+  },
+  "reminderTimeTitle": "Reminder time",
+  "@reminderTimeTitle": {
+    "description": "The reminder time wheel's heading (N01's 'Pick a time', N03, V24)."
+  },
+  "reminderTimeSemantics": "Reminder time, {time}. Change",
+  "@reminderTimeSemantics": {
+    "description": "VoiceOver label of the reminder time button on the rest scene (V24). {time} is like 20:00.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "20:00"
+      }
+    }
+  },
+  "restRemind": "Remind me tomorrow",
+  "@restRemind": {
+    "description": "The rest scene (V24): the switch that turns on tomorrow's Daily Test reminder."
+  },
+  "restDreamingOf": "{hero} is dreaming of…",
+  "@restDreamingOf": {
+    "description": "V24f: the dream bubble's label over today's weak spot (shown in capitals).",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "restTodaysWeakSpot": "today’s weak spot",
+  "@restTodaysWeakSpot": {
+    "description": "V24f: under the weak spot in the dream bubble."
+  },
+  "restBody": "Your buddy is resting until tomorrow.",
+  "@restBody": {
+    "description": "The rest scene (V24): under the panel's title."
+  },
+  "restPracticeTitle": "Practice",
+  "@restPracticeTitle": {
+    "description": "The rest scene (V24): the practice tile's title."
+  },
+  "restTestLine": "{correct}/{total} · +{points} points",
+  "@restTestLine": {
+    "description": "The rest scene (V24): the Daily Test tile's line.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "4"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      },
+      "points": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "restNextTest": "Next Daily Test · step {step}",
+  "@restNextTest": {
+    "description": "The rest scene (V24): above the countdown (uppercased by the app). 'Daily Test' is the feature name.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "restNotSleepy": "Not sleepy yet?",
+  "@restNotSleepy": {
+    "description": "V24f: beside the PREMIUM chip on the Premium card."
+  },
+  "restTodaysTicketUsed": "Today’s free ticket is used.",
+  "@restTodaysTicketUsed": {
+    "description": "V24f (v13): beside the small used ticket, first line."
+  },
+  "restPracticesADay": "{count, plural, =1{1 practice a day} other{{count} practices a day}}",
+  "@restPracticesADay": {
+    "description": "V24f (v13): the Premium card's top right, beside the PREMIUM tag: the Premium daily practice allowance.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "restNextUp": "Next up",
+  "@restNextUp": {
+    "description": "V24f (v13): the front ticket's small label in the Premium card's deck (upper-cased by the app)."
+  },
+  "restAiFeedback": "AI feedback on every answer",
+  "@restAiFeedback": {
+    "description": "V24f (v13): the front ticket's line under today's weak spot."
+  },
+  "restDeckToday": "Today",
+  "@restDeckToday": {
+    "description": "V24f (v13): under \"+4\" on the front ticket's stub (upper-cased by the app)."
+  },
+  "restDeckSemantics": "{count, plural, =1{Premium: 1 more practice today} other{Premium: {count} more practices today}}",
+  "@restDeckSemantics": {
+    "description": "V24f (v13): the screen reader's label for the Premium card's deck of tickets.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "restDeckAnyTopic": "Any of {count} topics",
+  "@restDeckAnyTopic": {
+    "description": "V24f (v13): the front ticket's title when there is no weak spot yet (one line).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "14"
+      }
+    }
+  },
+  "restWakeUp": "Wake {hero} up",
+  "@restWakeUp": {
+    "description": "V24f: the Premium card's button when no free trial applies.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "restWakeUpTrial": "Wake {hero} up · {days} days free",
+  "@restWakeUpTrial": {
+    "description": "V24f: the Premium card's button with the store's free trial.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "restAwake": "I’m awake! One more round?",
+  "@restAwake": {
+    "description": "V24s: the companion's bubble after waking up."
+  },
+  "paywallRestTitle": "{hero} is wide awake, {name}.",
+  "@paywallRestTitle": {
+    "description": "V13r: the paywall's title when opened from the rest scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestTitleNoName": "{hero} is wide awake.",
+  "@paywallRestTitleNoName": {
+    "description": "V13r: the title without a name.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestSubline": "Keep practising today. Your free ticket is used, Premium adds {more} more.",
+  "@paywallRestSubline": {
+    "description": "V13r: under the title.",
+    "placeholders": {
+      "more": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestPractiseNow": "PRACTISE IT NOW",
+  "@paywallRestPractiseNow": {
+    "description": "V13r: the weak spot card's label (capitals)."
+  },
+  "paywallRestSavedToday": "saved today",
+  "@paywallRestSavedToday": {
+    "description": "V13r: the chip under today's weak spot."
+  },
+  "paywallRestAfterTrial": "→ right after your trial starts",
+  "@paywallRestAfterTrial": {
+    "description": "V13r: beside 'saved today' when a free trial applies."
+  },
+  "paywallRestAfterPremium": "→ right after Premium starts",
+  "@paywallRestAfterPremium": {
+    "description": "V13r: beside 'saved today' without a free trial."
+  },
+  "paywallRestSessionsTitle": "{count} practice sessions a day",
+  "@paywallRestSessionsTitle": {
+    "description": "V13r benefit 1.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestSessionsBody": "Today: {today} more. Every day after: {count}.",
+  "@paywallRestSessionsBody": {
+    "description": "V13r benefit 1's line.",
+    "placeholders": {
+      "today": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestFeedbackTitle": "AI feedback on every answer",
+  "@paywallRestFeedbackTitle": {
+    "description": "V13r benefit 2."
+  },
+  "paywallRestFeedbackBody": "On every topic you practise.",
+  "@paywallRestFeedbackBody": {
+    "description": "V13r benefit 2's line."
+  },
+  "paywallRestTopicsTitle": "All {count} grammar topics",
+  "@paywallRestTopicsTitle": {
+    "description": "V13r benefit 3.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallRestTopicsBody": "Sessions of {lengths} questions.",
+  "@paywallRestTopicsBody": {
+    "description": "V13r benefit 3's line; lengths like '3, 5 or 10'.",
+    "placeholders": {
+      "lengths": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestTitle": "{hero} is ready. Let’s go!",
+  "@paywallOnRestTitle": {
+    "description": "PW05r: the title after a trial started from the rest scene.",
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestSessions": "{today} more sessions today, {count} every day",
+  "@paywallOnRestSessions": {
+    "description": "PW05r: the third unlocked thing.",
+    "placeholders": {
+      "today": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallOnRestPractise": "Practise {spot}",
+  "@paywallOnRestPractise": {
+    "description": "PW05r: the button that opens today's weak spot's practice.",
+    "placeholders": {
+      "spot": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallOnRestPickTopic": "Pick a topic",
+  "@paywallOnRestPickTopic": {
+    "description": "PW05r: the button when there is no weak spot (opens the topics)."
   }
 }

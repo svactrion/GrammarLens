@@ -7,8 +7,9 @@ import '../models/topic.dart';
 ///
 /// The texts are the owner's, verbatim; they were shortened (2026-10-12) to
 /// fit above the "Your answer" row with the keyboard up at 375 × 667, which
-/// `test/topic_hint_card_test.dart` guards. The card's title is the topic's
-/// own title (`kTopics`).
+/// `test/topic_hint_card_test.dart` guards. The Modal Past Forms card was
+/// rewritten on the owner's decision of 2026-11-19 (below). The card's
+/// title is the topic's own title (`kTopics`).
 const Map<TopicId, List<String>> kTopicHints = {
   TopicId.gerundVsInfinitive: [
     '+ -ing: enjoy, avoid, finish, keep',
@@ -22,11 +23,14 @@ const Map<TopicId, List<String>> kTopicHints = {
     'may / might / could: possibility',
     "mustn't ≠ don't have to",
   ],
+  // Rewritten for 1.5.0 (owner decision 2026-11-19): the topic's questions
+  // ask for "could" and "would" as the past of "can" and "will", also in
+  // reported speech; the card had only modal + have + past participle.
   TopicId.modalPastForms: [
-    'modal + have + past participle',
-    "must / can't have: sure it did / didn't",
-    'might / could have: maybe it did',
-    "should have: right, but it didn't happen",
+    'could / would: the past of can / will',
+    'Reported: "I can" → she said she could',
+    'modal + have + past participle: past events',
+    'must have: sure · should have: regret',
   ],
   TopicId.tenseSelection: [
     'Past simple: finished time (ago, in 2020)',
@@ -39,6 +43,38 @@ const Map<TopicId, List<String>> kTopicHints = {
     'an before a vowel sound: an hour',
     'the: specific, known, or the only one',
     'No article: general plural or uncountable',
+  ],
+  // The first-wave topics (SPEC §1.11, in Topic Practice since 1.5.0): the
+  // same shape, four short lines.
+  TopicId.conditionals: [
+    'If + present, will + verb: real future',
+    'If + past, would + verb: unreal now',
+    'If + had + p.p., would have + p.p.: past',
+    'No "will" or "would" in the if-part',
+  ],
+  TopicId.passiveVoice: [
+    'be + past participle: is made, was built',
+    'The tense lives in "be": is / was / has been',
+    'by + doer, only when it matters',
+    'Modal passive: can be done, must be paid',
+  ],
+  TopicId.prepositions: [
+    'at: a point (at 5, at the door)',
+    'on: a surface or a day (on Monday)',
+    'in: inside or a period (in May, in 2020)',
+    'Verb + preposition: depend on, listen to',
+  ],
+  TopicId.relativeClauses: [
+    'who: people · which: things · that: both',
+    'whose: belonging (the man whose car…)',
+    'where / when: places and times',
+    'Commas: extra info, no "that"',
+  ],
+  TopicId.comparativesSuperlatives: [
+    'Short: -er / the -est (tall, the tallest)',
+    'Long: more / the most (more useful)',
+    'Irregular: good → better → the best',
+    'than after a comparative; the before -est',
   ],
 };
 

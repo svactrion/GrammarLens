@@ -53,7 +53,7 @@ changed. Line numbers below are from that starting point.
 | `session_completed` (renamed `practice_completed`, §8) | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
 | `free_practice_used` | none | `lib/screens/practice_launch.dart:147` |
 | `free_practice_quota_exhausted` | none | `lib/screens/practice_launch.dart:73`, `lib/screens/weak_spot_detail_screen.dart:127` |
-| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8; `review_quota`, Review's "used today" card, added 2026-10-05 in 1.2.0 Batch 5: a new value of the existing parameter, no new event) | `lib/screens/premium_screen.dart:128` |
+| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8; `review_quota`, Review's "used today" card, added 2026-10-05 in 1.2.0 Batch 5: a new value of the existing parameter, no new event; `rest_scene`, the free users' rest scene "Wake <Hero> up" (V24f → V13r), added 2026-11-17 by the UI polish fix round 2 on branch `ui-polish`: a new value of the existing parameter, no new event) | `lib/screens/premium_screen.dart:128` |
 | `paywall_dismissed` | `source`, `method` = `close_button` / `maybe_later` / `system_back` | `premium_screen.dart:229`, `:270` |
 | `purchase_started` | `plan` = `monthly` / `annual` | `premium_screen.dart:176` |
 | `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` / `pending` | `premium_screen.dart` (`_startPurchase`). **1.2.0 (owner, 2026-10-05):** `pending` = Ask to Buy or a deferred payment, waiting for approval (O10); no new event or parameter. An approval that comes later reaches the app only as an entitlement change and logs nothing, so each attempt is counted once; a pending purchase that is later approved stays `pending` in analytics (RevenueCat records the transaction itself) |
@@ -332,7 +332,7 @@ paywall funnel by `source` and `plan` (§5).
 |---|---|---|
 | `first_step_dom` | Day of month (`"1"`–`"31"`) on which the user earned their first ever step | Exactly once, at the moment E3 fires (`welcomeBadgeJustEarned`) |
 | `text_size` | `small` / `medium` / `large` | At startup after the stored value is loaded, and on each change (E6) |
-| `learning_goal` | `exam_prep` / `work` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
+| `learning_goal` | `exam_prep` / `work` / `school` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05); `school` added by the UI polish fix round 2 (SPEC §1.14, 2026-11-17, branch `ui-polish`).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
 
 **`learning_goal` (1.2.0).** The onboarding goal question personalizes
 nothing; it is asked to understand who uses the app and to decide what to
@@ -749,7 +749,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 |---|---|---|---|
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
-| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, registered 2026-10-06** |
+| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `school` / `general` / `skipped` — **1.2.0, registered 2026-10-06; `school` added on branch `ui-polish` (fix round 2), a new value of the registered property, nothing to register** |
 | Interface language | `ui_language` | User | `en` / `ja` / `ko` / `es` / `pt-BR` / `tr` / `ar` / `de` — **1.4.0; implemented 2026-11-02 (B3), not registered** (owner registers before 1.4.0 ships) |
 
 ### Event-scoped custom dimensions

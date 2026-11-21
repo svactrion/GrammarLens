@@ -1,0 +1,856 @@
+# Widgets and reminders — progress log (branch `widgets-notifications`)
+
+Running log of `TASK-widgets.md` (W01 home-screen widgets; N01, N02, N03
+reminders; the V24 reminder switch). One section per step W0–W6: status,
+commits, what was verified and how, decisions, open items. The final summary
+and the "Owner steps" go at the top when W6 ends.
+
+Rules carried over from `TASK.md`: the §1 decision rule (TASK-widgets fixed
+decisions → `SPEC.md` → the board → the app's current behaviour → the
+smallest choice that is easy to change), no questions and no stopping, small
+commits, no new package, no deploy, no paid API, no merge into `main`, never
+touch `~/GrammarLens` or the `ui-polish` branch. Nothing unverified is
+marked done.
+
+## Summary
+
+**Status: W0–W6 done** on branch `widgets-notifications` (pushed). Not
+merged into `ui-polish` or `main`, not shipped, **not checked on a device**.
+
+| Step | Status | Commits |
+|---|---|---|
+| W0 Plan | done | `2cacae0` |
+| W1 Bridge, URL scheme, routing | done | `8f55b36`, `28dff82`, `5dc2524` |
+| W2 Widget extension + SwiftUI views | done | `9a54674`, `eeec68f`, `6fb1203` |
+| W3 App-side payload | done | `5e114bd`, `975b882`, `4f933fa`, `077ecd7` |
+| W4 Reminder engine | done | `d49b1c1`, `ac6ee6b`, `dfc0810`, `ad30068`, `fa77769` |
+| W5 UI (N01, N03, V24), captures | done | `a290231`, `ab895bf`, `f2d285f`, `fc4a32d`, `b840785`, `2d7e8c8` |
+| W6 Final pass, merge, docs | done | `f9002b7` (merge), `88b0b01`, `3e27dd5`, `0d71690`, and the docs commit that records them |
+
+**Done.** The "Climb" widget (small, medium A) and the "Tip" widget
+(medium B) from a WidgetKit extension fed only by the app (texts in the
+app's language, images the app scaled down, no network); the
+`grammarlens://daily-test | home | review` links, cold and warm; one
+reminder a day at the user's time, picked (a) new mountain → (b) close to a
+medal → (c) Daily Test → (d) free ticket, seven days ahead and rebuilt on
+every change; N01 asked once before the iOS dialog, N03 under Profile →
+Notifications, V24's "Remind me tomorrow". Our own `MethodChannel`: no new
+package, no new third party, nothing leaves the device, no new analytics
+event, no version change.
+
+**Verified** (after the last code change, `88b0b01`–`0d71690`):
+`flutter analyze` no issues; `flutter test` **2605 passed**; `xcodebuild
+build` of Runner + `GrammarLensWidgets` for the iPhone 18 Pro simulator
+**BUILD SUCCEEDED**; `xcodebuild test` RunnerTests **21 passed, 0 failed**
+(bridge, payload, timeline, reminder requests, the `ImageRenderer`
+snapshots of every widget and state from both the Swift samples and the
+Dart builder's six fixtures: 50 PNGs in `build/widget-snapshots/`). On the
+simulator: every widget size and state on the home screen, N01, N02 (a real
+reminder), N03, V24, in English light and in Arabic + dark + the largest
+text; the board comparison is in W5 and W6.
+
+**Not verified.** Anything on a device. On the simulator: a delivered
+reminder's tap (the lock screen did not hand it to the app) and the
+companion thumbnail (attached, not shown). See "Blocked / not verified".
+
+**Decisions to review:** DW0-2 (a third link for Review), DW0-3 (links
+dropped while a flow is open), DW2-1 (system rounded type in widgets),
+DW2-2 (the tip's highlight instead of an example line), DW3-2 (translated
+mountain and month names), DW5-1 (N03 goes straight to iOS), DW5-3 (when
+N01 opens), DW6-1 (V24f after the merge).
+
+## Owner steps
+
+1. **Signing (Xcode, Runner project).** Select the team for the new
+   `GrammarLensWidgets` target (Signing & Capabilities), like Runner's; its
+   bundle ID is `com.ahmettayfur.grammarlens.widgets`. No signing setting
+   was written by this run.
+2. **App Group.** In the Apple Developer portal register
+   `group.com.ahmettayfur.grammarlens` and enable App Groups (with that
+   group) for both App IDs, `com.ahmettayfur.grammarlens` and
+   `com.ahmettayfur.grammarlens.widgets`; with automatic signing Xcode
+   offers to do this when the capability shows red. Push Notifications are
+   **not** needed (reminders are local).
+3. **Build for the device** with `flutter run` / Xcode as usual. On this
+   Mac `flutter build ios --simulator` fails before any code (Flutter
+   3.44.6 vs. Xcode 27.2's `lipo -verify_arch`); single-simulator and device
+   builds are not affected.
+4. **Widgets on the phone.** Open the app once (it writes the payload),
+   then long-press the home screen → Edit → Add Widget → GrammarLens: add
+   "Climb" small and medium and "Tip". Check: waiting state before today's
+   test, done state after it (countdown in hours), the medium mountain at
+   your step, a tap on each widget (Daily Test / Home), dark mode, Arabic.
+5. **Reminders on the phone.** Finish a Daily Test on a second day or reach
+   the rest scene: N01 should open once. Turn reminders on and allow iOS's
+   dialog; in Profile → Notifications set the time a few minutes ahead and
+   leave the app: one reminder should arrive, with the companion's picture,
+   and a tap should open the Daily Test (or Review for "Free ticket is
+   back"). Also check "Don't Allow" → Profile → Notifications shows the
+   "Notifications are off" card and "Open Settings" works.
+6. **Merging with `ui-polish`.** Its fix round 2 (SPEC v10, merged here as
+   docs only) adds V24f, the free users' rest scene, whose board also has
+   "Remind me tomorrow": when V24f is built, put `RestReminderRow` into it
+   as `RestScene.reminder` is today (DW6-1).
+7. **Legal and store.** `product.yaml` `legal` is unchanged (no new third
+   party, no data collected). Before release, the App Store "App Privacy"
+   answers stay as they are; the review notes may mention the widgets and
+   the optional reminders.
+
+## Decisions
+
+Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
+
+- **DW0-1 TASK-widgets.md is in English.** The owner's message was Turkish
+  and asked to be saved as the task file; the same message says all docs
+  stay in English. · Verbatim Turkish vs. an English rendering. · **English
+  rendering**, the user-facing copy kept exactly, with a note at the top that
+  the original wins on any difference. · Both rules hold that way.
+- **DW0-2 A third link, `grammarlens://review`.** Fixed decision 4 says a
+  "Free ticket is back" tap opens the ticket on Review; fixed decision 3 only
+  names `daily-test` and `home`. · Reuse `home` vs. add a link. · **Add
+  `grammarlens://review`** (the Review tab, where the ticket is the top card).
+  · Opening Home would not be "directly the right screen".
+- **DW0-3 Links act only on the tab shell.** A link that arrives while a
+  flow is pushed (a Daily Test, practice, paywall) or before onboarding is
+  complete. · Pop to the root vs. drop the link vs. queue it. · **Drop it
+  while a flow is pushed or onboarding is running; queue it during launch
+  until the profile has loaded.** · Popping could throw away a running
+  practice session; the app simply comes to the front where the user left it.
+- **DW0-4 Countdown text is prepared by the app, per hour.** "Next test in
+  10 h" changes over time, and `Text(date, style: .relative)` formats in the
+  device language, not the app's. · iOS relative text vs. the clock time of
+  the next test vs. app-prepared strings. · **The payload carries one string
+  per remaining whole hour** (ICU plural from the ARB) and the timeline has
+  an entry at each top of the hour until midnight. · Fixed decision 3 allows
+  "text the app prepared"; it keeps the board's copy.
+
+- **DW1-1 How the iOS app is built here.** `flutter build ios --simulator`
+  fails on this machine before any of our code: Flutter 3.44.6 runs
+  `lipo <framework> -verify_arch arm64 x86_64`, which Xcode 27.2's `lipo`
+  rejects ("-verify_arch requires exactly one input file"), so a generic
+  two-architecture simulator build always stops at "Failed to copy Flutter
+  framework". · Patch the Flutter SDK vs. build for one simulator. · **Build
+  for the booted simulator** (`xcodebuild … -destination 'platform=iOS
+  Simulator,id=…'` with the default DerivedData, or `flutter run -d <id>`),
+  which builds only the active architecture. · Touches nothing outside the
+  repo; the SDK problem is the owner's to know about (listed in Owner steps).
+- **DW1-2 Links arrive through a Flutter scene delegate.** The app uses
+  the scene lifecycle (`FlutterSceneDelegate`, implicit engine). ·
+  Override `SceneDelegate` methods (the superclass does not declare them in
+  its header, so overriding would bypass Flutter's own forwarding) vs.
+  Flutter's plugin hook. · **`GrammarLensBridge` registers itself with
+  `registrar.addSceneDelegate`** and gets `willConnectTo` (cold start) and
+  `openURLContexts` (warm). A link that arrives before Dart asks is kept
+  (latest wins) and handed over by `links.initial`.
+- **DW1-3 The seeded app for simulator checks.** `tool/widgets/seeded_app.dart`
+  runs the real app with the App Store screenshot learner (`Sam`, from
+  `tool/screenshots/seed.dart`), no Firebase or RevenueCat, analytics
+  dropped; nothing in `lib/` imports it (the existing import guard test).
+
+- **DW2-1 System rounded type in the widgets.** The boards use Nunito
+  Sans, an app asset; fixed decision 3 says no app asset is copied into the
+  extension. · Copy the font vs. the system font. · **SF Pro Rounded at
+  heavy/bold weights** (`WidgetFont`). · Keeps the rule; the look stays close
+  (rounded, heavy).
+- **DW2-2 The tip's key words are a highlight inside the rule line.** W01
+  shows "Use **the** with superlatives." with "the" in a green chip and an
+  example line. The app's hint data (`kTopicHints`) has one line per hint,
+  "key: explanation", and no examples. · Invent example lines vs. use the
+  line as it is. · **The part before ": " is the green highlight, the rest
+  follows in the same sentence** (an `AttributedString` background, iOS 15);
+  a line without ": " is shown plain. No example line. · The hint text stays
+  the owner's verbatim (SPEC §3.7: hints stay English).
+- **DW2-3 Runner compiles the widget views too.** The snapshot tests run
+  in RunnerTests (`@testable import Runner`). · Compile the view files into
+  RunnerTests vs. into Runner. · **Runner** (the extension's `@main` bundle
+  stays in the extension only): one copy of each type, so the tests' App
+  Group override reaches the same `AppGroupStore` the views read. The app
+  never shows these views; the cost is a few kilobytes.
+- **DW2-4 Before the first payload** (a fresh install, the widget gallery):
+  the widget shows the brand only ("GrammarLens" and the lens symbol, on
+  orange) and opens Home; it has no text to translate. The gallery's own
+  names ("Climb", "Tip") and descriptions are fixed English in the extension
+  (the extension cannot read the app's language before the app has run).
+
+- **DW3-1 One hook for "the state changed".** The widgets (and the
+  reminders, W4) must follow the Daily Test, practice, the profile and the
+  language. · Calls from every screen vs. one hook in storage. ·
+  **`StorageService.onChanged`**, called after the writes that matter
+  (`completeDailyTest`, `recordFreePracticeStarted`, `recordSessionStarted`,
+  `recordPracticeCompletion`, `saveUserProfile`, `setLanguage`,
+  `resetProgressData`), pointed by the app at `DeviceSync.requestUpdate`;
+  plus launch, resume (a new day or month) and a device-language change
+  from `app.dart`. `DeviceSync` coalesces requests and uses no timers (no
+  pending timer can leak into a widget test).
+- **DW3-2 The mountain's and the month's names are translated** on the
+  widget ("Glutgipfel · November"), as the app shows them; only topic names
+  and hint lines stay English (SPEC §3.7).
+- **DW3-3 "5 questions · 2 min"** is the board's short form for the widget;
+  Home keeps "about 2 minutes".
+- **DW3-4 The next month's mountain is read, never recorded.** When the
+  next midnight starts a new month the payload already points at that
+  month's crops; its theme comes from a stored row if one exists, else from
+  the rotation (`ClimbThemeRotation.shownFor`), without writing a row (Home
+  records it when the month is shown, as today).
+- **DW3-5 Images are written once per key.** File names carry what they
+  depend on (`avatar_14.png`, `mountain_<theme>_d<days>_s<step>_<mode>.png`);
+  a run renders only missing files and deletes the ones no entry uses.
+
+- **DW4-1 "Close to a medal" is the month card's near-miss rule**
+  (`MonthlyMedalRules.nearMiss`: the next tier 1–5 points away), so the
+  reminder and the app never disagree about "close".
+- **DW4-2 The Daily Test reminder's place.** N02 says "Fox is waiting at
+  First Camp". · Always the mountain vs. the place reached. · **The last save
+  point reached this month ("at First Camp"), else the mountain ("on Ember
+  Peak")**; names translated as the app shows them.
+- **DW4-3 Days ahead assume no more tests.** The plan is rebuilt whenever
+  a test or practice finishes, a setting changes, the app opens or comes
+  back, and when Premium starts or ends (the free ticket); so a day ahead is
+  planned as "test not done", which makes (d) possible only today.
+- **DW4-4 One table for the settings** (`reminder_settings`, DB v26 → v27):
+  four switches, the time, and whether our question was asked
+  (`not_asked` / `declined` / `accepted`). It is a setting, not progress, so
+  "Reset progress" leaves it; nothing is sent anywhere.
+- **DW4-5 The companion picture works.** `UNNotificationAttachment` with the
+  widgets' `avatar_<n>.png` from the App Group, a fresh copy per request
+  (iOS moves the file when the request is added); verified by
+  `ReminderSchedulerTests` on the simulator. Without the file the reminder
+  goes without a picture.
+- **DW4-6 Times are local wall-clock dates** (`UNCalendarNotificationTrigger`,
+  year/month/day/hour/minute, no time zone, not repeating): one request per
+  day, id `gl.reminder.YYYY-MM-DD`, so two can never share a day; every
+  schedule call first removes all pending `gl.reminder.*` requests.
+
+- **DW5-1 N03's switches do not go through N01.** Fixed decision 5 puts
+  our question before the iOS dialog; in N03 the user turns a reminder on
+  by hand, which is that choice. · Show N01 first vs. go to iOS. · **The
+  first switch turned on in N03 turns all four on and shows the iOS dialog**
+  (fixed decision 6). V24's switch does open N01 (fixed decision 7), also
+  after an earlier "Not now" (the user asked; only asking *on its own* is
+  over).
+- **DW5-2 Closing N01 counts as "Not now".** A swipe down or a tap outside
+  is an answer too; it is never asked again on its own.
+- **DW5-3 When N01 opens on its own.** The first rest scene, or Home after
+  a Daily Test flow when the first test on record is older than today (the
+  second test or later), only while Home is quiet (visible, no flow, no step
+  walking, no month card) and only if the stored answer was actually read.
+- **DW5-4 "Notifications" is the first row of Profile's "App information"
+  card** (N03 has no board for Profile itself); the page has no subtitle
+  (`PageHeader.subtitle` is now optional).
+- **DW5-5 The time wheel is a 24-hour `CupertinoDatePicker` in every
+  language**, like the times on N01, N03 and V24 ("20:00").
+- **DW5-6 N03's switches are navy and V24's is green**, as on the boards
+  (the app's default switch colour is orange).
+
+- **DW6-1 V24f will need the reminder row too.** `origin/ui-polish` gained
+  SPEC v10 and the fix round 2 task (docs only, merged here as `f9002b7`,
+  no conflict): free users get a new rest scene V24f whose board ends with
+  "Remind me tomorrow · 20:00" and says the row "belongs to the separate
+  notifications task". V24f is not built yet on either branch. · Build V24f
+  here vs. leave it to fix round 2. · **Leave it; `RestReminderRow` is a
+  self-contained widget that V24f can take as `RestScene.reminder` does**
+  (Owner steps 6). · Building another branch's screen here would collide
+  with fix round 2.
+- **DW6-2 The small done widget's title stays on one line** (W01) and
+  scales down; the countdown may take two lines; the tip box's "Done today"
+  scales down further (German "Heute erledigt").
+
+## Blocked / not verified
+
+- **Tapping a delivered reminder on the simulator did not open the app**
+  (W5): from the lock screen and from Notification Center the simulator
+  kept the lock screen or the home screen. The tap goes through
+  `ReminderScheduler.didReceive` → `GrammarLensBridge.receive(link:)`, the
+  same path as a widget's link, which is verified cold and warm; the
+  reminder tap itself is **not verified** (owner, on a device).
+- **The companion picture (N02) is attached but not seen** (W5): iOS logged
+  "Copied attachment file into repository … Successfully resolved request"
+  for every reminder, but the simulator's lock-screen row showed no
+  thumbnail. **Not verified visually** (owner, on a device).
+- **Disk full (2026-11-17, W1).** The Mac's data volume reached 308 MB
+  free during the first simulator build; a `flutter run` failed with "No
+  space left on device" and the simulator shut down. Freed by deleting only
+  this run's own build folder (`build/xc-dd`, a custom DerivedData path);
+  about 8 GB free afterwards. Builds in this run stay on the default
+  DerivedData folder and `build/`. The owner may want to free space.
+
+## W0 — Plan
+
+Status: **done**.
+
+Read: `docs/roadmap.md` (1.5.0 row, the UI polish split-out note),
+`docs/build-log.md` (head), `docs/1.4.0-plan.md` D5 (widget: avatar, this
+month's step, done or not, no streak), `CLAUDE.md`, `docs/AGENTS.md`,
+`SPEC.md`, `TASK.md`, `PROGRESS.md` (summary, B0, B5), the boards W01, N01,
+N02, N03, V24 and their renders; the app's `main.dart`, `app.dart`,
+`storage_service.dart` (sqflite, single-row settings tables, DB version 26),
+`settings_screen.dart`, `home_screen.dart`, `review_screen.dart`,
+`rest_scene.dart`, `data/topic_hints.dart`, `monthly_medal_rules.dart`,
+`widgets/monthly_climb/climb_trail_table.dart`; `ios/` (Runner, RunnerTests,
+`project.pbxproj`, scheme, `Info.plist`).
+
+Facts the plan rests on (checked, not guessed):
+
+- iOS project: Swift Package Manager for plugins (no Podfile), `objectVersion
+  54`, deployment target 15.0, Swift 5.0, two targets (Runner, RunnerTests),
+  the Runner scheme already tests RunnerTests. Scene-based lifecycle:
+  `AppDelegate` is a `FlutterImplicitEngineDelegate` and `SceneDelegate` a
+  `FlutterSceneDelegate`, so URLs arrive through the scene
+  (`willConnectTo` options on a cold start, `openURLContexts` warm). No
+  entitlements file exists yet; no `CFBundleURLTypes` yet.
+- Tooling here: Xcode 27.2, Ruby 4.0.6 with the `xcodeproj` gem 1.28.1, the
+  iPhone 18 Pro simulator (iOS 27.2).
+- App data the widgets and reminders need already exists locally:
+  climb progress and steps per month (`getClimbProgress`, steps = days in
+  the month), the month's theme (`resolveClimbMonthTheme`, trail points in
+  `climbTrail`, the same for every theme), medal thresholds and "points to
+  next tier" (`MonthlyMedalRules.nextTier`, `nearMissPoints = 5`), the free
+  ticket (`getFreePracticeCountForToday`, `freeDailyPracticeLimit = 1`),
+  Premium (`SubscriptionService`), weak spots with `topicId`
+  (`getWeakSpots`), topic hint lines (`kTopicHints`, English, four per
+  topic), save point and theme names (ARB: `savePointFirstCamp`,
+  `themeEmberPeak`, …), the avatar and name (`UserProfile`).
+
+### File list
+
+New unless marked (edit).
+
+Dart (`lib/`):
+
+| File | What |
+|---|---|
+| `services/native_bridge.dart` | `NativeBridge` interface + `MethodChannelNativeBridge` (the one channel, below); a fake lives in `test/helpers/` |
+| `services/app_link.dart` | `AppLink` (`dailyTest`, `home`, `review`) parsed from `grammarlens://…`; `AppLinkRouter`: the cold-start link, the warm stream, the DW0-3 rules |
+| `models/reminder_settings.dart` | `ReminderSettings` (four kinds on/off, time in minutes, `askState`: `notAsked` / `declined` / `accepted`) |
+| `services/reminder_plan.dart` | **pure**: `planReminders(now, settings, ReminderState) → List<PlannedReminder>` (7 days, ≤ 1 a day, priority a–d) |
+| `services/reminder_sync.dart` | reads the state, fills texts from `AppLocalizations`, calls the bridge; the triggers call this |
+| `services/widget_payload.dart` | **pure**: `buildWidgetPayload(WidgetState, AppLocalizations, now) → Map` (schema below) |
+| `services/widget_images.dart` | avatar and mountain crops as PNG bytes (`dart:ui`), crop rect math as a pure function |
+| `services/widget_sync.dart` | reads the state, builds payload + images, writes them through the bridge, reloads timelines |
+| `screens/reminder_soft_ask.dart` | N01 sheet (four time options, "Turn on reminders", "Not now") |
+| `screens/notification_settings_screen.dart` | N03 |
+| `widgets/time_wheel_picker.dart` | the wheel time picker (`CupertinoPicker`-based, SDK only) used by N01 "Pick a time", N03 and V24 |
+| `services/storage_service.dart` (edit) | `reminder_settings` single-row table, DB version 26 → 27 with migration |
+| `app.dart` (edit) | link router, launch/language triggers for widget + reminder sync |
+| `screens/home_screen.dart` (edit) | open the Daily Test from a link; triggers after the Daily Test, practice and the month change; N01 after the second Daily Test |
+| `widgets/rest_scene.dart` (edit) | V24 "Remind me tomorrow" row (switch + time chip); N01 on first rest scene |
+| `screens/settings_screen.dart` (edit) | "Notifications" row → N03; avatar/name change triggers |
+| `screens/review_screen.dart` (edit) | nothing expected (the Review tab is the target); practice-finished trigger if it lives here |
+| `l10n/app_*.arb` (edit, 8) | widget, reminder, N01, N03, V24 strings |
+
+iOS (`ios/`):
+
+| File | What |
+|---|---|
+| `Runner/AppDelegate.swift` (edit) | registers `GrammarLensBridge` with the implicit engine's registrar; sets the notification center delegate early |
+| `Runner/SceneDelegate.swift` (edit) | hands URLs (cold `connectionOptions.urlContexts`, warm `openURLContexts`) to the bridge, then `super` |
+| `Runner/GrammarLensBridge.swift` | the `MethodChannel` handler; pending cold-start link |
+| `Runner/ReminderScheduler.swift` | `UNUserNotificationCenter`: status, request, schedule (calendar triggers), cancel, attachment, foreground suppression, tap → link |
+| `Shared/AppGroupStore.swift` | App Group container paths, safe names, atomic write/read; compiled into Runner **and** the extension |
+| `Shared/WidgetPayload.swift` | `Codable` payload model; Runner (tests) + extension |
+| `Runner/Runner.entitlements` | `com.apple.security.application-groups` |
+| `Runner/Info.plist` (edit) | `CFBundleURLTypes` with the `grammarlens` scheme |
+| `GrammarLensWidgets/GrammarLensWidgets.swift` | `@main` `WidgetBundle`: `ClimbWidget` (small, medium), `TipWidget` (medium) |
+| `GrammarLensWidgets/PayloadTimeline.swift` | `TimelineProvider`: entries from the payload (now, each hour to midnight, midnight) |
+| `GrammarLensWidgets/ClimbSmallView.swift`, `ClimbMediumView.swift`, `TipMediumView.swift`, `WidgetStyle.swift` | the SwiftUI views (W01) |
+| `GrammarLensWidgets/Info.plist`, `GrammarLensWidgets.entitlements` | `com.apple.widgetkit-extension`; the App Group |
+| `RunnerTests/WidgetSnapshotTests.swift` | `ImageRenderer` PNGs for every widget × state (iOS 16+) into `build/widget-snapshots/` |
+| `RunnerTests/WidgetPayloadTests.swift`, `ReminderSchedulerTests.swift` | decoding, timeline entries, request building |
+| `Runner.xcodeproj/project.pbxproj` (edit, by script) | the extension target, embed phase, dependency, entitlements setting, the shared files' memberships |
+
+Tooling and docs: `tool/ios/add_widget_target.rb` (idempotent; backs up
+`project.pbxproj` to `build/pbxproj-backup/` first), this file,
+`TASK-widgets.md`; at W6 `docs/build-log.md`, `docs/roadmap.md`,
+`product.yaml`.
+
+Dart tests (`test/`): `native_bridge_test`, `app_link_test` (parsing, cold,
+warm, DW0-3), `widget_payload_test`, `widget_images_test` (crop math),
+`reminder_plan_test`, `reminder_settings_storage_test` (migration 26 → 27),
+`reminder_soft_ask_test`, `notification_settings_screen_test`, rest scene
+switch tests, the trigger tests on Home / app.
+
+### Bridge API
+
+One channel, `com.ahmettayfur.grammarlens/bridge`, registered from the
+implicit engine's plugin registry (`registrar(forPlugin: "GrammarLensBridge")`).
+Arguments are maps; errors are `FlutterError` with a code; every Dart call is
+best effort (a failure never breaks the app, like analytics).
+
+Dart → iOS:
+
+| Method | Arguments | Returns |
+|---|---|---|
+| `appGroup.write` | `name` (`[a-z0-9_.-]+`, no `/`), `bytes` (`Uint8List`) | `true`; atomic write into `<group>/widget/<name>` |
+| `appGroup.read` | `name` | `Uint8List?` |
+| `appGroup.delete` | `name` | `true` |
+| `widgets.reload` | — | `true`; `WidgetCenter.shared.reloadAllTimelines()` |
+| `links.initial` | — | `String?`: the cold-start URL (scene or notification tap), cleared once read |
+| `notifications.status` | — | `notDetermined` / `denied` / `authorized` / `provisional` / `ephemeral` |
+| `notifications.request` | — | `bool` granted (alert, sound, badge off) |
+| `notifications.schedule` | `items`: list of `{id, year, month, day, hour, minute, title, body, link, image?}` | `int` scheduled; removes every pending `gl.reminder.*` first, then adds one `UNCalendarNotificationTrigger` (local date components, non-repeating) per item |
+| `notifications.cancelAll` | — | `true` (pending `gl.reminder.*` and delivered ones) |
+| `notifications.pending` | — | list of ids (tests, debug) |
+| `settings.openNotifications` | — | `bool`; iOS 16+ `openNotificationSettingsURLString`, else `openSettingsURLString` |
+
+iOS → Dart: `links.open` with `{url}` for warm opens (widget tap, notification
+tap while running). The router (DW0-3) decides what happens.
+
+Notification details: ids `gl.reminder.YYYY-MM-DD`; `userInfo.link` holds the
+URL; `willPresent` returns no options (nothing shown in the foreground);
+`didReceive` hands the link to the bridge (or keeps it as the initial link on
+a cold start). `image` names a file in the App Group (`avatar.png`); each
+request gets its own copy in the temporary folder, because iOS moves an
+attachment's file into its store when the request is added.
+
+### Payload schema (`<group>/widget/payload.json`, version 1)
+
+All strings final and in the app's language; the extension formats nothing.
+
+```json
+{
+  "schema": 1,
+  "writtenAt": 1795504320,
+  "rtl": false,
+  "entries": [
+    {
+      "validFrom": 1795504320,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 2, "steps": 30,
+        "label": "DAILY TEST",
+        "title": "Step 2 is waiting",
+        "subtitle": "5 questions · 2 min",
+        "stepBadge": "1/30",
+        "points": "18",
+        "mediumTitle": "Step 2 is one test away",
+        "mediumSubtitle": "Ember Peak · November · 1/30",
+        "chip": "Test waiting",
+        "button": "Start",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar.png",
+          "mountainLight": "mountain_2026-11_light.png",
+          "mountainDark": "mountain_2026-11_dark.png"
+        },
+        "avatarPoint": [0.42, 0.61]
+      },
+      "tip": {
+        "url": "grammarlens://daily-test",
+        "label": "TIP FOR YOU · ARTICLES",
+        "rule": "the",
+        "example": "specific, known, or the only one",
+        "footer": "From your weak spots · new tip daily",
+        "boxLabel": "DAILY TEST",
+        "button": "Start",
+        "done": false
+      }
+    },
+    { "validFrom": 1795554000, "climb": { "…": "waiting" }, "tip": { "…": "tomorrow's tip" } }
+  ]
+}
+```
+
+- `entries[0]` is now; `entries[1]` starts at the next local midnight
+  (always the waiting state, with the next day's tip; if midnight starts a
+  new month it points at that month's images and step 1).
+- Times are seconds since 1970 (no date strings to parse).
+- In the done state `climb.countdown` maps whole hours left, rounded up,
+  1…24, to the small widget's line (`{"10": "Next test in 10 h", …}`) and
+  `countdownMedium` to the medium one (`"Next test in 10 h · 1/30"`), DW0-4;
+  the provider adds an entry at each top of the hour until `entries[1]`.
+- `avatarPoint` is the avatar's trail point inside the cropped mountain
+  image (0–1, from `climbTrail` and the crop), so the extension only places
+  it. Waiting uses the light image in light mode and the dark one in dark
+  mode; done uses the dark one ("evening tone").
+- Images: PNG, sized for a medium widget at 3× (about 1100 × 520 px for the
+  mountain crop, 240 px for the avatar); old month files are deleted by the
+  app after each write.
+- Tip: the weak spot with the highest frequency → its topic → one of its
+  `kTopicHints` lines picked by the day number; the line is split at its
+  first ": " into `rule` and `example` (no colon → all `rule`). No weak spot
+  → a general topic by the day number and the label without "From your weak
+  spots". Hint lines and topic names stay English (SPEC §3.7); labels are
+  translated.
+
+### Reminder plan (pure function, W4)
+
+`planReminders` input: `now`, `ReminderSettings`, and `ReminderState`
+(today's Daily Test done, free ticket used today, Premium, this month's
+points and next tier threshold, current step, companion name, place name,
+first day of next months in range). For each of the next 7 local days whose
+chosen time is still ahead: pick (a) → (b) → (c) → (d) among enabled kinds;
+future days assume "test not done that day" (so (d) only ever applies to
+today, after the test, until the ticket is used); no fit → no item. Rebuilt at
+launch, Daily Test finished, practice finished, settings changed, language
+changed. Copy, N02: "<Buddy> is waiting at <place>" / "Today's 5 questions take
+about 2 minutes. Step N is one test away.", "Your free ticket is back" /
+"Practise “<Topic>” with AI feedback.", "So close to <Tier>" / "Just N points
+to go this month.", plus a "New mountain" pair.
+
+### Risks
+
+- **Xcode project surgery.** A scripted target can break the Runner build
+  (Flutter's "Thin Binary" and Crashlytics run-script phases are known to
+  form a build cycle with an "Embed Foundation Extensions" phase placed after
+  them). Mitigation: back up `project.pbxproj`, an idempotent script that
+  puts the embed phase before the script phases, a clean simulator build
+  after every change; the script is kept so it can be re-run.
+- **Signing.** The new target gets no team and no provisioning settings
+  (owner's step); simulator builds sign ad hoc, device builds will fail until
+  the owner picks the team and registers the App Group — written into
+  "Owner steps".
+- **App Group on the simulator** works with ad-hoc signing; if
+  `containerURL(forSecurityApplicationGroupIdentifier:)` returns nil, record
+  it under Blocked and test the store through a temporary-folder fallback.
+- **Notification delegate.** Another SDK could replace the
+  `UNUserNotificationCenter` delegate (none of Firebase Analytics,
+  Crashlytics or RevenueCat does today); we set ours in
+  `didFinishLaunching`, before the first frame, so cold-start taps are seen.
+- **Cold-start links** with the scene lifecycle and the implicit engine: the
+  URL can arrive before the channel exists, so the bridge keeps it until
+  Dart asks (`links.initial`).
+- **Widget limits.** No animation, a memory limit of a few tens of MB, no
+  custom fonts unless bundled (assumption to verify in W2: system rounded
+  font instead of Nunito Sans, recorded as a decision if so); images kept
+  small.
+- **Timeline staleness.** If the app is not opened for days, the widget keeps
+  showing the precomputed midnight state; acceptable (it is still "waiting").
+- **ImageRenderer snapshots** need iOS 16+ (the simulator is 27.2) and
+  render the views outside WidgetKit (no system container background); the
+  comparison with the board is by eye and recorded per state. Writing to the
+  host's `build/widget-snapshots/` from the simulator test process may be
+  blocked; fallback: write into the test's temporary folder and copy it out
+  with `xcrun simctl`.
+- **Simulator notifications.** The permission dialog must be tapped in the
+  simulator; foreground suppression means the capture is taken with the app
+  in the background or on the lock screen.
+- **DB migration 26 → 27** for the reminder settings table: covered by a
+  migration test like the existing ones.
+- **Tests that pin today's layout** (V24 has a "no switch" test from B5,
+  settings rows): updated where the design intentionally adds the switch and
+  the row, and the commit says so.
+- **Merging `origin/ui-polish`** at W6 may conflict on shared files
+  (`home_screen.dart`, `rest_scene.dart`, ARB files, `product.yaml`); merge,
+  never rebase; `git merge --abort` and record if it cannot be resolved
+  safely.
+
+### Verification plan
+
+- Dart: unit tests for the pure functions, widget tests for N01, N03, V24,
+  bridge tests over a mocked channel; `flutter analyze` and `flutter test`
+  at every step.
+- iOS: `xcodebuild build` and `xcodebuild test` (RunnerTests) on the
+  iPhone 18 Pro simulator; snapshots in `build/widget-snapshots/`; the widget
+  added to the simulator home screen and captured; a real reminder scheduled
+  1–2 minutes ahead and captured on the simulator.
+- Not possible here: anything on a physical device (signing, App Group
+  provisioning, the real lock screen); those go to "Owner steps".
+
+Verified in W0 (docs only, no code changed): `flutter analyze` → no issues;
+`flutter test` → 2493 passed.
+
+`product.yaml`: the widget/reminder line in `planned` now points at this
+task and plan (CLAUDE.md: a plan was added); nothing else changed there.
+
+## W1 — Bridge, URL scheme, routing
+
+Status: **done**.
+
+What was built:
+- `ios/Runner/GrammarLensBridge.swift`: the one channel
+  (`com.ahmettayfur.grammarlens/bridge`): `appGroup.write / read / delete /
+  list / available`, `widgets.reload`, `links.initial`; iOS → Dart
+  `links.open`. Registered from `AppDelegate.didInitializeImplicitFlutterEngine`
+  and as a scene delegate (DW1-2).
+- `ios/Shared/AppGroupStore.swift`: `<group>/widget/<name>`, names limited
+  to `[a-z0-9_.-]`, atomic writes; shared with the extension in W2.
+- `ios/Runner/Runner.entitlements` (App Group
+  `group.com.ahmettayfur.grammarlens`), `CODE_SIGN_ENTITLEMENTS` on Runner's
+  three configurations; `Info.plist` `CFBundleURLTypes` with `grammarlens`.
+- `tool/ios/configure_xcode_project.rb`: idempotent project edits with the
+  `xcodeproj` gem, a backup of `project.pbxproj` in `build/pbxproj-backup/`
+  before each save, and the Flutter package reference comment restored
+  after the gem's save (Flutter's migrations match it). No team, signing
+  style or provisioning setting is written.
+- Dart: `lib/services/native_bridge.dart` (`NativeBridge`, best effort:
+  without the native side every call is a no-op), `lib/services/app_link.dart`
+  (`AppLink` daily-test / home / review, `AppLinkRouter`: cold-start link
+  waits for the shell, warm links go straight through, dropped during
+  onboarding); `app.dart` attaches the router once the tab shell exists and
+  drops a link while anything is pushed on the root navigator (DW0-3);
+  Home opens the Daily Test for a `daily-test` link after reading today's
+  set again (stays on Home when it is done).
+
+Verified:
+- `flutter analyze`: no issues; full `flutter test`: 2516 passed.
+- New Dart tests: `app_link_test` (parsing, router, the channel's calls and
+  file-name guard, errors swallowed), `app_link_routing_test` (cold review /
+  daily-test, warm tab switches, dropped while the Daily Test is open,
+  dropped during onboarding), three Home tests in `home_screen_test`
+  ("Daily Test link").
+- Swift: `RunnerTests/BridgeTests.swift` (`AppGroupStoreTests`, 5 cases:
+  write/read/list/delete, the folder, unsafe names, the bridge's cold-start
+  link kept until Dart asks, the channel's write/read shape): `xcodebuild
+  test` on the iPhone 18 Pro simulator, TEST SUCCEEDED.
+- Simulator (seeded app, Debug): the built app's simulated entitlements
+  carry the App Group; `xcrun simctl openurl booted grammarlens://review`
+  with the app running switched to Review (after iOS's own "Open in
+  GrammarLens?" confirmation, which `simctl openurl` triggers); with the
+  app terminated, `grammarlens://daily-test` cold-started it straight into
+  the Daily Test's first question. Captures: `build/widgets-captures/
+  w1-warm-review.png`, `w1-cold-daily-test.png` (not committed).
+
+Not verified: on a device (signing with the App Group is the owner's step).
+
+## W2 — Widget extension and SwiftUI views
+
+Status: **done**.
+
+What was built:
+- Target `GrammarLensWidgets` (app extension, bundle ID
+  `com.ahmettayfur.grammarlens.widgets`, iOS 15.0, Flutter's xcconfigs so
+  its version follows the app's, entitlements with the App Group), embedded
+  in Runner by an "Embed Foundation Extensions" phase placed right after
+  "Embed Frameworks", before Flutter's "Thin Binary" and the Crashlytics
+  script (no build cycle). Added by `tool/ios/configure_xcode_project.rb`
+  (now idempotent for array settings too); no team, signing style or
+  provisioning setting on the new target, so it inherits the project's.
+- `ios/Shared/WidgetPayload.swift` (Codable schema 1, `entry(at:)`,
+  countdown lines), `GrammarLensWidgets/WidgetTimeline.swift` (provider:
+  current entry, hourly countdown entries when done, the midnight waiting
+  entry; policy `.never`, the app reloads), `WidgetViews.swift` (small
+  waiting/done, medium A waiting/done, medium B tip, the empty state,
+  RTL from the payload), `WidgetStyle.swift` (W01 palette, light and dark),
+  `GrammarLensWidgets.swift` (`@main` bundle: "Climb" small + medium, "Tip"
+  medium; content margins off on iOS 17 so the mountain fills the widget).
+
+Verified:
+- `xcodebuild build` (Runner + extension, Debug, iPhone 18 Pro simulator):
+  BUILD SUCCEEDED; the `.appex` is in `Runner.app/PlugIns/` with version
+  1.4.0 and `com.apple.widgetkit-extension`; its simulated entitlements
+  carry the App Group.
+- `xcodebuild test` (RunnerTests: `AppGroupStoreTests` 5,
+  `WidgetTimelineTests` 6, `WidgetSnapshotTests` 4 + 1 skipped until W3's
+  Dart fixtures exist): TEST SUCCEEDED.
+- Snapshots in `build/widget-snapshots/` (not committed): small, medium A
+  and the tip, waiting and done, light and dark, the general tip and the
+  empty state, from a hand-written sample payload in the board's data and
+  the app's own avatar and Ember Peak images.
+- Comparison with W01 (by eye, sample data): small waiting — match (orange,
+  label, two-line title, subtitle, "1/30" chip, avatar bottom right);
+  small done — match (check + "Done today", "Step 2 of 30", countdown, gold
+  points chip); medium A waiting — match (title, subtitle, "Test waiting"
+  chip, avatar on the trail, white "Start" button), medium A done — match
+  (evening image, "See you tomorrow, Ada", countdown · 1/30, green chip,
+  no button); medium B — layout match, the rule line differs by DW2-2;
+  type is the system rounded face (DW2-1).
+
+- Flutter gate: `flutter analyze` no issues; `flutter test` 2516 passed.
+
+Not verified here: the widgets on a real home screen (W5 adds them on the
+simulator), on a device (owner).
+
+## W3 — App-side payload
+
+Status: **done**.
+
+What was built:
+- `lib/services/widget_payload.dart`: the pure builder
+  `buildWidgetPayload(WidgetInput, AppLocalizations)` → schema 1 (now +
+  next local midnight, countdown lines 1–24 h when done), the tip picker
+  `widgetTipFor` (the most frequent weak spot's topic → one `kTopicHints`
+  line per local day, split at ": "; no weak spot → a Daily Test topic by
+  the day, "TIP OF THE DAY"), and `widgetCrop` (the medium crop around the
+  avatar's trail point, the avatar's point inside it).
+- `lib/services/widget_images.dart`: asset → crop / square → PNG with
+  `dart:ui` (1092 × 510 mountain, 240 × 240 avatar).
+- `lib/services/widget_sync.dart`: reads profile, today's set, climb steps,
+  month points, the month's theme, the top weak spot; writes images and
+  `payload.json` through the bridge; deletes unused files; reloads the
+  widgets. Nothing happens without the App Group or before onboarding.
+- `lib/services/device_sync.dart` + `StorageService.onChanged` + `app.dart`
+  (DW3-1): launch, resume, Daily Test, practice, profile, language.
+- ARB: 11 new `widget*` keys in all 8 languages (Arabic, Japanese, Korean,
+  Turkish, German, Spanish, Portuguese translated here); reused
+  `homeDailyEyebrow`, `firstClimbStep`, `restSeeYou`.
+
+Verified:
+- `flutter analyze`: no issues; `flutter test`: 2550 passed.
+- `test/widget_payload_test.dart` (24): the board's copy waiting and done,
+  countdown keys 1–24, the midnight entry (next step; same step when not
+  done; a new month's mountain, step 1, no points; never past the month's
+  days), tips (weak spot, daily rotation, lines without ": ", general),
+  Turkish and Arabic, every locale has every string, the crop stays inside
+  the image with the avatar inside the crop for every day of 28–31-day
+  months, the crop's shape; four fixtures in `test/fixtures/widget_payloads/`
+  compared without timestamps (time-zone independent; checked with
+  `TZ=America/New_York`).
+- `test/widget_sync_test.dart` (10): real assets rendered to 240 × 240 and
+  1092 × 510 PNGs, files written once and replaced on a new step, the next
+  month's crops on the last day, German and Arabic, nothing without the App
+  Group or a profile; `DeviceSync` coalescing (found and fixed a re-entrancy
+  bug: a job's synchronous request started a nested run), failing jobs;
+  `StorageService.onChanged` fires on the five writes tested and not on
+  reads (real SQLite through ffi).
+- Swift: `xcodebuild test` RunnerTests 17 passed, none skipped:
+  `testDartFixtures` decodes the Dart fixtures and renders them (Arabic
+  mirrored, Turkish copy fits) into `build/widget-snapshots/`.
+- Simulator: the seeded app (Sam, Glacier Peak, 14 steps) wrote
+  `payload.json`, `avatar_14.png` and `mountain_glacier_peak_d30_s14_{light,dark}.png`
+  into the real App Group container
+  (`xcrun simctl get_app_container … group.com.ahmettayfur.grammarlens`):
+  "Step 15 is waiting", "Glacier Peak · November · 14/30", "TIP FOR YOU ·
+  MODAL VERBS".
+
+## W4 — Reminder engine
+
+Status: **done**.
+
+What was built:
+- `lib/models/reminder_settings.dart` (four kinds, time, `ReminderAsk`;
+  `turnedOn` switches all four on, fixed decision 6) and storage
+  (`getReminderSettings` / `setReminderSettings`, DB v27, DW4-4).
+- `lib/services/reminder_plan.dart`: the pure `planReminders` (7 days, at
+  most one a day, (a) new mountain → (b) close to a medal → (c) Daily Test →
+  (d) free ticket; nothing unless accepted).
+- `lib/services/reminder_sync.dart`: the pure `reminderMessage` (N02 copy,
+  links: the Daily Test, or Review for the ticket) and `ReminderSync`
+  (reads the state, checks iOS permission, schedules or cancels), the second
+  `DeviceSync` job after `WidgetSync`; Premium changes also trigger it.
+- Bridge: `notifications.status / request / schedule / cancelAll /
+  pending`, `settings.openNotifications`; Swift `ReminderScheduler`
+  (calendar triggers, the companion attachment, nothing shown in front,
+  taps → `GrammarLensBridge.receive(link:)`, which also covers a tap that
+  launched the app).
+- ARB: 10 `reminder*` keys in all 8 languages (topic names stay English).
+
+Verified:
+- `test/reminder_plan_test.dart` (18): not accepted / all off → nothing;
+  seven days, one id per day; today's time passed (and exactly now) → from
+  tomorrow; (c) by default; (a) before (b) and (c) on the 1st (December from
+  0 points, step 1); (a) today; (b) before (c) with tier and gap; (d) only
+  today, only after the test, only for free users with the ticket unused; a
+  switched-off kind falls through; 5 points close, 6 not, reached Bronze →
+  Silver far; Silver named, Gold none; the test finishing turns today into
+  (d) or cancels it, a close medal no longer counts today, tomorrow's step
+  follows; the step never passes the month's days.
+- `test/reminder_sync_test.dart` (10): every kind's English copy (place vs.
+  mountain, 1 point vs. N points, ticket with and without a weak spot, the
+  new month's mountain), every language has every string, seven requests
+  with the picture and links, the test finishing → today's ticket / today
+  cancelled / none in Premium, Turkish copy, cancel when not accepted, all
+  off, denied, not determined or no profile.
+- Migration test v26 → v27 added; three tests that pinned DB version 26 now
+  say 27 (the schema change is intentional).
+- Swift `ReminderSchedulerTests` (4, simulator): one non-repeating local
+  calendar trigger at the right date and time, the link in `userInfo`, the
+  companion attached from the App Group (and none when the file is
+  missing), incomplete or foreign items dropped, status names.
+
+- Gate: `flutter analyze` no issues; `flutter test` 2580 passed (the
+  first run caught `reminderMedalBody` translated as plain text where the
+  English is a plural; `l10n_completeness_test` requires plurals to stay
+  plurals, so all seven translations are plurals now).
+
+Not verified here: a reminder actually delivered (W5 does it on the
+simulator); on a device (owner).
+
+## W5 — UI: N01, N03, V24; captures; a real reminder
+
+Status: **done**.
+
+What was built:
+- `lib/services/reminder_controller.dart`: the settings as the UI changes
+  them (turn on → all four on + iOS dialog when iOS has not asked; not now;
+  one kind; the time; iOS permission refreshed on return from Settings);
+  shared by Home and Settings (`app.dart`).
+- N01 `lib/screens/reminder_soft_ask.dart` (companion + bubble, Morning
+  08:30 / Lunch break 12:30 / Evening 20:00 preselected / Pick a time,
+  the promise, "Turn on reminders", "Not now"; a snackbar with "Open
+  Settings" when iOS says no); opens on its own per DW5-3.
+- N03 `lib/screens/notification_settings_screen.dart` (four rows, the free
+  ticket only for free users, "Every day at 20:00" chip → wheel, the
+  promise, the iOS-denied card with "Open Settings"), from Profile →
+  Notifications.
+- V24 `lib/widgets/rest_reminder_row.dart` in the rest scene ("Remind me
+  tomorrow", the time chip → wheel, the switch).
+- `lib/widgets/time_wheel_picker.dart`; 27 new strings in all 8 languages.
+
+Verified:
+- `flutter analyze`: no issues; `flutter test`: 2601 passed.
+- `test/reminders_ui_test.dart` (17): N01 copy and preselection, our
+  question before iOS's, Turn on (all four, chosen time), Not now, closing,
+  Pick a time, iOS refusal → snackbar → Settings; N03 rows free / Premium,
+  first switch → all four + iOS, then one by one, the time chip and wheel,
+  the denied card, dark + largest text without overflow; V24 → N01 before
+  acceptance, the Daily Test switch after, one line at 320 pt with the
+  largest text, the time chip. `home_screen_test` (4 new): N01 on the first
+  rest scene and never again after "Not now", not when already answered,
+  after a second Daily Test, not after the first.
+- Simulator (iPhone 18 Pro, iOS 27.2; the real app from
+  `tool/widgets/seeded_app.dart`; captures in `build/widgets-captures/`, not
+  committed):
+  - The widget gallery lists GrammarLens with "Climb" (small, medium) and
+    "Tip" showing the app's own payload; all three added to the home screen
+    (`w5-home-widgets-waiting.png`); tapping the small widget opened the
+    Daily Test (`w5-widget-tap-daily-test.png`).
+  - N03 off (`N03-Settings-off.png`) → the Daily Test switch → the iOS
+    dialog (`w5-ios-permission.png`) → Allow → all four on
+    (`N03-Settings.png`).
+  - **A real reminder**: relaunched with the reminder time two minutes
+    ahead (`SEED_REMINDER_IN=2`), app in the background: at 18:16 the
+    banner "Fox is waiting at First Camp — Today’s 5 questions take about
+    2 minutes. Step 15 is one test away." (`w5-real-reminder.png`), and on
+    the lock screen (`N02-LockScreen-real.png`).
+  - Done state (`SEED_DONE`, `SEED_TICKET_USED`, `SEED_RESET_ASK`): the
+    rest scene opened N01 on its own (`N01-SoftAsk.png`); "Turn on
+    reminders" → V24 with the switch on (`V24-DayComplete-scrolled.png`);
+    the widgets turned to their done state (`w5-home-widgets-done.png`:
+    "Done today", "Step 15 of 30", "Next test in 6 h", ★ 149; medium
+    "See you tomorrow, Sam" in the evening tone; the tip's box "Done
+    today").
+
+### Board comparison
+
+| Board | Capture | Result | Note |
+|---|---|---|---|
+| W01 small, waiting | `w5-home-widgets-waiting.png`, `build/widget-snapshots/climb-small-waiting-*` | match | Orange, "DAILY TEST", two-line title, "5 questions · 2 min", step chip, avatar bottom right; system rounded type (DW2-1). |
+| W01 small, done | `w5-home-widgets-done.png`, `climb-small-done-*` | match | Check + "Done today", "Step N of 30", countdown, gold points chip. |
+| W01 medium A, waiting | `w5-home-widgets-waiting.png`, `climb-medium-waiting-*` | match | The month's mountain cropped around the avatar on its trail point, "Test waiting" chip, white "Start". |
+| W01 medium A, done | `w5-home-widgets-done.png`, `climb-medium-done-*` | match | Evening (dark) image, "See you tomorrow, <name>", countdown · progress, green chip, no button. |
+| W01 medium B (tip) | `w5-home-widgets-*.png`, `tip-medium-*` | match, one gap | Layout and box as on the board; the rule line is the hint's key highlighted inside the sentence, no separate example line (DW2-2). |
+| N01 | `N01-SoftAsk.png` | match | Companion + bubble, four choices with Evening selected, the promise, orange button, "Not now"; behind it the rest scene (the board shows a mountain). |
+| N02 | `w5-real-reminder.png`, `N02-LockScreen-real.png` | match, one gap | Title and text as on the board, from the app's state; the companion thumbnail is attached but not seen on the simulator (Blocked / not verified). |
+| N03 | `N03-Settings-off.png`, `N03-Settings.png` | match | Rows, lines, "Every day at 20:00", the promise with the companion. The captures show orange switches; they are navy since (DW5-6), recaptured in W6. |
+| V24 (switch) | `V24-DayComplete-scrolled.png` | match after a fix | The label wrapped to two lines; now one line, scaling down if needed (test at 320 pt, largest text); recaptured in W6. |
+
+## W6 — Final pass, merge, docs
+
+Status: **done**.
+
+- **Merge.** `git fetch origin ui-polish`: one new commit, `ca3a847`
+  ("docs: SPEC v10 and fix round 2 task", docs and boards only). Merged
+  with `git merge --no-ff` (no rebase) as `f9002b7`, no conflict. DW6-1.
+- **Arabic, dark, largest text** (the app's Large text size, simulator in
+  dark mode, `SEED_LANGUAGE=ar`, `SEED_TEXT_SIZE=large`; captures in
+  `build/widgets-captures/`):
+
+| Board | Capture | Result | Note |
+|---|---|---|---|
+| N01 | `N01-ar-dark-large.png` | match | Mirrored: companion and text on the right, the button's arrow flipped; times in Western digits; nothing clipped. |
+| V24 (switch) | `V24-ar-dark-large.png` | match | Bell, label, time chip and switch mirrored; the label on one line (the W5 fix). |
+| N03 | `N03-ar-dark-large.png` | match | Switches on the left, navy; time chip; the promise. |
+| W01 (all three) | `W01-ar-dark-done.png` | fixed | The small done widget wrapped "Step 15 of 30" and cut the countdown; fixed (DW6-2), checked again in the snapshots `climb-small-done-ar_done_late-dark.png` and `tip-medium-done-de_done-dark.png`. |
+
+- Tests added: N01 and N03 in Arabic, dark, largest text (`reminders_ui_test`,
+  19 cases now); two more Dart fixtures (Arabic and German, step 15), so
+  the Swift snapshot test renders them.
+- Final gate (after the last code change): `flutter analyze` no issues;
+  `flutter test` 2605 passed; Runner + extension `xcodebuild build` BUILD
+  SUCCEEDED; RunnerTests 21 passed, 0 failed.
+- Docs: `docs/build-log.md` (entry for this task), `docs/roadmap.md` (1.5.0
+  row and the UI polish split-out note), `product.yaml` (the widgets /
+  reminders `planned` line, a `recent` entry, `recent` trimmed to five;
+  `legal`, `status` and `versions` unchanged; `updated_at` 2026-11-17).

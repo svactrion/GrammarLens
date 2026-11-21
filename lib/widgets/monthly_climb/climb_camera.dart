@@ -18,14 +18,24 @@ class ClimbCamera {
   /// width.
   static const zoom = 1.1;
 
-  /// The Home window's height, unchanged from 1.0.
-  static const windowHeight = 350.0;
+  /// The Home window's full height, unchanged from 1.0. Home makes it
+  /// shorter where the full window would put the pawn under the floating
+  /// nav bar on first view (INTEGRATE 3b, `MonthlyMountain.fitWindowHeight`).
+  static const fullWindowHeight = 350.0;
+
+  /// The shortest window Home fits (an iPhone SE at the default text size
+  /// needs about 180).
+  static const minWindowHeight = 160.0;
   static const pawnAt = .72;
 
   /// The window's width, in points.
   final double width;
 
-  const ClimbCamera(this.width) : assert(zoom >= 1);
+  /// The window's height, in points.
+  final double windowHeight;
+
+  const ClimbCamera(this.width, {this.windowHeight = fullWindowHeight})
+      : assert(zoom >= 1);
 
   /// Points per image width ([ClimbRoute]'s unit).
   double get scale => width * zoom;

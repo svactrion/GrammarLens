@@ -21,13 +21,32 @@ extension LearningGoalLabels on LearningGoal {
   String label(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.goalExamPrep,
         LearningGoal.work => l10n.goalWork,
+        LearningGoal.school => l10n.goalSchool,
         LearningGoal.general => l10n.goalGeneral,
       };
 
   String description(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.goalExamPrepDetail,
         LearningGoal.work => l10n.goalWorkDetail,
+        LearningGoal.school => l10n.goalSchoolDetail,
         LearningGoal.general => l10n.goalGeneralDetail,
+      };
+
+  /// The buddy's reaction inside the chosen card (V05).
+  String reaction(AppLocalizations l10n) => switch (this) {
+        LearningGoal.examPrep => l10n.goalReactionExam,
+        LearningGoal.work => l10n.goalReactionWork,
+        LearningGoal.school => l10n.goalReactionSchool,
+        LearningGoal.general => l10n.goalReactionGeneral,
+      };
+
+  /// The buddy's line while the climb gets ready (V05b), and the goal's
+  /// chip on the "Your climb" card.
+  String readyLine(AppLocalizations l10n) => switch (this) {
+        LearningGoal.examPrep => l10n.readyBubbleExam,
+        LearningGoal.work => l10n.readyBubbleWork,
+        LearningGoal.school => l10n.readyBubbleSchool,
+        LearningGoal.general => l10n.readyBubbleGeneral,
       };
 }
 
@@ -52,6 +71,11 @@ extension TopicLabels on Topic {
         TopicId.modalPastForms => l10n.topicModalPastTitle,
         TopicId.tenseSelection => l10n.topicTenseTitle,
         TopicId.articles => l10n.topicArticlesTitle,
+        TopicId.conditionals => l10n.topicConditionalsTitle,
+        TopicId.passiveVoice => l10n.topicPassiveTitle,
+        TopicId.prepositions => l10n.topicPrepositionsTitle,
+        TopicId.relativeClauses => l10n.topicRelativeTitle,
+        TopicId.comparativesSuperlatives => l10n.topicComparativesTitle,
       };
 
   String description(AppLocalizations l10n) => switch (id) {
@@ -60,6 +84,11 @@ extension TopicLabels on Topic {
         TopicId.modalPastForms => l10n.topicModalPastDescription,
         TopicId.tenseSelection => l10n.topicTenseDescription,
         TopicId.articles => l10n.topicArticlesDescription,
+        TopicId.conditionals => l10n.topicConditionalsDescription,
+        TopicId.passiveVoice => l10n.topicPassiveDescription,
+        TopicId.prepositions => l10n.topicPrepositionsDescription,
+        TopicId.relativeClauses => l10n.topicRelativeDescription,
+        TopicId.comparativesSuperlatives => l10n.topicComparativesDescription,
       };
 }
 
@@ -80,26 +109,36 @@ String weakSpotTitle(String errorType, Topic topic, AppLocalizations l10n) =>
 
 extension AvatarLabels on Avatar {
   /// The animal the illustration shows, in the interface language (shown
-  /// under the carousel and read by VoiceOver). [Avatar.semanticLabel] is
-  /// the English identity.
+  /// on the picker and read by VoiceOver). [Avatar.semanticLabel] is the
+  /// English identity.
   String name(AppLocalizations l10n) => switch (index) {
         1 => l10n.avatarKoala,
-        2 => l10n.avatarSnail,
-        3 => l10n.avatarElephant,
-        4 => l10n.avatarBee,
         5 => l10n.avatarFrog,
-        6 => l10n.avatarChick,
         7 => l10n.avatarCrab,
         8 => l10n.avatarCat,
-        9 => l10n.avatarTurtle,
-        10 => l10n.avatarPenguin,
         11 => l10n.avatarGiraffe,
-        12 => l10n.avatarHedgehog,
         13 => l10n.avatarBird,
         14 => l10n.avatarFox,
         15 => l10n.avatarPanda,
         16 => l10n.avatarSloth,
         _ => semanticLabel,
+      };
+
+  /// The three personality chips (SPEC §3.5).
+  List<String> traits(AppLocalizations l10n) => switch (index) {
+        14 => [
+            l10n.traitCurious,
+            l10n.traitQuickLearner,
+            l10n.traitLovesChallenge
+          ],
+        15 => [l10n.traitCalm, l10n.traitSteady, l10n.traitNeverGivesUp],
+        1 => [l10n.traitRelaxed, l10n.traitThoughtful, l10n.traitKind],
+        5 => [l10n.traitCheerful, l10n.traitBouncy, l10n.traitAlwaysReady],
+        13 => [l10n.traitFreeSpirit, l10n.traitEarlyRiser, l10n.traitChatty],
+        11 => [l10n.traitGentle, l10n.traitPatient, l10n.traitThinksBig],
+        8 => [l10n.traitClever, l10n.traitIndependent, l10n.traitCurious],
+        16 => [l10n.traitSlowAndSteady, l10n.traitCalm, l10n.traitFocused],
+        _ => [l10n.traitBrave, l10n.traitTough, l10n.traitThinksSideways],
       };
 }
 
@@ -165,6 +204,10 @@ DateFormat _latin(DateFormat format) => format..useNativeDigits = false;
 /// A month's name ("October") in the interface language.
 String monthName(int month, AppLocalizations l10n) =>
     _latin(DateFormat.MMMM(_dateLocale(l10n))).format(DateTime(2000, month));
+
+/// A month's short name ("Oct"): PF02's grid.
+String monthShort(int month, AppLocalizations l10n) =>
+    _latin(DateFormat.MMM(_dateLocale(l10n))).format(DateTime(2000, month));
 
 /// A month and its year ("October 2026").
 String monthYear(int year, int month, AppLocalizations l10n) =>

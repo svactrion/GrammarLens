@@ -132,6 +132,16 @@ void main() {
     }
 
     void expectMedal(MedalTier tier, {required bool earned, String? why}) {
+      if (!earned) {
+        // V23: the running month is a locked slot until its first tier.
+        expect(
+            find.descendant(
+                of: find.byKey(MonthlyMedalCollection.slotKey(2026, 11)),
+                matching: find.byKey(MonthlyMedalCollection.lockedKey)),
+            findsOneWidget,
+            reason: why);
+        return;
+      }
       final badge = shelfMedal();
       expect(badge.asset, MedalArt.monthly('ember_peak', tier), reason: why);
       expect(badge.earned, earned, reason: why);

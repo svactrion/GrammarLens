@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "writtenAt": 1795001400,
+  "rtl": false,
+  "entries": [
+    {
+      "validFrom": 1795001400,
+      "climb": {
+        "state": "done",
+        "url": "grammarlens://home",
+        "step": 2,
+        "steps": 30,
+        "label": "Done today",
+        "title": "Step 2 of 30",
+        "subtitle": "5 questions · 2 min",
+        "stepBadge": "2/30",
+        "points": "18",
+        "mediumTitle": "See you tomorrow, Ada",
+        "mediumSubtitle": "Ember Peak · November · 2/30",
+        "chip": "Done today",
+        "button": "Start",
+        "countdown": {
+          "1": "Next test in 1 h",
+          "2": "Next test in 2 h",
+          "3": "Next test in 3 h",
+          "4": "Next test in 4 h",
+          "5": "Next test in 5 h",
+          "6": "Next test in 6 h",
+          "7": "Next test in 7 h",
+          "8": "Next test in 8 h",
+          "9": "Next test in 9 h",
+          "10": "Next test in 10 h",
+          "11": "Next test in 11 h",
+          "12": "Next test in 12 h",
+          "13": "Next test in 13 h",
+          "14": "Next test in 14 h",
+          "15": "Next test in 15 h",
+          "16": "Next test in 16 h",
+          "17": "Next test in 17 h",
+          "18": "Next test in 18 h",
+          "19": "Next test in 19 h",
+          "20": "Next test in 20 h",
+          "21": "Next test in 21 h",
+          "22": "Next test in 22 h",
+          "23": "Next test in 23 h",
+          "24": "Next test in 24 h"
+        },
+        "countdownMedium": {
+          "1": "Next test in 1 h · 2/30",
+          "2": "Next test in 2 h · 2/30",
+          "3": "Next test in 3 h · 2/30",
+          "4": "Next test in 4 h · 2/30",
+          "5": "Next test in 5 h · 2/30",
+          "6": "Next test in 6 h · 2/30",
+          "7": "Next test in 7 h · 2/30",
+          "8": "Next test in 8 h · 2/30",
+          "9": "Next test in 9 h · 2/30",
+          "10": "Next test in 10 h · 2/30",
+          "11": "Next test in 11 h · 2/30",
+          "12": "Next test in 12 h · 2/30",
+          "13": "Next test in 13 h · 2/30",
+          "14": "Next test in 14 h · 2/30",
+          "15": "Next test in 15 h · 2/30",
+          "16": "Next test in 16 h · 2/30",
+          "17": "Next test in 17 h · 2/30",
+          "18": "Next test in 18 h · 2/30",
+          "19": "Next test in 19 h · 2/30",
+          "20": "Next test in 20 h · 2/30",
+          "21": "Next test in 21 h · 2/30",
+          "22": "Next test in 22 h · 2/30",
+          "23": "Next test in 23 h · 2/30",
+          "24": "Next test in 24 h · 2/30"
+        },
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://home",
+        "boxLabel": "DAILY TEST",
+        "button": "Done today",
+        "doneLabel": "Done",
+        "next": {
+          "1": "next in 1 h",
+          "2": "next in 2 h",
+          "3": "next in 3 h",
+          "4": "next in 4 h",
+          "5": "next in 5 h",
+          "6": "next in 6 h",
+          "7": "next in 7 h",
+          "8": "next in 8 h",
+          "9": "next in 9 h",
+          "10": "next in 10 h",
+          "11": "next in 11 h",
+          "12": "next in 12 h",
+          "13": "next in 13 h",
+          "14": "next in 14 h",
+          "15": "next in 15 h",
+          "16": "next in 16 h",
+          "17": "next in 17 h",
+          "18": "next in 18 h",
+          "19": "next in 19 h",
+          "20": "next in 20 h",
+          "21": "next in 21 h",
+          "22": "next in 22 h",
+          "23": "next in 23 h",
+          "24": "next in 24 h"
+        },
+        "boxImage": "fox_sleep.png",
+        "done": true
+      }
+    },
+    {
+      "validFrom": 1795035600,
+      "climb": {
+        "state": "waiting",
+        "url": "grammarlens://daily-test",
+        "step": 3,
+        "steps": 30,
+        "label": "DAILY TEST",
+        "title": "Step 3 is waiting",
+        "subtitle": "5 questions · 2 min",
+        "stepBadge": "2/30",
+        "points": "18",
+        "mediumTitle": "Step 3 is one test away",
+        "mediumSubtitle": "Ember Peak · November · 2/30",
+        "chip": "Test waiting",
+        "button": "Start",
+        "countdown": {},
+        "countdownMedium": {},
+        "images": {
+          "avatar": "avatar_14.png",
+          "mountainLight": "mountain_ember_peak_d30_s1_light.png",
+          "mountainDark": "mountain_ember_peak_d30_s1_dark.png"
+        },
+        "avatarPoint": [
+          0.36,
+          0.72
+        ]
+      },
+      "tip": {
+        "url": "grammarlens://weak-spot?topic=gerundVsInfinitive&type=gerund_after_preposition",
+        "label": "GERUND VS. INFINITIVE",
+        "lead": "After a preposition, use -ing",
+        "rule": "in learning",
+        "example": "",
+        "mistake": {
+          "wrong": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "to learn",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ],
+          "right": [
+            {
+              "t": "I’m interested ",
+              "m": false
+            },
+            {
+              "t": "in learning",
+              "m": true
+            },
+            {
+              "t": " French.",
+              "m": false
+            }
+          ]
+        },
+        "footer": "Your weak spot · a new one daily",
+        "boxUrl": "grammarlens://daily-test",
+        "boxLabel": "DAILY TEST",
+        "button": "Start",
+        "doneLabel": "Done",
+        "next": {},
+        "boxImage": "avatar_14.png",
+        "done": false
+      }
+    }
+  ]
+}

@@ -7,16 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A689FCB81A55CDB12BC93DC /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		2B1B953D1855B35CC3A1ACD0 /* WidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */; };
+		3025ABE4AB76F93AF05799D5 /* WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */; };
+		3045FBA66D8F705292194397 /* OFL-NunitoSans.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */; };
+		312FA4EE66A7355F0106DC73 /* WidgetSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0CF2F8AE7893264EE3D87B /* WidgetSnapshotTests.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		43F23EA9A30A4F50A31C8BFF /* GrammarLensBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */; };
+		54BEFA8AC309DBE3E2777823 /* NunitoSans-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */; };
+		68FFA86BFEF821815A06ACF8 /* GrammarLensWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638A0D762525FBF8D7FFFC7A /* GrammarLensWidgets.swift */; };
+		6F115BEC3460DDEB600B5934 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
+		72233F4D1CB541E4111B6BA0 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
+		8508951805E226FAAD80A46E /* GrammarLensWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7B830C334B8A6CC4D428A892 /* GrammarLensWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		A397A44D24FEB7FCCC0A93DD /* WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */; };
+		A52C8AEB398CA3FEC96C7ABB /* BridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4467F2D9CA5E2861B9F9240F /* BridgeTests.swift */; };
+		AD985B5764E133DECA831F83 /* NunitoSans-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */; };
+		BC376E2932CB7AEA9DF1B278 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91FC57F4A338B5F930347C70 /* WidgetViews.swift */; };
+		C011AFADDB876A00B261E1C7 /* WidgetPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D686D48EFA888B8679E9639 /* WidgetPayload.swift */; };
+		C2BD31059CC91B8ED785A215 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6E9CD9AD85443489C6D611 /* Foundation.framework */; };
+		CE0154482D8665CD8EADFEE2 /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */; };
+		D762D66B099B609D8E18457A /* ReminderSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */; };
+		DB128510D836A099DB50E6C4 /* WidgetTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */; };
+		E6E1BF2EE16F356D0F668872 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91FC57F4A338B5F930347C70 /* WidgetViews.swift */; };
 		F0ED1C12DBC34F5DD7657CA1 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4E4300B6BBE2C05C614DFB0C /* GoogleService-Info.plist */; };
+		FE22EB405811916A88392033 /* WidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,9 +49,27 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
+		7E89A8EB493AFE6B266EB0E3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 87465925F2CDABA98CCE2496;
+			remoteInfo = GrammarLensWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		88B52033B3609E4F5497E83A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8508951805E226FAAD80A46E /* GrammarLensWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -43,17 +83,29 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReminderSchedulerTests.swift; sourceTree = "<group>"; };
+		0F7B5FDA95CE22BB3C9390E4 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		2D0CF2F8AE7893264EE3D87B /* WidgetSnapshotTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotTests.swift; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		3D686D48EFA888B8679E9639 /* WidgetPayload.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetPayload.swift; sourceTree = "<group>"; };
+		4467F2D9CA5E2861B9F9240F /* BridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BridgeTests.swift; sourceTree = "<group>"; };
 		4E4300B6BBE2C05C614DFB0C /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetStyle.swift; sourceTree = "<group>"; };
+		638A0D762525FBF8D7FFFC7A /* GrammarLensWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GrammarLensWidgets.swift; sourceTree = "<group>"; };
+		6A08DBFC7C8619521D99E0A7 /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		7B830C334B8A6CC4D428A892 /* GrammarLensWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GrammarLensWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
+		8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
+		91FC57F4A338B5F930347C70 /* WidgetViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,6 +113,13 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AB6E9CD9AD85443489C6D611 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; name = "NunitoSans-Variable.ttf"; path = "../assets/fonts/NunitoSans-Variable.ttf"; sourceTree = SOURCE_ROOT; };
+		BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GrammarLensBridge.swift; sourceTree = "<group>"; };
+		DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "OFL-NunitoSans.txt"; path = "../assets/fonts/OFL-NunitoSans.txt"; sourceTree = SOURCE_ROOT; };
+		E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = GrammarLensWidgets.entitlements; sourceTree = "<group>"; };
+		EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimeline.swift; sourceTree = "<group>"; };
+		FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimelineTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,15 +131,66 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C29A4E4F8BA882FFDB6B8378 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2BD31059CC91B8ED785A215 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1B3599844D8E6050A98C4684 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */,
+				3D686D48EFA888B8679E9639 /* WidgetPayload.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		331C8082294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
+				4467F2D9CA5E2861B9F9240F /* BridgeTests.swift */,
+				2D0CF2F8AE7893264EE3D87B /* WidgetSnapshotTests.swift */,
+				FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */,
+				05B8BD169AD1858F9BA46518 /* ReminderSchedulerTests.swift */,
 			);
 			path = RunnerTests;
+			sourceTree = "<group>";
+		};
+		659C54A080367F53B96C919F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				74C281ADCC3FBD81547279AF /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		74C281ADCC3FBD81547279AF /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				AB6E9CD9AD85443489C6D611 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		84E1C81B50342A5D70CF5747 /* GrammarLensWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				638A0D762525FBF8D7FFFC7A /* GrammarLensWidgets.swift */,
+				EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */,
+				91FC57F4A338B5F930347C70 /* WidgetViews.swift */,
+				5D616EC740FB3518415FE3F0 /* WidgetStyle.swift */,
+				0F7B5FDA95CE22BB3C9390E4 /* Info.plist */,
+				E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */,
+				E9414A94EAD2D8B66E3BFF06 /* Fonts */,
+			);
+			path = GrammarLensWidgets;
 			sourceTree = "<group>";
 		};
 		9740EEB11CF90186004384FC /* Flutter */ = {
@@ -103,6 +213,9 @@
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				4E4300B6BBE2C05C614DFB0C /* GoogleService-Info.plist */,
+				1B3599844D8E6050A98C4684 /* Shared */,
+				84E1C81B50342A5D70CF5747 /* GrammarLensWidgets */,
+				659C54A080367F53B96C919F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,6 +224,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				7B830C334B8A6CC4D428A892 /* GrammarLensWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -127,8 +241,20 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */,
+				6A08DBFC7C8619521D99E0A7 /* Runner.entitlements */,
+				8EED60634A96C04FACC53F1E /* ReminderScheduler.swift */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		E9414A94EAD2D8B66E3BFF06 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */,
+				DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */,
+			);
+			name = Fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,6 +277,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		87465925F2CDABA98CCE2496 /* GrammarLensWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 68F481D73D7CFEA4B7F5C65B /* Build configuration list for PBXNativeTarget "GrammarLensWidgets" */;
+			buildPhases = (
+				93E6F28D4ABF968AE65BFDEF /* Sources */,
+				C29A4E4F8BA882FFDB6B8378 /* Frameworks */,
+				C9814C3120B37651B393009B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GrammarLensWidgets;
+			productName = GrammarLensWidgets;
+			productReference = 7B830C334B8A6CC4D428A892 /* GrammarLensWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -160,12 +303,14 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				88B52033B3609E4F5497E83A /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				FFD9BAE9B3E15736CFAC1F1E /* FlutterFire: "flutterfire upload-crashlytics-symbols" */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				44BF120A334CE422557E307C /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -220,6 +365,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				87465925F2CDABA98CCE2496 /* GrammarLensWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -229,6 +375,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD985B5764E133DECA831F83 /* NunitoSans-Variable.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,6 +388,15 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				F0ED1C12DBC34F5DD7657CA1 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9814C3120B37651B393009B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54BEFA8AC309DBE3E2777823 /* NunitoSans-Variable.ttf in Resources */,
+				3045FBA66D8F705292194397 /* OFL-NunitoSans.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +460,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+				A52C8AEB398CA3FEC96C7ABB /* BridgeTests.swift in Sources */,
+				312FA4EE66A7355F0106DC73 /* WidgetSnapshotTests.swift in Sources */,
+				DB128510D836A099DB50E6C4 /* WidgetTimelineTests.swift in Sources */,
+				D762D66B099B609D8E18457A /* ReminderSchedulerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		93E6F28D4ABF968AE65BFDEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				68FFA86BFEF821815A06ACF8 /* GrammarLensWidgets.swift in Sources */,
+				A397A44D24FEB7FCCC0A93DD /* WidgetTimeline.swift in Sources */,
+				BC376E2932CB7AEA9DF1B278 /* WidgetViews.swift in Sources */,
+				FE22EB405811916A88392033 /* WidgetStyle.swift in Sources */,
+				C011AFADDB876A00B261E1C7 /* WidgetPayload.swift in Sources */,
+				CE0154482D8665CD8EADFEE2 /* AppGroupStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -314,6 +487,13 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				43F23EA9A30A4F50A31C8BFF /* GrammarLensBridge.swift in Sources */,
+				0A689FCB81A55CDB12BC93DC /* AppGroupStore.swift in Sources */,
+				3025ABE4AB76F93AF05799D5 /* WidgetTimeline.swift in Sources */,
+				E6E1BF2EE16F356D0F668872 /* WidgetViews.swift in Sources */,
+				2B1B953D1855B35CC3A1ACD0 /* WidgetStyle.swift in Sources */,
+				6F115BEC3460DDEB600B5934 /* WidgetPayload.swift in Sources */,
+				72233F4D1CB541E4111B6BA0 /* ReminderScheduler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,6 +504,12 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		44BF120A334CE422557E307C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = GrammarLensWidgets;
+			target = 87465925F2CDABA98CCE2496 /* GrammarLensWidgets */;
+			targetProxy = 7E89A8EB493AFE6B266EB0E3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -347,6 +533,33 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		130A98B808B8F52BBE411F17 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmettayfur.grammarlens.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -405,6 +618,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 37U9L67C2J;
 				ENABLE_BITCODE = NO;
@@ -470,6 +684,32 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
 			};
 			name = Profile;
+		};
+		430378B0E3B6D89EF557E9B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmettayfur.grammarlens.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -588,6 +828,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 37U9L67C2J;
 				ENABLE_BITCODE = NO;
@@ -611,6 +852,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 37U9L67C2J;
 				ENABLE_BITCODE = NO;
@@ -627,6 +869,33 @@
 			};
 			name = Release;
 		};
+		B9B87E309BA6CF0509511D4E /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmettayfur.grammarlens.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -636,6 +905,16 @@
 				331C8088294A63A400263BE5 /* Debug */,
 				331C8089294A63A400263BE5 /* Release */,
 				331C808A294A63A400263BE5 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		68F481D73D7CFEA4B7F5C65B /* Build configuration list for PBXNativeTarget "GrammarLensWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				130A98B808B8F52BBE411F17 /* Release */,
+				430378B0E3B6D89EF557E9B3 /* Debug */,
+				B9B87E309BA6CF0509511D4E /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

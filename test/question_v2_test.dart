@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/practice_reviewing.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -606,7 +608,8 @@ void main() {
       await tester.pump();
       await tester.tap(_primary);
       await tester.pump();
-      expect(find.text('Reviewing your answers…'), findsOneWidget);
+      // V20: the AI wait (the inspecting companion and the checklist).
+      expect(find.byType(PracticeReviewing), findsOneWidget);
 
       claude.pending!.completeError(Exception('offline'));
       await tester.pumpAndSettle();
@@ -648,38 +651,45 @@ void main() {
       expect(_textField(tester).maxLength, isNull);
       expect(_textField(tester).autocorrect, isFalse);
       expect(_textField(tester).textCapitalization, TextCapitalization.none);
-      await tester.tap(_skip);
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
       expect(_textField(tester).minLines, 2);
       expect(
           _textField(tester).textCapitalization, TextCapitalization.sentences);
-      expect(find.widgetWithText(FilledButton, 'Finish'), findsOneWidget);
+      // UI polish Q05: the last question's button reads "Finish".
+      expect(
+          tester
+              .widget<PressableButton>(find.byKey(DailyTestScreen.checkKey))
+              .label,
+          'Finish');
     });
 
-    testWidgets(
-        'Next → Back keeps the answers, and moving makes no read or grading',
+    // UI polish V07: no Back in the Daily Test (a checked answer is
+    // final); checking grades on the device and still makes no read.
+    testWidgets('Check grades on the device: no read, no request',
         (tester) async {
       final (finished, claude) = await pumpDaily(tester);
       final reads = claude.reads;
       await tester.enterText(_field, 'interrupting');
-      await _next(tester);
-      await tester.enterText(_field, _longAnswer);
-      await _back(tester);
-      expect(_controller(tester).text, 'interrupting');
-      await _next(tester);
-      expect(_controller(tester).text, _longAnswer);
+      await tester.pump();
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(DailyTestScreen.continueKey), findsOneWidget);
       expect(claude.reads, reads);
       expect(finished, isEmpty);
     });
 
     testWidgets('a second tap on Finish does not finish twice', (tester) async {
       final (finished, _) = await pumpDaily(tester);
-      await tester.tap(_skip);
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
       await tester.enterText(_field, _longAnswer);
       await tester.pump();
-      await tester.tap(_primary);
-      await tester.tap(_primary, warnIfMissed: false);
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(DailyTestScreen.continueKey));
+      await tester.tap(find.byKey(DailyTestScreen.continueKey),
+          warnIfMissed: false);
       await tester.pump();
       expect(finished, hasLength(1));
       expect(finished.single['rewrite'], _longAnswer);

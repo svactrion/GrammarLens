@@ -1,11 +1,20 @@
 import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
+import '../app_colors.dart';
 import '../l10n/l10n.dart';
+import '../models/daily_test_completion.dart';
+import '../utils/haptics.dart';
+import '../widgets/daily_test_card.dart';
+import '../widgets/home_practice.dart';
+import '../widgets/rest_reminder_row.dart';
+import '../widgets/rest_scene.dart';
+import '../widgets/score_capsule.dart';
+import '../widgets/ticket.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/climb_theme.dart';
@@ -14,33 +23,32 @@ import '../models/error_entry.dart';
 import '../models/medal_tier.dart';
 import '../models/pending_climb.dart';
 import '../models/review_sort_order.dart';
-import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/month_transition.dart';
 import '../services/monthly_medal_rules.dart';
+import '../services/reminder_controller.dart';
+import 'reminder_soft_ask.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../theme.dart';
-import '../utils/answer_matching.dart';
+import '../motion.dart';
 import '../utils/greeting.dart';
 import '../utils/text_format.dart';
-import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/brand_wordmark.dart';
-import '../widgets/section_title.dart';
 import '../widgets/home_greeting.dart';
 import '../widgets/launch_splash.dart';
-import '../widgets/locked_premium_pill.dart';
 import '../widgets/month_card_sheet.dart';
 import '../widgets/monthly_climb/climb_card.dart';
+import '../widgets/monthly_climb/climb_camera.dart';
+import '../widgets/skeleton.dart';
+import '../widgets/error_state.dart';
+import '../widgets/floating_nav_shell.dart';
 import '../widgets/monthly_climb/climb_debug_month_card.dart';
-import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
-import '../widgets/weak_spot_card.dart';
-import 'avatar_picker_screen.dart' show homeAvatarHeroTag;
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
 import 'premium_screen.dart';
@@ -67,15 +75,23 @@ class HomeScreen extends StatefulWidget {
   final StorageService storageService;
   final AnalyticsService analyticsService;
   final SubscriptionService subscriptionService;
-  // Nullable, same as ReviewScreen's `onGoToPractice`: the bottom-nav tab
-  // switch lives in app.dart's State, not here, so this is a hook rather
-  // than HomeScreen owning navigation itself.
-  final VoidCallback? onAvatarTap;
 
   /// Switches the bottom-nav to the Review tab (the Review call-out that
   /// ends Home for a free user, 1.2.0 Q15). Nullable for the same reason as
-  /// [onAvatarTap]: the tab switch lives in app.dart.
+  /// the Profile hook below: the tab switch lives in app.dart.
   final VoidCallback? onGoToReview;
+
+  /// Switches to the Profile tab (the score capsule's tap: the month's
+  /// progress, V14).
+  final VoidCallback? onOpenProfile;
+
+  /// Bumped by a `grammarlens://daily-test` link (a widget or reminder
+  /// tap): Home opens today's Daily Test, or stays on Home when it is done.
+  final ValueListenable<int>? dailyTestLinks;
+
+  /// The reminder settings (N01, V24's switch); Home makes its own when
+  /// none is given.
+  final ReminderController? reminders;
   // Test-only clock seam (defaults to the real DateTime.now) — the
   // time-of-day greeting's boundary tests need to construct exact
   // 04:59/05:00-style instants, not depend on whatever time the suite
@@ -107,6 +123,11 @@ class HomeScreen extends StatefulWidget {
   /// Read once in `initState`, like [offerDay0Paywall].
   final bool firstRunZoom;
 
+  /// The first climb (V12) already played the first run's camera: Home
+  /// still treats this as the first run's Home (no month card, M2) but does
+  /// not zoom again.
+  final bool firstRunZoomPlayed;
+
   /// Called from `initState` once [firstRunZoom] has been taken.
   final VoidCallback? onFirstRunZoomTaken;
 
@@ -119,13 +140,16 @@ class HomeScreen extends StatefulWidget {
     required this.storageService,
     required this.analyticsService,
     SubscriptionService? subscriptionService,
-    this.onAvatarTap,
     this.onGoToReview,
+    this.onOpenProfile,
+    this.dailyTestLinks,
+    this.reminders,
     this.initialPendingClimb,
     this.onInitialPendingClimbTaken,
     this.offerDay0Paywall = false,
     this.onOfferDay0PaywallTaken,
     this.firstRunZoom = false,
+    this.firstRunZoomPlayed = false,
     this.onFirstRunZoomTaken,
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
@@ -143,16 +167,26 @@ class HomeScreen extends StatefulWidget {
   /// 22 pt at the default text size.
   static const greetingScale = 1.1;
 
-  /// Light mode's ground shadow under the hero, for tests.
-  static const heroGroundKey = ValueKey('home_hero_ground');
-
-  /// The soft light behind the hero, for tests.
-  static const heroBacklightKey = ValueKey('home_hero_backlight');
-
-  /// The Review call-out's tap target, for tests.
-  static const reviewCalloutKey = ValueKey('home_review_callout');
-
   /// The Daily Test card, for tests that measure or tap it.
+  static const capsuleKey = ValueKey('home_score_capsule');
+  static const restSceneKey = ValueKey('home_rest_scene');
+
+  /// The rest scene's fade over Home after the day's step (fix round 6);
+  /// present only while it fades in.
+  static const restFadeKey = ValueKey('home_rest_fade');
+
+  /// PW05r's practice, opened from the rest scene's paywall (tests).
+  static const restPractiseKey = ValueKey('home_rest_practise');
+  static const ticketKey = ValueKey('home_ticket');
+
+  /// Fix round 6, item 1 (SPEC §1.8, v14): how long the pawn stands on the
+  /// day's new step, with nothing else moving, before the rest scene comes.
+  static const restBeat = Duration(seconds: 1);
+
+  /// The cross-fade from Home to the rest scene after [restBeat]
+  /// (`AppMotion.slow`; under Reduce Motion `AppMotion.fast`).
+  static Duration restReveal(BuildContext context) =>
+      AppMotion.entrance(context, AppMotion.slow);
   static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
   /// The clock the month card's open time is measured with; a test seam,
@@ -172,6 +206,11 @@ class _HomeScreenState extends State<HomeScreen>
   // fail-closed default (never grant access nobody paid for while a check
   // is still in flight).
   bool _hasFullAccess = false;
+
+  /// V24f's "· N days free": the store's trial on the paywall's preselected
+  /// plan for this user, read once the free rest scene shows.
+  int? _restTrialDays;
+  bool _restTrialRequested = false;
 
   // One service for everything Daily Test on this Home (opening the test, its
   // result, the completion): its single-flight generation and the next day's
@@ -197,8 +236,63 @@ class _HomeScreenState extends State<HomeScreen>
   bool _loadingClimb = true;
   bool _climbLoadFailed = false;
   final _mountainKey = GlobalKey();
+
+  /// INTEGRATE 3b: the climb section (the card, or its skeleton) and the
+  /// mountain window's height fitted to it on first view.
+  final _climbSectionKey = GlobalKey();
+  double _climbWindowHeight = ClimbCamera.fullWindowHeight;
+  double? _navClearance;
+  (double, int, double)? _climbFitInputs;
   bool _dailyFlowActive = false;
+
+  /// A Daily Test link waits for today's set to be read.
+  bool _dailyTestLinkPending = false;
+
+  late final ReminderController _reminders =
+      widget.reminders ?? ReminderController(storage: widget.storageService);
+
+  /// N01 should open once Home is quiet (TASK-widgets fixed decision 5):
+  /// the rest scene appeared, or a second Daily Test was finished.
+  bool _softAskQueued = false;
+  bool _restSceneSeen = false;
+
+  /// A check of [_maybeShowSoftAsk] is scheduled for the end of this frame
+  /// (fix round 3, A2: N01 opens on the first frame the rest scene is on
+  /// screen, whatever path led there).
+  bool _softAskCheckScheduled = false;
   String? _pendingClimbDay;
+
+  /// Fix round 6, item 1: the rest scene waits for the day's step. Set when
+  /// a Daily Test's completion is saved (with [_pendingClimbDay]); while it
+  /// is set on a rest day, Home keeps its normal content: the step is
+  /// pending (Home not visible yet), walking, or followed by what a step
+  /// brings (a save point's light and name, a month card), then
+  /// [HomeScreen.restBeat], then the cross-fade. Cleared when the scene has
+  /// come, when there is no step to show, and when the user leaves Home
+  /// once the walk has begun (the scene is then simply there on return).
+  bool _restWaitsForStep = false;
+
+  /// The pawn has landed and the mountain has nothing more to show for it
+  /// (`MonthlyMountain.onArrivalEnd`); the beat starts once Home is quiet.
+  bool _stepArrived = false;
+
+  /// [HomeScreen.restBeat], then the cross-fade to the rest scene.
+  late final AnimationController _restArrival;
+
+  /// The rest scene's opacity over Home during [_restArrival]'s second part.
+  Animation<double> _restOpacity = kAlwaysDismissedAnimation;
+
+  /// Whether the cross-fade's part of [_restArrival] has begun: both Home
+  /// and the rest scene are built.
+  bool _restRevealing = false;
+
+  /// Home's normal content, kept as one subtree (its scroll position, the
+  /// mountain) when the rest scene fades in over it.
+  final _homeContentKey = GlobalKey();
+
+  /// The rest scene, one subtree from the first frame of its fade to the
+  /// frame it stands alone (its loops do not restart).
+  final _restContentKey = GlobalKey();
 
   /// Steps the pending completion earned, known only when it arrived through
   /// [HomeScreen.initialPendingClimb]. It lets the first load derive the
@@ -230,14 +324,12 @@ class _HomeScreenState extends State<HomeScreen>
       (ModalRoute.of(context)?.isCurrent ?? true) &&
       WidgetsBinding.instance.lifecycleState != AppLifecycleState.paused;
 
-  bool _loadingWeakSpots = true;
   List<WeakSpot> _weakSpots = const [];
 
-  /// How many weak spots there are in all; Home shows at most three
-  /// ([_weakSpots]). Read from `getTopicStats` (distinct error types per
-  /// topic, the same grouping `getWeakSpots` uses), falling back to the
-  /// number shown if that read fails.
-  int _weakSpotTotal = 0;
+  /// Today's practice use (V14's ticket, H04's sessions, V24's rule):
+  /// free practices started today, and practice sessions today.
+  int _freeUsedToday = 0;
+  int _sessionsToday = 0;
 
   /// Batch 6: the zoom from the whole mountain (K-c) to the daily framing,
   /// after the month card or on the first run.
@@ -312,16 +404,22 @@ class _HomeScreenState extends State<HomeScreen>
     _zoom = ClimbZoomController(vsync: this)..addListener(_onZoomChanged);
     _chipOpacity =
         CurvedAnimation(parent: _zoom.progress, curve: const Interval(.85, 1));
+    _restArrival = AnimationController(vsync: this)
+      ..addListener(_onRestArrivalTick)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) _endRestWait();
+      });
     WidgetsBinding.instance.addObserver(this);
     final initialClimb = widget.initialPendingClimb;
     if (initialClimb != null && initialClimb.step > 0) {
+      _restWaitsForStep = true;
       _pendingClimbDay = initialClimb.day;
       _pendingClimbStep = initialClimb.step;
     }
     widget.onInitialPendingClimbTaken?.call();
     _day0PaywallPending = widget.offerDay0Paywall;
     widget.onOfferDay0PaywallTaken?.call();
-    if (widget.firstRunZoom ||
+    if ((widget.firstRunZoom && !widget.firstRunZoomPlayed) ||
         _debugMonthCard == ClimbDebugMonthCardValue.firstRun) {
       _firstRunZoomPending = true;
       // K-c from the first frame the mountain is drawn.
@@ -335,9 +433,13 @@ class _HomeScreenState extends State<HomeScreen>
     // [_checkAccess]'s one-shot read above (which only covers this
     // screen's own initial build).
     widget.subscriptionService.addAccessListener(_onAccessChanged);
+    widget.dailyTestLinks?.addListener(_onDailyTestLink);
+    _reminders.addListener(_onRemindersChanged);
+    _reminders.load();
     _loadTodaysDailyTest();
     _loadClimb();
     _loadWeakSpots();
+    _loadPracticeUsage();
     if (ClimbDebugControls.available) {
       ClimbDebugControls.instance.addListener(_onDebugPlay);
     }
@@ -349,8 +451,12 @@ class _HomeScreenState extends State<HomeScreen>
       ClimbDebugControls.instance.removeListener(_onDebugPlay);
     }
     WidgetsBinding.instance.removeObserver(this);
+    widget.dailyTestLinks?.removeListener(_onDailyTestLink);
+    _reminders.removeListener(_onRemindersChanged);
+    if (widget.reminders == null) _reminders.dispose();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
+    _restArrival.dispose();
     _zoom.removeListener(_onZoomChanged);
     _zoom.dispose();
     super.dispose();
@@ -359,6 +465,13 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // A route was pushed above Home, or its tab's tickers stopped, after
+    // the day's step began: the rest scene no longer waits (a build
+    // follows).
+    _dropRestWaitIfLeft(rebuild: false);
+    // A route above Home closed, or Home's visibility changed: N01 may be
+    // waiting for exactly this (A2).
+    _scheduleSoftAskCheck();
     // A delayed save may finish while another route/tab covers Home.
     if (_pendingClimbDay != null && _homeVisible) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -392,10 +505,23 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.dailyTestLinks != widget.dailyTestLinks) {
+      oldWidget.dailyTestLinks?.removeListener(_onDailyTestLink);
+      widget.dailyTestLinks?.addListener(_onDailyTestLink);
+    }
+    if (oldWidget.active && !widget.active) {
+      _dropRestWaitIfLeft(rebuild: false);
+    }
     if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
       _loadClimb();
     }
     if (!oldWidget.active && widget.active) {
+      // Home is the visible tab again: what another tab did today (the free
+      // ticket used on a practice from Review, A2) shows now, not at the
+      // next resume.
+      _loadTodaysDailyTest();
+      _loadPracticeUsage();
+      _scheduleSoftAskCheck();
       _showDay0Paywall();
       _presentMonthCard();
       _presentDebugMilestone();
@@ -412,6 +538,7 @@ class _HomeScreenState extends State<HomeScreen>
         _monthCardOpenStart();
       }
     }
+    if (state == AppLifecycleState.paused) _dropRestWaitIfLeft();
     if (state == AppLifecycleState.resumed) {
       // Refresh greeting and cached day after midnight/timezone changes.
       // This is a local read; resuming never generates another question set.
@@ -419,7 +546,9 @@ class _HomeScreenState extends State<HomeScreen>
       _loadTodaysDailyTest();
       _loadClimb();
       _loadWeakSpots();
+      _loadPracticeUsage();
       _showDay0Paywall();
+      _scheduleSoftAskCheck();
     }
   }
 
@@ -545,7 +674,10 @@ class _HomeScreenState extends State<HomeScreen>
       // simply loaded.
       if (showStep) {
         _climbAnimating = true;
+        _stepArrived = false;
       } else if (!_climbAnimating) {
+        // No step to show: the rest scene has nothing to wait for.
+        if (!_stepArrived) _endRestWait();
         _armDay0Paywall(Duration.zero);
       }
     } catch (_) {
@@ -554,7 +686,10 @@ class _HomeScreenState extends State<HomeScreen>
         _loadingClimb = false;
         _climbLoadFailed = true;
       });
-      if (!_climbAnimating) _armDay0Paywall(Duration.zero);
+      if (!_climbAnimating) {
+        if (!_stepArrived) _endRestWait();
+        _armDay0Paywall(Duration.zero);
+      }
     }
   }
 
@@ -691,6 +826,8 @@ class _HomeScreenState extends State<HomeScreen>
     } finally {
       _monthCardShowing = false;
     }
+    // The card and its zoom were the last thing after the day's step.
+    _tryRestArrival();
     _presentDebugMilestone();
     _onDebugPlay();
   }
@@ -824,6 +961,93 @@ class _HomeScreenState extends State<HomeScreen>
   void _onMountainMotionEnd() {
     _climbAnimating = false;
     _armDay0Paywall(_day0PaywallDelay);
+    _scheduleSoftAskCheck();
+  }
+
+  /// The pawn has landed and a save point it reached has shown its light
+  /// and its name: on a rest day the beat before the rest scene can start.
+  void _onMountainArrivalEnd() {
+    if (!_restWaitsForStep) return;
+    if (!_restDay) {
+      // An ordinary day: nothing waits for this step.
+      _restWaitsForStep = false;
+      return;
+    }
+    _stepArrived = true;
+    _tryRestArrival();
+  }
+
+  /// Whether the rest scene is held back for the day's step (fix round 6).
+  bool get _restHeld => _restWaitsForStep && _restDay;
+
+  /// Starts [HomeScreen.restBeat] and the cross-fade once the day's step
+  /// and everything after it have ended and nothing is above Home. Asked
+  /// when the pawn's arrival ends and when a month card closes.
+  void _tryRestArrival() {
+    if (!mounted || !_restWaitsForStep || !_stepArrived) return;
+    if (_restArrival.isAnimating || _climbAnimating) return;
+    if (_monthCardShowing || _pendingMonthCard != null || _zoom.active) return;
+    if (!_restDay) {
+      _restWaitsForStep = false;
+      _stepArrived = false;
+      return;
+    }
+    if (!_homeVisible) {
+      _endRestWait();
+      return;
+    }
+    final reveal = HomeScreen.restReveal(context);
+    final total = HomeScreen.restBeat + reveal;
+    _restOpacity = CurvedAnimation(
+        parent: _restArrival,
+        curve: Interval(
+            HomeScreen.restBeat.inMicroseconds / total.inMicroseconds, 1,
+            curve: AppMotion.enter));
+    _restArrival
+      ..duration = total
+      ..forward(from: 0);
+  }
+
+  /// The beat has passed: from here Home and the rest scene are both built
+  /// and the scene fades in.
+  void _onRestArrivalTick() {
+    final total = _restArrival.duration;
+    if (total == null || !mounted) return;
+    final revealing = _restArrival.isAnimating &&
+        _restArrival.value * total.inMicroseconds >=
+            HomeScreen.restBeat.inMicroseconds;
+    if (revealing != _restRevealing) {
+      setState(() => _restRevealing = revealing);
+    }
+  }
+
+  /// The rest scene no longer waits: it has faded in, there was no step to
+  /// show, or the user left Home. With [rebuild] false the caller is
+  /// already in a build.
+  void _endRestWait({bool rebuild = true}) {
+    if (!_restWaitsForStep && !_stepArrived && !_restRevealing) return;
+    _restWaitsForStep = false;
+    _stepArrived = false;
+    _restRevealing = false;
+    if (_restArrival.isAnimating || _restArrival.value != 0) {
+      _restArrival.stop();
+      _restArrival.value = 0;
+    }
+    if (rebuild && mounted) setState(() {});
+    // N01 follows the scene (A2): asked once it is fully on screen.
+    _scheduleSoftAskCheck();
+  }
+
+  /// The user left Home (another tab, a route above, the app in the
+  /// background) after the day's step had begun to walk: the rest scene is
+  /// shown on return and the step is not replayed. A step that has not
+  /// begun (Home was not visible when the test was saved) still waits for
+  /// Home. A month card Home opened itself is not leaving.
+  void _dropRestWaitIfLeft({bool rebuild = true}) {
+    if (!_restWaitsForStep || !mounted) return;
+    final begun = _climbAnimating || _stepArrived || _restArrival.isAnimating;
+    if (!begun || _monthCardShowing || _homeVisible) return;
+    _endRestWait(rebuild: rebuild);
   }
 
   /// The climb has landed, or there is none to wait for: opens the paywall
@@ -877,6 +1101,96 @@ class _HomeScreenState extends State<HomeScreen>
     _loadTodaysDailyTest();
     _loadClimb();
     _loadWeakSpots();
+    _loadPracticeUsage();
+    _queueSoftAskAfterSecondTest();
+  }
+
+  void _onRemindersChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// N01 after the second Daily Test: the first one on record was finished
+  /// before today.
+  Future<void> _queueSoftAskAfterSecondTest() async {
+    try {
+      if (!_reminders.mayAsk) return;
+      final today = await widget.storageService.getDailyTestSetForToday();
+      if (today?.isCompleted != true) return;
+      final first = await widget.storageService.getFirstDailyTestCompletion();
+      final now = widget.clock();
+      if (first == null ||
+          !first.isBefore(DateTime(now.year, now.month, now.day))) {
+        return;
+      }
+      if (mounted) setState(() => _softAskQueued = true);
+    } catch (_) {
+      // Storage unavailable: asked another time.
+    }
+  }
+
+  /// Runs [_maybeShowSoftAsk] at the end of the current frame, once per
+  /// frame (A2): after a build that shows the rest scene, when Home becomes
+  /// the visible tab, when a route above it closes, on resume and when the
+  /// pawn lands. Does nothing when nothing is queued.
+  void _scheduleSoftAskCheck() {
+    if (_softAskCheckScheduled) return;
+    _softAskCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _softAskCheckScheduled = false;
+      if (mounted) _maybeShowSoftAsk();
+    });
+  }
+
+  /// Opens N01 when it is queued and Home is quiet: visible, no flow, no
+  /// step walking.
+  void _maybeShowSoftAsk() {
+    if (!_softAskQueued || !_reminders.mayAsk) return;
+    if (!_homeVisible || _climbAnimating || _monthCardShowing) return;
+    // Fix round 6: on a rest day N01 follows the delayed rest scene.
+    if (_restHeld) return;
+    _softAskQueued = false;
+    _reminders.askOpened();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _reminders.askClosed();
+      if (!mounted || !_reminders.mayAsk) return;
+      await showReminderSoftAsk(context,
+          controller: _reminders, hero: widget.avatar ?? Avatar.values.first);
+    });
+  }
+
+  /// Today's free practices and practice sessions (best effort: a failed
+  /// read shows the ticket free and no session, as before).
+  Future<void> _loadPracticeUsage() async {
+    try {
+      final free = await widget.storageService.getFreePracticeCountForToday();
+      final sessions = await widget.storageService.getSessionCountForToday();
+      if (!mounted) return;
+      setState(() {
+        _freeUsedToday = free;
+        _sessionsToday = sessions;
+      });
+    } catch (_) {}
+  }
+
+  /// Every daily right used (SPEC §1.8, V24): today's Daily Test done and
+  /// the practice allowance used — the free ticket, or every Premium
+  /// session.
+  bool get _restDay {
+    if (_todaysDailyTest?.isCompleted != true) return false;
+    return _hasFullAccess
+        ? _sessionsToday >= StorageService.dailySessionLimit
+        : _freeUsedToday >= StorageService.freeDailyPracticeLimit;
+  }
+
+  /// Today's completed test, graded as the completion grades it.
+  DailyTestCompletion? get _todaysCompletion {
+    final set = _todaysDailyTest;
+    if (set == null || !set.isCompleted) return null;
+    return DailyTestCompletion(
+      set: set,
+      answers: set.answers ?? const {},
+      completedAt: set.completedAt ?? widget.clock(),
+    );
   }
 
   void _onAccessChanged(bool hasFullAccess) {
@@ -905,6 +1219,27 @@ class _HomeScreenState extends State<HomeScreen>
         _loadingToday = false;
       });
     }
+    _openDailyTestFromLink();
+  }
+
+  /// A `grammarlens://daily-test` link: today's set is read again (the
+  /// link may come right after midnight), then [_openDailyTestFromLink].
+  void _onDailyTestLink() {
+    if (!mounted) return;
+    _dailyTestLinkPending = true;
+    setState(() => _loadingToday = true);
+    _loadTodaysDailyTest();
+  }
+
+  /// Opens the Daily Test a link asked for, once today's set is known:
+  /// not when it is done (Home is the answer) or already open.
+  void _openDailyTestFromLink() {
+    if (!_dailyTestLinkPending || !mounted || _loadingToday) return;
+    _dailyTestLinkPending = false;
+    if (_dailyFlowActive || _todaysDailyTest?.isCompleted == true) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openDailyTest(context);
+    });
   }
 
   /// The 2-3 most frequent weak spots (PRD v2 §13.5 item 4) — same
@@ -918,25 +1253,11 @@ class _HomeScreenState extends State<HomeScreen>
         limit: 3,
         sortOrder: ReviewSortOrder.frequent,
       );
-      int? total;
-      try {
-        final stats = await widget.storageService.getTopicStats();
-        total = stats.values.fold<int>(0, (sum, s) => sum + s.weakSpotCount);
-      } catch (_) {
-        // The count is a label; the cards still show.
-      }
       if (!mounted) return;
-      setState(() {
-        _weakSpots = spots;
-        _weakSpotTotal = math.max(total ?? 0, spots.length);
-        _loadingWeakSpots = false;
-      });
+      setState(() => _weakSpots = spots);
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _weakSpots = const [];
-        _loadingWeakSpots = false;
-      });
+      setState(() => _weakSpots = const []);
     }
   }
 
@@ -952,6 +1273,8 @@ class _HomeScreenState extends State<HomeScreen>
     final result = await navigator.push<(DailyTestSet, Map<String, String>)>(
       MaterialPageRoute(
         builder: (_) => DailyTestScreen(
+          hero: widget.avatar,
+          userName: widget.userName,
           analyticsService: widget.analyticsService,
           onFinished: (set, answers) => navigator.pop((set, answers)),
           dailyTestService: _dailyTestService,
@@ -962,11 +1285,15 @@ class _HomeScreenState extends State<HomeScreen>
     if (result != null) {
       final resultRoute = MaterialPageRoute<void>(
         builder: (_) => DailyTestResultScreen(
+          hero: widget.avatar,
+          userName: widget.userName,
           dailyTestSet: result.$1,
           answers: result.$2,
           analyticsService: widget.analyticsService,
           onCompletionSaved: () {
             if (!mounted) return;
+            _restWaitsForStep = true;
+            _stepArrived = false;
             _pendingClimbDay = result.$1.day;
             _refreshAfterDailyTest();
           },
@@ -993,6 +1320,8 @@ class _HomeScreenState extends State<HomeScreen>
         .push(
           MaterialPageRoute(
             builder: (_) => DailyTestResultScreen(
+              hero: widget.avatar,
+              userName: widget.userName,
               dailyTestSet: set,
               answers: set.answers ?? const {},
               analyticsService: widget.analyticsService,
@@ -1003,13 +1332,14 @@ class _HomeScreenState extends State<HomeScreen>
         .then((_) => _refreshAfterDailyTest());
   }
 
-  void _openTopicPractice(BuildContext context) {
+  void _openTopicPractice(BuildContext context, {bool afterPurchase = false}) {
     // Gated by entitlement (PRD v2 §12.2/§12.3): free tier doesn't include
     // Topic Practice at all — a locked tap goes to the Premium screen
     // instead of ever reaching the real screen, same "no fake it"
     // reasoning as the daily session cap already applies to generation
-    // itself.
-    if (!_hasFullAccess) {
+    // itself. Right after a purchase (PW05r) the screen checks the
+    // entitlement itself; Home's flag may not have caught up yet.
+    if (!_hasFullAccess && !afterPurchase) {
       _openPremium(context);
       return;
     }
@@ -1018,6 +1348,7 @@ class _HomeScreenState extends State<HomeScreen>
         .push(
           MaterialPageRoute(
             builder: (_) => TopicPracticeScreen(
+              hero: widget.avatar,
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,
@@ -1037,16 +1368,14 @@ class _HomeScreenState extends State<HomeScreen>
       _openPremium(context, sourceContext: humanizeSlug(spot.errorType));
       return;
     }
-    final topic = kTopics.firstWhere(
-      (t) => t.id.name == spot.topicId,
-      orElse: () => kTopics.first,
-    );
+    final topic = topicOfWeakSpot(spot.topicId);
     Navigator.of(context)
         .push(
           MaterialPageRoute(
             builder: (_) => WeakSpotDetailScreen(
               topic: topic,
               spot: spot,
+              hero: widget.avatar,
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,
@@ -1055,6 +1384,69 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         )
         .then((_) => _loadWeakSpots());
+  }
+
+  /// Today's weak spot for the free rest scene (V24f): the most frequent.
+  WeakSpot? get _restWeakSpot => _weakSpots.isEmpty ? null : _weakSpots.first;
+
+  /// V24s → V13r: the paywall rises from the bottom (450 ms spring) with
+  /// the rest scene's top; source `rest_scene`. After a trial, PW05r's
+  /// "Practise <weak spot>" opens that weak spot's practice straight away
+  /// (V18), or the topics without one. Closing it returns to the scene.
+  Future<void> _openRestPaywall(BuildContext context) async {
+    widget.analyticsService.modeSelected(AnalyticsService.modePremium);
+    final spot = _restWeakSpot;
+    final reduced = AppMotion.reduced(context);
+    final practise = await Navigator.of(context).push<bool>(
+      PageRouteBuilder<bool>(
+        transitionDuration: reduced ? AppMotion.fast : AppMotion.sheet,
+        reverseTransitionDuration: reduced ? AppMotion.fast : AppMotion.base,
+        pageBuilder: (_, __, ___) => PremiumScreen(
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourceRestScene,
+          subscriptionService: widget.subscriptionService,
+          rest: PaywallRest(
+            theme: _climbTheme,
+            weakSpot: spot == null ? null : humanizeSlug(spot.errorType),
+            hero: widget.avatar ?? Avatar.values.first,
+            name: widget.userName,
+          ),
+        ),
+        transitionsBuilder: (_, animation, __, child) => reduced
+            ? FadeTransition(opacity: animation, child: child)
+            : SlideTransition(
+                position: Tween(begin: const Offset(0, 1), end: Offset.zero)
+                    .animate(CurvedAnimation(
+                        parent: animation,
+                        curve: AppMotion.spring,
+                        reverseCurve: AppMotion.exit)),
+                child: child,
+              ),
+      ),
+    );
+    if (practise != true || !mounted || !context.mounted) return;
+    if (spot == null) {
+      _openTopicPractice(context, afterPurchase: true);
+      return;
+    }
+    final topic = topicOfWeakSpot(spot.topicId);
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WeakSpotDetailScreen(
+          key: HomeScreen.restPractiseKey,
+          topic: topic,
+          spot: spot,
+          hero: widget.avatar,
+          claudeService: widget.claudeService,
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          subscriptionService: widget.subscriptionService,
+          startPractice: true,
+        ),
+      ),
+    );
+    if (mounted) _loadWeakSpots();
   }
 
   /// Single entry point to the merged Premium screen (PRD v2 §13.1) —
@@ -1115,7 +1507,112 @@ class _HomeScreenState extends State<HomeScreen>
     // brand and the greeting sit in the page and scroll with it, so the app
     // bar is only the status bar's height (page-coloured; content passes
     // under it).
-    return BrandScaffold(
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final completion = _todaysCompletion;
+    final todayPoints = completion == null
+        ? null
+        : MonthlyMedalRules.score(
+            correct: completion.correct, wrong: completion.wrong);
+    final capsule = ScoreCapsule(
+      key: HomeScreen.capsuleKey,
+      points: _climbScore,
+      year: _climbMonth.year,
+      month: _climbMonth.month,
+      today: todayPoints,
+      onTap: widget.onOpenProfile,
+    );
+    final hero = widget.avatar ?? Avatar.values.first;
+    _maybeShowSoftAsk();
+
+    // V24 (SPEC §1.8): once every daily right is used, the rest scene
+    // replaces Home's content. Fix round 6 (v14): after the day's step and
+    // a short beat, not instead of them ([_restWaitsForStep]).
+    final restDay = _restDay && _climbSteps != null && completion != null;
+    Widget restScene({required bool primary}) {
+      if (!_hasFullAccess && !_restTrialRequested) {
+        _restTrialRequested = true;
+        unawaited(paywallTrialDays(widget.subscriptionService).then((days) {
+          if (mounted) setState(() => _restTrialDays = days);
+        }));
+      }
+      final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+      // The rest scene replaces the mountain: a step that was still walking
+      // never reports its end, so it no longer holds N01 back (A2).
+      if (primary) _climbAnimating = false;
+      // N01 the first time the rest scene is shown (once the stored answer
+      // is known), checked after this frame, when the scene is on screen.
+      if (!_restSceneSeen && _reminders.loaded) {
+        _restSceneSeen = true;
+        if (_reminders.mayAsk) _softAskQueued = true;
+      }
+      if (_softAskQueued) _scheduleSoftAskCheck();
+      // Fix round 3, B1: the scene is full-bleed from the top of the screen
+      // (behind the status bar), the night sheet attached under it; no
+      // page padding. Light status bar text on the night sky.
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        key: _restContentKey,
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          // The night panel's colour (v13, both themes).
+          backgroundColor: AppColors.restPanel,
+          body: SingleChildScrollView(
+            // While it fades in over Home, Home's list still holds the
+            // route's primary scroll controller.
+            primary: primary,
+            child: RestScene(
+              key: HomeScreen.restSceneKey,
+              theme: _climbTheme,
+              days: days,
+              steps: _climbSteps!,
+              hero: hero,
+              name: widget.userName,
+              clock: widget.clock,
+              capsule: capsule,
+              reminder: RestReminderRow(controller: _reminders, hero: hero),
+              // V24's done tiles (fix round 5, its own board again): "4/5 ·
+              // +9 points" and "5/5 sessions" (V24f shows the used ticket
+              // instead).
+              testLine: l10n.restTestLine(completion!.correct,
+                  completion.results.length, todayPoints ?? 0),
+              practiceLine: l10n.restSessionsLine(
+                  _sessionsToday, StorageService.dailySessionLimit),
+              // V24f (SPEC §1.15): free users' rest scene leads to Premium;
+              // Premium users keep V24.
+              offer: _hasFullAccess
+                  ? null
+                  : RestOffer(
+                      weakSpot: _restWeakSpot == null
+                          ? null
+                          : humanizeSlug(_restWeakSpot!.errorType),
+                      trialDays: _restTrialDays,
+                      topics: practiceTopics().length,
+                      onWake: () => _openRestPaywall(context),
+                    ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (restDay && !_restWaitsForStep) return restScene(primary: true);
+
+    // INTEGRATE 3b: the mountain window is fitted above the floating nav
+    // bar after each layout (there is no bar for a screen shown alone).
+    _navClearance =
+        context.dependOnInheritedWidgetOfExactType<NavBarClearance>()?.value;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitClimbWindow());
+
+    final steps = _climbSteps;
+    final topic =
+        _weakSpots.isEmpty ? null : topicOfWeakSpot(_weakSpots.first.topicId);
+    final ticketUsed = _freeUsedToday >= StorageService.freeDailyPracticeLimit;
+
+    // 1.2.0 Home, UI polish V14 / V15: the brand with the score capsule,
+    // the greeting, the Daily Test card, the month's mountain, the free
+    // ticket (free users), and topic practice.
+    final home = BrandScaffold(
+      key: _homeContentKey,
       isTabRoot: true,
       appBar: AppBar(
         toolbarHeight: 0,
@@ -1123,142 +1620,194 @@ class _HomeScreenState extends State<HomeScreen>
         scrolledUnderElevation: 0,
       ),
       children: [
-        // Keep the small Home body mounted while covered/scrolled so the
-        // mountain retains the pre-completion position and can be revealed.
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Semantics(
-            container: true,
-            header: true,
-            child: BrandWordmark(
-              style: theme.textTheme.displaySmall?.copyWith(
-                letterSpacing: -1.4,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          // PRD v2 §11: an avatar next to the greeting, not floating
-          // elsewhere on the page, so it reads as "whose home screen this
-          // is" rather than a decorative icon. Greeting leads on the left,
-          // avatar pinned to the far right edge — `spaceBetween` with a
-          // `Flexible` (not `Expanded`) text so the avatar always lands
-          // flush against the trailing edge while a long name never pushes
-          // it off the row. The greeting is two lines ("Good evening," over
-          // the name, the brief's layout); the name wraps rather than being
-          // cut off, and the `Row` (no fixed height) grows to fit whichever
-          // of the two is taller.
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
-                child: HomeGreeting(
-                  word: timeOfDayGreeting(widget.clock(), context.l10n),
-                  name: widget.userName,
-                  withName: context.l10n.greetingWithName(
-                      timeOfDayGreeting(widget.clock(), context.l10n),
-                      context.l10n.greetingName(widget.userName)),
-                  addressedName: context.l10n.greetingName(widget.userName),
-                  lead: context.l10n.greetingLead(
-                      timeOfDayGreeting(widget.clock(), context.l10n)),
-                  // 22 pt at Small (owner, after Batch 3: larger): above
-                  // the 20 pt section titles, below the name (24) and the
-                  // brand (34). Derived from titleLarge so it follows the
-                  // text size setting.
-                  style: theme.textTheme.titleLarge
-                      ?.withWeight(FontWeight.w600)
-                      .copyWith(
-                          fontSize:
-                              (theme.textTheme.titleLarge?.fontSize ?? 20) *
-                                  HomeScreen.greetingScale,
-                          letterSpacing: -0.3,
-                          color: colorScheme.onSurfaceVariant),
-                  nameStyle: theme.textTheme.headlineSmall
-                      ?.withWeight(FontWeight.w900)
-                      .copyWith(
-                          letterSpacing: -0.5, color: colorScheme.onSurface),
+              Expanded(
+                child: Semantics(
+                  container: true,
+                  header: true,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: BrandWordmark(
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          letterSpacing: -1.4,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              // 8 pt (the mockup's 6, was 12): at 320 pt and Large text
-              // "Good afternoon," (172.2 pt) then fits beside the hero
-              // (176 pt) instead of breaking by a fraction of a point.
-              const SizedBox(width: 8),
-              _HeroButton(avatar: widget.avatar, onTap: widget.onAvatarTap),
+              const SizedBox(width: 10),
+              capsule,
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          HomeGreeting(
+            word: timeOfDayGreeting(widget.clock(), l10n),
+            name: widget.userName,
+            withName: l10n.greetingWithName(
+                timeOfDayGreeting(widget.clock(), l10n),
+                l10n.greetingName(widget.userName)),
+            addressedName: l10n.greetingName(widget.userName),
+            lead: l10n.greetingLead(timeOfDayGreeting(widget.clock(), l10n)),
+            style: theme.textTheme.titleLarge
+                ?.withWeight(FontWeight.w500)
+                .copyWith(
+                    fontSize: (theme.textTheme.titleLarge?.fontSize ?? 20) *
+                        HomeScreen.greetingScale,
+                    letterSpacing: -0.3,
+                    color: c.muted),
+            nameStyle: theme.textTheme.titleLarge
+                ?.withWeight(FontWeight.w900)
+                .copyWith(
+                    fontSize: (theme.textTheme.titleLarge?.fontSize ?? 20) *
+                        HomeScreen.greetingScale,
+                    letterSpacing: -0.3,
+                    color: c.muted),
+          ),
+          const SizedBox(height: 14),
           KeyedSubtree(
             key: HomeScreen.dailyTestCardKey,
-            child: _DailyTestCard(
+            child: DailyTestCard(
               key: _todayKey,
-              loading: _loadingToday,
-              dailyTestSet: _todaysDailyTest,
-              onStart: () => _openDailyTest(context),
-              onViewResult: (set) => _openDailyTestResult(context, set),
+              state: _loadingToday
+                  ? DailyTestCardState.loading
+                  : (completion != null
+                      ? DailyTestCardState.done
+                      : DailyTestCardState.todo),
+              hero: hero,
+              title: completion == null
+                  ? l10n.homeDailyNextTitle
+                  : (steps == null || steps == 0
+                      ? l10n.dailyResultDone
+                      : l10n.dailyResultDayComplete(steps)),
+              subtitle: completion == null
+                  ? l10n.homeDailyTodoLine(DailyTestSet.questionCount, 2)
+                  : l10n.homeDailyDoneLine(todayPoints ?? 0, steps ?? 0),
+              results: [
+                for (final r
+                    in completion?.results ?? const <DailyTestAnswerResult>[])
+                  r.isCorrect,
+              ],
+              questionCount:
+                  completion?.results.length ?? DailyTestSet.questionCount,
+              buttonLabel: completion == null
+                  ? l10n.homeDailyStartToday
+                  : l10n.homeDailyReviewAnswers,
+              onSegmentFilled: (_) => HapticMap.light(),
+              onPressed: completion == null
+                  ? () => _openDailyTest(context)
+                  : () => _openDailyTestResult(context, _todaysDailyTest!),
             ),
           ),
           const SizedBox(height: 24),
-          _buildClimb(context),
-          const SizedBox(height: 24),
-          _SectionHeader(
-            title: context.l10n.homeTopicPractice,
-            trailing: _hasFullAccess
-                ? null
-                : const LockedPremiumPill(showChevron: false),
-          ),
-          const SizedBox(height: 12),
-          _TopicStrip(onOpen: () => _openTopicPractice(context)),
-          // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
-          // Review tab already covers "no weak spots yet", and repeating
-          // that message on Home too would just be noise on a screen
-          // that's supposed to lead with what's actually there.
-          if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            _SectionHeader(
-              title: context.l10n.homeWeakSpots,
-              trailing: _CountBadge(
-                context.l10n.topicStatsWeakSpots(_weakSpotTotal),
-              ),
+          _buildClimb(context,
+              bubble: steps == null
+                  ? null
+                  : (completion != null
+                      ? l10n.homeClimbNextTomorrow(steps + 1)
+                      : l10n.homeClimbOneTestAway(steps + 1))),
+          const SizedBox(height: 20),
+          if (!_hasFullAccess) ...[
+            Ticket(
+              key: HomeScreen.ticketKey,
+              compact: true,
+              state: ticketUsed ? TicketState.used : TicketState.free,
+              title: l10n.ticketFreeTitle,
+              subtitle: ticketUsed
+                  ? l10n.ticketUsedLine(widget.userName)
+                  : (topic == null
+                      ? l10n.ticketPickInReview
+                      : l10n.ticketUseItOn(weakSpotTitle(
+                          _weakSpots.first.errorType, topic, l10n))),
+              nextIn: timeToMidnight(widget.clock()),
+              onTap: () {
+                HapticMap.light();
+                widget.onGoToReview?.call();
+              },
             ),
-            const SizedBox(height: 12),
-            for (final spot in _weakSpots) ...[
-              WeakSpotCard(
-                topic: kTopics.firstWhere(
-                  (t) => t.id.name == spot.topicId,
-                  orElse: () => kTopics.first,
-                ),
-                spot: spot,
-                locked: !_hasFullAccess,
-                // The mockup's Home card with its action line (owner,
-                // Batch 5); the same tap as before.
-                withAction: true,
-                onTap: () => _openWeakSpot(context, spot),
-              ),
-              if (spot != _weakSpots.last) const SizedBox(height: 12),
-            ],
-            // 1.2.0 (owner decision Q15): the quiet Premium row that used to
-            // end Home is replaced by a pointer to Review's free daily
-            // practice. Free users only (premium has no quota to describe),
-            // and only when there is a weak spot to choose.
-            if (!_hasFullAccess) ...[
-              const SizedBox(height: 16),
-              _ReviewCallout(onTap: widget.onGoToReview),
-            ],
-          ],
+            const SizedBox(height: 20),
+            TopicShowcase(
+              picked: topic,
+              onOpenPaywall: () => _openPremium(context),
+            ),
+          ] else
+            PracticeCard(
+              sessionsToday: _sessionsToday,
+              sessionLimit: StorageService.dailySessionLimit,
+              onOpenTopic: (_) => _openTopicPractice(context),
+              onPracticeWeakSpot: () => _weakSpots.isEmpty
+                  ? _openTopicPractice(context)
+                  : _openWeakSpot(context, _weakSpots.first),
+            ),
         ]),
       ],
     );
+    if (!restDay || !_restRevealing) return home;
+    // Fix round 6: the beat has passed; the rest scene fades in over Home,
+    // which takes no more taps and is no longer read out.
+    return Stack(fit: StackFit.expand, children: [
+      IgnorePointer(child: ExcludeSemantics(child: home)),
+      FadeTransition(
+          key: HomeScreen.restFadeKey,
+          opacity: _restOpacity,
+          child: restScene(primary: false)),
+    ]);
   }
 
-  Widget _buildClimb(BuildContext context) {
+  /// INTEGRATE 3b: on Home's first view (scrolled to the top) the pawn and
+  /// the next step's ring stay [MonthlyMountain.firstViewClearance] above
+  /// the floating nav bar, on every day of the month: the window gets
+  /// shorter where its full height would put them under the bar (6.1" and
+  /// 6.3" phones, the iPhone SE); 6.7" and 6.9" keep the full window.
+  void _fitClimbWindow() {
+    final clearance = _navClearance;
+    final section = _climbSectionKey.currentContext;
+    if (!mounted || clearance == null || section == null) return;
+    if (_climbSteps == null && !_loadingClimb) return; // the error state
+    final box = section.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return;
+    final scrolled = Scrollable.maybeOf(section)?.position.pixels ?? 0;
+    // The window's top: under the card's plaque (half of it overlaps the
+    // frame), or under the skeleton's 18 pt.
+    final top = box.localToGlobal(Offset.zero).dy +
+        scrolled +
+        (_climbSteps != null ? ClimbCard.plaqueHeight(context) / 2 : 18);
+    final barTop =
+        MediaQuery.sizeOf(context).height - (clearance - NavBarClearance.gap);
+    final room = barTop - MonthlyMountain.firstViewClearance - top;
+    final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+    final inputs = (box.size.width, days, room.roundToDouble());
+    if (inputs == _climbFitInputs) return;
+    _climbFitInputs = inputs;
+    final height = MonthlyMountain.fitWindowHeight(
+        width: box.size.width, days: days, room: room);
+    if ((height - _climbWindowHeight).abs() > .5) {
+      setState(() => _climbWindowHeight = height);
+    }
+  }
+
+  Widget _buildClimb(BuildContext context, {String? bubble}) {
     final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
     return Column(
+      key: _climbSectionKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // The card carries the title on its plaque (design decision K3);
         // until the month's progress has loaded there is no card, so the
         // title stands alone above the progress indicator or the retry.
-        if (_climbSteps == null) ...[
+        if (_climbSteps == null && _loadingClimb)
+          // H03: the card's own shape as a skeleton until the month loads.
+          Semantics(
+            label: context.l10n.homeClimbLoading,
+            child: _ClimbSkeleton(windowHeight: _climbWindowHeight),
+          )
+        else if (_climbSteps == null) ...[
           Text(context.l10n.homeClimbTitle,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -1276,6 +1825,7 @@ class _HomeScreenState extends State<HomeScreen>
                 steps: _climbSteps!,
                 days: days,
                 chipOpacity: _zoom.active ? _chipOpacity : null,
+                windowHeight: _climbWindowHeight,
                 mountain: MonthlyMountain(
                   key: ValueKey(_climbMonth),
                   days: days,
@@ -1283,600 +1833,76 @@ class _HomeScreenState extends State<HomeScreen>
                   avatar: widget.avatar ?? Avatar.values.first,
                   theme: _climbTheme,
                   onMotionEnd: _onMountainMotionEnd,
+                  onArrivalEnd: _onMountainArrivalEnd,
                   zoom: _zoom.active ? _zoom.progress : null,
                   zoomCrossFade: _zoom.crossFade,
                   debugHop: _debugHop,
+                  // V15: the next step pulses while today's test waits.
+                  nextStepPulse: !_loadingToday &&
+                      _todaysCompletion == null &&
+                      !_zoom.active,
+                  windowHeight: _climbWindowHeight,
                   labelAvoid: (width) => ClimbCard.chipRects(context,
                       width: width,
                       month: _climbMonth,
                       steps: _climbSteps!,
                       days: days),
                 ),
-                // Under the window, not over the scene (design decision D9).
-                scoreBar: ClimbScoreBar(
-                  score: _climbScore,
-                  maxScore: MonthlyMedalRules.maxScore(
-                      _climbMonth.year, _climbMonth.month),
-                  thresholds: {
-                    for (final tier in MedalTier.values)
-                      tier: MonthlyMedalRules.threshold(
-                          _climbMonth.year, _climbMonth.month, tier),
-                  },
-                ),
+                // The score bar moved to the capsule (V14).
+                bubble: bubble,
               )),
-        if (_loadingClimb)
+        if (_loadingClimb && _climbSteps != null)
           LinearProgressIndicator(
               semanticsLabel: context.l10n.homeClimbLoading),
-        if (_climbLoadFailed) ...[
-          Text(context.l10n.homeClimbFailed, textAlign: TextAlign.center),
-          TextButton(
-              onPressed: _loadClimb, child: Text(context.l10n.homeClimbRetry)),
-        ],
+        // R11: one language for a load error — the sad companion, a calm
+        // line, "Try again" with dots while it retries.
+        if (_climbLoadFailed)
+          ErrorState(
+            hero: widget.avatar ?? Avatar.values.first,
+            kind: ErrorKind.server,
+            message: context.l10n.homeClimbFailed,
+            onRetry: () async {
+              await _loadClimb();
+              return !_climbLoadFailed;
+            },
+          ),
       ],
     );
   }
 }
 
-/// The avatar beside the greeting (the brief's hero picker): the user's
-/// avatar, opening the avatar picker. A Hero, so it flies to the picker's
-/// centred avatar and back. No edit badge (owner, after the Batch 3 device
-/// check): the avatar alone is the control, named "Change your avatar".
-class _HeroButton extends StatelessWidget {
-  final Avatar? avatar;
-  final VoidCallback? onTap;
-
-  const _HeroButton({required this.avatar, required this.onTap});
-
-  /// The brief's 108 pt hero; AvatarTile is sized by half its side.
-  static const _size = 108.0;
-
-  /// Light mode's ground shadow under the hero (Batch 7): the only shadow
-  /// there, so it is drawn darker and tighter than Batch 6's 88 x 16 pt at
-  /// 32 % with sigma 6, which sat on top of the avatar's own ellipse.
-  static const _groundWidth = 80.0;
-  static const _groundHeight = 16.0;
-  static const _groundBlur = 5.0;
-  static const _groundBottom = 4.0;
+/// H03: the mountain card while the month loads: its plaque and its window
+/// as shimmering skeletons, the size of the real card, so nothing jumps
+/// when it arrives.
+class _ClimbSkeleton extends StatelessWidget {
+  final double windowHeight;
+  const _ClimbSkeleton({required this.windowHeight});
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppPalette.of(context);
-    final backlight = palette.heroBacklight;
-    final ground = palette.heroGround;
-    // A node of its own (container): without it the label and the button
-    // flag would merge into the Home list's node above.
-    return Semantics(
-      container: true,
-      button: true,
-      label: context.l10n.homeChangeAvatar,
-      child: InkWell(
-        // Matches AvatarTile's own corner rounding (radius * 0.6).
-        customBorder: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_size / 2 * 0.6),
-        ),
-        onTap: onTap,
-        child: SizedBox.square(
-          dimension: _size,
-          child: Stack(clipBehavior: Clip.none, children: [
-            // Dark mode's glow (owner, Batch 5–6): a radial gradient inside
-            // the hero's own square, fading to nothing at its edge, so it is
-            // never clipped by the screen edge and never reaches the
-            // greeting. Light mode has none since Batch 7: only the ground
-            // shadow below. Behind the Hero, not in it, so the flight to the
-            // picker carries only the avatar.
-            if (backlight != null)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    key: HomeScreen.heroBacklightKey,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        center: const Alignment(0, .25),
-                        radius: .5,
-                        colors: [
-                          backlight,
-                          backlight.withValues(alpha: 0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            // Light mode's ground shadow (Batch 6, stronger in Batch 7): a
-            // blurred ellipse under the hero's feet, 80 x 16 pt, its visible
-            // blur (about 2 sigma) inside the square's sides and about 6 pt
-            // below it — inside the 8 pt gap to the greeting, the 12 pt gap
-            // to the Daily Test card, and well inside the screen. It replaces
-            // the avatar's own ellipse here (`groundShadow: false` below),
-            // so the feet get one shadow, not two.
-            if (ground != null)
-              Positioned(
-                key: HomeScreen.heroGroundKey,
-                left: (_size - _groundWidth) / 2,
-                bottom: _groundBottom,
-                width: _groundWidth,
-                height: _groundHeight,
-                child: IgnorePointer(
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                        sigmaX: _groundBlur, sigmaY: _groundBlur),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: ground,
-                        borderRadius: const BorderRadius.all(
-                          Radius.elliptical(
-                              _groundWidth / 2, _groundHeight / 2),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            // `homeAvatarHeroTag` is its own tag, distinct from Settings'
-            // `avatarHeroTag` — see that constant's doc comment for why
-            // sharing one tag across both entry points would crash.
-            Hero(
-              tag: homeAvatarHeroTag,
-              child: AvatarTile(
-                avatar: avatar,
-                radius: _size / 2,
-                groundShadow: ground == null,
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-/// A section's title with an optional tag at its end.
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final Widget? trailing;
-
-  const _SectionHeader({required this.title, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: SectionTitle(title)),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ],
-    );
-  }
-}
-
-/// A small count on the info surface (the weak spots heading).
-class _CountBadge extends StatelessWidget {
-  final String text;
-
-  const _CountBadge(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall
-            ?.withWeight(FontWeight.w800)
-            .copyWith(color: colorScheme.onSecondaryContainer),
-      ),
-    );
-  }
-}
-
-/// The Daily Test card (PRD v2 §13.5 item 2; 1.2.0 brief, "Home"): its own
-/// orange card, separate from the mountain. Two states only, read from what
-/// is already cached ([DailyTestSet.isCompleted] and the persisted
-/// [DailyTestSet.answers]): not started — the question count and "Start
-/// daily test"; done — the real score and "Review results". No progress bar.
-/// The navy button is the card's one tap target and calls the same two
-/// handlers the whole card used to.
-///
-/// Text on the orange is `onPrimary` (#241200) in both themes: light text
-/// on the dark-mode orange measures under 2.4:1.
-class _DailyTestCard extends StatelessWidget {
-  final bool loading;
-  final DailyTestSet? dailyTestSet;
-  final VoidCallback onStart;
-  final ValueChanged<DailyTestSet> onViewResult;
-
-  const _DailyTestCard({
-    super.key,
-    required this.loading,
-    required this.dailyTestSet,
-    required this.onStart,
-    required this.onViewResult,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    final ink = colorScheme.onPrimary;
-    final shape = RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(appCardRadius));
-
-    if (loading) {
-      return Card(
-        color: colorScheme.primary,
-        shape: shape,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: ink),
-            ),
+    final c = AppColors.of(context);
+    return ExcludeSemantics(
+      child: Stack(clipBehavior: Clip.none, children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 18),
+          height: windowHeight,
+          decoration: BoxDecoration(
+            color: c.card,
+            borderRadius: BorderRadius.circular(ClimbCard.frameRadius + 6),
+            border: Border.all(color: c.line, width: 2),
           ),
+          padding: const EdgeInsets.all(10),
+          child: SkeletonBar(
+              height: windowHeight - 24, radius: ClimbCard.frameRadius),
         ),
-      );
-    }
-
-    final set = dailyTestSet;
-    final completed = set != null && set.isCompleted;
-    final String title, description, amount, unit, action;
-    if (completed) {
-      final score = computeDailyTestScore(set.questions, set.answers ?? {});
-      title = context.l10n.homeDailyDoneTitle;
-      description = context.l10n.homeDailyDoneBody;
-      amount = '${score.correct}/${score.total}';
-      unit = context.l10n.homeDailyUnitCorrect;
-      action = context.l10n.homeDailyReview;
-    } else {
-      final count = set?.questions.length ?? DailyTestSet.questionCount;
-      title = context.l10n.homeDailyNextTitle;
-      description = context.l10n.homeDailyNextBody;
-      amount = '$count';
-      unit = context.l10n.homeDailyUnitQuestions(count);
-      action = context.l10n.homeDailyStart;
-    }
-    final small = theme.textTheme.labelSmall?.copyWith(color: ink);
-
-    return Card(
-      color: colorScheme.primary,
-      shape: shape,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // A Wrap, not a Row: at a large text size on a narrow screen
-            // "Free every day" moves under the label instead of overflowing.
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                Text(context.l10n.homeDailyEyebrow,
-                    style: small
-                        ?.withWeight(FontWeight.w800)
-                        .copyWith(letterSpacing: 0.8)),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_rounded, size: 13, color: ink),
-                    const SizedBox(width: 4),
-                    Flexible(
-                        child: Text(context.l10n.homeDailyFree, style: small)),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LayoutBuilder(builder: (context, constraints) {
-              final titleStyle =
-                  theme.textTheme.headlineSmall?.copyWith(color: ink);
-              final unitStyle =
-                  theme.textTheme.labelMedium?.copyWith(color: ink);
-              final amountStyle = theme.textTheme.headlineMedium
-                  ?.copyWith(color: ink, height: 1);
-              final copy = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: titleStyle),
-                  const SizedBox(height: 7),
-                  Text(description,
-                      style: theme.textTheme.bodySmall?.copyWith(color: ink)),
-                ],
-              );
-              final stat = Container(
-                constraints: const BoxConstraints(minWidth: 67),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                decoration: BoxDecoration(
-                  color: palette.brandTint,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                // The label above the value (owner, after Batch 3), in
-                // labelMedium, one step up from the card's 11 pt labels;
-                // the value in headlineMedium.
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(unit, style: unitStyle),
-                    const SizedBox(height: 6),
-                    Text(amount, style: amountStyle),
-                  ],
-                ),
-              );
-              // Side by side while the title's longest word still fits
-              // next to the box; otherwise (a narrow screen with a large
-              // system text size) the box goes under the copy instead of
-              // squeezing the title to nothing and overflowing.
-              final scaler = MediaQuery.textScalerOf(context);
-              final statWidth = 20 +
-                  [
-                    67.0 - 20,
-                    _textWidth(unit, unitStyle, scaler),
-                    _textWidth(amount, amountStyle, scaler),
-                  ].reduce((a, b) => a > b ? a : b);
-              final longestWord = title
-                  .split(' ')
-                  .map((w) => _textWidth(w, titleStyle, scaler))
-                  .reduce((a, b) => a > b ? a : b);
-              if (statWidth + 10 + longestWord <= constraints.maxWidth) {
-                return Row(
-                  children: [
-                    Expanded(child: copy),
-                    const SizedBox(width: 10),
-                    stat,
-                  ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [copy, const SizedBox(height: 10), stat],
-              );
-            }),
-            const SizedBox(height: 14),
-            FilledButton(
-              onPressed: completed ? () => onViewResult(set) : onStart,
-              child: Row(
-                children: [
-                  Expanded(child: Text(action)),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 17),
-                ],
-              ),
-            ),
-          ],
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Center(child: SkeletonBar(width: 190, height: 36)),
         ),
-      ),
+      ]),
     );
   }
-}
-
-/// Topic Practice on Home (1.2.0 brief): one card with a line of copy, a
-/// sideways strip of the real topics ([kTopics]) and "Explore all topics".
-/// Every tile and the link open the existing Topic Practice screen through
-/// [onOpen] — the same entry point the old single card used, so a free
-/// user still gets the paywall there (owner decisions Q9, Q10: no new
-/// route, no scroll arrows). The strip scrolls sideways only.
-class _TopicStrip extends StatelessWidget {
-  final VoidCallback onOpen;
-
-  const _TopicStrip({required this.onOpen});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 18, bottom: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Text(
-                context.l10n.homeTopicStripLead,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-            ),
-            SingleChildScrollView(
-              key: _topicStripKey,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(18, 15, 18, 8),
-              // Every tile as tall as the tallest: a long topic name at a
-              // large text size wraps instead of being cut off.
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final topic in kTopics) ...[
-                      _TopicTile(topic: topic, onTap: onOpen),
-                      if (topic != kTopics.last) const SizedBox(width: 10),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: TextButton.icon(
-                  onPressed: onOpen,
-                  iconAlignment: IconAlignment.end,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 15),
-                  label: Text(context.l10n.homeExploreTopics),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-const _topicStripKey = ValueKey('home_topic_strip');
-
-class _TopicTile extends StatelessWidget {
-  final Topic topic;
-  final VoidCallback onTap;
-
-  const _TopicTile({required this.topic, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final link = colorScheme.secondary;
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(15),
-      side: BorderSide(color: colorScheme.outlineVariant),
-    );
-    return SizedBox(
-      width: 146,
-      child: Material(
-        color: colorScheme.surfaceContainerHighest,
-        shape: shape,
-        child: InkWell(
-          customBorder: shape,
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 118),
-            child: Padding(
-              padding: const EdgeInsets.all(13),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(topic.icon, size: 21, color: link),
-                  const SizedBox(height: 14),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          topic.title(context.l10n),
-                          style: theme.textTheme.titleSmall
-                              ?.withWeight(FontWeight.w800)
-                              .copyWith(
-                                  height: 1.25, color: colorScheme.onSurface),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Icon(Icons.north_east_rounded, size: 14, color: link),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The end of Home for a free user (1.2.0, owner decision Q15), replacing
-/// the quiet Premium row: one free weak spot practice a day lives in
-/// Review, and this switches to the Review tab. The whole card is the one
-/// tap target and one semantics button (owner, Batch 5); "Go to Review" is
-/// its label, not a second button.
-class _ReviewCallout extends StatelessWidget {
-  final VoidCallback? onTap;
-
-  const _ReviewCallout({required this.onTap});
-
-  static const _radius = 18.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final onInfo = colorScheme.onSecondaryContainer;
-    final link = colorScheme.secondary;
-    return Semantics(
-      container: true,
-      button: true,
-      child: Material(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(_radius),
-        child: InkWell(
-          key: HomeScreen.reviewCalloutKey,
-          borderRadius: BorderRadius.circular(_radius),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(15),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child:
-                      Icon(Icons.auto_awesome_rounded, size: 19, color: onInfo),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(context.l10n.homeReviewCalloutTitle,
-                          style: theme.textTheme.labelLarge
-                              ?.copyWith(color: onInfo)),
-                      const SizedBox(height: 5),
-                      Text(
-                        context.l10n.homeReviewCalloutBody,
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: onInfo),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(context.l10n.homeGoToReview,
-                                style: theme.textTheme.labelLarge
-                                    ?.copyWith(color: link)),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_rounded,
-                              size: 15, color: link),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The width [text] takes on one line in [style].
-double _textWidth(String text, TextStyle? style, TextScaler scaler) {
-  final painter = TextPainter(
-    text: TextSpan(text: text, style: style),
-    textDirection: TextDirection.ltr,
-    textScaler: scaler,
-    maxLines: 1,
-  )..layout();
-  final width = painter.width;
-  painter.dispose();
-  return width;
 }

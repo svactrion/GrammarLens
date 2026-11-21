@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/widgets/review_parts.dart';
+import 'package:grammar_lens/widgets/ticket.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -196,8 +200,8 @@ void main() {
     });
 
     testWidgets(
-        'long feedback is laid out by FeedbackText in the "Saved feedback" '
-        'panel and in the mistake card (1.4.0 B9)', (tester) async {
+        'long feedback is laid out by FeedbackText in the mistake card '
+        '(1.4.0 B9; R03 has one card)', (tester) async {
       const long = "First, 'a' is wrong. Second, 'b' is wrong. Third, 'c' "
           'is wrong. In short, learn the pattern.';
       await _pumpSpot(
@@ -217,34 +221,37 @@ void main() {
         ],
       );
 
-      // The panel and the card: two FeedbackTexts, each with the closing
-      // rule above its fourth paragraph.
-      expect(find.byType(FeedbackText), findsNWidgets(2));
-      expect(find.byKey(FeedbackText.closingRuleKey), findsNWidgets(2));
-      expect(find.byKey(FeedbackText.paragraphKey(3)), findsNWidgets(2));
+      // R03: the latest mistake inline, its explanation under it, with
+      // the closing rule above its fourth paragraph.
+      expect(find.byType(FeedbackText), findsOneWidget);
+      expect(find.byKey(FeedbackText.closingRuleKey), findsOneWidget);
+      expect(find.byKey(FeedbackText.paragraphKey(3)), findsOneWidget);
+      expect(find.byType(InlineMistake), findsOneWidget);
       expect(find.text(long), findsNothing);
     });
   });
 
   testWidgets(
-      'free user with quota available: enabled button plus a caption '
-      'naming the remaining count — never "unlimited"', (tester) async {
+      'free user with quota available (R03): today\'s ticket; a tap tears '
+      'it (medium) — never "unlimited"', (tester) async {
     await _pump(tester, hasAccess: false, freePracticeCount: 0);
 
-    // 1.2.0 (N3): the free user's button names the free practice.
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Start free practice'),
-    );
-    expect(button.onPressed, isNotNull);
-    expect(
-      find.text(
-        '${StorageService.freeDailyPracticeLimit} free practice'
-        '${StorageService.freeDailyPracticeLimit == 1 ? '' : 's'} today',
-      ),
-      findsOneWidget,
-    );
+    final ticket = find.byType(Ticket);
+    expect(tester.widget<Ticket>(ticket).state, TicketState.free);
+    expect(find.text('Use today’s ticket'), findsOneWidget);
+    expect(find.text('Free practice with AI feedback'), findsOneWidget);
     expect(find.textContaining('unlimited'), findsNothing);
     expect(find.text('Practice with Premium'), findsNothing);
+    HapticMap.log = [];
+    await tester.ensureVisible(ticket);
+    await tester.pumpAndSettle();
+    await tester.tap(ticket);
+    await tester.pump();
+    expect(tester.widget<Ticket>(ticket).state, TicketState.tearing);
+    expect(find.text('Ticket used!'), findsOneWidget);
+    expect(HapticMap.log, contains('medium'));
+    await tester.pump(Ticket.tearDuration);
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
@@ -280,10 +287,11 @@ void main() {
       'name since there is no quota', (tester) async {
     await _pump(tester, hasAccess: true);
 
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Practice this'),
+    final button = tester.widget<PressableButton>(
+      find.widgetWithText(PressableButton, 'Practice this'),
     );
     expect(button.onPressed, isNotNull);
+    expect(find.byType(Ticket), findsNothing);
     expect(find.textContaining('free practice'), findsNothing);
     expect(find.text('Practice with Premium'), findsNothing);
   });

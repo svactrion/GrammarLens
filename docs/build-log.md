@@ -14198,3 +14198,841 @@ Docs only. Nothing is rewritten or deleted by this entry.
 - **[Fix]** `lib/utils/monthly_equivalent.dart`: a small map of symbols `intl` has wrong at the version this app can use (TRY → "₺"); those currencies format through `NumberFormat.currency` with that symbol, every other currency stays on `NumberFormat.simpleCurrency`. Placement stays the locale's (`₺166,67` in `tr_TR`, `166,67 ₺` in `de_DE`). `intl` itself cannot move: `flutter_localizations` pins it.
 - **[Tests]** `test/monthly_equivalent_test.dart`: TRY in `tr_TR` and `de_DE` for both derived lines, no "TL" in five locales, USD and EUR unchanged. Without the map the test fails on `TL166,67`. `flutter analyze` clean; **2411 tests passed**. Not checked on a device.
 - **[Docs]** Roadmap: a 1.4.1 row and section, with this fix and the storage reset gate fix (`8d4183b`), both done on `main`, not shipped. No version bump yet.
+
+## 2026-11-17 (UI polish built on branch `ui-polish`; not merged, not shipped)
+
+The design handoff in `docs/design/ui-polish/handoff/` (`SPEC.md` v9,
+`TASK.md`) implemented in one run on branch `ui-polish`, batches B0–B11.
+The full record, every decision and every gap: `PROGRESS.md` there.
+
+- **[Built]** Foundations (colour tokens, motion tokens, haptics map, the
+  9 heroes × 6 poses, retired heroes moved to Fox); shared components
+  (pressable buttons and cards, step bar, score ring, skeletons, the Daily
+  Test card, the ticket, the score capsule, sheets, the companion dialog,
+  the error state, the one snackbar); launch and onboarding (splash,
+  welcome, the turntable and the wheel, name, goal, getting ready, this
+  month's mountain); the Daily Test with per-question Check graded on the
+  device against the set's key, new results, Welcome badge and medal;
+  Home (capsule, Daily Test card, mountain with bubble, free ticket, topic
+  showcase or Premium practice card, rest scene once every daily right is
+  used), the first climb's camera, the month recap and new mountain;
+  Review with the ticket, inline mistakes and the sort sheet, the weak spot
+  screen; practice (topics, length, consent, preparing, question, AI wait,
+  results, limit sheet); the paywall as one page with the exit reminder
+  and the Premium on screen; Profile (stage, name sheet, medals layer,
+  language, data, credits); a dark / Arabic / largest-text / Reduce Motion
+  sweep.
+- **[First-wave topics]** Conditionals, Passive Voice, Prepositions,
+  Relative Clauses, Comparatives & Superlatives are in the app's topic
+  data (titles, descriptions in 8 languages, hint cards) and the proxy's
+  topic table, behind flags that are off (`kFirstWaveTopicsEnabled`,
+  `FIRST_WAVE_TOPICS_ENABLED`). Tests cover both states. The proxy was not
+  deployed; no generation or measurement script was run.
+- **[Rules kept]** Points, steps, medals, the free ticket's count, the
+  session cap, the AI permission and the paywall's purchase / restore /
+  legal lines work as before; the Daily Test's points shown during Check
+  equal what the completion stores. No new analytics events, no new data
+  collected, no new package, no version change.
+- **[Decisions to review]** Listed in `PROGRESS.md` (D0-x … D10); the main
+  ones: no mastery strips (no stored count, D6-1); the first tab is called
+  "Climb" (D5-2); the first climb's camera takes the place of Home's
+  in-card first-run zoom (D5-3); the month change is full screen (D5-4);
+  the paywall's comparison is always on the page (D8-1); the exit reminder
+  once per session (D8-2).
+- **[Verified]** `flutter analyze`: no issues; `flutter test`: all passed
+  (counts in `PROGRESS.md`); proxy `tsc --noEmit` and the topic-related
+  vitest files passed locally. Every in-scope board captured on the iPhone
+  18 Pro simulator (iOS 27.2) through a debug-only board gallery
+  (`tool/ui_polish/`), compared with its board; the comparison table is in
+  `PROGRESS.md`.
+- **[Not verified]** Nothing is checked on a physical device. Arabic and
+  the largest text size are checked by tests, not by captures. Real
+  purchases, real AI generation and the proxy were not exercised.
+- **[Open]** Merge into `main` and a device pass are the owner's; the
+  `product.yaml` "planned" line for the UI polish still says "not started"
+  (TASK §7 allows only the `recent` entry in this run).
+
+
+## 2026-11-17 (UI polish fix round 1 on branch `ui-polish`; not merged, not shipped)
+
+- **[Product]** The owner kept D5-1, D5-2, D5-3, D5-4, D6-3, D7-2, D8-1,
+  D8-2 and D8-3 as built, deferred the mastery strips (D6-1 / D7-1) to a
+  separate feature, and asked for a fix round on the same branch before
+  their device test. Merging waits for that test.
+- **[Engineering]** Profile's medal strip became the board's thick shelf
+  (at most three medals, newest first, the running month a locked slot,
+  "See all" to the medals layer, which now lists newest first); the ribbon
+  reads "Climbing with <Hero> · since <month year>" from the first Daily
+  Test already on record (no new data); R02's ring matches the board and
+  its number rolls; after a wrong answer the book flies to the Review tab's
+  place; the hint knob nudges, a focused blank breathes, the next step on
+  the mountain pulses, the recap's medal lines glow, the paywall's plans and
+  rows enter in turn, the focus card glints, medals fly between the shelf,
+  the layer and the detail, whose numbers count up; the language options
+  take keyboard focus again.
+- **[Engineering]** V05-Goal's capture "hang" (B11) was the capture
+  script's race (Continue tapped before it was enabled, no driver timeout),
+  not the app: the real onboarding flow was walked on the simulator without
+  a hang. Script fixed, every driver step now times out, V05 recaptured.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2493 passed, 0 failed. The 15 changed boards recaptured on
+  the iPhone 18 Pro simulator; B11's comparison now has 65 of 65 boards
+  matching. Nothing checked on a device; no proxy change, no deploy, no new
+  package, no version change, no new data stored.
+- **[Open]** Device pass and merge are the owner's; details and the
+  remaining decisions in `docs/design/ui-polish/handoff/PROGRESS.md`
+  ("Fix round 1").
+
+## 2026-11-17 (home-screen widgets and daily reminders on branch `widgets-notifications`; not merged, not shipped)
+
+- **[Product]** The owner split the widgets (W01) and the reminders (N01,
+  N02, N03, V24's switch) out of the UI polish into their own task
+  (`docs/design/ui-polish/handoff/TASK-widgets.md`), on a worktree branched
+  from `ui-polish`, with fixed decisions: no new package (our own
+  `MethodChannel`), App Group `group.com.ahmettayfur.grammarlens`, the
+  extension `com.ahmettayfur.grammarlens.widgets`, at most one reminder a
+  day in a fixed priority, nothing leaving the device, no new analytics.
+- **[Engineering]** iOS: `GrammarLensBridge` (App Group files, widget
+  reloads, `grammarlens://daily-test | home | review` links, cold and warm,
+  through Flutter's scene-delegate hook), `ReminderScheduler`
+  (`UNUserNotificationCenter`: local calendar triggers, the companion as an
+  attachment, nothing shown in front, taps → links), Runner's App Group
+  entitlement and URL scheme; the `GrammarLensWidgets` WidgetKit extension
+  ("Climb" small + medium, "Tip" medium; payload schema 1; an hourly
+  countdown and the midnight "waiting" entry) added by
+  `tool/ios/configure_xcode_project.rb` (the `xcodeproj` gem; no signing
+  settings).
+- **[Engineering]** Dart: the pure payload builder (texts from the ARB
+  files, the tip from the top weak spot's hint lines, the mountain cropped
+  around the avatar's trail point), `WidgetSync` writing images and
+  `payload.json` to the App Group; the pure seven-day reminder planner and
+  `ReminderSync`; `DeviceSync` runs both at launch, on resume and after the
+  storage writes that change them (`StorageService.onChanged`); reminder
+  settings in a new table (DB v27); N01, N03 (Profile → Notifications) and
+  V24's row; 48 new strings in all 8 languages.
+- **[Verified]** `flutter analyze` and `flutter test` at every step (final
+  numbers in `PROGRESS-widgets.md`); Swift RunnerTests (bridge, payload,
+  timeline, reminder requests, `ImageRenderer` snapshots of every widget and
+  state, including the Dart builder's fixtures); on the iPhone 18 Pro
+  simulator: the App Group payload written by the real app, the widgets
+  added from the system gallery in their waiting and done states, a widget
+  tap opening the Daily Test, cold and warm links, N01 / N03 / V24 and the
+  iOS dialog, **a real reminder delivered** ("Fox is waiting at First
+  Camp …"), Arabic + dark + the largest text on N01, N03, V24 and the
+  widgets.
+- **[Not verified]** Nothing on a device (signing, App Group provisioning,
+  widgets and reminders on a real phone). On the simulator a delivered
+  reminder's tap did not open the app and the companion thumbnail did not
+  show, though iOS stored the attachment.
+- **[Found]** `flutter build ios --simulator` fails on this machine before
+  any code (Flutter 3.44.6 vs. Xcode 27.2's `lipo -verify_arch`); single-
+  simulator builds work. The disk filled during a build (308 MB free); only
+  this run's own build folder was removed.
+- **[Open]** Owner steps (signing the extension, registering the App
+  Group, the device check) and the merge with `ui-polish`'s fix round 2
+  (V24f also needs the reminder row) are listed in `PROGRESS-widgets.md`.
+
+## 2026-11-17 (UI polish fix round 2 on branch `ui-polish`; not merged, not shipped)
+
+- **[Product]** After the owner's first device test (iPhone 14 Plus), SPEC
+  v10 and `FIX2.md`:
+  - a fourth goal, School & university (`learning_goal` = `school`);
+  - the free users' rest scene leads to Premium (V24f → V24s → V13r →
+    PW05r). The paywall opens only from "Wake <Hero> up", with source
+    `rest_scene`;
+  - getting ready lasts at least 4 s.
+- **[Engineering]** The companions' loops now follow the boards'
+  keyframes as minimums. The main cause of "they don't move" was amplitude
+  (wave ±1°, no idle float, cheer hopped once and then barely breathed);
+  the paywall trio had no loop at all. Paywall CTA shine and pulse, the
+  V13c table, Profile's ribbon, PF02's order (the Welcome badge sat after
+  every year) and counters are now as the boards.
+- **[Engineering]** PF04: the keyboard inset was added twice, so with a
+  real keyboard the sheet filled the screen. V06: the flag stood on the
+  climb's flag point on the trail, not the summit; now its foot is the
+  trail's last point in image coordinates for every mountain scene. Home's
+  greeting is one line, scaling down to 70 % instead of wrapping. V15's
+  pawn clears the nav bar at first view on 6.7" and 6.9" (measured; no
+  camera change).
+- **[Disk]** Before 6.5 GiB free, after 11 GiB: `flutter clean`, this
+  repo's DerivedData, `simctl delete unavailable` (nothing). A report-only
+  table of the rest is in PROGRESS.md; nothing of the widgets session was
+  touched.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2482 passed, 0 failed. Every changed board and the four
+  new ones (V24f, V24s, V13r, PW05r) captured on the iPhone 18 Pro Max
+  simulator (5 gallery runs, 0 failed boards); B11's table has 69 of 69
+  matching. Item 1 has "-t2" captures as motion evidence. Nothing checked
+  on a device.
+- **[Open]** The owner's device checks (PROGRESS.md "Owner device
+  checks": Reduce Motion first), decisions F2-1 to F2-12, the merge.
+
+## 2026-11-17 (UI polish + widgets integrated on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** `INTEGRATE.md`: `widgets-notifications` merged into a
+  new branch from `ui-polish` (`--no-ff`, merge `c3d9cba`). Conflicts in the
+  eight ARB files (merged by key; no key on both sides), the rest scene,
+  Home and this log, each resolved keeping both sides. One semantic
+  conflict: the widgets branch's N01 test expected the reminder row on a
+  free user's rest scene, which fix round 2 had made V24f; the row now sits
+  under V24f's Premium card. The schema goes from 1.4.0's v26 to v27 in one
+  step; a new test opens a database built from 1.4.0's own `onCreate`
+  (frozen from `c37757a`) and checks every row survives (the retired hero
+  becomes Fox, reminders read as never asked).
+- **[Engineering]** The pawn: on 6.1"–6.3" phones the full mountain window
+  put the pawn under the floating nav bar on first view (day 0: 31 pt under
+  at 390 × 844, 14 pt at 402 × 874, 149 pt on the iPhone SE). Home now fits
+  the window on first view so the pawn and the next step's ring stay 16 pt
+  above the bar on every day of the month (303 / 299 / 319 pt there, 160
+  on the SE, which is not covered but has 12.6 pt; 6.7" and 6.9" keep
+  350). V24f's "Wake <Hero> up" was under the bar on the same phones; the
+  free scene now shrinks just enough to keep it on the first view, and the
+  reminder row scrolls in below it.
+- **[Engineering]** The widgets now use the app's Nunito Sans (the font
+  file and its OFL licence in the extension, the system font as the
+  fallback for Japanese, Korean and Arabic). `TASK-widgets.md` was already
+  English. Found in the smoke walk and fixed: getting ready's goal chip
+  showed the work icon for every goal.
+- **[Verified]** `flutter build ios --release --no-codesign`: built
+  (50.0 MB, the widget extension inside, arm64); the Flutter 3.44.6 / Xcode
+  27.2 `lipo` problem only hits the generic simulator build. After the last
+  code change: `flutter analyze` no issues; `flutter test` 2630 passed; Runner + widget extension simulator build succeeded; Swift RunnerTests 22 passed, 0 failed (with the widget snapshots and a font test). A fresh-install walk on the simulator from
+  Welcome to Home, then the free rest scene → N01 → "Wake Cat up" → V13r (no
+  purchase); captures in `build/integration-captures/`.
+- **[Not verified]** Anything on a device. The owner's ordered checklist,
+  with the Xcode steps for the extension's team and App Group and the
+  release command, is `docs/design/ui-polish/handoff/DEVICE-CHECKS.md`.
+- **[Disk]** 7.1 GiB free before, 14 GiB after the allowed cleanup
+  (`flutter clean` in both folders, their three DerivedData folders).
+
+## 2026-11-18 (UI polish fix round 3 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 3 (`docs/design/ui-polish/handoff/FIX3.md`,
+  SPEC v11), after the owner's device test of the integrated build
+  (iPhone 14 Plus, release). Record: `PROGRESS.md` "Fix round 3" (each
+  item's cause, fix and tests; decisions F3-1 to F3-26).
+- **[Engineering]** Bugs. Day 0 showed the Welcome badge before the
+  results: the result screen opened it as a layer the moment the save
+  landed; now the results come first and "Climb my first step" opens the
+  badge (V10 → V11 → V12). N01 opened only after another tab switch: Home
+  never re-read the free ticket when it became the visible tab again, and
+  the soft ask was checked only inside `build`; Home now re-reads on
+  becoming visible and checks after the frame that shows the rest scene.
+  Both have app-level regression tests.
+- **[Engineering]** Board fixes: V24f and V24 full-bleed with the night
+  sheet attached (measured at six sizes and two text sizes); V05b's bar;
+  the goal cards' tilt by position; one button shine (the device's "small
+  square" was the band laid out inside the label); white switch thumbs
+  from the theme; the summit flag on each mountain art's measured apex
+  (`tool/scene_art/summit_apex.py`); one V18 loading screen for topic and
+  weak-spot practice; the expression kit everywhere (the dialogs' cloud,
+  wrong answers' oops).
+- **[Engineering]** Owner decisions of SPEC v11: the splash takes 2.2 s on
+  the first launch; the name screen's companion asks, listens and greets
+  (new strings in 8 languages); V12's bubble right above the companion;
+  the paywall reads first view → Free vs Premium → plans ("Compare plans",
+  8 languages); the Profile ribbon follows the screen width; pose changes
+  cross-fade in `CompanionView`.
+- **[Engineering]** Dark mode from the theme (SY03): text tokens with light
+  counterparts on dark surfaces (navy text → #9DB8FF, right/wrong chips as
+  dark tints with light text), about sixty uses moved to them, and a test
+  that measures every text and icon pair in both themes (4.5:1 / 3:1).
+  Every gallery board captured in dark and looked at; the two still hard
+  to read were fixed. Found on the way: B5's switch style made every build
+  of the theme unequal, so `AnimatedTheme` animated on each rebuild; fixed.
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2742 passed; Swift RunnerTests 22 passed, 0 failed (with
+  the widget snapshots); Runner + widget extension simulator build
+  succeeded; `flutter build ios --release --no-codesign` built Runner.app
+  (50.1 MB, arm64, 1.4.0 (7)) with the extension. A driven smoke walk of a
+  first install on the iPhone Air simulator (a local stand-in for the
+  practice proxy, no AI call): results before the badge, then Review, the
+  free ticket on a practice and back to Home, where the rest scene and N01
+  were on screen at once (A2).
+- **[Not verified]** Anything on a device. The owner's second pass, in
+  order, is the first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 8.5 GiB free before, 19 GiB after the allowed cleanup
+  (`flutter clean`, this project's DerivedData folders); the disk filled
+  once mid-run and was freed the same way.
+
+## 2026-11-18 (UI polish fix round 4 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 4 (`docs/design/ui-polish/handoff/FIX4.md`,
+  SPEC v12), after the owner's second device pass (iPhone 14 Plus, release,
+  Turkish, a larger text size). Record: `PROGRESS.md` "Fix round 4" (each
+  item's cause, fix and tests; decisions F4-1 to F4-13).
+- **[Engineering]** V24f fits one screen at 390 × 844 and up at the default
+  and the next text size (no scroll extent; the reminder row 8 pt above the
+  nav bar; measured at six sizes and three text sizes): the sheet starts at
+  the board's place, a compact header and Premium card, a 44 pt reminder
+  row. The campfire stands at the companion's front right on its foot line
+  (40 % flame in two layers, a warm ground glow); late in the month the
+  art's sky continues above its edge so the camp keeps its place. V24
+  (Premium) shares the camp, header and row.
+- **[Engineering]** The paywall footer is the board's compact one (about
+  150 pt; "Restore · Terms · Privacy" on one row, the full price line, the
+  button with only its pulse) and "Maybe later" is gone everywhere (the
+  close button is the way out); the board's top row (Close and the chip)
+  puts "Compare plans" on the first view of every phone.
+- **[Engineering]** Widgets v12: the tip widget shows the user's own latest
+  mistake (the sentence struck through and corrected, under a rule with
+  its key words in a pill), a different weak spot each day; tapping it
+  opens that weak spot in Review (a new `grammarlens://weak-spot` link);
+  every widget has a designed dark variant. The data is Review's own,
+  written to the App Group on the device; nothing new is collected.
+- **[Engineering]** Profile's month progress card as on V23 (score capsule,
+  ten segments, tier marks at their places). Props placed by each hero's
+  head, measured from the images (`tool/scene_art/companion_heads.py`).
+  Forward buttons give a light haptic, never two (Check keeps only its
+  right / wrong feedback). V20 and V18 centred; V20's last checklist item
+  waits for the result. Upper case by language (Turkish İ).
+- **[Verified]** After the last code change: `flutter analyze` no issues;
+  `flutter test` 2807 passed; Swift RunnerTests 23 passed, 0 failed (64
+  widget snapshots, light and dark); the Runner + widget extension
+  simulator build succeeded (`xcodebuild`; the `flutter build ios
+  --simulator` wrapper stops on Xcode's "Could not compute dependency
+  graph" for its generic destination, recorded in PROGRESS); `flutter build
+  ios --release --no-codesign` built Runner.app (50.3 MB, arm64, 1.4.0 (7))
+  with the extension. A driven smoke walk of a fresh install in Turkish on
+  the iPhone 18 Pro simulator (a local stand-in for the practice proxy, no
+  AI call): the sweat drop by the head, results before the badge, the
+  paywall without "Belki sonra" and its X opening V13b, V20 centred with
+  the last item waiting and "GERİ BİLDİRİMİN YOLDA", N01 at once over the
+  rest scene ("TİLKİ RÜYASINDA…"), then V24f on one screen (a drag does not
+  move it). The iPad paywall's first view captured.
+- **[Not verified]** Anything on a device. The owner's third pass, in
+  order, is the first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 16 GiB free before, 17 GiB after the allowed cleanup (`flutter
+  clean`, this project's DerivedData folder).
+
+## 2026-11-18 (UI polish fix round 5 on branch `ui-polish-widgets`; not on `main`, not shipped)
+
+- **[Engineering]** Fix round 5 (`docs/design/ui-polish/handoff/FIX5.md`,
+  SPEC v13), after the owner's third device pass (iPhone 14 Plus): the
+  paywall footer and V24f on one screen confirmed; a new V24f panel chosen
+  on the canvas; a clearer month progress card asked for; some paywalls
+  closed with a swipe. Record: `PROGRESS.md` "Fix round 5" (each item's
+  cause, fix and tests; decisions F5-1 to F5-19).
+- **[Engineering]** V24f's panel is the ticket deck: the title, today's
+  free ticket used (the app's ticket made small, with the time to the next
+  one) and the Premium card with a deck of four of the app's tickets ("NEXT
+  UP", the weak spot, "+4 / TODAY") over "Wake Fox up". V24 (Premium) has
+  its own board's done tiles and step-bar card again. Both panels end just
+  above the nav bar and the scene fills the rest (no empty band, no scroll
+  from 390 × 844 up at the default and next text size); the night panel is
+  the same in light and dark.
+- **[Engineering]** Profile's month progress card shows the medals on the
+  bar: the points with "/ 300" and the distance to the next medal, a 0–300
+  bar split at 75 / 150 / 225, each medal over its gap (earned: colour and
+  a tick), a dot at the points; the fill runs part by part.
+- **[Engineering]** The paywall closes only with its X, wherever it opens:
+  six entry points used page routes whose iOS edge swipe closed it, and the
+  rest scene's route closed with a system back; the paywall now blocks
+  both itself. Each entry point has a test.
+- **[Verified]** After the last code change: `flutter analyze` clean,
+  2863 Flutter tests and 23 Swift tests (64 widget snapshots) pass, the
+  simulator build with `xcodebuild` and the release build (`--no-codesign`,
+  50.3 MB, with the widget extension) succeed; `flutter build ios
+  --simulator` still hits Xcode's "Could not compute dependency graph", as
+  in round 4. A Turkish smoke walk on the simulator from a fresh install
+  reached the new rest-scene panel on one screen, Profile's new card and
+  the paywall from Wake, which stayed through edge swipes and a drag down
+  and closed with X.
+- **[Not verified]** Anything on a device. The owner's fourth pass is the
+  first section of `DEVICE-CHECKS.md`.
+- **[Disk]** 16 GiB free before, 14 GiB after the builds, 18 GiB after the
+  allowed cleanup (`flutter clean`, this project's DerivedData folders).
+
+## 2026-11-18 (First-wave topics: the quality measurement's tooling, phase A; no API call)
+
+- **[Decision]** The owner decided the five first-wave practice topics ship
+  in 1.5.0, after a quality measurement and his review of a sample
+  (`docs/TOPICS.md`). They stay switched off until then
+  (`kFirstWaveTopicsEnabled`, `FIRST_WAVE_TOPICS_ENABLED`).
+- **[Engineering]** `npm run eval -- topics --dry-run | topics run [--out
+  DIR]` in `proxy/eval` (`lib/topics_measurement.ts`, `lib/topics_checks.ts`,
+  two commands in `run.ts`): 6 Topic Practice sets of 5 questions per new
+  topic and 3 of `articles` as a control through the live practice path
+  (the production prompt, model and effort), with the first-wave topics
+  known for that request only: a third parameter on
+  `buildGeneratePracticeSetBodyFor`, the routes unchanged. A practice
+  question has no answer key, so one harness call per set writes the key, a
+  second correct answer when one exists and typical learner mistakes; every
+  built answer is scored by the production scoring cell (`claude-haiku-5-5`,
+  `low`, D3 + D11); five automatic checks run on every question (topic, one
+  natural answer per blank, duplicates, length and level, the hint card
+  against the key). It reuses the 1.4.0 measurement's call, retry, spend
+  accounting, resumable folder, `progress.log` and key check.
+- **[Cost]** The dry run: 198 calls, estimated $1.30 (limit for the dry
+  run $12.00); hard cap $15.00 of measured spend, checked before every
+  call; $10.41 if every call wrote all its `max_tokens` allows.
+- **[Verified]** `npm run typecheck` clean; `npm test` 585 passed (62 new,
+  no network). The run's path rehearsed on a local stand-in for `fetch`: a
+  run with failed calls ends "incomplete", the same folder run again makes
+  only the missing calls, a third run makes none; the key reaches no file
+  and no log.
+- **[Not verified]** Anything against the real API: no call was made from
+  this session. The paid run is the owner's, from his own Terminal
+  (`proxy/eval/README.md`, "Owner checklist — first-wave topics").
+- Record and decisions T-1 to T-11: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics: the owner's run; phase B, the report and the blind label sheet; no API call)
+
+- **[Measured]** The owner ran the measurement from his Terminal
+  (`proxy/eval/out/topics-2026-11-18T16-35-34-632Z`): 189 calls, all ok,
+  $0.76 of the $15.00 cap ($1.30 estimated), 5 min 32 s. 33 sets, 165
+  questions; 32 sets passed the gate (one Conditionals fill-in-the-blank
+  question has no blank); 464 built answers for 164 questions.
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, phases B and C
+  rewritten): every question is labelled, not a sample of 50 (with 10 per
+  topic, 0 defects of 10 still leaves a true rate of up to 26 % open; with
+  30, one defect passes and two fail); the built answers are labelled too,
+  because their truth is by construction; the sheet is blind.
+- **[Engineering]** `npm run eval -- topics analyze --out DIR`
+  (`proxy/eval/lib/topics_analysis.ts`, `topics_sheet.ts`), no API call and
+  no change to the run's files. It writes `docs/1.5.0-topics-report.md`
+  (counts and rates only; it refuses to write a report that holds a
+  question, an answer or a sheet key) and, into the run folder, which is not
+  in the repository: `sheet/questions.txt` (the hint cards, then every
+  question in mixed order under an opaque key with its built answers under
+  shuffled letters), `sheet/labels.csv` (to fill), `private/sheet-mapping.json`
+  and `private/details.txt` (the gate, the flags, the scorer's verdicts and
+  explanations, the resembling questions side by side; not opened before
+  the sheet is filled). A sheet that exists is read back and checked, never
+  rewritten.
+- **[Finding]** Duplicates: every resembling pair is across sets, none
+  inside a set; Conditionals 15 of 30 questions (one group of 5 reaching
+  into 5 of 6 sets), Prepositions 11, Relative Clauses 7, Comparatives &
+  Superlatives 7, Passive Voice 2, the control 0 of 15. From the code: on
+  the live path two Topic Practice requests for one topic and length are
+  the same request byte for byte (the app sends `deviceId`, `topicId`,
+  `count`; no seed, no earlier question, no list to avoid), so only the
+  model's sampling makes two sets differ. Nothing was changed.
+- **[Finding]** The scorer against the built answers, truth by construction:
+  the five new topics 96.4 % agreement (406 of 421), false "correct" 0.8 %,
+  false "needs work" 7.1 %, 10 of the 15 disagreements on second answers;
+  the control 86.0 % (37 of 43), 5 of its 24 mistakes called correct. Not a
+  verdict before the labels.
+- **[Verified]** `npm run typecheck` clean; `npm test` 620 passed (35 new,
+  no network); the run folder's own files byte for byte unchanged.
+- **[Not verified]** Any question's quality: nothing is labelled yet. The
+  sheet is labelled in the owner's Cowork chat (Claude first, the owner
+  spot-checks); phase C follows.
+- Record and decisions T-12 to T-22: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics: the labels and phase C, the pass criteria per topic; no API call)
+
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, phase C rewritten): a
+  question with more than one right answer is not a defect for that reason
+  (the scorer is a model and matches no key); the labels mark such questions
+  with a note starting `multi:` and lesser blemishes with `minor:`. The risk
+  moves to the scorer and is shown per topic.
+- **[Measured]** The sheet is filled: 165 of 165 questions and their 464
+  built answers, labelled by Claude in the owner's Cowork chat and checked
+  by the owner. 4 questions are defects (1 of them had failed the gate), 18
+  are noted `multi:`, 6 `minor:`; 6 built answers are `unsure`.
+- **[Result]** The owner's three criteria per topic (at most 5 % defective
+  questions after the gate; scoring agreement at least 95 %; false "correct"
+  at most 2 %):
+  - Passive Voice: 0 of 30; 82 of 82; 0 of 51. **Passes.**
+  - Prepositions: 0 of 30; 81 of 83 (97.6 %); 0 of 48. **Passes.**
+  - Relative Clauses: 0 of 30; 89 of 90 (98.9 %); 0 of 51. **Passes.**
+  - Conditionals: 1 of 29 (3.4 %); 75 of 80 (93.8 %); 2 of 46 (4.3 %).
+    **Fails** on agreement and on false "correct".
+  - Comparatives & Superlatives: 1 of 30 (3.3 %); 80 of 81 (98.8 %); 1 of 47
+    (2.1 %). **Fails** on false "correct", by one answer.
+  - The control, Articles (live), for reference: 1 of 15 (6.7 %); 40 of 42
+    (95.2 %); 2 of 22 (9.1 %). Fails two.
+  - The five new topics together: agreement 407 of 416 (97.8 %), false
+    "correct" 3 of 243 (1.2 %), false "needs work" 6 of 173 (3.5 %).
+- **[Finding]** Conditionals fails on one structure: 5 of its 30 questions
+  are about mixed conditionals, which the topic's description and hint card
+  do not name; both false "correct" verdicts, the defect after the gate and
+  the question without a blank are among them. Comparatives & Superlatives
+  fails by a misspelt superlative the scorer accepted while giving the right
+  spelling; with 47 answers labelled wrong the 2 % line allows none. In 3 of
+  the run's 5 false "correct" verdicts the scorer's own explanation or
+  corrected answer contradicts its verdict. Of the 34 second answers the
+  writer built for the new topics, 9 are labelled wrong.
+- **[Finding]** More than one right answer: on the right answers of the 18
+  `multi:` questions the scorer said "needs work" 2 times of 28, against 4
+  of 145 on the other questions of the new topics. The answers to accept
+  that nobody built (10 questions) were never scored.
+- **[Engineering]** `topics analyze` does phase C when the sheet is complete
+  (`proxy/eval/lib/topics_labels.ts`): the report's label sections, the
+  pass criteria in whole numbers, and `second-look.md` in the run folder
+  (every answer where the scorer and the labelled truth differ, the unsure
+  answers, the defect questions; an "Owner:" line per entry). The causes and
+  proposed fixes are hand-written in
+  `proxy/eval/data/topics/phase-c-findings.md` and put into the report as
+  they are. No prompt, no hint card, no flag and no record of the run was
+  changed; `sheet/labels.csv` is only read.
+- **[Proposal]** Not built: a generation-only note that keeps mixed
+  conditionals out of Conditionals, with a re-measurement of that topic
+  alone (this run: $0.14, 30 questions to label); one sentence in the
+  scoring prompt (a misspelling in the tested form is a mistake; the verdict
+  follows the scorer's own correction), checked against the 464 labelled
+  answers (about $0.17, no new labels); set variety by a scenario theme the
+  Worker gives each set (`docs/1.5.0-topics-set-variety.md`: no app change,
+  no new data, under 1 % more per set, all ten topics).
+- **[Verified]** `npm run typecheck` clean; `npm test` 647 passed (27 new,
+  no network); the sheet and the run's own files byte for byte unchanged; no
+  question, no built answer and no sheet key in the commits (one labeller's
+  note of 34 characters stood as an example string in a test in `f911919`
+  and was replaced in `a7ccf77`).
+- **[Not verified]** Any proposed fix. The owner decides which topics go on
+  to release prep, which fixes are made, and the set-variety option.
+- Record and decisions T-23 to T-33: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-18 (First-wave topics, phase C2: the Conditionals generation note and the re-measurement's tooling; no API call)
+
+- **[Decision]** Owner, 2026-11-18 (`docs/TOPICS.md`, "Phase C2"): fix
+  Conditionals as phase C proposed and measure that topic again. His
+  decisions on Comparatives & Superlatives, set variety and the scoring
+  prompt are open.
+- **[Engineering]** The fix, in the Worker's source, not deployed: a topic
+  may carry a generation-only note (`generationNote` in
+  `proxy/src/topics.ts`), and the practice request's topic line ends with it
+  (`proxy/src/anthropic.ts`). Conditionals has one: "Use the first, second
+  and third conditional only; no mixed conditional (a past condition with a
+  present result, or a present condition with a past result)." No other
+  topic has one and no other request changed; the system prompt, the scoring
+  prompt and the hint card are as they were. The note is not in the app and
+  is never returned to it. `FIRST_WAVE_TOPICS_ENABLED` and
+  `kFirstWaveTopicsEnabled` stay `false`.
+- **[Engineering]** `npm run eval -- topics --dry-run --only conditionals`
+  and `topics run --only conditionals [--out DIR]`: a run folder of its own
+  (`topics-conditionals-…`, with a `run.json` that says what it measures), 6
+  sets, the answers, the scoring, the checks. The $15.00 cap is on the
+  measurement as a whole: the earlier runs' measured spend is read from
+  their folders and counted as spent before every call. `topics analyze` on
+  that folder writes its blind sheet (keys that are not the first run's),
+  the private files, and a section "Re-measurement: Conditionals" after the
+  first run's part of `docs/1.5.0-topics-report.md`, with the first run's
+  Conditionals figures beside each table and the count of questions the
+  hint-card check still marks as a mixed conditional; the first run's
+  sections are not touched and keep the section when they are written again.
+- **[Cost]** The dry run: 36 calls, estimated $0.24; with the first run's
+  $0.76 the measurement comes to $1.00 of $15.00; worst case $1.89 for this
+  run.
+- **[Finding]** From the code, nothing changed: a fill-in-the-blank practice
+  item without a blank is shown as a normal question with one short answer
+  box, and nothing on the live path stops it (the prompt asks for at most 4
+  blanks, not at least one; the schema cannot require one; the Worker
+  returns a practice set as the model wrote it; the app's parser accepts
+  it). The first run had one such question in 33 sets. Proposed, not built:
+  the Worker removes such an item from the practice response, as the legacy
+  Daily Test route already removes a correction without its sentence.
+- **[Verified]** `npm run typecheck` clean; `npm test` 672 passed (25 new,
+  no network). The five live topics' and the other four first-wave topics'
+  requests are byte for byte what they were (fingerprints taken before the
+  change, in the test); the route still refuses the first-wave ids. The
+  re-measurement's path was rehearsed on a local stand-in for `fetch`: the
+  run, a resume, a wrong-topic resume refused, the sheet, the report
+  section before and after labels. The first run's records, sheet and
+  labels are unchanged, and `docs/1.5.0-topics-report.md` was not changed.
+- **[Not verified]** Whether the note keeps the generator to the three
+  types, and whether Conditionals passes with it: no API call was made. The
+  run is the owner's, from his Terminal (`proxy/eval/README.md`, "Owner
+  checklist — Conditionals re-measurement").
+- Record and decisions T-34 to T-44: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase C3: the Conditionals result, the final configuration in the Worker's source, its measurement's tooling; no API call)
+
+- **[Measured]** The owner ran the Conditionals re-measurement
+  (`proxy/eval/out/topics-conditionals-2026-11-19T03-29-29-295Z`, 35 calls,
+  $0.13; the measurement has spent $0.89 of $15.00) and its 30 questions
+  were labelled in his Cowork chat. **Result: 0 of 27 defective questions
+  after the gate (pass), agreement 71 of 74, 95.9 % (pass), false "correct"
+  1 of 41, 2.4 % (fail): the topic fails by one answer.** The generation
+  note kept mixed conditionals out (none by either count, against 4 and 5 in
+  the first run). Not in the criteria: 3 of its 6 fill-in-the-blank items
+  had no blank, and one scenario came back in all six sets.
+- **[Decision]** Owner, 2026-11-19 (`docs/TOPICS.md`, "Phase C3"): items
+  without a blank get a Worker guard and a prompt line; set variety option A
+  for all ten topics, now; Comparatives & Superlatives is not waved through:
+  the scoring prompt gets the two proposed changes as a candidate; the
+  configuration that will ship is measured once more as a whole, the five
+  live topics included.
+- **[Engineering]** In the Worker's source, not deployed:
+  - the practice route removes a `fill_in_blank` item that has no blank and
+    serves the rest (`practice_filter.ts`); only an emptied set is refused;
+    counts only are logged;
+  - the generation prompt's line on blanks: "A fill_in_blank item has 1 to 4
+    blanks, and each blank is written as a run of underscores (____).";
+  - every practice set gets a scenario theme (`practice_theme.ts`): one of
+    the Daily Test's 14, stepped from the device id, the day and the
+    device's request count, which the quota check already reads; the last
+    line of the user prompt: `Scenario theme for this set: "<theme>". Set
+    every item in a different everyday situation within that theme.` The app
+    sends what it sent; a client cannot name the theme;
+  - a scoring prompt candidate beside the production prompt (the production
+    prompt plus two paragraphs: a misspelling in the tested form is a
+    mistake; the verdict follows the scorer's own correction), selectable by
+    the measurement only.
+  `FIRST_WAVE_TOPICS_ENABLED` and `kFirstWaveTopicsEnabled` stay `false`;
+  the app was not changed.
+- **[Engineering]** `npm run eval -- topics final --dry-run | topics final
+  run` (all ten topics, 6 sets each with the final request and a theme per
+  set, the guard applied, the checks on all 60 sets, answers and scoring for
+  the five new topics on 6 sets and the five live ones on 3, every built
+  answer scored with both prompts) and `topics rescore [--dry-run]` (the 464
+  + 75 labelled answers scored again with the candidate, and its section of
+  the report). `topics analyze` on the final folder writes the blind sheet
+  and a "Final configuration" section after the earlier ones.
+- **[Cost]** The dry runs: `topics final` 465 calls, estimated $2.28;
+  `topics rescore` 146 calls, estimated $0.18; together $2.46, the
+  measurement then at about $3.36 of $15.00. The worst case (every call
+  writing all its `max_tokens`) is over the cap for the first time; the
+  check before each call holds the cap.
+- **[Finding]** From the app's code, unchanged: a practice set that arrives
+  a question short works (the screen takes its count from the set), the
+  loading line names the requested number and can be one too high, and an
+  empty set would break the screen, so the guard refuses a response it has
+  emptied. Proposed for the app, not built: treat an empty practice set as a
+  failed generation.
+- **[Verified]** `npm run typecheck` clean; `npm test` 706 passed (34 new,
+  no network). A released app's request still works through the route;
+  consecutive requests of one device get different themes; the scoring
+  route sends the production prompt. Both commands and the analysis were
+  rehearsed on a local stand-in for `fetch`. The earlier run folders'
+  records, sheets and labels are unchanged.
+- **[Not verified]** Whether the line on blanks, the themes and the
+  candidate do what they are for: no API call was made. The two runs are the
+  owner's (`proxy/eval/README.md`, "Owner checklist — final configuration").
+- **[Legal]** No change needed: the app sends what it sent, nothing new is
+  stored, no service is added.
+- Record and decisions T-45 to T-62: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics: the final configuration measured and labelled; the scoring candidate recommended against; no API call)
+
+- **[Measured]** The owner ran both commands: `topics rescore` (146 calls,
+  $0.20) and `topics final run` (453 calls, $1.43; 60 of 60 sets, 300 items,
+  none removed by the guard, 651 built answers, each scored with both
+  prompts). The measurement has spent $2.52 of $15.00. The sheet's 225
+  questions were labelled in his Cowork chat: 3 defects, 17 built answers
+  `unsure`.
+- **[Result]** The owner's three criteria per new topic, production scoring
+  prompt (defective questions at most 5 %; agreement at least 95 %; false
+  "correct" at most 2 %):
+  - Passive Voice: 0 of 30; 82 of 82; 0 of 48. **Passes** (as in the first
+    run).
+  - Relative Clauses: 0 of 30; 91 of 91; 0 of 49. **Passes** (as in the
+    first run).
+  - Prepositions: 1 of 30; 81 of 82 (98.8 %); 1 of 48 (2.1 %). **Fails** on
+    false "correct", by one answer.
+  - Comparatives & Superlatives: 0 of 30; 81 of 83 (97.6 %); 1 of 48
+    (2.1 %). **Fails** on false "correct", by one answer.
+  - Conditionals: 1 of 30; 82 of 85 (96.5 %); 2 of 45 (4.4 %). **Fails** on
+    false "correct"; both answers mix two conditional types, as did every
+    one of this topic's 5 false "correct" verdicts over three runs (5 of
+    132).
+  - With the candidate prompt the same two topics pass and the same three
+    fail (Prepositions with 3 of 48).
+  - Live topics, for reference: Gerund vs. Infinitive and Tense Selection
+    pass; Modal Verbs (false "correct" 1 of 23), Modal Past Forms (1 defect
+    of 15) and Articles (agreement 35 of 38, false "correct" 3 of 24) do
+    not.
+- **[Result]** The practice-path changes: no fill-in-the-blank item without
+  a blank in 300 (4 in the 195 before); no question of a new topic
+  resembling another (15, 11, 7, 7 and 2 in the first run); 3 defects in 225
+  questions.
+- **[Result]** The scoring prompt candidate, on the 1,163 labelled answers
+  both prompts scored (first run, Conditionals re-measurement, final run):
+  agreement 1,137 (97.8 %) → 1,126 (96.8 %); false "correct" 14 → 16 of
+  661; false "needs work" 12 → 21 of 502; of 31 answers judged differently
+  the candidate has the label's verdict on 10. **Recommended against,** in
+  whole and for its verdict rule (the model does not keep it); the spelling
+  sentence fixed its one case and is unproven alone. The candidate stays the
+  measurement's variant; the production scoring prompt is unchanged.
+- **[Finding]** The production scorer left 3 of 651 answers without a usable
+  verdict (a response that answered one of three items; one that answered
+  under an id that was not asked).
+- **[Finding]** From the code, nothing changed: Modal Past Forms is
+  described to the generator as "will → would, can → could" (the Worker's
+  topic table and the app's description), while the app's hint card teaches
+  modal + have + past participle; the generator does what the description
+  says, and did so before any theme (1.4.0's measurement, 30 questions, none
+  with modal + have). Proposals in the progress doc; the owner chooses.
+- **[Finding]** From the code, nothing changed: the practice prompt asks for
+  "a sentence containing exactly one grammar mistake" and nothing more, so
+  two Conditionals corrections gave a sentence that was already correct; the
+  shared Daily Test's prompt has had the rule "the original must be clearly
+  wrong" since September. A wording for practice is proposed, not applied.
+- **[Engineering]** `topics analyze` on the final folder: both prompts held
+  to the same answers, the comparison over every labelled run, the findings
+  from `proxy/eval/data/topics/final-findings.md`; in the run folders the
+  second-look file with both prompts and `changed-verdicts.md` (final and
+  rescore folders).
+- **[Verified]** `npm run typecheck` clean; `npm test` 712 passed (6 new, no
+  network); every run folder's records, sheets and labels unchanged; no
+  question, answer or sheet key in the report or in the commits.
+- **[Not verified]** Any proposal: none was built. Nothing is deployed.
+- **[Legal]** No change needed.
+- Record and decisions T-63 to T-70: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase C4: the scoring prompt's second round, its tooling and the pooled reading; no API call)
+
+- **[Owner decisions]** The first scoring candidate is dropped, in whole and
+  in its verdict rule. Agreement and false "correct" are read on all
+  labelled answers pooled over the first run, the Conditionals
+  re-measurement and the final run; the defect criterion stays on the final
+  configuration's questions. One more round for the scorer, with no new
+  labels (T-71 to T-73).
+- **[Engineering]** Three candidates beside the production scoring prompt
+  (`proxy/src/prompts.ts`, `SECOND_ROUND_SCORING` in `proxy/src/anthropic.ts`),
+  none live: S, a short paragraph on spelling (a misspelling in the tested
+  form is a mistake, the keyboard variants stay acceptable); T, one on
+  conditional types (each clause judged against the time the sentence gives
+  it; a result that also says up to when it holds stays correct); ST, both.
+  Each is the production prompt byte for byte with the addition after it.
+  No example in either: no phrase of them occurs in a labelled question or
+  answer.
+- **[Engineering]** `topics rescore` is now this round
+  (`proxy/eval/lib/topics_round2.ts`): every stored scoring call of the
+  three labelled runs again, once per candidate, the same answers per call;
+  one folder, resumable, under the cap on the whole measurement. When
+  complete it writes the report's section "The scoring prompt, second round"
+  (the three criteria per new topic pooled, for the production prompt and
+  each candidate; per topic and per run; the verdicts each candidate
+  changed, towards the label and away) and, in the run folder,
+  `changed-verdicts.md`. The first candidate's folder is refused for a run
+  and still read by `topics analyze`.
+- **[Engineering]** A report section now counts the spend of the run
+  folders started before its own, so writing an earlier section again after
+  a later run gives the same number; the cap before a call counts every
+  folder, as before.
+- **[Dry run]** `topics rescore --dry-run`: 960 calls (320 a candidate),
+  about $1.19; with the $2.52 spent, about $3.70 of $15.00; worst case
+  $9.54 with the earlier runs.
+- **[Measured, from stored verdicts]** The production prompt on the pooled
+  reading: Passive Voice (0 of 99 false "correct"), Prepositions (1 of 96)
+  and Relative Clauses (0 of 100) pass all three criteria; Conditionals
+  fails (5 of 132, 3.8 %; agreement 228 of 239) and Comparatives &
+  Superlatives fails by one answer (2 of 95, 2.1 %).
+- **[Finding]** From the code, nothing changed: when the scorer leaves an
+  answer of a set out, the Worker passes the response on and the app shows
+  a result without that question (four cards and a score out of 4 for five
+  questions; nothing saved for it); feedback under an id that was not asked
+  is shown as a skipped card without its question. No crash, and no log
+  line. A check with one retry in the Worker is proposed, not built.
+- **[Docs]** `proxy/eval/README.md`: "Owner checklist — scoring prompt,
+  second round".
+- **[Verified]** `npm run typecheck` clean; `npm test` 723 passed (11 new, no
+  network); the whole command rehearsed against a local stand-in (made-up
+  key, no network, scratch folder and a scratch copy of the report); the
+  run folders' records, sheets and labels unchanged; no question, answer or
+  sheet key in the commits.
+- **[Not verified]** What any candidate does: the owner's run is the first
+  time. Nothing is deployed; both first-wave switches are false.
+- **[Legal]** No change needed.
+- Record and decisions T-71 to T-86: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (First-wave topics, phase D: the owner's decision, the topics switched on in the app and in the Worker's source, three small fixes; nothing deployed)
+
+- **[Measured]** The owner ran the scoring prompt's second round: 960 calls,
+  $1.31; the measurement is closed at $3.83 of $15.00. Production · S · T ·
+  ST, false "correct": Conditionals 5 · 4 · 2 · 5 of 132, Comparatives &
+  Superlatives 2 · 3 · 3 · 4 of 95, Prepositions 1 · 2 · 3 · 2 of 96;
+  everything labelled 14 · 13 · 15 · 16 of 661, agreement 1137 · 1130 ·
+  1132 · 1134 of 1163. T helps Conditionals and costs the other topics; no
+  candidate is better overall.
+- **[Owner decisions]** All five first-wave topics ship in 1.5.0 with the
+  production scoring prompt as it is; no candidate becomes the production
+  prompt. Passive Voice, Prepositions and Relative Clauses meet all three
+  criteria on the pooled reading; Comparatives & Superlatives (2 of 95) and
+  Conditionals (5 of 132) are over the false "correct" line and ship on the
+  owner's acceptance, not as a pass. Three small fixes ship with it; the
+  Modal Past Forms hint card is rewritten; four things wait until after
+  1.5.0 (T-87 to T-92).
+- **[Engineering, Worker, not deployed]** `FIRST_WAVE_TOPICS_ENABLED = true`.
+  The scoring route asks the scorer once more when a response leaves an
+  answer without a usable verdict or carries an entry that belongs to no
+  answer (`proxy/src/score_retry.ts`); a second incomplete response is a 502,
+  so the app keeps the answers on the screen instead of showing a result a
+  question short. Not repeated when the first call took more than 18 s (the
+  app waits 40 s). The quota is counted once. Log line `score_incomplete`,
+  counts only.
+- **[Engineering, app]** `kFirstWaveTopicsEnabled = true`: ten cards on
+  Topic Practice, all ten in Home's showcase. A weak spot keeps its own
+  topic on Review and on Home (`topicOfWeakSpot`; five lookups knew only the
+  Daily Test's five and fell back to Gerund vs. Infinitive). The copy that
+  counts topics already took the real number: it says 10 in the eight
+  languages. The Daily Test keeps its five topics.
+- **[Fix, app]** The practice loading screen says "Writing your questions on
+  <topic>…", with no number, in the eight languages (a set can arrive a
+  question short). An empty practice set is a failed generation: the app's
+  general sentence, no session counted.
+- **[Copy]** The Modal Past Forms hint card (English, as every card): "could
+  / would: the past of can / will", "Reported: "I can" → she said she
+  could", "modal + have + past participle: past events", "must have: sure ·
+  should have: regret". The harness's copy is in step.
+- **[Docs]** `docs/1.5.0-topics-report.md`: the closing "Decision" section
+  (the report's tooling keeps it last). `proxy/README.md`: "Owner checklist —
+  deploy for 1.5.0 (first-wave topics)": what goes live, the checks right
+  after, how to go back. `DEVICE-CHECKS.md`: "First-wave topics (1.5.0) —
+  after the Worker's deploy", T-1 to T-8. Two dated notes in the spec.
+- **[Verified]** The proxy: typecheck clean, `npm test` 737 passed (30
+  files); `wrangler deploy --dry-run` builds 104.46 KiB and uploads nothing.
+  The app: `flutter analyze` no issues, `flutter test` 2890 passed. Swift
+  RunnerTests: 23 tests, 0 failures (iPhone 18 Pro simulator). `flutter
+  build ios --release --no-codesign`: built, 50.4 MB, arm64, with the widget
+  extension, 1.4.0 (7).
+- **[Not verified]** Nothing on a device, nothing against the live Worker,
+  no screen looked at in a simulator. Nothing was deployed; no API call; no
+  version bump; not merged into `main`.
+- **[Legal]** No change needed: no new data, no new service.
+- **[Next, the owner's]** The deploy, then the device checks, then the merge
+  and the 1.5.0 build.
+- Record and decisions T-87 to T-110: `docs/1.5.0-topics-progress.md`.
+
+## 2026-11-19 (UI polish fix round 6 on branch `ui-polish-widgets`; the Worker deployed for 1.5.0 by the owner; not on `main`, not shipped)
+
+- **[Owner]** Deployed the Worker for 1.5.0: version
+  `a3f736ef-0877-4200-b0b2-a996ef20cca0` (the earlier one,
+  `18d87c6b-5f7b-4290-a08b-f07a32565511`, is the rollback point); `/health`
+  answered `ok`, a Conditionals practice request `200`. Installed the build
+  of `ui-polish-widgets` over his test build. On the phone: the ten topic
+  cards show, practice sets of the new topics generate and are scored,
+  their weak spots appear in Review. He found one flow defect and two
+  things to look into (`docs/design/ui-polish/handoff/FIX6.md`).
+- **[Fix, app]** The day's step plays before the rest scene. With the
+  practice allowance used before the Daily Test (free: the ticket;
+  Premium: every session), Home showed the rest scene as soon as the test
+  was saved and the step was never seen. Now Home keeps the mountain, the
+  pawn walks, a save point shows its light and its name, the pawn rests
+  for 1 s, and the rest scene fades in over Home (400 ms; 150 ms under
+  Reduce Motion). N01 opens when the scene stands. Leaving Home once the
+  walk has begun shows the scene on return; no step to show brings it at
+  once; the other order is unchanged. SPEC v14, §1.8.
+- **[Fix, app]** Review's inline mistake. A multi-blank practice answer is
+  stored as the whole line that holds the blanks, instruction and
+  bracketed cues included; the card walked the answer and the correction
+  in step, so the wrong word landed in the wrong place and the rest of the
+  line was appended struck through. The card now follows the diff's own
+  alignment; nothing stored changes, so the records on phones are drawn
+  right. The older topics' multi-blank lines could show the same and are
+  covered.
+- **[Fix, app, found by the smoke walk]** Review's weak spots are read
+  again when Review is the top route again: after a practice started with
+  the ticket, "Back to topics" showed the old list.
+- **[Measured, not changed]** The Daily Test card's companion: filmed on
+  the simulator, the hop is drawn as specified (16.3 pt up every 1.2 s,
+  back on the ground after 0.58 s, not clipped). Whether that is large
+  enough at this size is the owner's call.
+- **[Verified]** After the last code change: `flutter analyze` clean, 2925
+  Flutter tests and 23 Swift tests pass, the simulator build with
+  `xcodebuild` and the release build (`--no-codesign`, 50.3 MB, with the
+  widget extension, 1.4.0 (7)) succeed. Two smoke walks on the simulator in
+  Turkish as a free user, the practice on a local stand-in (no AI call):
+  the ticket first, then the Daily Test (the step walks, the pawn rests,
+  the rest scene follows 5.9 s after "See your climb" on a save point day,
+  N01 over it); and a fresh install in the other order (the rest scene
+  with N01 at once, as before).
+- **[Not verified]** Anything on a device. The owner's check is the first
+  section of `DEVICE-CHECKS.md`, "Fix round 6 — the next morning".
+- **[Not done]** No deploy, no API call, nothing under `proxy/` changed, no
+  version bump, not merged into `main`.
+- **[Disk]** 18 GiB free before, 17 GiB after the builds and the walks.
+- Record and decisions F6-1 to F6-14:
+  `docs/design/ui-polish/handoff/PROGRESS.md`, "Fix round 6".

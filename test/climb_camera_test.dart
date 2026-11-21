@@ -37,7 +37,7 @@ void main() {
           expect(o.dy, greaterThanOrEqualTo(0), reason: why);
           expect(o.dx + width, lessThanOrEqualTo(camera.imageSize.width + 1e-9),
               reason: why);
-          expect(o.dy + ClimbCamera.windowHeight,
+          expect(o.dy + ClimbCamera.fullWindowHeight,
               lessThanOrEqualTo(camera.imageSize.height + 1e-9),
               reason: why);
         }
@@ -99,7 +99,7 @@ void main() {
                             avatar: Avatar.values.first))))));
         await tester.pump();
         final window = tester.getRect(find.byType(MonthlyMountain));
-        expect(window.height, ClimbCamera.windowHeight);
+        expect(window.height, ClimbCamera.fullWindowHeight);
         // The layer the camera moves: it covers the whole window.
         final image = tester.getRect(find.byType(Image).first);
         expect(image.left, lessThanOrEqualTo(window.left + 1e-6));

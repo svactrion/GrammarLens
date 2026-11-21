@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/ai_consent.dart';
@@ -264,10 +265,12 @@ void main() {
         'is graded', (tester) async {
       final finished = await pumpDaily(tester);
       await tester.enterText(_field, 'swimming');
-      await _tap(tester, _skip);
+      await _tap(tester, find.byKey(DailyTestScreen.skipKey));
       await tester.enterText(_field, 'to go');
-      await _tap(tester, _primary);
-      await _tap(tester, _skip); // the last: finishes
+      // UI polish V07: Check, then the sheet's button goes on.
+      await _tap(tester, find.byKey(DailyTestScreen.checkKey));
+      await _tap(tester, find.byKey(DailyTestScreen.continueKey));
+      await _tap(tester, find.byKey(DailyTestScreen.skipKey)); // the last
 
       final answers = finished.single;
       expect(answers['single'] ?? '', '');
@@ -280,13 +283,19 @@ void main() {
       expect(answered.isSkipped, isFalse);
     });
 
-    testWidgets('Back after Skip shows an empty field', (tester) async {
+    // UI polish V07: the Daily Test has no Back (a checked answer is final),
+    // so a skipped question's text is gone with it: the next question opens
+    // with an empty field.
+    testWidgets('after Skip the next question opens empty', (tester) async {
       await pumpDaily(tester);
       await tester.enterText(_field, 'swimming');
-      await _tap(tester, _skip);
-      await _tap(tester, find.byKey(QuestionHeader.backKey));
+      await _tap(tester, find.byKey(DailyTestScreen.skipKey));
       expect(_text(tester, _field), '');
-      expect(_primaryEnabled(tester), isFalse);
+      expect(
+          tester
+              .widget<PressableButton>(find.byKey(DailyTestScreen.checkKey))
+              .onPressed,
+          isNull);
     });
   });
 }

@@ -99,10 +99,10 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('^September 2026, .*in progress')),
         findsOneWidget);
 
+    // V23 (fix round 1): the shelf holds three, newest first — the running
+    // month and the two newest finalized months; the rest are in PF02.
     await selectScenario(tester, 'No medal', 'Multiple months');
-    expect(slot('Gold medal\\.'), findsOneWidget);
-    expect(slot('Silver medal\\.'), findsOneWidget);
-    expect(slot('Bronze medal\\.'), findsOneWidget);
+    expect(slot('(Bronze|Silver|Gold) medal\\.'), findsNWidgets(2));
   });
 
   for (final textSize in ['Small', 'Medium', 'Large']) {
@@ -132,7 +132,9 @@ void main() {
       await tester.pumpWidget(const MonthlyMedalPreview());
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+      // V23 (fix round 1): an unearned badge is not on the shelf (PF02
+      // shows it faded).
+      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsNothing);
 
       await tester.tap(find.text('Welcome badge earned'));
       await tester.pumpAndSettle();
@@ -145,7 +147,8 @@ void main() {
 
       await tester.tap(find.text('Welcome badge earned'));
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+      expect(find.bySemanticsLabel('Welcome badge, earned.'), findsNothing);
+      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsNothing);
     });
   });
 }

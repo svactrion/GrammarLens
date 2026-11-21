@@ -1,19 +1,29 @@
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../motion.dart';
+import '../utils/haptics.dart';
+import '../widgets/companion_dialog.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/pressable_button.dart';
+import '../widgets/rest_scene.dart';
+import 'premium_on_screen.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
+import '../models/climb_theme.dart';
 import '../models/practice_length.dart';
 import '../models/user_profile.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
-import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
 import '../utils/monthly_equivalent.dart';
@@ -28,7 +38,8 @@ enum _PlanPeriod { monthly, annual }
 /// "Turn your mistakes into progress.", three benefits in one card, the
 /// Free/Premium comparison behind "Compare Free & Premium", the two plans
 /// stacked as radio cards, and a fixed footer with the purchase button, the
-/// renewal terms, Restore Purchases, Terms, Privacy and "Maybe later".
+/// renewal terms, Restore, Terms and Privacy (V13 v12: no "Maybe later";
+/// the close button at the top is the way out).
 ///
 /// **Prices and trials come only from the store.** Every price, currency,
 /// period and introductory offer is read from RevenueCat's current offering
@@ -57,14 +68,21 @@ class PremiumScreen extends StatefulWidget {
   /// came from — required: every call site is a known entry point.
   final String analyticsSource;
 
-  /// Called when the user is done here — "Maybe later", the close button,
-  /// or "Continue" after a purchase — right before this screen pops itself.
+  /// Called when the user is done here — the close button or "Continue"
+  /// after a purchase — right before this screen pops itself.
   /// Null at every call site today: they only want the pop.
   final VoidCallback? onDone;
 
   /// The weak spot that prompted this screen. It replaces the supporting
   /// line, keeping the headline identical across entry points.
   final String? sourceContext;
+
+  /// V13r (SPEC §1.15): opened from the free users' rest scene. Only the
+  /// top changes (the evening camp with the awake companion, "<Hero> is
+  /// wide awake", today's weak spot, the benefits in V13r's order); after a
+  /// trial starts PW05r sends the user straight into that practice: the
+  /// screen pops with `true` when they choose it.
+  final PaywallRest? rest;
 
   PremiumScreen({
     super.key,
@@ -74,6 +92,7 @@ class PremiumScreen extends StatefulWidget {
     SubscriptionService? subscriptionService,
     this.onDone,
     this.sourceContext,
+    this.rest,
   }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
   // The headline, the same from every entry point: `paywallHeadline`.
@@ -82,6 +101,43 @@ class PremiumScreen extends StatefulWidget {
   static const ctaKey = ValueKey('premium_cta');
   static const restoreKey = ValueKey('premium_restore');
   static const heroKey = ValueKey('premium_hero');
+
+  /// V13 (v11): "Compare plans" under the first view.
+  static const comparePlansKey = ValueKey('premium_compare_plans');
+
+  /// V13c (v11): "Choose your plan" under the comparison.
+  static const choosePlanHintKey = ValueKey('premium_choose_plan_hint');
+  static const closeKey = ValueKey('premium_close');
+  static const exitStartKey = ValueKey('premium_exit_start');
+  static const exitContinueFreeKey = ValueKey('premium_exit_continue_free');
+  static const selectedPlanKey = ValueKey('premium_selected_plan');
+
+  /// V13 v12: the full price line in the footer.
+  static const priceLineKey = ValueKey('premium_price_line');
+  static const timelineKey = ValueKey('premium_trial_timeline');
+  static const compareKey = ValueKey('premium_compare');
+
+  /// V13r: the rest-scene top, its awake companion and its weak spot card.
+  static const restTopKey = ValueKey('premium_rest_top');
+  static const restCompanionKey = ValueKey('premium_rest_companion');
+  static const restSpotKey = ValueKey('premium_rest_spot');
+
+  /// V13c (fix round 2): the one-piece Premium column, the companion beside
+  /// the heading, and the green note under the table.
+  static const premiumColumnKey = ValueKey('premium_compare_column');
+  static const compareCompanionKey = ValueKey('premium_compare_companion');
+  static const compareNoteKey = ValueKey('premium_compare_note');
+
+  /// V13a / V13c: a plan's and a comparison row's entrance.
+  static ValueKey<String> planRevealKey(int i) =>
+      ValueKey('premium_plan_reveal_$i');
+  static ValueKey<String> rowRevealKey(int i) =>
+      ValueKey('premium_row_reveal_$i');
+
+  /// For tests: lets the next close show V13b (once per session) again.
+  @visibleForTesting
+  static void resetExitReminder() =>
+      _PremiumScreenState._exitReminderShown = false;
 
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
@@ -105,7 +161,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _purchasedTrial = false;
   bool _restoring = false;
   String? _restoreMessage;
-  bool _compareOpen = false;
 
   // Picked once per visit: a legacy profile with no avatar (or an unknown
   // id) still shows a real companion, the same one on every rebuild.
@@ -116,12 +171,105 @@ class _PremiumScreenState extends State<PremiumScreen> {
   // button's exit from a system back gesture.
   bool _exitHandled = false;
 
+  /// The user's name, for the headline and the exit pop-up (V13, V13b).
+  String _userName = '';
+
+  /// V13b opens once per app session, on the first close.
+  static bool _exitReminderShown = false;
+
+  final _scroll = ScrollController();
+  final _plansKey = GlobalKey();
+  final _compareKey = GlobalKey();
+
+  /// The plans have scrolled up out of view (V13c): their name sits above
+  /// the pinned button.
+  bool _plansPassed = false;
+
   @override
   void initState() {
     super.initState();
     widget.analyticsService.paywallViewed(widget.analyticsSource);
     _loadOffer();
     _loadAvatar();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final plans = _plansKey.currentContext?.findRenderObject() as RenderBox?;
+    final body = context.findRenderObject() as RenderBox?;
+    if (plans == null || !plans.hasSize || body == null) return;
+    final bottom = plans.localToGlobal(Offset(0, plans.size.height)).dy;
+    final passed = bottom < MediaQuery.paddingOf(context).top + 60;
+    if (passed != _plansPassed) setState(() => _plansPassed = passed);
+  }
+
+  /// V13 (v11): "Compare plans" scrolls Free vs Premium into view.
+  void _toCompare() {
+    final compare = _compareKey.currentContext;
+    if (compare == null) return;
+    Scrollable.ensureVisible(compare,
+        alignment: .05,
+        duration: AppMotion.orInstant(context, AppMotion.slow),
+        curve: AppMotion.enter);
+  }
+
+  /// V13c (v11): "Choose your plan" scrolls the plans into view.
+  void _seePlans() {
+    final plans = _plansKey.currentContext;
+    if (plans == null) return;
+    Scrollable.ensureVisible(plans,
+        alignment: .05,
+        duration: AppMotion.orInstant(context, AppMotion.slow),
+        curve: AppMotion.enter);
+  }
+
+  /// The close button: the first time in an app session, V13b asks once
+  /// (no discount); otherwise, and on "Continue with free", the paywall
+  /// closes as before.
+  Future<void> _onClose() async {
+    final terms = _offeringsAvailable && _selectedPackage != null
+        ? _termsFor(_selectedPackage!,
+            _selectedPeriod == _PlanPeriod.annual ? 'Annual' : 'Monthly')
+        : null;
+    if (_exitReminderShown ||
+        terms == null ||
+        _purchaseState == _PurchaseState.purchasing ||
+        _purchaseState == _PurchaseState.success) {
+      _dismiss(dismissMethod: AnalyticsService.paywallDismissCloseButton);
+      return;
+    }
+    _exitReminderShown = true;
+    HapticMap.light();
+    final l10n = context.l10n;
+    final result = await showCompanionDialog(
+      context: context,
+      hero: _userAvatar,
+      mood: CompanionMood.sad,
+      title: _userName.trim().isEmpty
+          ? l10n.paywallExitTitleNoName
+          : l10n.paywallExitTitle(_userName.trim()),
+      body: l10n.paywallExitBody,
+      primaryLabel: terms.cta,
+      primaryTone: ButtonTone.orange,
+      secondaryLabel: l10n.paywallExitContinueFree,
+      primaryKey: PremiumScreen.exitStartKey,
+      secondaryKey: PremiumScreen.exitContinueFreeKey,
+    );
+    if (!mounted) return;
+    switch (result) {
+      case CompanionDialogResult.primary:
+        await _startPurchase();
+      case CompanionDialogResult.secondary:
+        _dismiss(dismissMethod: AnalyticsService.paywallDismissCloseButton);
+      case null:
+        break;
+    }
   }
 
   Future<void> _loadOffer() async {
@@ -150,7 +298,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
       // Decorative: falls back to the random companion above.
     }
     if (!mounted) return;
-    setState(() => _userAvatar = profile?.avatar ?? _fallbackAvatar);
+    setState(() {
+      _userAvatar = profile?.avatar ?? _fallbackAvatar;
+      _userName = profile?.name ?? '';
+    });
   }
 
   /// Both plans must exist for the picker to mean anything; one alone is
@@ -216,6 +367,37 @@ class _PremiumScreenState extends State<PremiumScreen> {
       PurchaseOutcome.pending => 'pending',
     };
     widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
+    if (outcome == PurchaseOutcome.success && mounted) {
+      await _showPremiumOn(terms);
+    }
+  }
+
+  /// PW05: the celebration after a purchase or trial start; its Continue
+  /// closes the paywall as the footer's Continue does.
+  Future<void> _showPremiumOn(_PlanTerms terms) async {
+    final trialDays = _trialDays(terms.trial);
+    final done = await Navigator.of(context).push<bool>(
+      PageRouteBuilder(
+        transitionDuration: AppMotion.orInstant(context, AppMotion.slow),
+        pageBuilder: (_, __, ___) => PremiumOnScreen(
+          hero: widget.rest?.hero ?? _userAvatar,
+          topics: practiceTopics().length,
+          sessions: StorageService.dailySessionLimit,
+          trialEnds: trialDays == null
+              ? null
+              : DateTime.now().add(Duration(days: trialDays)),
+          rest: widget.rest == null
+              ? null
+              : PremiumOnRest(weakSpot: widget.rest!.weakSpot),
+        ),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+      ),
+    );
+    if (done == true && mounted) {
+      _practiseNext = widget.rest != null;
+      _dismiss();
+    }
   }
 
   Future<void> _restore() async {
@@ -234,9 +416,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
     });
   }
 
-  /// "Maybe later", the close button and the post-purchase "Continue": the
-  /// first two log `paywall_dismissed` with their method, "Continue" does
-  /// not (a purchase is not an abandonment). Runs [PremiumScreen.onDone],
+  /// The close button and the post-purchase "Continue": the close logs
+  /// `paywall_dismissed` with its method, "Continue" does not (a purchase
+  /// is not an abandonment). Runs [PremiumScreen.onDone],
   /// then pops.
   void _dismiss({String? dismissMethod}) {
     _exitHandled = true;
@@ -247,8 +429,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
       );
     }
     widget.onDone?.call();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(_practiseNext ? true : null);
   }
+
+  /// PW05r's "Practise <weak spot>" was chosen (V13r only): the rest
+  /// scene opens that practice once this screen has closed.
+  bool _practiseNext = false;
 
   String get _supportingText {
     final source = widget.sourceContext?.trim();
@@ -281,8 +467,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
         : null;
 
     return PopScope(
-      // Observes rather than blocks: a pop that did not go through
-      // _dismiss() is a system back gesture.
+      // Fix round 5 (SPEC V13 "Closing (v13)", §1.29): the paywall closes
+      // only with its X (or a purchase's Continue), wherever it is opened.
+      // Blocking the route's own pops turns off the iOS edge swipe back
+      // (the six entry points pushed as page routes closed with it on the
+      // device) and the system back (V13r's own route closed with it);
+      // _dismiss() pops the route itself and is not blocked. A pop that
+      // still arrives without _dismiss() is logged as a system back.
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop || _exitHandled) return;
         widget.analyticsService.paywallDismissed(
@@ -301,12 +493,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
           children: [
             _TopBar(
               horizontalPadding: ContentWidth.sidePaddingOf(context, base: 17),
-              onClose: () => _dismiss(
-                dismissMethod: AnalyticsService.paywallDismissCloseButton,
-              ),
+              onClose: _onClose,
+              // V13r has its chip under its own scene.
+              badge: widget.rest == null,
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scroll,
                 padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 16),
                 child: Column(
                   key: const Key('premiumBody'),
@@ -314,41 +507,82 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   children: [
                     // Decorative, and 133 pt a short screen (an iPhone SE)
                     // cannot spare: dropped under 700 pt tall.
-                    if (!shortScreen) ...[
-                      _AvatarHero(centerAvatar: _userAvatar),
-                      const SizedBox(height: 9),
+                    if (widget.rest case final rest?)
+                      _RestTop(
+                        rest: rest,
+                        hero: rest.hero ?? _userAvatar,
+                        name: (rest.name ?? _userName).trim(),
+                        trial: _trialDays(selectedTerms?.trial) != null,
+                        headlineStyle: _headlineStyle(theme, size.width),
+                        compact: shortScreen,
+                      )
+                    else ...[
+                      if (!shortScreen) ...[
+                        _AvatarHero(centerAvatar: _userAvatar),
+                        const SizedBox(height: 9),
+                      ],
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          _userName.trim().isEmpty
+                              ? context.l10n.paywallHeadline
+                              : context.l10n
+                                  .paywallHeadlineName(_userName.trim()),
+                          textAlign: TextAlign.center,
+                          style: _headlineStyle(theme, size.width),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _SupportingLine(text: _supportingText),
+                      const SizedBox(height: 21),
+                      const _BenefitsCard(),
                     ],
-                    const Center(child: _PremiumLabel()),
-                    const SizedBox(height: 12),
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        context.l10n.paywallHeadline,
-                        textAlign: TextAlign.center,
-                        style: _headlineStyle(theme, size.width),
+                    const SizedBox(height: 8),
+                    // V13 (v11): no price boxes on the first view; value
+                    // before price: "Compare plans" leads to Free vs Premium
+                    // (13c), then the plans and the trial (13a), one page.
+                    Center(
+                      child: _ScrollHint(
+                        key: PremiumScreen.comparePlansKey,
+                        label: context.l10n.paywallComparePlans,
+                        onTap: _toCompare,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _SupportingLine(text: _supportingText),
-                    const SizedBox(height: 21),
-                    const _BenefitsCard(),
-                    const SizedBox(height: 4),
-                    _CompareToggle(
-                      open: _compareOpen,
-                      onTap: () => setState(() => _compareOpen = !_compareOpen),
+                    const SizedBox(height: 18),
+                    KeyedSubtree(
+                      key: PremiumScreen.compareKey,
+                      child: KeyedSubtree(
+                        key: _compareKey,
+                        child: _ComparisonTable(
+                            theme: theme,
+                            colorScheme: colorScheme,
+                            hero: _userAvatar,
+                            reveal: _scroll),
+                      ),
                     ),
-                    if (_compareOpen) ...[
-                      _ComparisonTable(theme: theme, colorScheme: colorScheme),
-                      const SizedBox(height: 16),
-                    ] else
-                      const SizedBox(height: 13),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: _ScrollHint(
+                        key: PremiumScreen.choosePlanHintKey,
+                        label: context.l10n.paywallChoosePlan,
+                        onTap: _seePlans,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // V13a (v11): the plans and the trial at the page's end.
+                    // The selected plan (yearly by default) drives the
+                    // pinned button from the first view on.
                     Semantics(
+                      key: _plansKey,
                       header: true,
                       child: Text(
                         context.l10n.paywallChoosePlan,
-                        style: theme.textTheme.titleSmall
+                        style: theme.textTheme.titleLarge
                             ?.withWeight(FontWeight.w900)
-                            .copyWith(color: colorScheme.onSurface),
+                            .copyWith(
+                                color: colorScheme.onSurface,
+                                fontSize: 20,
+                                height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -365,6 +599,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       )
                     else
                       _PlanCards(
+                        reveal: _scroll,
                         annual: _termsFor(annual, 'Annual'),
                         monthly: _termsFor(monthly, 'Monthly'),
                         savingsLabel:
@@ -380,6 +615,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         onChanged: (period) =>
                             setState(() => _selectedPeriod = period),
                       ),
+                    if (_trialDays(selectedTerms?.trial) case final days?) ...[
+                      const SizedBox(height: 18),
+                      _TrialTimeline(days: days),
+                    ],
                     if (!linksInFooter) ...[
                       const SizedBox(height: 12),
                       Center(
@@ -395,6 +634,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
             _PremiumFooter(
               key: const Key('premiumFooter'),
+              planLabel: _plansPassed && selectedTerms != null
+                  ? context.l10n.paywallSelectedPlan(selectedTerms.label)
+                  : null,
               loading: _loadingOffer,
               offeringsReady: offeringsReady,
               purchaseState: _purchaseState,
@@ -406,10 +648,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               onRestore: _restore,
               onPurchase: _startPurchase,
               onContinue: _dismiss,
-              onMaybeLater: () => _dismiss(
-                dismissMethod: AnalyticsService.paywallDismissMaybeLater,
-              ),
-              horizontalPadding: hPad,
               maxHeight: (size.height - MediaQuery.paddingOf(context).top) * .5,
             ),
           ],
@@ -677,34 +915,49 @@ final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
 );
 
-/// "GrammarLens" and Close (44 × 44).
+/// Close (44 × 44) and the GRAMMARLENS PREMIUM chip (V13).
 class _TopBar extends StatelessWidget {
   final double horizontalPadding;
   final VoidCallback onClose;
 
-  const _TopBar({required this.horizontalPadding, required this.onClose});
+  /// The GRAMMARLENS PREMIUM chip at the row's end (not on V13r, which has
+  /// it under its scene).
+  final bool badge;
 
+  const _TopBar(
+      {required this.horizontalPadding,
+      required this.onClose,
+      this.badge = true});
+
+  /// V13 (the board's top row; fix round 4, F4-7): Close (44 × 44) at the
+  /// start and the GRAMMARLENS PREMIUM chip at the end, in one row. The
+  /// chip used to have a row of its own under the companions, under a
+  /// "GrammarLens" wordmark here: 40 pt the first view needed for "Compare
+  /// plans" (F3-26).
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 0),
       child: Row(
         children: [
-          Expanded(
-            child: BrandWordmark(
-              style: theme.textTheme.titleMedium
-                  ?.withWeight(FontWeight.w900)
-                  .copyWith(color: colorScheme.onSurface, letterSpacing: -.5),
-            ),
-          ),
           IconButton(
+            key: PremiumScreen.closeKey,
             icon: const Icon(Icons.close_rounded, size: 22),
             tooltip: context.l10n.paywallClose,
-            color: colorScheme.onSurface,
+            color: colorScheme.onSurfaceVariant,
             style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
             onPressed: onClose,
+          ),
+          const SizedBox(width: 8),
+          // At the row's end (the board's `margin-left: auto`), shrinking
+          // for a long translation.
+          Expanded(
+            child: badge
+                ? const Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: _PremiumLabel())
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -720,8 +973,7 @@ class _TopBar extends StatelessWidget {
 List<Avatar> _otherAvatarsFor(Avatar center) {
   const offsets = [4, 6];
   return offsets
-      .map(
-          (offset) => Avatar.values[(center.index - 1 + offset) % Avatar.count])
+      .map((offset) => Avatar.values[(center.order + offset) % Avatar.count])
       .toList();
 }
 
@@ -730,19 +982,49 @@ class _AvatarHero extends StatelessWidget {
 
   const _AvatarHero({required this.centerAvatar});
 
-  static const double centerSize = 124;
-  static const double sideSize = 66;
+  /// The board's sizes (V13: 70, 110, 64; fix round 2 keeps the old 124 pt
+  /// row height so nothing below moves).
+  static const double centerSize = 110;
+  static const double leftSize = 70;
+  static const double rightSize = 64;
 
   @override
   Widget build(BuildContext context) {
     final others = _otherAvatarsFor(centerAvatar);
+    // V13 (fix round 2): the side companions float, the middle one hops,
+    // each over a soft shadow; CompanionView runs the loops (still under
+    // Reduce Motion).
+    Widget companion(Avatar a, double size, CompanionAmbient ambient) =>
+        SizedBox(
+          width: size,
+          height: size,
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned(
+              left: size * .22,
+              right: size * .22,
+              bottom: size * .01,
+              height: size * .08,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: .2),
+                    borderRadius: BorderRadius.circular(size),
+                  ),
+                ),
+              ),
+            ),
+            CompanionView(
+                hero: a, size: size, ambient: ambient, decorative: true),
+          ]),
+        );
     return Semantics(
       key: PremiumScreen.heroKey,
       label: context.l10n.paywallCompanion(centerAvatar.name(context.l10n)),
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
-          height: centerSize,
+          height: 124,
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -750,23 +1032,244 @@ class _AvatarHero extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: AvatarTile(avatar: others[0], radius: sideSize / 2),
-                  ),
-                  const SizedBox(width: 8),
-                  AvatarTile(avatar: centerAvatar, radius: centerSize / 2),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: AvatarTile(avatar: others[1], radius: sideSize / 2),
-                  ),
+                  companion(others[0], leftSize, CompanionAmbient.float),
+                  const SizedBox(width: 4),
+                  companion(centerAvatar, centerSize, CompanionAmbient.hop),
+                  const SizedBox(width: 4),
+                  companion(others[1], rightSize, CompanionAmbient.float),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What V13r (the paywall opened from the free users' rest scene, SPEC
+/// §1.15) needs to draw its top: the month's camp and today's weak spot
+/// (null when there is none).
+class PaywallRest {
+  final ClimbTheme theme;
+  final String? weakSpot;
+
+  /// The companion and the name the rest scene showed, so the paywall and
+  /// PW05r name the same hero (null: the stored profile's).
+  final Avatar? hero;
+  final String? name;
+
+  const PaywallRest({required this.theme, this.weakSpot, this.hero, this.name});
+}
+
+/// The free trial, in days, the paywall would promise on its preselected
+/// annual plan: only when the store has one and says this user is eligible,
+/// the paywall's own rule; null otherwise (and on any error). V24f's button
+/// says "· N days free" only with it.
+Future<int?> paywallTrialDays(SubscriptionService service) async {
+  try {
+    final offering = await service.getOfferings();
+    final package = offering?.annual ?? offering?.monthly;
+    final intro = package?.storeProduct.introductoryPrice;
+    if (package == null || intro == null) return null;
+    final id = package.storeProduct.identifier;
+    final eligibility = await service.checkTrialEligibility([id]);
+    if (eligibility[id] != TrialEligibility.eligible) return null;
+    return _trialDays(_trialDurationInDays(intro));
+  } catch (_) {
+    return null;
+  }
+}
+
+/// V13r's top (fix round 2, item 11): an evening camp strip (the month's
+/// night art, the awake companion waving, the campfire), the "GRAMMARLENS
+/// PREMIUM" chip, "<Hero> is wide awake, <name>.", the subline, a
+/// "PRACTISE IT NOW" card with today's weak spot, then the benefits in
+/// V13r's order. The rest of the page (plans, table, CTA) is V13's.
+class _RestTop extends StatelessWidget {
+  final PaywallRest rest;
+  final Avatar hero;
+  final String name;
+  final bool trial;
+  final TextStyle headlineStyle;
+  final bool compact;
+
+  const _RestTop({
+    required this.rest,
+    required this.hero,
+    required this.name,
+    required this.trial,
+    required this.headlineStyle,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    const free = StorageService.freeDailyPracticeLimit;
+    const sessions = StorageService.dailySessionLimit;
+    final heroName = hero.name(l10n);
+    final lengths = _joinWithOr(
+        PracticeLength.values.map((l) => '${l.questionCount}').toList(), l10n);
+    final spot = rest.weakSpot;
+    Widget benefit(IconData icon, String title, String body) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                  color: c.sky, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, size: 20, color: c.onSky),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: theme.textTheme.titleSmall!
+                          .withWeight(FontWeight.w900)
+                          .copyWith(fontSize: 16, color: c.text)),
+                  Text(body,
+                      style:
+                          theme.textTheme.bodyMedium!.copyWith(color: c.muted)),
+                ],
+              ),
+            ),
+          ]),
+        );
+    return Column(
+      key: PremiumScreen.restTopKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The evening camp, the companion awake (V24s continues here).
+        ExcludeSemantics(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: SizedBox(
+              height: compact ? 120 : 160,
+              child: Stack(fit: StackFit.expand, children: [
+                Image.asset(rest.theme.backgroundFor(Brightness.dark),
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(0, .55),
+                    excludeFromSemantics: true),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        c.nightTop.withValues(alpha: .25),
+                        c.nightBottom.withValues(alpha: .55),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: const Alignment(-.1, 1.15),
+                  child: CompanionView(
+                      key: PremiumScreen.restCompanionKey,
+                      hero: hero,
+                      mood: CompanionMood.wave,
+                      size: compact ? 96 : 120,
+                      decorative: true),
+                ),
+                const Align(
+                  alignment: Alignment(.42, .95),
+                  child: SizedBox(width: 50, height: 64, child: Campfire()),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Center(child: _PremiumLabel()),
+        const SizedBox(height: 10),
+        Semantics(
+          header: true,
+          child: Text(
+            name.isEmpty
+                ? l10n.paywallRestTitleNoName(heroName)
+                : l10n.paywallRestTitle(heroName, name),
+            textAlign: TextAlign.center,
+            style: headlineStyle,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.paywallRestSubline(sessions - free),
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge!.copyWith(color: c.muted),
+        ),
+        if (spot != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            key: PremiumScreen.restSpotKey,
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            decoration: lipCard(c, radius: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.paywallRestPractiseNow,
+                    style: theme.textTheme.labelMedium!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.navyText, letterSpacing: 1.2)),
+                const SizedBox(height: 6),
+                Text(spot,
+                    style: theme.textTheme.titleLarge!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.text)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: c.redSoft,
+                          borderRadius: BorderRadius.circular(999)),
+                      child: Text(l10n.paywallRestSavedToday,
+                          style: theme.textTheme.labelMedium!
+                              .withWeight(FontWeight.w800)
+                              .copyWith(color: c.onRedSoft)),
+                    ),
+                    Text(
+                        trial
+                            ? l10n.paywallRestAfterTrial
+                            : l10n.paywallRestAfterPremium,
+                        style: theme.textTheme.labelLarge!
+                            .withWeight(FontWeight.w800)
+                            .copyWith(color: c.navyText)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: lipCard(c, radius: 22),
+          child: Column(children: [
+            benefit(
+                Icons.track_changes_rounded,
+                l10n.paywallRestSessionsTitle(sessions),
+                l10n.paywallRestSessionsBody(sessions - free, sessions)),
+            benefit(Icons.chat_bubble_outline_rounded,
+                l10n.paywallRestFeedbackTitle, l10n.paywallRestFeedbackBody),
+            benefit(
+                Icons.menu_book_rounded,
+                l10n.paywallRestTopicsTitle(practiceTopics().length),
+                l10n.paywallRestTopicsBody(lengths)),
+          ]),
+        ),
+      ],
     );
   }
 }
@@ -829,8 +1332,8 @@ class _BenefitsCard extends StatelessWidget {
       (
         Icons.menu_book_rounded,
         l10n.paywallBenefitTopicsTitle,
-        l10n.paywallBenefitTopicsBody(
-            kTopics.length, lengthText, StorageService.dailySessionLimit),
+        l10n.paywallBenefitTopicsBody(practiceTopics().length, lengthText,
+            StorageService.dailySessionLimit),
       ),
     ];
   }
@@ -905,54 +1408,14 @@ class _BenefitsCard extends StatelessWidget {
 
 /// "Compare Free & Premium": opens and closes the comparison table below
 /// it. A 44 pt target; screen readers hear whether it is open.
-class _CompareToggle extends StatelessWidget {
-  final bool open;
-  final VoidCallback onTap;
-
-  const _CompareToggle({required this.open, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return MergeSemantics(
-      child: Semantics(
-        expanded: open,
-        child: TextButton(
-          key: PremiumScreen.compareToggleKey,
-          onPressed: onTap,
-          style: TextButton.styleFrom(
-            minimumSize: const Size.fromHeight(44),
-            foregroundColor: colorScheme.secondary,
-            textStyle: theme.textTheme.labelMedium?.withWeight(FontWeight.w800),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: Text(context.l10n.paywallCompare)),
-              const SizedBox(width: 6),
-              Icon(
-                open
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 17,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Restore Purchases, Terms of Service and Privacy Policy on one row,
 /// wrapping when narrow; each a 44 pt target.
 class _FooterLinks extends StatelessWidget {
   final bool restoring;
   final VoidCallback onRestore;
 
-  /// In the footer: the row is only [_footerRowHeight] tall and each
-  /// target reaches 44 pt upward, into the terms above (see [_TapArea]).
+  /// In the footer (v12): one row only [_footerRowHeight] tall, each
+  /// target reaching up and down to 44 pt (see [_TapArea]).
   final bool compact;
 
   const _FooterLinks({
@@ -964,100 +1427,100 @@ class _FooterLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    // The three at the mockup's 11 / 700, so they share one row on a phone.
-    final row = TextButtonTheme(
-      data: TextButtonThemeData(
-        style: _footerTextButtonStyle.copyWith(
-          textStyle: WidgetStatePropertyAll(
-              theme.textTheme.labelSmall?.withWeight(FontWeight.w700)),
-          minimumSize: compact
-              ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
-              : null,
-        ),
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        // When the three wrap (narrow or large text), a second row's
-        // targets reach up into this gap (see below).
-        runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
-        children: [
-          _link(TextButton(
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    // V13 v12: 12 pt, one centred row, "·" between (the board's
+    // "Restore · Terms · Privacy"); VoiceOver reads the full names.
+    final style = theme.textTheme.labelSmall!.withWeight(FontWeight.w800);
+    final buttonStyle = _footerTextButtonStyle.copyWith(
+      foregroundColor: WidgetStatePropertyAll(c.navyText),
+      textStyle: WidgetStatePropertyAll(
+          style.copyWith(decoration: TextDecoration.underline)),
+      padding:
+          const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 4)),
+      minimumSize: compact
+          ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
+          : null,
+    );
+    Widget dot() => ExcludeSemantics(
+          child: Text('·', // l10n-guard: a separator
+              style:
+                  style.withWeight(FontWeight.w400).copyWith(color: c.muted)),
+        );
+    final row = Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      // When the three wrap (narrow or large text), two rows' targets meet
+      // in the gap between them.
+      runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
+      children: [
+        _link(Semantics(
+          button: true,
+          label: restoring ? l10n.paywallRestoring : l10n.paywallRestore,
+          excludeSemantics: true,
+          child: TextButton(
             key: PremiumScreen.restoreKey,
             // Required wherever a subscription is sold (App Store), in
             // every state, whether or not prices loaded.
             onPressed: restoring ? null : onRestore,
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.secondary,
-            ),
-            child: Text(restoring
-                ? context.l10n.paywallRestoring
-                : context.l10n.paywallRestore),
-          )),
-          _link(LegalLink(
-              label: context.l10n.commonTermsOfService,
-              url: AppLinks.termsUrl)),
-          _link(LegalLink(
-              label: context.l10n.commonPrivacyPolicy,
-              url: AppLinks.privacyPolicyUrl)),
-        ],
-      ),
+            style: buttonStyle,
+            child: Text(
+                restoring ? l10n.paywallRestoring : l10n.paywallRestoreShort),
+          ),
+        )),
+        dot(),
+        _link(LegalLink(
+            label: l10n.commonTermsOfService,
+            shortLabel: l10n.paywallTermsShort,
+            style: buttonStyle,
+            url: AppLinks.termsUrl)),
+        dot(),
+        _link(LegalLink(
+            label: l10n.commonPrivacyPolicy,
+            shortLabel: l10n.paywallPrivacyShort,
+            style: buttonStyle,
+            url: AppLinks.privacyPolicyUrl)),
+      ],
     );
-    // The whole row reaches up over the terms (for the first row); each
-    // link reaches up into the run gap (for a second row, if any).
+    // The row passes taps above and below itself on to the links.
     return compact ? _RowTapArea(child: row) : row;
   }
 
-  Widget _link(Widget button) =>
-      compact ? _TapArea(extendUp: true, child: button) : button;
+  Widget _link(Widget button) => compact ? _TapArea(child: button) : button;
 }
 
-/// The footer's text rows (the links, "Maybe later") are drawn this tall,
-/// so the gaps between them match the gap above them (owner, after
-/// Batch 12); [_TapArea] keeps each target 44 pt.
-const double _footerRowHeight = 30;
+/// The footer's links row is drawn this tall (V13 v12: 12 pt text, the
+/// board's 6 pt rhythm); [_TapArea] keeps each target 44 pt.
+const double _footerRowHeight = 20;
 
-/// Keeps a short footer button's target [_footerTargetHeight] tall by
-/// taking taps in the empty or non-interactive space right above
-/// ([extendUp]) or below it: the links take the renewal terms' lower edge
-/// and the small gap above them (or the gap between two rows when they
-/// wrap); "Maybe later" takes the empty margin under it. A tap there is
-/// handed on as if it landed on the nearest edge, so the button under that
-/// point gets it; the drawn size, and so the visible rhythm, does not
-/// change. A tap is only seen where every ancestor contains it: the links'
-/// row passes the space above itself through with [_RowTapArea], and the
-/// bottom margin is a spacer inside the footer's column.
+/// How far a link's target reaches above and below its drawn row.
+const double _footerReach = (_footerTargetHeight - _footerRowHeight) / 2;
+
+/// Keeps a short footer link's target [_footerTargetHeight] tall by taking
+/// taps in the non-interactive space right above (the price line's lower
+/// edge, or the gap between two rows) and below it (the bottom margin). A
+/// tap there is handed on as if it landed on the nearest edge, so the link
+/// under that point gets it; the drawn size, and so the visible rhythm,
+/// does not change. A tap is only seen where every ancestor contains it:
+/// the row passes the space round itself through with [_RowTapArea], and
+/// the bottom margin is a spacer inside the footer's column.
 class _TapArea extends SingleChildRenderObjectWidget {
-  final bool extendUp;
-
-  const _TapArea({required this.extendUp, required super.child});
+  const _TapArea({required super.child});
 
   @override
-  RenderObject createRenderObject(BuildContext context) =>
-      _RenderTapArea(extendUp);
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderTapArea renderObject) {
-    renderObject.extendUp = extendUp;
-  }
+  RenderObject createRenderObject(BuildContext context) => _RenderTapArea();
 }
 
 class _RenderTapArea extends RenderProxyBox {
-  _RenderTapArea(this.extendUp);
-
-  bool extendUp;
-
   double get _extension =>
-      (_footerTargetHeight - size.height).clamp(0, _footerTargetHeight);
+      ((_footerTargetHeight - size.height) / 2).clamp(0, _footerReach);
 
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    final top = extendUp ? -_extension : 0.0;
-    final bottom = size.height + (extendUp ? 0 : _extension);
     if (position.dx < 0 ||
         position.dx >= size.width ||
-        position.dy < top ||
-        position.dy >= bottom) {
+        position.dy < -_extension ||
+        position.dy >= size.height + _extension) {
       return false;
     }
     final inside = Offset(
@@ -1070,9 +1533,9 @@ class _RenderTapArea extends RenderProxyBox {
   }
 }
 
-/// Lets taps in the [_footerTargetHeight] − [_footerRowHeight] points above
-/// the links' row reach the links themselves (their own [_TapArea]s decide
-/// which one); a [Wrap] alone ignores any point outside its box.
+/// Lets taps in the [_footerReach] points above and below the links' row
+/// reach the links themselves (their own [_TapArea]s decide which one); a
+/// [Wrap] alone ignores any point outside its box.
 class _RowTapArea extends SingleChildRenderObjectWidget {
   const _RowTapArea({required super.child});
 
@@ -1081,12 +1544,13 @@ class _RowTapArea extends SingleChildRenderObjectWidget {
 }
 
 class _RenderRowTapArea extends RenderProxyBox {
-  static const double _reach = _footerTargetHeight - _footerRowHeight;
-
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    if (position.dy >= 0) return super.hitTest(result, position: position);
-    if (position.dy < -_reach ||
+    if (position.dy >= 0 && position.dy < size.height) {
+      return super.hitTest(result, position: position);
+    }
+    if (position.dy < -_footerReach ||
+        position.dy >= size.height + _footerReach ||
         position.dx < 0 ||
         position.dx >= size.width ||
         child == null) {
@@ -1100,18 +1564,24 @@ class _RenderRowTapArea extends RenderProxyBox {
   }
 }
 
-/// The fixed bottom area: never scrolls away.
+/// The fixed bottom area: never scrolls away. V13 v12 (on the device it
+/// was about 207 pt tall and spread out): 24 pt side margins, the 54 pt
+/// button with only its pulse round it, the full price line (12 pt,
+/// centred, at most 300 pt wide), and Restore · Terms · Privacy on one
+/// centred row; no "Maybe later" (the close button at the top is the way
+/// out).
+/// About 150 pt tall at 390 × 844.
 ///
-/// - **loading**: a disabled button with a spinner, then the links and
-///   "Maybe later".
+/// - **loading**: a disabled button with a spinner, then the links.
 /// - **prices ready**: the last purchase's or restore's result, the button
-///   (its label from the selected plan's [_PlanTerms]), the renewal terms,
-///   the links, and "Maybe later" (gone once a purchase succeeded: the
-///   button becomes "Continue").
-/// - **prices unavailable**: no button and no terms, which mean nothing
-///   without a price; the links and "Maybe later". The retry is in the
-///   body.
+///   (its label from the selected plan's [_PlanTerms]), the price line and
+///   the links (the button becomes "Continue" once a purchase succeeded).
+/// - **prices unavailable**: no button and no price line, which mean
+///   nothing without a price; the links. The retry is in the body.
 class _PremiumFooter extends StatelessWidget {
+  /// V13c: the selected plan's name above the button once the plans have
+  /// scrolled away.
+  final String? planLabel;
   final bool loading;
   final bool offeringsReady;
   final _PurchaseState purchaseState;
@@ -1123,14 +1593,19 @@ class _PremiumFooter extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onPurchase;
   final VoidCallback onContinue;
-  final VoidCallback onMaybeLater;
-  final double horizontalPadding;
 
   /// Half the screen, applied only when the text is large enough that the
   /// links have moved to the body (screen height / text scale under 400;
   /// e.g. 375 × 667 at 2x and 3x). Past it the footer scrolls inside
   /// itself, the button first, so the body above still has room to scroll.
   final double maxHeight;
+
+  /// V13 v12: the side margins, the gap between the rows, the price line's
+  /// width, the button's height.
+  static const sideMargin = 24.0;
+  static const gap = 6.0;
+  static const priceLineWidth = 300.0;
+  static const buttonHeight = 54.0;
 
   Widget _capped(Widget content) => showLinks
       ? content
@@ -1141,6 +1616,7 @@ class _PremiumFooter extends StatelessWidget {
 
   const _PremiumFooter({
     super.key,
+    this.planLabel,
     required this.loading,
     required this.offeringsReady,
     required this.purchaseState,
@@ -1152,121 +1628,110 @@ class _PremiumFooter extends StatelessWidget {
     required this.onRestore,
     required this.onPurchase,
     required this.onContinue,
-    required this.onMaybeLater,
-    required this.horizontalPadding,
     required this.maxHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final showMaybeLater = purchaseState != _PurchaseState.success;
+    final c = AppColors.of(context);
+    final side = ContentWidth.sidePaddingOf(context, base: sideMargin);
+    final inset = MediaQuery.paddingOf(context).bottom;
     return DecoratedBox(
-      // A permanent edge between the scrolling body and this fixed area.
+      // The board's footer: the card colour under a 2 pt line.
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        color: c.card,
+        border: Border(top: BorderSide(color: c.line, width: 2)),
       ),
-      child: SafeArea(
-        top: false,
-        // The bottom inset is a spacer inside the column instead, so
-        // "Maybe later"'s target can reach into it.
-        bottom: false,
-        child: _capped(
-          Padding(
-            padding:
-                EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _StatusMessage(
-                  state: purchaseState,
-                  purchasedTrial: purchasedTrial,
-                  restoreMessage: restoreMessage,
-                ),
-                if (loading) ...[
-                  const _Cta(
-                    onPressed: null,
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+      child: _capped(
+        Padding(
+          padding: EdgeInsets.fromLTRB(side, 10, side, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _StatusMessage(
+                state: purchaseState,
+                purchasedTrial: purchasedTrial,
+                restoreMessage: restoreMessage,
+              ),
+              if (loading)
+                const _Cta(
+                  onPressed: null,
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(height: 6),
-                ] else if (offeringsReady && terms != null) ...[
-                  _Cta(
-                    onPressed: switch (purchaseState) {
-                      _PurchaseState.purchasing => null,
-                      _PurchaseState.success => onContinue,
-                      _ => onPurchase,
-                    },
-                    arrow: purchaseState != _PurchaseState.purchasing,
-                    child: purchaseState == _PurchaseState.purchasing
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            purchaseState == _PurchaseState.success
-                                ? context.l10n.commonContinue
-                                : terms!.cta,
-                            textAlign: TextAlign.center,
-                          ),
-                  ),
-                  const SizedBox(height: 6),
-                  Semantics(
-                    liveRegion: true,
+                )
+              else if (offeringsReady && terms != null) ...[
+                if (planLabel != null &&
+                    purchaseState != _PurchaseState.success) ...[
+                  Center(
                     child: Text(
-                      // Never cut: at large text it wraps and the footer grows.
-                      terms!.disclosure,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall
-                          ?.withWeight(FontWeight.w400)
-                          .copyWith(
-                              color: colorScheme.onSurfaceVariant, height: 1.6),
+                      planLabel!,
+                      key: PremiumScreen.selectedPlanKey,
+                      style: theme.textTheme.labelMedium
+                          ?.withWeight(FontWeight.w900)
+                          .copyWith(color: c.navyText),
                     ),
                   ),
+                  const SizedBox(height: 4),
                 ],
-                // One rhythm under the button: the terms, the links and
-                // "Maybe later" each about 14 pt apart (owner, after Batch
-                // 12; "Maybe later" used to sit 27.5 pt under the links).
-                if (showLinks) ...[
-                  const SizedBox(height: 7),
-                  _FooterLinks(
-                      restoring: restoring,
-                      onRestore: onRestore,
-                      compact: true),
-                ],
-                if (showMaybeLater)
-                  _TapArea(
-                    extendUp: false,
-                    child: Center(
-                      child: TextButton(
-                        style: _footerTextButtonStyle.copyWith(
-                          minimumSize: const WidgetStatePropertyAll(
-                              Size(44, _footerRowHeight)),
-                          foregroundColor: WidgetStatePropertyAll(
-                              colorScheme.onSurfaceVariant),
+                _Cta(
+                  onPressed: switch (purchaseState) {
+                    _PurchaseState.purchasing => null,
+                    _PurchaseState.success => onContinue,
+                    _ => onPurchase,
+                  },
+                  arrow: purchaseState != _PurchaseState.purchasing,
+                  child: purchaseState == _PurchaseState.purchasing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          purchaseState == _PurchaseState.success
+                              ? context.l10n.commonContinue
+                              : terms!.cta,
+                          textAlign: TextAlign.center,
                         ),
-                        onPressed: onMaybeLater,
-                        child: Text(context.l10n.paywallMaybeLater),
+                ),
+                const SizedBox(height: gap),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: priceLineWidth),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        // Never cut: at large text it wraps and the footer
+                        // grows.
+                        terms!.disclosure,
+                        key: PremiumScreen.priceLineKey,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w600)
+                            .copyWith(color: c.muted, height: 1.35),
                       ),
                     ),
                   ),
-                // The bottom margin: the home indicator's inset plus 4, and
-                // never less than "Maybe later"'s target needs below it.
-                SizedBox(
-                  height: (MediaQuery.paddingOf(context).bottom + 4)
-                      .clamp(_footerTargetHeight - _footerRowHeight,
-                          double.infinity)
-                      .toDouble(),
                 ),
               ],
-            ),
+              if (showLinks) ...[
+                const SizedBox(height: gap),
+                // Full width (no Center: a tap above or below the row must
+                // reach it, and an ancestor only passes on what it holds).
+                _FooterLinks(
+                    restoring: restoring, onRestore: onRestore, compact: true),
+              ],
+              // The bottom margin: the board's 26 over the home indicator
+              // (its inset less 8), never less than the links' targets
+              // need below them.
+              SizedBox(
+                height: math.max(inset - 8, _footerReach),
+              ),
+            ],
           ),
         ),
       ),
@@ -1275,7 +1740,7 @@ class _PremiumFooter extends StatelessWidget {
 }
 
 /// The purchase button: brandOrange with the onOrange text (the mockup's
-/// colour), at least 52 tall, radius 17, an arrow after the label; the
+/// colour), at least 54 tall (V13 v12), radius 18, an arrow after the label; the
 /// app's opaque disabled pairing; no navy edge (Batch 8).
 class _Cta extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -1289,6 +1754,16 @@ class _Cta extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = AppPalette.of(context);
+    // V13: the pinned CTA shines and pulses (fix round 2: it had neither).
+    return CtaGlow(
+      enabled: onPressed != null,
+      color: theme.colorScheme.primary,
+      radius: 18,
+      child: _button(theme, palette),
+    );
+  }
+
+  Widget _button(ThemeData theme, AppPalette palette) {
     return FilledButton(
       key: PremiumScreen.ctaKey,
       onPressed: onPressed,
@@ -1297,9 +1772,10 @@ class _Cta extends StatelessWidget {
         foregroundColor: theme.colorScheme.onPrimary,
         disabledBackgroundColor: palette.disabledFill,
         disabledForegroundColor: palette.disabledLabel,
-        minimumSize: const Size.fromHeight(52),
+        // V13 v12: 54 pt, radius 18.
+        minimumSize: const Size.fromHeight(_PremiumFooter.buttonHeight),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         textStyle: theme.textTheme.bodyLarge
             ?.withWeight(FontWeight.w900)
             .copyWith(height: 1.3),
@@ -1390,20 +1866,6 @@ class _StatusMessage extends StatelessWidget {
   }
 }
 
-class _ComparisonRow {
-  final String label;
-  final bool free;
-  final String? freeLabel;
-  final bool premium;
-
-  const _ComparisonRow({
-    required this.label,
-    required this.free,
-    this.freeLabel,
-    required this.premium,
-  });
-}
-
 /// Row 4's question counts, joined the way a sentence would ("3, 5 or 10"
 /// — no Oxford comma) rather than a plain comma list, and read off
 /// [PracticeLength] so this can't drift from what session lengths the app
@@ -1414,58 +1876,330 @@ String _joinWithOr(List<String> items, AppLocalizations l10n) {
       items.sublist(0, items.length - 1).join(l10n.listSeparator), items.last);
 }
 
-/// Four rows (down from five): "Questions from your own mistakes" and
-/// "Targeted weak-spot practice" used to describe the same underlying
-/// capability twice, both showing free as "—" — which was also wrong.
-/// `launchPracticeSet` (practice_launch.dart) genuinely grants a free user
-/// [StorageService.freeDailyPracticeLimit] such sessions per day; merged
-/// into one row with that real value, read from the constant rather than
-/// retyped, so it can't drift from the actual quota again.
-///
-/// [weakSpotFreeLabel] is the only piece [_ComparisonTable] varies at
-/// build time — it picks between the full "N a day" phrasing and an
-/// abbreviated "N/day" once it's measured whether the full phrase fits
-/// the free-value column on one line at the current width (see that
-/// class's own doc comment on the overlap this replaced).
-List<_ComparisonRow> _buildComparisonRows(
-        String weakSpotFreeLabel, AppLocalizations l10n) =>
-    [
-      _ComparisonRow(
-        label: l10n.paywallRowDailyTest,
-        free: true,
-        premium: true,
+/// A value in V13c's Free or Premium column.
+sealed class _CompareValue {
+  const _CompareValue();
+}
+
+class _CompareText extends _CompareValue {
+  final String text;
+  const _CompareText(this.text);
+}
+
+class _CompareCheck extends _CompareValue {
+  const _CompareCheck();
+}
+
+class _CompareNone extends _CompareValue {
+  const _CompareNone();
+}
+
+/// One V13c row: an icon tile, a label, the Free and the Premium value.
+class _CompareRow {
+  final IconData icon;
+  final String label;
+  final _CompareValue free;
+  final _CompareValue premium;
+
+  const _CompareRow(this.icon, this.label, this.free, this.premium);
+}
+
+/// One Daily Test a day, free or Premium (the shared daily set).
+const _dailyTestsPerDay = 1;
+
+/// V13c's rows (fix round 2, item 3), each value read from the app's real
+/// rules so the table cannot drift from them: one Daily Test a day for
+/// everyone; AI practice [StorageService.freeDailyPracticeLimit] vs
+/// [StorageService.dailySessionLimit] a day; weak-spot practice in both;
+/// every topic ([practiceTopics]) in Premium only; a free session is
+/// always [PracticeLength.quick] (`practice_launch.dart`), Premium picks
+/// any [PracticeLength]; the Monthly Climb in both.
+List<_CompareRow> _compareRows(AppLocalizations l10n) {
+  String perDay(int n) => l10n.paywallFreePerDay(n);
+  return [
+    _CompareRow(
+        Icons.today_rounded,
+        l10n.featureDailyTest,
+        _CompareText(perDay(_dailyTestsPerDay)),
+        _CompareText(perDay(_dailyTestsPerDay))),
+    _CompareRow(
+        Icons.auto_awesome_rounded,
+        l10n.paywallCompareAiPractice,
+        _CompareText(perDay(StorageService.freeDailyPracticeLimit)),
+        _CompareText(perDay(StorageService.dailySessionLimit))),
+    _CompareRow(Icons.track_changes_rounded, l10n.paywallCompareWeakSpots,
+        const _CompareCheck(), const _CompareCheck()),
+    _CompareRow(
+        Icons.menu_book_rounded,
+        l10n.paywallCompareTopics(practiceTopics().length),
+        const _CompareNone(),
+        const _CompareCheck()),
+    _CompareRow(
+        Icons.timer_outlined,
+        l10n.paywallCompareLength,
+        _CompareText('${PracticeLength.quick.questionCount}'),
+        _CompareText(PracticeLength.values
+            .map((l) => '${l.questionCount}')
+            .join(' · '))),
+    _CompareRow(Icons.landscape_rounded, l10n.paywallCompareClimb,
+        const _CompareCheck(), const _CompareCheck()),
+  ];
+}
+
+/// V13c-PaywallCompare (fix round 2, item 3, the board's values): the
+/// heading "Free vs Premium" with the user's companion hopping at its end;
+/// a card whose Premium column is one piece from the header to the last row
+/// (2 px orange border, soft orange fill, a 4 px lip, a navy "Premium" pill
+/// on top); six rows of an icon tile and a label; Free checks are grey
+/// outlines, Premium checks filled green, "—" grey; then the green
+/// "Cancel anytime" note. The rows appear 40 ms apart the first time they
+/// scroll into view (a fade only).
+class _ComparisonTable extends StatelessWidget {
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final Avatar hero;
+
+  /// The page's scroll, for the rows' entrance.
+  final ScrollController? reveal;
+
+  const _ComparisonTable({
+    required this.theme,
+    required this.colorScheme,
+    required this.hero,
+    this.reveal,
+  });
+
+  /// The board's column widths (V13c: `minmax(0, 1fr) 76px 92px`).
+  static const double freeWidth = 76;
+  static const double premiumWidth = 92;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final rows = _compareRows(l10n);
+    final valueStyle = theme.textTheme.bodyMedium!
+        .withWeight(FontWeight.w900)
+        .copyWith(fontSize: 14, height: 1.2);
+
+    String spoken(String tier, _CompareValue v) => switch (v) {
+          _CompareText(:final text) => l10n.paywallCompareValue(tier, text),
+          _CompareCheck() => l10n.paywallIncludedIn(tier),
+          _CompareNone() => l10n.paywallNotIncludedIn(tier),
+        };
+
+    Widget value(_CompareValue v, {required bool premium}) => switch (v) {
+          _CompareText(:final text) => FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(text,
+                  maxLines: 1,
+                  style: valueStyle.copyWith(
+                      color: premium ? c.navyText : c.muted)),
+            ),
+          _CompareCheck() => Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: premium ? c.green : null,
+                border: premium
+                    ? null
+                    : Border.all(color: c.disabledLabel, width: 2),
+              ),
+              child: Icon(Icons.check_rounded,
+                  size: 16, color: premium ? c.onNavy : c.disabledLabel),
+            ),
+          _CompareNone() => Container(
+              width: 26,
+              height: 26,
+              decoration:
+                  BoxDecoration(shape: BoxShape.circle, color: c.disabledFill),
+              child:
+                  Icon(Icons.remove_rounded, size: 16, color: c.disabledLabel),
+            ),
+        };
+
+    Widget row(int i) {
+      final r = rows[i];
+      return RevealOnScroll(
+        key: PremiumScreen.rowRevealKey(i),
+        scroll: reveal,
+        delay: _rowStagger * i,
+        child: Semantics(
+          key: ValueKey('comparisonRow_${r.label}'),
+          container: true,
+          label: [
+            r.label,
+            spoken(l10n.paywallTierFree, r.free),
+            spoken(l10n.featurePremium, r.premium),
+          ].join('. '),
+          excludeSemantics: true,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 54),
+            decoration: i == 0
+                ? null
+                : BoxDecoration(border: Border(top: BorderSide(color: c.line))),
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              Expanded(
+                child: Row(children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                        color: c.sky, borderRadius: BorderRadius.circular(10)),
+                    child: Icon(r.icon, size: 18, color: c.onSky),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(r.label,
+                        style: theme.textTheme.bodyMedium!
+                            .withWeight(FontWeight.w800)
+                            .copyWith(
+                                fontSize: 15, height: 1.2, color: c.text)),
+                  ),
+                ]),
+              ),
+              SizedBox(
+                  width: freeWidth,
+                  child: Center(child: value(r.free, premium: false))),
+              SizedBox(
+                  width: premiumWidth,
+                  child: Center(child: value(r.premium, premium: true))),
+            ]),
+          ),
+        ),
+      );
+    }
+
+    final card = Container(
+      key: const Key('comparisonTable'),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: c.line, width: 2),
+        boxShadow: [BoxShadow(color: c.lip, offset: const Offset(0, 4))],
       ),
-      _ComparisonRow(
-        label: l10n.paywallRowTopicPractice,
-        free: false,
-        premium: true,
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 6),
+      child: Stack(clipBehavior: Clip.none, children: [
+        // The Premium column, one piece from the header to the last row.
+        PositionedDirectional(
+          end: 0,
+          top: -6,
+          bottom: 2,
+          width: premiumWidth,
+          child: DecoratedBox(
+            key: PremiumScreen.premiumColumnKey,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [c.cream, c.orangeSoft],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: c.orange, width: 2),
+              boxShadow: [
+                BoxShadow(color: c.orangeDeep, offset: const Offset(0, 4))
+              ],
+            ),
+          ),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ExcludeSemantics(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                const Spacer(),
+                SizedBox(
+                  width: freeWidth,
+                  child: Text(l10n.paywallTierFree,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium!
+                          .withWeight(FontWeight.w900)
+                          .copyWith(fontSize: 13, color: c.muted)),
+                ),
+                SizedBox(
+                  width: premiumWidth,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: c.navy,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(l10n.featurePremium,
+                            maxLines: 1,
+                            style: theme.textTheme.labelMedium!
+                                .withWeight(FontWeight.w800)
+                                .copyWith(fontSize: 12, color: c.onNavy)),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+          for (var i = 0; i < rows.length; i++) row(i),
+        ]),
+      ]),
+    );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: Text(l10n.paywallCompareTitle,
+                style: theme.textTheme.titleLarge!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(fontSize: 22, height: 1.4, color: c.text)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        CompanionView(
+            key: PremiumScreen.compareCompanionKey,
+            hero: hero,
+            mood: CompanionMood.cheer,
+            size: 60,
+            ambient: CompanionAmbient.hop,
+            decorative: true),
+      ]),
+      const SizedBox(height: 14),
+      card,
+      const SizedBox(height: 14),
+      Container(
+        key: PremiumScreen.compareNoteKey,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: c.greenSoft,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.verified_user_outlined, size: 18, color: c.onGreenSoft),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(l10n.paywallCompareNote,
+                style: theme.textTheme.bodySmall!
+                    .withWeight(FontWeight.w700)
+                    .copyWith(fontSize: 13, height: 1.4, color: c.onGreenSoft)),
+          ),
+        ]),
       ),
-      _ComparisonRow(
-        label: l10n.paywallRowWeakSpots,
-        free: false,
-        freeLabel: weakSpotFreeLabel,
-        premium: true,
-      ),
-      _ComparisonRow(
-        label: l10n.paywallRowLengths(_joinWithOr(
-            PracticeLength.values.map((l) => '${l.questionCount}').toList(),
-            l10n)),
-        free: false,
-        premium: true,
-      ),
-    ];
+    ]);
+  }
+}
+
+/// V13c: the table's rows appear this far apart.
+const _rowStagger = Duration(milliseconds: 40);
 
 /// Measures a single line of [text] in [style] at the context's current
-/// [TextScaler] — the shared primitive behind every fixed-but-Dynamic-
-/// Type-aware column width in [_ComparisonTable], so none of them drift
-/// out of sync with each other or need a `FittedBox(scaleDown)` safety
-/// net (the previous design's actual bug: a fixed-pixel column didn't fit
-/// its own header word at the *default* text scale, let alone a larger
-/// one).
-///
-/// Measured in the style the text is *drawn* in — [style] merged over the
-/// ambient [DefaultTextStyle], which carries the app font — not in the
-/// platform default font, which is narrower and shorter than Nunito Sans.
+/// [TextScaler], in the style it is drawn in ([style] merged over the
+/// ambient [DefaultTextStyle], which carries the app font).
 double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   final painter = TextPainter(
     text: TextSpan(
@@ -1478,620 +2212,6 @@ double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   return painter.width;
 }
 
-final TextStyle _freeValueStyle =
-    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
-
-/// The Free/Premium comparison table. The Premium column reads as one
-/// continuous, rounded, highlighted strip running from the header down to
-/// the last row — not per-cell coloring — built from each row independently
-/// painting its own [_PremiumStripCell] flush against its neighbors (zero
-/// gap, matching fill color, only the very first/last corners rounded) so
-/// adjacent cells visually fuse into one strip regardless of how tall any
-/// individual row happens to be (a wrapped label at large Dynamic Type
-/// grows only *that* row — see [_ComparisonRowLine]'s own doc comment).
-///
-/// Strip color is `colorScheme.secondaryContainer`/`onSecondaryContainer`
-/// in light mode — not `colorScheme.secondary`, which the previous
-/// per-cell-icon design used and which measures only 2.53:1 against
-/// `secondaryContainer` in dark mode (fails the 3:1 non-text minimum).
-/// Dark mode uses `colorScheme.surfaceContainerHighest` for the fill
-/// instead of `secondaryContainer` (visual-polish batch, same date as
-/// this comment): the saturated navy read as too dominant a block of
-/// color against the dark body, and `onSecondaryContainer` still holds
-/// 9.34:1 against this calmer neutral fill (measured, up from 7.13:1 —
-/// still comfortably clears both the 4.5:1 text and 3:1 icon minimums).
-/// Light mode is untouched — its 9.79:1 pairing was never the complaint.
-class _ComparisonTable extends StatelessWidget {
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _ComparisonTable({required this.theme, required this.colorScheme});
-
-  /// The Premium column's width — enough for "PREMIUM" at the *current*
-  /// text scale, measured directly via [_measureTextWidth] rather than a
-  /// fixed constant, so this is correct at any Dynamic Type setting.
-  double _premiumColumnWidth(BuildContext context) {
-    final width = _measureTextWidth(
-        context, context.l10n.paywallHeaderPremium, _headerStyle);
-    // Horizontal padding inside the strip on each side, plus a floor so a
-    // single small checkmark icon never makes the strip look pinched.
-    return (width + 28).clamp(56, double.infinity);
-  }
-
-  /// Row heights are computed up front (measured, not `IntrinsicHeight`) —
-  /// `IntrinsicHeight` combined with an `Expanded` child is a known
-  /// unreliable pairing (Flutter asks a flex child for its "intrinsic"
-  /// height independent of the width it will actually be allocated, which
-  /// can under-measure badly): this surfaced as a real overflow at 2.0x
-  /// text scale during this batch's own testing, not a hypothetical
-  /// concern. A fixed, measured height per row type — enough for the
-  /// header's own single line, or two lines for a data row's label — is
-  /// simpler and doesn't have that failure mode; a label short enough to
-  /// need only one line just centers within the extra room.
-  double _measuredHeight(BuildContext context, TextStyle style, int maxLines) {
-    final painter = TextPainter(
-      text:
-          TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    return painter.height + 10; // 5 top + 5 bottom padding, both row types
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final rowDividerColor =
-            colorScheme.outlineVariant.withValues(alpha: 0.4);
-        final premiumWidth = _premiumColumnWidth(context);
-
-        // The free-value column ("FREE" header, checkmark/dash, and the
-        // weak-spot row's own quota text) used to share a flex factor with
-        // the row label in one Row — which split the row 50/50 regardless
-        // of how much either side actually needed, squeezed "1 a day" into
-        // a narrow sliver that wrapped to two lines, and let that second
-        // line silently paint outside the row's fixed height (a *vertical*
-        // RenderFlex overflow, which Flutter doesn't report the way it
-        // does a horizontal one — the exact reason ordinary overflow tests
-        // never caught this). Giving the free-value column its own
-        // measured, non-flexible width instead — sized to fit its own
-        // longest real content on one line — makes that vertical overflow
-        // structurally impossible: the label gets every remaining pixel
-        // to itself and wraps only within its own column, and the
-        // free-value column never needs more than one line because it was
-        // sized for exactly the text it holds.
-        const freeColumnHorizontalPadding = 24.0; // 12 each side
-        // Below this much room for the label column, a two-line wrapped
-        // label stops being legible — the threshold this table falls back
-        // to the shorter "N/day" phrasing at, rather than an untested
-        // guess: PRD copy review confirmed 96pt is the narrowest a label
-        // like "Practice your weak spots" reads comfortably at 2 lines,
-        // 13sp, on this table's own font.
-        const minLabelWidth = 96.0;
-        final freeHeaderWidth = _measureTextWidth(
-            context, context.l10n.paywallHeaderFree, _headerStyle);
-        // The checkmark icon (_ComparisonCell's `included` branch) is 20pt
-        // square — included as a width candidate so the column is never
-        // narrower than the icon itself even if every text candidate
-        // measures smaller (not the case today, but keeps this correct if
-        // the header/quota text ever gets shorter than that).
-        const checkmarkWidth = 20.0;
-        const limit = StorageService.freeDailyPracticeLimit;
-        final longFreeText = context.l10n.paywallFreePerDay(limit);
-        final shortFreeText = context.l10n.paywallFreePerDayShort(limit);
-        final longFreeWidth =
-            _measureTextWidth(context, longFreeText, _freeValueStyle);
-        final shortFreeWidth =
-            _measureTextWidth(context, shortFreeText, _freeValueStyle);
-
-        double columnWidthFor(double freeTextWidth) =>
-            [freeHeaderWidth, checkmarkWidth, freeTextWidth]
-                .reduce((a, b) => a > b ? a : b) +
-            freeColumnHorizontalPadding;
-
-        var freeText = longFreeText;
-        var freeColumnWidth = columnWidthFor(longFreeWidth);
-        var availableForLabel =
-            constraints.maxWidth - premiumWidth - freeColumnWidth;
-        if (availableForLabel < minLabelWidth) {
-          freeText = shortFreeText;
-          freeColumnWidth = columnWidthFor(shortFreeWidth);
-          availableForLabel =
-              constraints.maxWidth - premiumWidth - freeColumnWidth;
-        }
-
-        // The table only counts as fitting if every label reads in full in
-        // the two lines a row is sized for. A label that needs a third line
-        // would be cut off with an ellipsis, and a sales table must not clip
-        // what it sells. Measured exactly as drawn: same style, same text
-        // scale, and the label cell's width minus its own padding.
-        final labelStyle =
-            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
-        bool everyLabelFitsInTwoLines() {
-          final textWidth = availableForLabel - _labelCellHorizontalPadding;
-          if (textWidth <= 0) return false;
-          for (final row in _buildComparisonRows(freeText, context.l10n)) {
-            final painter = TextPainter(
-              text: TextSpan(
-                text: row.label,
-                style: DefaultTextStyle.of(context).style.merge(labelStyle),
-              ),
-              textDirection: Directionality.of(context),
-              textScaler: MediaQuery.textScalerOf(context),
-              maxLines: 2,
-            )..layout(maxWidth: textWidth);
-            if (painter.didExceedMaxLines) return false;
-          }
-          return true;
-        }
-
-        // Even the shortest phrasing leaves the label less than
-        // [minLabelWidth], or a label would be clipped: three columns no
-        // longer fit (a narrow screen or a large text size). Rather than
-        // squeeze, clip or scroll, stack each row: label on top at full
-        // width, its Free and Premium values on one line below. No content
-        // is dropped and nothing scrolls sideways.
-        if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
-          return _StackedComparison(
-            key: const Key('comparisonStacked'),
-            rows: _buildComparisonRows(longFreeText, context.l10n),
-            theme: theme,
-            colorScheme: colorScheme,
-          );
-        }
-
-        final rows = _buildComparisonRows(freeText, context.l10n);
-        final headerHeight = _measuredHeight(context, _headerStyle, 1);
-        final dataRowHeight = _measuredHeight(context, labelStyle, 2);
-
-        return Container(
-          key: const Key('comparisonTable'),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              _ComparisonHeaderRow(
-                colorScheme: colorScheme,
-                freeColumnWidth: freeColumnWidth,
-                premiumWidth: premiumWidth,
-                height: headerHeight,
-              ),
-              for (var i = 0; i < rows.length; i++)
-                _ComparisonRowLine(
-                  // Identifies each row's own rendered rect for the
-                  // geometry regression tests guarding the vertical-
-                  // overflow class of bug this table used to have — see
-                  // this class's own doc comment.
-                  key: ValueKey('comparisonRow_${rows[i].label}'),
-                  row: rows[i],
-                  theme: theme,
-                  colorScheme: colorScheme,
-                  freeColumnWidth: freeColumnWidth,
-                  premiumWidth: premiumWidth,
-                  height: dataRowHeight,
-                  showDivider: i != rows.length - 1,
-                  dividerColor: rowDividerColor,
-                  isLastRow: i == rows.length - 1,
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// The label cell's own horizontal padding in [_ComparisonRowLine]; the
-/// table's fit check subtracts it from the label column to get the text width.
-const double _labelCellLeftPadding = 20;
-const double _labelCellRightPadding = 8;
-const double _labelCellHorizontalPadding =
-    _labelCellLeftPadding + _labelCellRightPadding;
-
-final TextStyle _headerStyle =
-    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
-
-/// The comparison table's fallback when its three columns do not fit (see
-/// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
-/// out top to bottom. Each row is a label with its full width and natural
-/// height (no ellipsis, no fixed height), then a [Wrap] of two tier chips so
-/// they fall onto separate lines instead of overflowing at the largest text
-/// sizes. The Premium chip keeps the table's Premium-strip colors, so the
-/// two layouts read as one visual language.
-class _StackedComparison extends StatelessWidget {
-  final List<_ComparisonRow> rows;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _StackedComparison({
-    super.key,
-    required this.rows,
-    required this.theme,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++)
-            Container(
-              key: ValueKey('comparisonRow_${rows[i].label}'),
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
-                border: i == rows.length - 1
-                    ? null
-                    : Border(bottom: BorderSide(color: dividerColor)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    rows[i].label,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _StackedTierChip(
-                        tier: context.l10n.paywallTierFree,
-                        included: rows[i].free,
-                        valueLabel: rows[i].freeLabel,
-                        fill: colorScheme.surfaceContainerHighest,
-                        foreground: colorScheme.onSurfaceVariant,
-                        dashColor: colorScheme.outline,
-                      ),
-                      _StackedTierChip(
-                        tier: context.l10n.featurePremium,
-                        included: rows[i].premium,
-                        fill: colorScheme.brightness == Brightness.dark
-                            ? colorScheme.surfaceContainerHighest
-                            : colorScheme.secondaryContainer,
-                        foreground: colorScheme.onSecondaryContainer,
-                        dashColor: colorScheme.onSecondaryContainer,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One "Free" or "Premium" value in [_StackedComparison]: the tier name in
-/// the header style, then the same glyph the table uses (or [valueLabel]
-/// when the row has a specific free quota such as "1 a day").
-class _StackedTierChip extends StatelessWidget {
-  final String tier;
-  final bool included;
-  final String? valueLabel;
-  final Color fill;
-  final Color foreground;
-  final Color dashColor;
-
-  const _StackedTierChip({
-    required this.tier,
-    required this.included,
-    this.valueLabel,
-    required this.fill,
-    required this.foreground,
-    required this.dashColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      // A Wrap, not a Row: at the largest text sizes the tier name and its
-      // value must be free to fall onto two lines inside the chip rather
-      // than overflow it.
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 2,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            tier.toUpperCase(),
-            style: _headerStyle.copyWith(color: foreground),
-          ),
-          if (valueLabel != null)
-            // The quota is part of the visible text; screen readers get the
-            // whole phrase from it, so it needs no separate semantics label.
-            Text(
-              valueLabel!,
-              style: _freeValueStyle.copyWith(color: foreground),
-            )
-          else
-            _ComparisonCell(
-              included: included,
-              includedColor: foreground,
-              dashColor: dashColor,
-              tier: tier,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonHeaderRow extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final double freeColumnWidth;
-  final double premiumWidth;
-  final double height;
-
-  const _ComparisonHeaderRow({
-    required this.colorScheme,
-    required this.freeColumnWidth,
-    required this.premiumWidth,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Purely a spacer matching the label column's own left padding —
-          // "FREE" itself now lives in the fixed-width column below, the
-          // same one every row's checkmark/dash/quota-text renders in, so
-          // the header centers on exactly the same x-position as what it
-          // labels (docs/design-audit.md's own "FREE should share a center
-          // with the ticks and dividers below it" finding).
-          const Expanded(child: SizedBox.shrink()),
-          SizedBox(
-            width: freeColumnWidth,
-            child: Center(
-              child: Text(
-                context.l10n.paywallHeaderFree,
-                style: _headerStyle.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-          _PremiumStripCell(
-            key: const Key('premiumStripHeader'),
-            colorScheme: colorScheme,
-            width: premiumWidth,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            child: Text(
-              context.l10n.paywallHeaderPremium,
-              maxLines: 1,
-              style: _headerStyle.copyWith(
-                color: colorScheme.onSecondaryContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One data row, split into three siblings sharing one [Row]: the label
-/// (an [Expanded] carrying its own bottom divider, with the whole
-/// remaining width to itself), the free-value column (a fixed
-/// [freeColumnWidth] — see [_ComparisonTable]'s own doc comment for why
-/// this is measured rather than flexed), and the Premium strip cell.
-/// [CrossAxisAlignment.stretch] plus a fixed, pre-measured [height] (see
-/// [_ComparisonTable._measuredHeight] — deliberately *not*
-/// `IntrinsicHeight`, which doesn't combine reliably with an `Expanded`
-/// child; that pairing under-measured badly enough to genuinely overflow
-/// at 2.0x text scale during this batch's own testing) makes every column
-/// match the row's own height. The label itself is capped at two lines
-/// with an ellipsis rather than wrapping indefinitely, since [height] is
-/// sized for exactly two lines; the free-value text is capped at one —
-/// [freeColumnWidth] is sized so it never actually needs to wrap.
-class _ComparisonRowLine extends StatelessWidget {
-  final _ComparisonRow row;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-  final double freeColumnWidth;
-  final double premiumWidth;
-  final double height;
-  final bool showDivider;
-  final Color dividerColor;
-  final bool isLastRow;
-
-  const _ComparisonRowLine({
-    super.key,
-    required this.row,
-    required this.theme,
-    required this.colorScheme,
-    required this.freeColumnWidth,
-    required this.premiumWidth,
-    required this.height,
-    required this.showDivider,
-    required this.dividerColor,
-    required this.isLastRow,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final divider =
-        showDivider ? Border(bottom: BorderSide(color: dividerColor)) : null;
-
-    return SizedBox(
-      height: height,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: DecoratedBox(
-              decoration: BoxDecoration(border: divider),
-              child: Padding(
-                // Start and end, not left and right (1.4.0 B3): the label
-                // cell mirrors under RTL.
-                padding: const EdgeInsetsDirectional.fromSTEB(
-                    _labelCellLeftPadding, 5, _labelCellRightPadding, 5),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    row.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: freeColumnWidth,
-            child: DecoratedBox(
-              decoration: BoxDecoration(border: divider),
-              child: Center(
-                child: row.freeLabel != null
-                    ? Text(
-                        row.freeLabel!,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall
-                            ?.withWeight(FontWeight.w700)
-                            .copyWith(
-                                fontSize: 12,
-                                color: colorScheme.onSurfaceVariant),
-                      )
-                    : _ComparisonCell(
-                        included: row.free,
-                        includedColor: colorScheme.onSurfaceVariant,
-                        dashColor: colorScheme.outline,
-                        tier: context.l10n.paywallTierFree,
-                      ),
-              ),
-            ),
-          ),
-          _PremiumStripCell(
-            colorScheme: colorScheme,
-            width: premiumWidth,
-            borderRadius: isLastRow
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : null,
-            child: _ComparisonCell(
-              included: row.premium,
-              includedColor: colorScheme.onSecondaryContainer,
-              dashColor: colorScheme.onSecondaryContainer,
-              tier: context.l10n.featurePremium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One segment of the continuous Premium strip — see [_ComparisonTable]'s
-/// own doc comment for why this is built as N adjacent same-color cells
-/// (one per row) rather than a single overlay spanning the table: it
-/// makes per-row height (a wrapped label at large Dynamic Type) a
-/// non-issue, since each cell simply fills whatever height its own row
-/// turns out to need.
-class _PremiumStripCell extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final double width;
-  final BorderRadius? borderRadius;
-  final Widget child;
-
-  const _PremiumStripCell({
-    super.key,
-    required this.colorScheme,
-    required this.width,
-    required this.borderRadius,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Dark mode's own calmer fill — see _ComparisonTable's doc comment.
-    final fillColor = colorScheme.brightness == Brightness.dark
-        ? colorScheme.surfaceContainerHighest
-        : colorScheme.secondaryContainer;
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: fillColor,
-        borderRadius: borderRadius,
-      ),
-      alignment: Alignment.center,
-      child: child,
-    );
-  }
-}
-
-/// One table cell: a checkmark or an em-dash, standing in for a boolean a
-/// screen reader can't read visually. [Semantics.excludeSemantics] replaces
-/// whatever VoiceOver/TalkBack would otherwise announce for the glyph
-/// itself (a checkmark icon is normally silent; an em-dash would be read
-/// literally) with an actual sentence — never two cells in a row both
-/// announcing as an unqualified "checkmark."
-class _ComparisonCell extends StatelessWidget {
-  final bool included;
-  final Color includedColor;
-  final Color dashColor;
-  final String tier;
-
-  const _ComparisonCell({
-    required this.included,
-    required this.includedColor,
-    required this.dashColor,
-    required this.tier,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: included
-          ? context.l10n.paywallIncludedIn(tier)
-          : context.l10n.paywallNotIncludedIn(tier),
-      excludeSemantics: true,
-      // Forces this into its own semantics node instead of merging its
-      // label into whatever ancestor node it would otherwise combine
-      // with (the row's label text, in this layout) — each cell needs to
-      // be independently reachable by its own exact label.
-      container: true,
-      child: included
-          ? Icon(Icons.check_rounded, size: 20, color: includedColor)
-          : Text(
-              '—',
-              style: TextStyle(color: dashColor, fontSize: 16)
-                  .withWeight(FontWeight.w600),
-            ),
-    );
-  }
-}
-
-/// The plan's saving ("Save 24%"), on the warm surface (the mockup's
-/// colours, O1): onWarm on warm, 7.96:1 (light) and 7.82:1 (dark).
 class _Badge extends StatelessWidget {
   final String label;
 
@@ -2130,7 +2250,12 @@ class _PlanCards extends StatelessWidget {
   final _PlanPeriod selected;
   final ValueChanged<_PlanPeriod> onChanged;
 
+  /// V13a: the page's scroll; each plan enters from below, 60 ms after the
+  /// one above, the first time it scrolls into view.
+  final ScrollController? reveal;
+
   const _PlanCards({
+    this.reveal,
     required this.annual,
     required this.monthly,
     required this.savingsLabel,
@@ -2144,19 +2269,30 @@ class _PlanCards extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PlanCard(
-          terms: annual,
-          savingsLabel: savingsLabel,
-          referencePrice: referencePrice,
-          selected: selected == _PlanPeriod.annual,
-          onTap: () => onChanged(_PlanPeriod.annual),
+        RevealOnScroll(
+          key: PremiumScreen.planRevealKey(0),
+          scroll: reveal,
+          rise: 24,
+          child: _PlanCard(
+            terms: annual,
+            savingsLabel: savingsLabel,
+            referencePrice: referencePrice,
+            selected: selected == _PlanPeriod.annual,
+            onTap: () => onChanged(_PlanPeriod.annual),
+          ),
         ),
         const SizedBox(height: 10),
-        _PlanCard(
-          terms: monthly,
-          savingsLabel: null,
-          selected: selected == _PlanPeriod.monthly,
-          onTap: () => onChanged(_PlanPeriod.monthly),
+        RevealOnScroll(
+          key: PremiumScreen.planRevealKey(1),
+          scroll: reveal,
+          rise: 24,
+          delay: AppMotion.stagger,
+          child: _PlanCard(
+            terms: monthly,
+            savingsLabel: null,
+            selected: selected == _PlanPeriod.monthly,
+            onTap: () => onChanged(_PlanPeriod.monthly),
+          ),
         ),
       ],
     );
@@ -2479,6 +2615,15 @@ class _PlanCardsSkeleton extends StatelessWidget {
 /// display-only and never touches [_parseSubscriptionPeriod] (the
 /// separate renewal-period text), which has its own independent input
 /// (the product's ISO subscription period, not the introductory offer).
+/// A trial's length in days when it is counted in days or weeks; null for
+/// a month or longer (the timeline and the end date are then left out
+/// rather than guessed).
+int? _trialDays(_Period? trial) => switch (trial?.unit) {
+      PeriodUnit.day => trial!.count,
+      PeriodUnit.week => trial!.count * 7,
+      _ => null,
+    };
+
 _Period _trialDurationInDays(IntroductoryPrice trial) {
   if (trial.periodUnit == PeriodUnit.week) {
     return (count: trial.periodNumberOfUnits * 7, unit: PeriodUnit.day);
@@ -2502,4 +2647,249 @@ _Period? _parseSubscriptionPeriod(String? iso) {
   };
   if (unit == null) return null;
   return (count: int.parse(match.group(1)!), unit: unit);
+}
+
+/// The trial timeline (V13a, V13c): today everything unlocks with nothing
+/// to pay; on the last day the plan starts unless cancelled before.
+class _TrialTimeline extends StatelessWidget {
+  final int days;
+  const _TrialTimeline({required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    Widget step(IconData icon, Color color, String text, {bool line = true}) =>
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Column(children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(icon, size: 16, color: Colors.white),
+              ),
+              if (line)
+                Expanded(
+                  child: Container(width: 3, color: c.line),
+                ),
+            ]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 5, bottom: 14),
+                child: Text(text,
+                    style: theme.textTheme.bodyMedium!
+                        .withWeight(FontWeight.w700)
+                        .copyWith(color: c.text)),
+              ),
+            ),
+          ]),
+        );
+    return Container(
+      key: PremiumScreen.timelineKey,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      decoration: lipCard(c, radius: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(l10n.paywallTimelineTitle,
+                style: theme.textTheme.titleSmall!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(color: c.text)),
+          ),
+          const SizedBox(height: 12),
+          step(Icons.lock_open_rounded, c.green, l10n.paywallTimelineToday),
+          step(Icons.event_rounded, c.navyText, l10n.paywallTimelineEnd(days),
+              line: false),
+        ],
+      ),
+    );
+  }
+}
+
+/// V13 / V13c (v11): a small grey hint with a chevron under it ("Compare
+/// plans", "Choose your plan"); the chevron floats every 1.8 s; tapping it
+/// scrolls on. At least 44 pt tall to tap.
+class _ScrollHint extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _ScrollHint({super.key, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: _Floating(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(fontSize: 12, color: c.muted)),
+                const SizedBox(height: 2),
+                Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 18, color: c.muted),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// V13 / V13c: the hint floats up 8 pt and back every 1.8 s (the boards'
+/// `gl-float`, an ambient loop).
+class _Floating extends StatefulWidget {
+  final Widget child;
+  const _Floating({required this.child});
+
+  static const period = Duration(milliseconds: 1800);
+
+  @override
+  State<_Floating> createState() => _FloatingState();
+}
+
+class _FloatingState extends State<_Floating>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _nudge;
+
+  @override
+  void initState() {
+    super.initState();
+    _nudge = AnimationController(vsync: this, duration: _Floating.period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context)) {
+      if (!_nudge.isAnimating) _nudge.repeat();
+    } else {
+      _nudge
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nudge.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _nudge,
+        // V13's `gl-float` 1.8 s (fix round 2: the board's motion, up 8 and
+        // back every 1.8 s, instead of a nudge that rested 60 % of the time).
+        builder: (context, child) => Transform.translate(
+            offset:
+                Offset(0, -8 * (1 - math.cos(2 * math.pi * _nudge.value)) / 2),
+            child: child),
+        child: widget.child,
+      );
+}
+
+/// An entrance played the first time [child] scrolls into view in [scroll]
+/// (or at once if it is already in view): a fade over [AppMotion.slow] after
+/// [delay], rising from [rise] points below. Its semantics stay while it is
+/// hidden. Without a [scroll], or under Reduce Motion, it is just shown.
+class RevealOnScroll extends StatefulWidget {
+  final ScrollController? scroll;
+  final Duration delay;
+  final double rise;
+  final Widget child;
+
+  const RevealOnScroll({
+    super.key,
+    required this.scroll,
+    this.delay = Duration.zero,
+    this.rise = 0,
+    required this.child,
+  });
+
+  @override
+  State<RevealOnScroll> createState() => _RevealOnScrollState();
+}
+
+class _RevealOnScrollState extends State<RevealOnScroll>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _enter;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _enter = AnimationController(
+        vsync: this, duration: AppMotion.slow + widget.delay);
+    if (widget.scroll == null) {
+      _enter.value = 1;
+      _started = true;
+    } else {
+      widget.scroll!.addListener(_check);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.scroll?.removeListener(_check);
+    _enter.dispose();
+    super.dispose();
+  }
+
+  /// In view: its top above the bottom fifth of the screen (the pinned
+  /// footer's band).
+  void _check() {
+    if (_started || !mounted) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) return;
+    final top = box.localToGlobal(Offset.zero).dy;
+    if (top > MediaQuery.sizeOf(context).height * .8) return;
+    _started = true;
+    widget.scroll?.removeListener(_check);
+    if (AppMotion.reduced(context)) {
+      _enter.value = 1;
+    } else {
+      _enter.forward();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _enter.duration!.inMilliseconds;
+    final curve = Interval(widget.delay.inMilliseconds / total, 1,
+        curve: AppMotion.enter);
+    return AnimatedBuilder(
+      animation: _enter,
+      builder: (context, child) {
+        final t = curve.transform(_enter.value);
+        return Opacity(
+          opacity: t,
+          alwaysIncludeSemantics: true,
+          child: widget.rise == 0
+              ? child
+              : Transform.translate(
+                  offset: Offset(0, widget.rise * (1 - t)), child: child),
+        );
+      },
+      child: widget.child,
+    );
+  }
 }

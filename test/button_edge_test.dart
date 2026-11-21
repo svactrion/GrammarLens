@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/screens/data_screen.dart';
-import 'package:grammar_lens/screens/review_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/destructive_dialog_actions.dart';
@@ -70,7 +69,6 @@ void main() {
               onCancel: () {},
               onConfirm: () {},
             ),
-            DailyPracticeCard(remaining: 0, onSeePremium: () {}),
             SizedBox(
                 height: 700, child: DataScreen(storageService: _Storage())),
           ]),
@@ -79,7 +77,7 @@ void main() {
       await tester.pumpAndSettle();
       final buttons = _buttons(tester);
       final labels = [for (final (l, _, _) in buttons) l];
-      for (final label in ['Navy', 'Forward', 'Delete', 'See Premium']) {
+      for (final label in ['Navy', 'Forward', 'Delete']) {
         expect(labels, contains(label));
       }
       final palette = AppPalette.of(tester.element(find.text('Navy')));
@@ -98,7 +96,6 @@ void main() {
       expect(fillOf('Navy'), palette.button);
       expect(fillOf('Delete'), scheme.destructive);
       expect(fillOf('Forward'), scheme.primary);
-      expect(fillOf('See Premium'), scheme.primary);
     });
   }
 }

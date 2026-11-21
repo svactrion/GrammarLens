@@ -279,8 +279,14 @@ class AnalyticsService {
   /// user tap, so it sends no `mode_selected`).
   static const String paywallSourceDay0AfterClimb = 'day0_after_climb';
 
+  /// The free users' rest scene (V24f → V13r, SPEC §1.15): "Wake <Hero> up"
+  /// after every daily right is used. A new value of the existing `source`
+  /// parameter, not a new event (UI polish fix round 2).
+  static const String paywallSourceRestScene = 'rest_scene';
+
   /// `PremiumScreen`'s dismissal methods (`paywall_dismissed`) — the X in
-  /// the band, the footer's "Maybe later", or a system back gesture/
+  /// the band, the footer's "Maybe later" (gone since fix round 4, V13
+  /// v12: kept so older data stays readable), or a system back gesture/
   /// hardware back button (the one path not triggered by this app's own
   /// code, so `PremiumScreen` has to observe it via `PopScope` rather than
   /// tag it at a specific `onPressed`). Never logged for the post-success
@@ -514,8 +520,9 @@ class AnalyticsService {
     return _setUserProperty('first_step_dom', dayOfMonth.toString());
   }
 
-  /// User property `learning_goal`: `exam_prep` / `work` / `general` /
-  /// `skipped`, the onboarding answer (1.2.0). Set once, as onboarding
+  /// User property `learning_goal`: `exam_prep` / `work` / `school` /
+  /// `general` / `skipped`, the onboarding answer (1.2.0; `school` added by
+  /// the UI polish fix round 2, SPEC §1.14). Set once, as onboarding
   /// completes and before `onboarding_completed`, so that event carries it.
   /// Not set for installs that finished onboarding earlier: their stored
   /// `general` cannot be told apart from a choice.

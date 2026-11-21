@@ -64,18 +64,54 @@ void main() {
     expect(find.text('Hello'), findsNothing);
   });
 
-  testWidgets('the Dismiss action actually closes the message', (tester) async {
+  // UI polish SY02: no Dismiss button any more; a message stays 3 s, a
+  // swipe down dismisses it at once, and it carries at most one action.
+  testWidgets('it stays 3 s, then goes', (tester) async {
     await tester.pumpWidget(const _Harness());
     AppMessenger.show('Hello');
-    await tester.pump();
-    // Let the entrance animation finish — tapping mid-slide-in hits
-    // whatever's behind the not-yet-settled SnackBar instead of its action.
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 2500));
     expect(find.text('Hello'), findsOneWidget);
-
-    await tester.tap(find.text('Dismiss'));
+    await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(find.text('Hello'), findsNothing);
+  });
+
+  testWidgets('a swipe down dismisses the message at once', (tester) async {
+    await tester.pumpWidget(const _Harness());
+    AppMessenger.show('Hello');
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('Hello'), const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Hello'), findsNothing);
+  });
+
+  testWidgets('its one action runs and closes the message', (tester) async {
+    await tester.pumpWidget(const _Harness());
+    var undone = 0;
+    AppMessenger.show('Name saved',
+        kind: MessageKind.success,
+        actionLabel: 'Undo',
+        onAction: () => undone++);
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(undone, 1);
+    expect(find.text('Name saved'), findsNothing);
+  });
+
+  testWidgets('each kind shows its status icon', (tester) async {
+    await tester.pumpWidget(const _Harness());
+    for (final (kind, icon) in [
+      (MessageKind.success, Icons.check_rounded),
+      (MessageKind.warning, Icons.priority_high_rounded),
+      (MessageKind.error, Icons.close_rounded),
+    ]) {
+      AppMessenger.show('Hello', kind: kind);
+      await tester.pumpAndSettle();
+      expect(find.byIcon(icon), findsOneWidget);
+    }
   });
 
   testWidgets('navigating to another screen clears a message left showing',
@@ -130,7 +166,7 @@ void main() {
 
       // If the second call had queued rather than replaced, dismissing the
       // current one would reveal a second "Hello" right behind it.
-      await tester.tap(find.text('Dismiss'));
+      await tester.drag(find.text('Hello'), const Offset(0, 300));
       await tester.pumpAndSettle();
       expect(find.text('Hello'), findsNothing);
     },

@@ -91,7 +91,7 @@ describe('auth', () => {
 
 describe('POST /v1/generate-practice-set', () => {
   it('returns the items Anthropic produced, on a valid request', async () => {
-    mockAnthropicSuccess({ items: [{ id: 'q1', type: 'fill_in_blank', instruction: 'Fill it in.' }] });
+    mockAnthropicSuccess({ items: [{ id: 'q1', type: 'fill_in_blank', instruction: 'Fill ____ in.' }] });
 
     const response = await post('/v1/generate-practice-set', {
       deviceId: 'd1',
@@ -101,7 +101,7 @@ describe('POST /v1/generate-practice-set', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      items: [{ id: 'q1', type: 'fill_in_blank', instruction: 'Fill it in.' }],
+      items: [{ id: 'q1', type: 'fill_in_blank', instruction: 'Fill ____ in.' }],
     });
   });
 
@@ -338,7 +338,7 @@ describe('POST /v1/score-answers', () => {
   });
 
   it('instructs the model not to score keyboard-variant characters as grammar mistakes, on any keyboard (1.4.0 D3)', async () => {
-    mockAnthropicSuccess({ feedback: [] });
+    mockAnthropicSuccess({ feedback: [{ itemId: 'q1', isCorrect: true }] });
 
     await post('/v1/score-answers', {
       deviceId: 'd1',

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/data/fallback_pool.dart';
@@ -272,8 +274,8 @@ void main() {
 
   group('Skip is never the primary action (docs/design-audit.md D3)', () {
     testWidgets(
-        'with an empty answer, the primary button reads Next/Finish, '
-        'disabled — never "Skip"', (tester) async {
+        'with an empty answer, the primary button reads Check, disabled — '
+        'never "Skip"', (tester) async {
       final service = DailyTestService(
         claudeService: _FlakyClaudeService(failCount: 0),
         storageService: storageService,
@@ -281,13 +283,14 @@ void main() {
 
       await pumpScreen(tester, service);
 
-      expect(find.widgetWithText(FilledButton, 'Skip'), findsNothing);
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Next'),
-      );
+      // UI polish V07: the primary action is "Check", disabled until there
+      // is an answer.
+      final button =
+          tester.widget<PressableButton>(find.byKey(DailyTestScreen.checkKey));
+      expect(button.label, 'Check');
       expect(button.onPressed, isNull);
       // Still reachable, just quiet — not gone.
-      expect(find.widgetWithText(TextButton, 'Skip'), findsOneWidget);
+      expect(find.byKey(DailyTestScreen.skipKey), findsOneWidget);
     });
 
     testWidgets('entering an answer enables the primary button',
@@ -301,9 +304,8 @@ void main() {
       await tester.enterText(find.byType(TextField), 'answer0');
       await tester.pump();
 
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Next'),
-      );
+      final button =
+          tester.widget<PressableButton>(find.byKey(DailyTestScreen.checkKey));
       expect(button.onPressed, isNotNull);
     });
 
@@ -316,7 +318,7 @@ void main() {
       );
 
       await pumpScreen(tester, service);
-      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
 
       expect(find.text('Question 1'), findsOneWidget);
@@ -338,52 +340,45 @@ void main() {
     expect(storageService.todaysSet!.source, DailyTestSource.fallback);
   });
 
+  // UI polish R10: the leave dialog is the companion card — the sad
+  // buddy, "Keep going" dominant, "Leave" as red text.
   for (final brightness in Brightness.values) {
-    group('"Leave Daily Test?" dialog ($brightness)', () {
-      Color? fill(ButtonStyleButton b) =>
-          b.style?.backgroundColor?.resolve(const {});
-      Color? label(ButtonStyleButton b) =>
-          b.style?.foregroundColor?.resolve(const {});
-      Color? border(ButtonStyleButton b) =>
-          b.style?.side?.resolve(const {})?.color;
-
+    group('"Leave today\'s test?" companion dialog ($brightness)', () {
       Future<void> openDialog(WidgetTester tester) async {
         final service = DailyTestService(
           claudeService: _FlakyClaudeService(failCount: 0),
           storageService: storageService,
         );
         await pumpScreen(tester, service, theme: buildAppTheme(brightness));
-        await tester.tap(find.byIcon(Icons.close_rounded));
+        await tester.tap(find.byKey(DailyTestScreen.closeKey));
         await tester.pumpAndSettle();
-        expect(find.text('Leave Daily Test?'), findsOneWidget);
-        expect(find.text('Your progress will be lost.'), findsOneWidget);
+        expect(find.text('Leave today’s test?'), findsOneWidget);
+        expect(
+            find.text('You’re 0 of 5 in. Your answers so far won’t be saved.'),
+            findsOneWidget);
       }
 
-      testWidgets('Leave is destructive, Cancel is neutral and not primary',
+      testWidgets('Keep going is the dominant button; Leave is red text',
           (tester) async {
         await openDialog(tester);
-        final scheme = buildAppTheme(brightness).colorScheme;
-
+        final keep = tester
+            .widget<PressableButton>(find.byKey(DailyTestScreen.keepGoingKey));
+        expect(keep.tone, ButtonTone.orange);
         final leave = tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Leave'));
-        expect(fill(leave), scheme.destructive);
-        expect(label(leave), scheme.onDestructive);
-
-        final cancel = tester.widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Cancel'));
-        expect(label(cancel), scheme.onSurface);
-        expect(label(cancel), isNot(scheme.primary));
-        expect(border(cancel), scheme.onSurfaceVariant);
-        expect(border(cancel), isNot(scheme.primary));
-        expect(fill(cancel), isNull);
+            .widget<PressableButton>(find.byKey(DailyTestScreen.leaveKey));
+        expect(leave.tone, ButtonTone.danger);
+        expect(
+            find.byWidgetPredicate(
+                (w) => w is CompanionView && w.mood == CompanionMood.sad),
+            findsOneWidget);
       });
 
-      testWidgets('Cancel keeps the test open', (tester) async {
+      testWidgets('Keep going keeps the test open', (tester) async {
         await openDialog(tester);
-        await tester.tap(find.text('Cancel'));
+        await tester.tap(find.byKey(DailyTestScreen.keepGoingKey));
         await tester.pumpAndSettle();
 
-        expect(find.text('Leave Daily Test?'), findsNothing);
+        expect(find.text('Leave today’s test?'), findsNothing);
         expect(find.byType(DailyTestScreen), findsOneWidget);
       });
     });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/screens/credits_screen.dart';
@@ -62,13 +63,15 @@ void main() {
     }
   });
 
-  testWidgets('no raw URL in the text, no artwork, one card', (tester) async {
+  testWidgets(
+      'no raw URL in the text, one card; the only pictures are the three '
+      'greeting companions (R09)', (tester) async {
     await pumpCredits(tester);
     final texts = tester
         .widgetList<RichText>(find.byType(RichText))
         .map((t) => t.text.toPlainText());
     expect(texts.where((t) => t.contains('http')), isEmpty);
-    expect(find.byType(Image), findsNothing);
+    expect(find.byType(CompanionView), findsNWidgets(3));
     expect(find.byType(Card), findsOneWidget);
   });
 

@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
@@ -13,7 +16,10 @@ import 'package:grammar_lens/models/pending_climb.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/screens/first_climb_screen.dart';
 import 'package:grammar_lens/screens/first_launch_flow.dart';
+import 'package:grammar_lens/screens/mountain_intro_screen.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
@@ -193,6 +199,7 @@ void main() {
       UserProfile, {
       PendingClimb? pendingClimb,
       bool dayZeroCompleted,
+      bool firstClimbShown,
     }) onComplete,
     AnalyticsService? analytics,
   }) async {
@@ -234,14 +241,20 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    // Two steps (1.2.0): the name, then the goal.
+    // UI polish: the buddy (V03, Fox in front), the name (V04), the goal
+    // (V05), then "Getting ready" (V05b) runs by itself and this month's
+    // mountain (V06) starts the Day-0 Daily Test.
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.byKey(OnboardingScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
+    await tester.tap(find.byKey(OnboardingScreen.startKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(MountainIntroScreen.startKey));
     await tester.pumpAndSettle();
   }
 
@@ -252,14 +265,14 @@ void main() {
     // PracticeStepFooter), so this taps the outlined Skip button beside it
     // instead, same as a real user would.
     for (var i = 0; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
     }
   }
 
-  /// The result screen's one button, always in view in its fixed footer.
+  /// The result screen's one button, always in view in its footer.
   Future<void> tapResultButton(WidgetTester tester, String label) async {
-    await tester.tap(find.widgetWithText(FilledButton, label));
+    await tester.tap(find.widgetWithText(PressableButton, label));
     await tester.pumpAndSettle();
   }
 
@@ -268,12 +281,16 @@ void main() {
       "straight to Home — onComplete doesn't fire yet", (tester) async {
     UserProfile? completed;
     await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+        onComplete: (p,
+                {pendingClimb,
+                dayZeroCompleted = false,
+                firstClimbShown = false}) =>
             completed = p);
     await completeOnboardingForm(tester);
 
     expect(completed, isNull);
-    expect(find.text('Daily Test'), findsOneWidget); // the app-bar title
+    // UI polish V07: the test's header is the progress bar and the points.
+    expect(find.byKey(DailyTestScreen.pointsKey), findsOneWidget);
     expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
     expect(storageService.savedProfile?.name, 'Ada');
   });
@@ -284,17 +301,22 @@ void main() {
       'profile', (tester) async {
     UserProfile? completed;
     await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+        onComplete: (p,
+                {pendingClimb,
+                dayZeroCompleted = false,
+                firstClimbShown = false}) =>
             completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
 
-    expect(find.text('Daily Test Results'), findsOneWidget);
+    // V10: the result's title ("Today's test complete!" with every
+    // question skipped: no step).
+    expect(find.byKey(DailyTestResultScreen.primaryKey), findsOneWidget);
     expect(find.text('Like the personalized feedback?'), findsNothing);
     expect(find.text('Start free trial'), findsNothing);
     expect(find.text('Maybe later'), findsNothing);
     expect(find.byType(PremiumScreen), findsNothing);
-    expect(find.byType(FilledButton), findsOneWidget);
+    expect(find.byType(PressableButton), findsOneWidget);
     expect(completed, isNull);
 
     await tapResultButton(tester, 'Continue');
@@ -311,39 +333,48 @@ void main() {
     UserProfile? completed;
     PendingClimb? pending;
     storageService.welcomeBadge = true;
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    var climbShown = false;
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       completed = p;
       pending = pendingClimb;
+      climbShown = firstClimbShown;
     });
     await completeOnboardingForm(tester);
     await tester.enterText(find.byType(TextField).first, 'eating');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pumpAndSettle();
     for (var i = 1; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
     }
 
-    // Batch 5 (N15): the celebration over the results first.
-    await closeCelebration(tester);
-    expect(find.text('Start my climb'), findsOneWidget);
-    expect(find.text('Continue'), findsNothing);
+    // Fix round 3 (A1): the results first; "Climb my first step" opens the
+    // Welcome badge, whose Continue goes on to the first climb.
+    expect(find.widgetWithText(PressableButton, 'Continue'), findsNothing);
     expect(completed, isNull);
-    // Reduced motion (the flow tests' setting): no confetti to wait for.
-    await tapResultButton(tester, 'Start my climb');
+    await climbThroughWelcome(tester);
+    // V12: the first climb, then Continue completes onboarding.
+    expect(completed, isNull);
+    await tester.pumpAndSettle();
+    expect(find.byType(FirstClimbScreen), findsOneWidget);
+    await tester.tap(find.byKey(FirstClimbScreen.continueKey));
+    await tester.pump();
 
     expect(completed?.name, 'Ada');
     expect(pending, (day: '2026-01-01', step: 1));
+    expect(climbShown, isTrue);
   });
 
   testWidgets(
       'finishing through the result button reports the Day-0 test as '
       'completed, so Home offers the first-day paywall', (tester) async {
     bool? reported;
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       reported = dayZeroCompleted;
     });
     await completeOnboardingForm(tester);
@@ -357,8 +388,8 @@ void main() {
       'leaving the Day-0 test unfinished reports it as not completed: no '
       'paywall offer', (tester) async {
     bool? reported;
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       reported = dayZeroCompleted;
     });
     await completeOnboardingForm(tester);
@@ -376,7 +407,10 @@ void main() {
       (tester) async {
     UserProfile? completed;
     await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+        onComplete: (p,
+                {pendingClimb,
+                dayZeroCompleted = false,
+                firstClimbShown = false}) =>
             completed = p);
     await completeOnboardingForm(tester);
 
@@ -396,7 +430,10 @@ void main() {
       'independent)', (tester) async {
     UserProfile? completed;
     await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+        onComplete: (p,
+                {pendingClimb,
+                dayZeroCompleted = false,
+                firstClimbShown = false}) =>
             completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
@@ -414,21 +451,26 @@ void main() {
       'one step) with the profile', (tester) async {
     UserProfile? completed;
     PendingClimb? pending;
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       completed = p;
       pending = pendingClimb;
     });
     await completeOnboardingForm(tester);
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pumpAndSettle();
     for (var i = 1; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
     }
     await tapResultButton(tester, 'Continue');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(FirstClimbScreen.continueKey));
+    await tester.pump();
 
     expect(completed, isNotNull);
     expect(pending, (day: '2026-01-01', step: 1));
@@ -437,8 +479,8 @@ void main() {
   testWidgets('a Day-0 test with every question skipped earns no pending climb',
       (tester) async {
     PendingClimb? pending = (day: 'sentinel', step: 9);
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       pending = pendingClimb;
     });
     await completeOnboardingForm(tester);
@@ -451,8 +493,8 @@ void main() {
   testWidgets('abandoning the Day-0 Daily Test carries no pending climb',
       (tester) async {
     PendingClimb? pending = (day: 'sentinel', step: 9);
-    await pumpFlow(tester,
-        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+    await pumpFlow(tester, onComplete: (p,
+        {pendingClimb, dayZeroCompleted = false, firstClimbShown = false}) {
       pending = pendingClimb;
     });
     await completeOnboardingForm(tester);
@@ -473,7 +515,10 @@ void main() {
         'nothing is generated or written while Welcome and the form are open',
         (tester) async {
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       expect(find.text('Get started'), findsOneWidget);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
@@ -486,7 +531,10 @@ void main() {
         'the Daily Test opens on the bundled set: the five fixed questions, '
         'no request', (tester) async {
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
@@ -498,20 +546,27 @@ void main() {
     });
 
     testWidgets(
-        'the set is written before the profile, so a user who exists always '
-        'has today\'s set on disk', (tester) async {
+        'getting ready runs its tasks in the order of its rows: the profile '
+        '(⅓), then today\'s set (⅔) — UI polish §1.6 changes the order',
+        (tester) async {
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
 
-      expect(storageService.events, ['seed', 'profile']);
+      expect(storageService.events, ['profile', 'seed']);
     });
 
     testWidgets(
         'leaving the test and opening it again gets the same fixed set, from '
         'the store', (tester) async {
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
       await tester.tap(find.byIcon(Icons.close_rounded));
       await tester.pumpAndSettle();
@@ -547,7 +602,10 @@ void main() {
         ],
       ));
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(find.text('Existing question'), findsOneWidget);
@@ -559,7 +617,10 @@ void main() {
         'Test screen reads today\'s shared set instead', (tester) async {
       storageService.failSeed = true;
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(storageService.savedProfile?.name, 'Ada');
@@ -573,14 +634,19 @@ void main() {
       final sink = RecordingAnalyticsSink();
       await pumpFlow(tester,
           analytics: AnalyticsService(sink: sink),
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await tapThroughToDailyTest(tester);
       await tester.enterText(find.byType(TextField).first, 'eating');
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(DailyTestScreen.continueKey));
       await tester.pumpAndSettle();
       for (var i = 1; i < DailyTestSet.questionCount; i++) {
-        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+        await tester.tap(find.byKey(DailyTestScreen.skipKey));
         await tester.pumpAndSettle();
       }
 
@@ -595,15 +661,18 @@ void main() {
     Future<void> toGoalStep(WidgetTester tester, {String name = 'Ada'}) async {
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(BuddyPicker.confirmKey));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), name);
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.tap(find.byKey(OnboardingScreen.continueKey));
       await tester.pumpAndSettle();
     }
 
     final cases = <String, LearningGoal?>{
       'exam_prep': LearningGoal.examPrep,
       'work': LearningGoal.work,
+      'school': LearningGoal.school,
       'general': LearningGoal.general,
       'skipped': null,
     };
@@ -614,20 +683,23 @@ void main() {
         final sink = RecordingAnalyticsSink();
         await pumpFlow(tester,
             analytics: AnalyticsService(sink: sink),
-            onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+            onComplete: (p,
+                {pendingClimb,
+                dayZeroCompleted = false,
+                firstClimbShown = false}) {});
         await toGoalStep(tester, name: 'Zeynep Ünlü');
         if (goal == null) {
-          await tester.tap(find.text('Skip goal & start'));
+          await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
         } else {
           // The test font is wider than Nunito Sans: at the default size
           // the last goal sits under the fixed footer here (not with the
           // real font), so it is scrolled into view first.
-          await tester.ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
+          await tester
+              .ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
           await tester.pump();
-          await tester
-              .tap(find.widgetWithText(FilledButton, 'Start my first test'));
+          await tester.tap(find.byKey(OnboardingScreen.startKey));
         }
         await tester.pumpAndSettle();
 
@@ -655,11 +727,14 @@ void main() {
         'a chosen goal then "Skip goal & start" stores skipped, not the '
         'choice and not general', (tester) async {
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await toGoalStep(tester);
       await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
       await tester.pump();
-      await tester.tap(find.text('Skip goal & start'));
+      await tester.tap(find.byKey(OnboardingScreen.skipGoalKey));
       await tester.pumpAndSettle();
       expect(storageService.savedProfile!.learningGoal, isNull);
       expect(storageService.savedProfile!.toMap()['learning_goal'], 'skipped');
@@ -672,7 +747,10 @@ void main() {
       final sink = RecordingAnalyticsSink();
       await pumpFlow(tester,
           analytics: AnalyticsService(sink: sink),
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       await toGoalStep(tester);
       await tester.ensureVisible(find.byKey(OnboardingScreen.dataLinkKey));
       await tester.tap(find.byKey(OnboardingScreen.dataLinkKey));
@@ -703,7 +781,10 @@ void main() {
       var completed = false;
       await pumpFlow(tester,
           analytics: AnalyticsService(sink: sink),
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+          onComplete: (p,
+                  {pendingClimb,
+                  dayZeroCompleted = false,
+                  firstClimbShown = false}) =>
               completed = true);
       await toGoalStep(tester);
       await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
@@ -717,7 +798,10 @@ void main() {
       expect(sink.userProperties.containsKey('learning_goal'), isFalse);
 
       await pumpFlow(tester,
-          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+          onComplete: (p,
+              {pendingClimb,
+              dayZeroCompleted = false,
+              firstClimbShown = false}) {});
       expect(find.text('Get started'), findsOneWidget);
     });
   });

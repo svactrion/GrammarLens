@@ -3,343 +3,87 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/screens/lucky_wheel_screen.dart';
+import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/buddy_picker.dart';
 
+/// R06: Change your buddy — the onboarding turntable opened from Profile,
+/// "Save <Hero>" and "Try my luck". (Replaces the carousel's autosave
+/// tests: the choice is saved with the button now.)
 void main() {
-  testWidgets(
-      'settling debounces before calling onAvatarChanged — a fast settle '
-      "doesn't write immediately", (tester) async {
-    final changes = <Avatar>[];
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AvatarPickerScreen(
-          currentAvatar: Avatar.values[3],
-          onAvatarChanged: changes.add,
-          heroTag: avatarHeroTag,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
-    await tester.pumpAndSettle();
-
-    // Settled, but the 500ms debounce window hasn't elapsed yet.
-    expect(changes, isEmpty);
-
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(changes, hasLength(1));
-  });
-
-  testWidgets(
-      'leaving before the debounce fires still flushes the pending change '
-      "instead of losing it", (tester) async {
-    final changes = <Avatar>[];
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AvatarPickerScreen(
-                    currentAvatar: Avatar.values[3],
-                    onAvatarChanged: changes.add,
-                    heroTag: avatarHeroTag,
-                  ),
-                ),
-              ),
-              child: const Text('open'),
-            ),
+  Future<List<Avatar>> pump(WidgetTester tester, Avatar current) async {
+    tester.view.physicalSize = const Size(390, 844) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final saved = <Avatar>[];
+    await tester.pumpWidget(MaterialApp(
+      theme: buildAppTheme(Brightness.light),
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => AvatarPickerScreen(
+                    currentAvatar: current, onAvatarChanged: saved.add))),
+            child: const Text('open'),
           ),
         ),
       ),
-    );
-    await tester.pumpAndSettle();
+    ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
-    await tester.pumpAndSettle();
-    expect(changes, isEmpty); // still inside the debounce window
-
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-
-    expect(changes, hasLength(1));
-  });
-
-  testWidgets(
-      'the centered avatar carries a Hero for the flight back to '
-      "Settings' preview row", (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AvatarPickerScreen(
-          currentAvatar: Avatar.values[3],
-          onAvatarChanged: (_) {},
-          heroTag: avatarHeroTag,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final heroes = tester.widgetList<Hero>(find.byType(Hero));
-    expect(heroes.any((h) => h.tag == avatarHeroTag), isTrue);
-  });
-
-  testWidgets(
-      'exactly one page ever carries the Hero tag at a time — never zero, '
-      'never two, including mid-drag before a settle', (tester) async {
-    // The requirement this pins down: a Hero tag must live on exactly one
-    // widget per route. AvatarCarousel's centerTileBuilder only wraps the
-    // *settled* page (never a mid-drag one), so this should hold even
-    // while dragging through several neighbors before releasing.
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AvatarPickerScreen(
-          currentAvatar: Avatar.values[3],
-          onAvatarChanged: (_) {},
-          heroTag: avatarHeroTag,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    int taggedHeroCount() => tester
-        .widgetList<Hero>(find.byType(Hero))
-        .where((h) => h.tag == avatarHeroTag)
-        .length;
-
-    expect(taggedHeroCount(), 1);
-
-    // Mid-drag, well before it would settle on a new page.
-    await tester.drag(find.byType(PageView), const Offset(-200, 0));
-    await tester.pump();
-    expect(taggedHeroCount(), 1,
-        reason: 'still mid-drag — the tag must not have moved or doubled');
-
-    await tester.pumpAndSettle();
-    expect(taggedHeroCount(), 1,
-        reason: 'settled on a (possibly different) page — still exactly one');
-  });
-
-  testWidgets(
-      'across the loop seam (last → first, first → last) exactly one Hero '
-      'carries the tag, on the centered avatar', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AvatarPickerScreen(
-          currentAvatar: Avatar.values.last,
-          onAvatarChanged: (_) {},
-          heroTag: avatarHeroTag,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    Iterable<Hero> taggedHeroes() => tester
-        .widgetList<Hero>(find.byType(Hero))
-        .where((h) => h.tag == avatarHeroTag);
-    Avatar heroAvatar() => tester
-        .widget<AvatarTile>(find.descendant(
-          of: find.byWidget(taggedHeroes().single),
-          matching: find.byType(AvatarTile),
-        ))
-        .avatar!;
-    // One page, measured on screen rather than derived from the picker's
-    // private viewportFraction.
-    Future<void> dragOnePageTo(Avatar neighbor) async {
-      final from = tester.getCenter(find.byWidget(taggedHeroes().single)).dx;
-      final to = tester
-          .getCenter(find.byWidgetPredicate(
-            (w) => w is AvatarTile && w.avatar == neighbor,
-          ))
-          .dx;
-      await tester.drag(find.byType(PageView), Offset((from - to) * 0.7, 0));
-      await tester.pumpAndSettle();
-    }
-
-    expect(taggedHeroes(), hasLength(1));
-    expect(heroAvatar(), Avatar.values.last);
-
-    await dragOnePageTo(Avatar.values.first);
-    expect(taggedHeroes(), hasLength(1));
-    expect(heroAvatar(), Avatar.values.first);
-
-    await dragOnePageTo(Avatar.values.last);
-    expect(taggedHeroes(), hasLength(1));
-    expect(heroAvatar(), Avatar.values.last);
-  });
-
-  Future<void> pumpPushed(
-    WidgetTester tester, {
-    required ValueChanged<Avatar> onAvatarChanged,
-  }) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AvatarPickerScreen(
-                    currentAvatar: Avatar.values[3],
-                    onAvatarChanged: onAvatarChanged,
-                    heroTag: avatarHeroTag,
-                  ),
-                ),
-              ),
-              child: const Text('open'),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+    return saved;
   }
 
-  testWidgets(
-      'tapping Done closes the screen and keeps the swiped avatar saved, '
-      'even mid-debounce — Done never adds a second write, it flushes the '
-      'same pending one dispose() already would', (tester) async {
-    final changes = <Avatar>[];
-    await pumpPushed(tester, onAvatarChanged: changes.add);
+  testWidgets('opens with the current buddy in front and the R06 copy',
+      (tester) async {
+    await pump(tester, Avatar.giraffe);
+    expect(find.text('Change your buddy'), findsOneWidget);
+    expect(find.text('Your progress stays the same'), findsOneWidget);
+    expect(find.text('Save Giraffe'), findsOneWidget);
+    expect(find.text('6 / 9'), findsOneWidget);
+  });
 
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+  testWidgets('Save saves the front buddy and closes', (tester) async {
+    final saved = await pump(tester, Avatar.fox);
+    await tester.tap(find.byKey(BuddyPicker.nextKey));
     await tester.pumpAndSettle();
-    expect(changes, isEmpty); // still inside the debounce window
-
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
     await tester.pumpAndSettle();
-
+    expect(saved, [Avatar.panda]);
     expect(find.byType(AvatarPickerScreen), findsNothing);
-    expect(changes, hasLength(1));
-    expect(changes.single, isNot(Avatar.values[3]));
   });
 
-  testWidgets(
-      'a mid-debounce change is flushed before the pop transition starts, '
-      "not after it finishes — the actual no-flicker guarantee for a Hero "
-      'flight to the destination avatar', (tester) async {
-    // dispose() also flushes, but only once the pop's transition animation
-    // completes — too late for a Hero flight, whose destination Hero
-    // needs to already show the new avatar from the flight's very first
-    // frame. This pins down that the flush happens synchronously as part
-    // of triggering the pop, not deferred to teardown.
-    final changes = <Avatar>[];
-    await pumpPushed(tester, onAvatarChanged: changes.add);
-
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+  testWidgets('saving the same buddy writes nothing', (tester) async {
+    final saved = await pump(tester, Avatar.cat);
+    await tester.tap(find.byKey(BuddyPicker.confirmKey));
     await tester.pumpAndSettle();
-    expect(changes, isEmpty); // still inside the debounce window
-
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
-    // A single frame, mid-transition — AvatarPickerScreen (and its State,
-    // including dispose()) is still very much alive at this point.
-    await tester.pump();
-
-    expect(find.byType(AvatarPickerScreen), findsOneWidget,
-        reason: 'the pop transition should still be in flight here');
-    expect(changes, hasLength(1),
-        reason: 'the flush must already have happened by this frame, not '
-            "only once dispose() runs at the transition's end");
-
-    await tester.pumpAndSettle();
+    expect(saved, isEmpty);
   });
 
-  testWidgets(
-      'tapping Done after the autosave already fired does not write a '
-      'second time', (tester) async {
-    final changes = <Avatar>[];
-    await pumpPushed(tester, onAvatarChanged: changes.add);
-
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+  testWidgets('Back leaves without saving', (tester) async {
+    final saved = await pump(tester, Avatar.fox);
+    await tester.tap(find.byKey(BuddyPicker.nextKey));
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(milliseconds: 600)); // past the debounce
-    expect(changes, hasLength(1));
-
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+    await tester.tap(find.byKey(AvatarPickerScreen.backKey));
     await tester.pumpAndSettle();
-
+    expect(saved, isEmpty);
     expect(find.byType(AvatarPickerScreen), findsNothing);
-    expect(changes, hasLength(1)); // still just the one write, not two
   });
 
-  testWidgets(
-      'Done and the back button are equivalent exit paths — both leave '
-      'the same swiped avatar saved', (tester) async {
-    final doneChanges = <Avatar>[];
-    await pumpPushed(tester, onAvatarChanged: doneChanges.add);
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+  testWidgets('the wheel reads "Save <Hero>" and saves what it lands on',
+      (tester) async {
+    final saved = await pump(tester, Avatar.fox);
+    await tester.tap(find.byKey(BuddyPicker.tryLuckKey));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+    await tester.tap(find.byKey(LuckyWheelScreen.spinKey));
     await tester.pumpAndSettle();
-
-    final backChanges = <Avatar>[];
-    await pumpPushed(tester, onAvatarChanged: backChanges.add);
-    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    final confirm = find.byKey(LuckyWheelScreen.confirmKey);
+    expect(find.descendant(of: confirm, matching: find.textContaining('Save ')),
+        findsOneWidget);
+    await tester.tap(confirm);
     await tester.pumpAndSettle();
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-
-    expect(doneChanges, hasLength(1));
-    expect(backChanges, hasLength(1));
-    expect(doneChanges.single, backChanges.single);
-  });
-
-  group('neighbor peek stays at least half-visible at both target widths', () {
-    // Regression coverage for the batch that enlarged the center avatar
-    // (docs/build-log.md, same date): measuring the real widget tree (not
-    // hand-derived arithmetic) found the neighbor's visible fraction
-    // depends only on viewportFraction, not on centerRadius at all — so
-    // this stays true regardless of whatever centerRadius is currently
-    // set to, as long as viewportFraction itself doesn't move above 0.5.
-    Future<void> expectHalfVisibleAt(
-      WidgetTester tester,
-      double screenWidth,
-    ) async {
-      tester.view.physicalSize = Size(screenWidth, 800) * 3.0;
-      tester.view.devicePixelRatio = 3.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: AvatarPickerScreen(
-            currentAvatar: Avatar.values[3],
-            onAvatarChanged: (_) {},
-            heroTag: avatarHeroTag,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final neighborLabel = Avatar.values[4].semanticLabel;
-      final neighborImage = find.descendant(
-        of: find.bySemanticsLabel(neighborLabel),
-        matching: find.byWidgetPredicate((w) => w is Image),
-      );
-      expect(neighborImage, findsOneWidget,
-          reason: 'the neighbor should already be built and peeking in');
-
-      final rect = tester.getRect(neighborImage);
-      final visibleWidth = (screenWidth - rect.left).clamp(0.0, rect.width);
-      final fraction = visibleWidth / rect.width;
-
-      expect(fraction, greaterThanOrEqualTo(0.5),
-          reason: 'at $screenWidth pt, only ${(fraction * 100).round()}% of '
-              'the neighbor is visible — swiping is the only way to pick, '
-              'so this signal must never drop below half');
-    }
-
-    testWidgets('375pt (iPhone SE)', (tester) async {
-      await expectHalfVisibleAt(tester, 375);
-    });
-
-    testWidgets('320pt (1st-gen iPhone SE width)', (tester) async {
-      await expectHalfVisibleAt(tester, 320);
-    });
+    expect(saved, hasLength(1));
+    expect(saved.single, isNot(Avatar.fox));
+    expect(find.byType(AvatarPickerScreen), findsNothing);
   });
 }

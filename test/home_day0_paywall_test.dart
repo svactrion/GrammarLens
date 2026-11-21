@@ -16,6 +16,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 import 'support/recording_analytics_sink.dart';
+import 'support/paywall_close.dart';
 
 /// The paywall Home opens by itself, once, after the first-day climb
 /// (`HomeScreen.offerDay0Paywall`): when it appears, when it must not, and that
@@ -74,6 +75,19 @@ class _FakeStorageService extends StorageService {
     onClaim?.call();
     if (failClaim) throw StateError('database unreadable');
     return claimed.add(key);
+  }
+}
+
+/// V13 v12: the paywall has no "Maybe later"; the close button is the way
+/// out, and the first close of a session asks once (V13b): "Continue with
+/// free" then closes it.
+Future<void> closePaywall(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Close'));
+  await tester.pumpAndSettle();
+  final free = find.byKey(PremiumScreen.exitContinueFreeKey);
+  if (free.evaluate().isNotEmpty) {
+    await tester.tap(free);
+    await tester.pumpAndSettle();
   }
 }
 
@@ -308,15 +322,29 @@ void main() {
       expect(storage.claimed, {StorageService.day0PaywallFlag});
     });
 
+    // Fix round 5, item 4: the paywall after the first climb (onboarding)
+    // closes only with its X.
     testWidgets(
-        'dismissed with Maybe later: Home is back, and nothing brings it '
+        'v13: it stays on a swipe, a drag down and a system back; X → V13b',
+        (tester) async {
+      PremiumScreen.resetExitReminder();
+      await pumpHome(tester);
+      await pumpUntil(tester, premiumShown);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byType(HomeScreen), findsOneWidget);
+    }, variant: iOSOnly);
+
+    testWidgets(
+        'dismissed with the close button: Home is back, and nothing brings it '
         'back (a resume, more time)', (tester) async {
       await pumpHome(tester);
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
       expect(premiumShown(), isFalse);
       expect(find.byType(HomeScreen), findsOneWidget);
 
@@ -331,8 +359,7 @@ void main() {
       await pumpHome(tester);
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
 
       await tester.pumpWidget(const SizedBox());
       await pumpHome(tester);
@@ -360,11 +387,10 @@ void main() {
       await pumpUntil(tester, premiumShown);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Maybe later'));
-      await tester.pumpAndSettle();
+      await closePaywall(tester);
 
       expect(sink.named('paywall_dismissed').single.parameters,
-          {'source': 'day0_after_climb', 'method': 'maybe_later'});
+          {'source': 'day0_after_climb', 'method': 'close_button'});
     });
 
     testWidgets(
@@ -373,8 +399,8 @@ void main() {
       await pumpHome(tester, offer: false, pending: null);
       await tester.pumpAndSettle();
       // 1.2.0 (Q15): Home's Premium row is gone; a free user's way to the
-      // paywall from Home is a locked topic (the Topic practice strip).
-      final row = find.text('Explore all topics');
+      // paywall from Home is the topic showcase (UI polish V14).
+      final row = find.text('Unlock all 10 topics');
       await tester.ensureVisible(row);
       await tester.pumpAndSettle();
 

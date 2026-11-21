@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/services/app_link.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -13,13 +15,18 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/weak_spot_card.dart';
+import 'package:grammar_lens/screens/ai_consent_screen.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/widgets/home_practice.dart';
+import 'package:grammar_lens/widgets/review_parts.dart';
+import 'package:grammar_lens/widgets/ticket.dart';
 
 import 'support/l10n_support.dart';
+import 'support/paywall_close.dart';
 
-/// 1.2.0 Batch 4: Review's layout, the daily free practice card (its two
-/// states, read from the existing free practice count, hidden for premium),
-/// the empty state and the sort order.
+/// Review (UI polish V16, V16b, V22, RV05, RV06): the free ticket (read
+/// from the existing free practice count, hidden for Premium), the weak
+/// spot cards, the empty state and the sort sheet.
 
 class _Subscription extends SubscriptionService {
   bool hasAccess;
@@ -83,10 +90,13 @@ class _Storage extends StorageService {
     savedSorts.add(order);
   }
 
+  /// The latest mistake each weak spot shows inline.
+  ErrorEntry? latest;
+
   @override
   Future<List<ErrorEntry>> getRecentMistakes(String topicId, String errorType,
           {int limit = 3}) async =>
-      const [];
+      latest == null ? const [] : [latest!];
 }
 
 WeakSpot _spot(String errorType, {int frequency = 1}) => WeakSpot(
@@ -109,6 +119,7 @@ void main() {
     Size size = const Size(390, 844),
     Brightness brightness = Brightness.light,
     AppTextSize textSize = AppTextSize.medium,
+    ValueListenable<WeakSpotLink?>? weakSpotLinks,
   }) async {
     tester.view.physicalSize = size * 3;
     tester.view.devicePixelRatio = 3;
@@ -122,127 +133,136 @@ void main() {
         subscriptionService: subscription ?? _Subscription(),
         active: active,
         onGoToPractice: onGoToPractice ?? () {},
+        userName: 'Ada',
+        clock: () => DateTime(2026, 11, 17, 3, 19),
+        weakSpotLinks: weakSpotLinks,
       ),
     ));
     await tester.pumpAndSettle();
   }
 
+  // Fix round 4, item 3 (W01 v12): the tip widget's weak spot opens R03.
+  group('the tip widget\'s weak spot link', () {
+    testWidgets('opens that weak spot (R03)', (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(null);
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      expect(find.byType(WeakSpotDetailScreen), findsNothing);
+      links.value = const WeakSpotLink('articles', 'a_vs_an');
+      await tester.pumpAndSettle();
+      final detail = tester
+          .widget<WeakSpotDetailScreen>(find.byType(WeakSpotDetailScreen));
+      expect(detail.spot.errorType, 'a_vs_an');
+    });
+
+    testWidgets('a link that came before the tab was built opens it too',
+        (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(
+          const WeakSpotLink('articles', 'missing_article'));
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      expect(
+          tester
+              .widget<WeakSpotDetailScreen>(find.byType(WeakSpotDetailScreen))
+              .spot
+              .errorType,
+          'missing_article');
+    });
+
+    testWidgets('a weak spot no longer saved leaves Review as it is',
+        (tester) async {
+      final links = ValueNotifier<WeakSpotLink?>(null);
+      addTearDown(links.dispose);
+      await pump(tester,
+          storage: _Storage(weakSpots: _twoSpots), weakSpotLinks: links);
+      links.value = const WeakSpotLink('articles', 'gone');
+      await tester.pumpAndSettle();
+      expect(find.byType(WeakSpotDetailScreen), findsNothing);
+      expect(find.text('Review'), findsOneWidget);
+    });
+  });
+
+  final ticket = find.byKey(ReviewScreen.ticketKey);
+  TicketState ticketState(WidgetTester tester) =>
+      tester.widget<Ticket>(ticket).state;
+
   testWidgets('the page title and its line are in the page', (tester) async {
     await pump(tester, storage: _Storage(weakSpots: _twoSpots));
     expect(find.text('Review'), findsOneWidget);
-    expect(find.text('Turn your mistakes into progress.'), findsOneWidget);
+    expect(find.text('Your mistakes, turned into practice.'), findsOneWidget);
   });
 
-  group('daily free practice card', () {
+  group('the free ticket (V16, V22)', () {
     testWidgets(
-        'available: orange, says any saved weak spot can take it and how '
-        'many are left today', (tester) async {
+        'free: "1 free practice", the line, and "Practice with my ticket" on '
+        'the first weak spot only', (tester) async {
       await pump(tester, storage: _Storage(weakSpots: _twoSpots));
-      final card = find.byKey(DailyPracticeCard.availableKey);
-      expect(card, findsOneWidget);
-      expect(find.byKey(DailyPracticeCard.usedKey), findsNothing);
-      expect(find.text('One weak spot. One step forward.'), findsOneWidget);
-      expect(find.text('1 free practice available today'), findsOneWidget);
-      final theme = Theme.of(tester.element(card));
-      expect(tester.widget<Card>(card).color, theme.colorScheme.primary);
-      expect(
-          tester
-              .widget<Text>(find.text('One weak spot. One step forward.'))
-              .style!
-              .color,
-          theme.colorScheme.onPrimary);
+      expect(ticketState(tester), TicketState.free);
+      expect(find.text('1 free practice'), findsOneWidget);
+      expect(find.text('Pick a weak spot below. AI feedback included.'),
+          findsOneWidget);
+      expect(find.text('Practice with my ticket'), findsOneWidget);
+      expect(find.byKey(ReviewScreen.moreKey), findsNothing);
       expect(find.textContaining('unlimited'), findsNothing);
     });
 
     testWidgets(
-        'used today: a different card, text and icon; no free-practice call '
-        'to action', (tester) async {
+        'used today: "Used today", the name, the next ticket at midnight; no '
+        'ticket button; Premium\'s sessions to the paywall', (tester) async {
       await pump(tester,
           storage: _Storage(
               weakSpots: _twoSpots,
               freePracticeCount: StorageService.freeDailyPracticeLimit));
-      final card = find.byKey(DailyPracticeCard.usedKey);
-      expect(card, findsOneWidget);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
-      expect(find.text('Today’s practice is complete.'), findsOneWidget);
-      expect(find.text('Next free practice tomorrow'), findsOneWidget);
-      expect(find.textContaining('available today'), findsNothing);
-      expect(find.text('Start free practice'), findsNothing);
-      // 1.2.0 Batch 5: its one button is "See Premium", never a free one.
-      expect(
-          find.descendant(
-              of: card,
-              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
-          findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text('See Premium')),
-          findsOneWidget);
-      // Not by color alone: the icon differs too.
-      expect(
-          find.descendant(
-              of: card, matching: find.byIcon(Icons.schedule_rounded)),
-          findsOneWidget);
-      expect(
-          find.descendant(
-              of: card, matching: find.byIcon(Icons.check_circle_rounded)),
-          findsNothing);
-    });
-
-    for (final brightness in Brightness.values) {
-      testWidgets(
-          'used today: navy with white text, the dark button edge in dark '
-          'mode, an orange "See Premium" (${brightness.name})', (tester) async {
-        await pump(tester,
-            brightness: brightness,
-            storage: _Storage(
-                weakSpots: _twoSpots,
-                freePracticeCount: StorageService.freeDailyPracticeLimit));
-        final card = find.byKey(DailyPracticeCard.usedKey);
-        final context = tester.element(card);
-        final palette = AppPalette.of(context);
-        final scheme = Theme.of(context).colorScheme;
-        final material = tester.widget<Card>(card);
-        expect(material.color, palette.button);
-        final side = (material.shape! as RoundedRectangleBorder).side;
-        if (brightness == Brightness.dark) {
-          expect(side.color, palette.buttonEdge);
-        } else {
-          expect(side, BorderSide.none);
-        }
-        expect(
-            tester
-                .widget<Text>(find.text('Today’s practice is complete.'))
-                .style!
-                .color,
-            palette.onButton);
-        final cta = tester.widget<FilledButton>(find.ancestor(
-            of: find.text('See Premium'), matching: find.byType(FilledButton)));
-        expect(cta.style!.backgroundColor!.resolve({}), scheme.primary);
-        expect(cta.style!.foregroundColor!.resolve({}), scheme.onPrimary);
-        expect(tester.takeException(), isNull);
-      });
-    }
-
-    testWidgets(
-        'used today: "See Premium" opens the existing Premium screen with '
-        'the review_quota source', (tester) async {
-      await pump(tester,
-          storage: _Storage(
-              weakSpots: _twoSpots,
-              freePracticeCount: StorageService.freeDailyPracticeLimit));
-      await tester.tap(find.text('See Premium'));
+      expect(ticketState(tester), TicketState.used);
+      expect(find.text('Used today'), findsOneWidget);
+      expect(find.text('Nice work, Ada.'), findsOneWidget);
+      // 03:19 → 20 h 41 min to midnight.
+      expect(tester.widget<Ticket>(ticket).nextIn,
+          const Duration(hours: 20, minutes: 41));
+      expect(find.text('Practice with my ticket'), findsNothing);
+      expect(find.text('Want more practice today?'), findsOneWidget);
+      expect(find.text('Premium: up to 5 sessions a day'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(ReviewScreen.moreKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ReviewScreen.moreKey));
       await tester.pumpAndSettle();
       final premium = tester.widget<PremiumScreen>(find.byType(PremiumScreen));
       expect(
           premium.analyticsSource, AnalyticsService.paywallSourceReviewQuota);
-      expect(AnalyticsService.paywallSourceReviewQuota, 'review_quota');
+      // Fix round 5, item 4: it closes only with its X.
+      PremiumScreen.resetExitReminder();
+      await expectPaywallHolds(tester);
+      // No store offer in this fake: V13b (it states the trial) stays shut.
+      await closeWithX(tester, reminder: false);
+      expect(find.byKey(ReviewScreen.moreKey), findsOneWidget);
+    }, variant: iOSOnly);
+
+    testWidgets(
+        '"Practice with my ticket": medium tap, the ticket tears ("Ticket '
+        'used!"), then practice starts (the AI permission first)',
+        (tester) async {
+      await pump(tester, storage: _Storage(weakSpots: _twoSpots));
+      HapticMap.log = [];
+      await tester.tap(find.byKey(ReviewScreen.practiceWithTicketKey));
+      await tester.pump();
+      expect(HapticMap.log!.first, 'medium');
+      expect(ticketState(tester), TicketState.tearing);
+      expect(find.text('Ticket used!'), findsOneWidget);
+      await tester.pump(Ticket.tearDuration);
+      await tester.pumpAndSettle();
+      expect(find.byType(AiConsentScreen), findsOneWidget);
     });
 
-    testWidgets('hidden for a premium user (Q13)', (tester) async {
+    testWidgets('no ticket for a Premium user (R12), the Premium chip instead',
+        (tester) async {
       await pump(tester,
           storage: _Storage(weakSpots: _twoSpots),
           subscription: _Subscription(hasAccess: true));
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
-      expect(find.byKey(DailyPracticeCard.usedKey), findsNothing);
+      expect(ticket, findsNothing);
+      expect(find.byType(PremiumChip), findsOneWidget);
+      expect(find.text('Practice with my ticket'), findsNothing);
     });
 
     testWidgets(
@@ -250,12 +270,12 @@ void main() {
         'elsewhere shows as used', (tester) async {
       final storage = _Storage(weakSpots: _twoSpots);
       await pump(tester, storage: storage);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsOneWidget);
+      expect(ticketState(tester), TicketState.free);
 
       storage.freePracticeCount = StorageService.freeDailyPracticeLimit;
       await pump(tester, storage: storage, active: false);
       await pump(tester, storage: storage, active: true);
-      expect(find.byKey(DailyPracticeCard.usedKey), findsOneWidget);
+      expect(ticketState(tester), TicketState.used);
     });
 
     testWidgets(
@@ -263,51 +283,95 @@ void main() {
         'nothing', (tester) async {
       final storage = _Storage(weakSpots: _twoSpots);
       await pump(tester, storage: storage);
-      await tester.tap(find.byType(WeakSpotCard).first);
+      await tester.ensureVisible(find.byType(ReviewSpotCard).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ReviewSpotCard).last);
       await tester.pumpAndSettle();
       expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
-      // Opening a weak spot does not use the free practice.
       expect(storage.freePracticeCount, 0);
 
       storage.freePracticeCount = StorageService.freeDailyPracticeLimit;
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(find.byKey(DailyPracticeCard.usedKey), findsOneWidget);
+      expect(ticketState(tester), TicketState.used);
     });
 
     testWidgets('a trial starting hides it without a restart', (tester) async {
       final subscription = _Subscription();
       await pump(tester,
           storage: _Storage(weakSpots: _twoSpots), subscription: subscription);
-      expect(find.byKey(DailyPracticeCard.availableKey), findsOneWidget);
+      expect(ticket, findsOneWidget);
       subscription.emit(true);
       await tester.pumpAndSettle();
-      expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
+      expect(ticket, findsNothing);
     });
   });
 
   testWidgets(
-      'empty: the empty state and a way back to the Daily Test, and no '
-      'allowance card for a weak spot that does not exist', (tester) async {
+      'empty (RV05): the ticket waits for the first weak spot, the companion '
+      'cheers, one way to the Daily Test', (tester) async {
     var toHome = 0;
     await pump(tester, storage: _Storage(), onGoToPractice: () => toHome++);
-    expect(find.text('No weak spots yet.'), findsOneWidget);
-    expect(find.byKey(DailyPracticeCard.availableKey), findsNothing);
-    expect(find.byKey(DailyPracticeCard.usedKey), findsNothing);
-    await tester.tap(find.text('Go to Daily Test'));
+    expect(ticketState(tester), TicketState.free);
+    expect(find.text('Waiting for your first weak spot.'), findsOneWidget);
+    expect(tester.widget<Ticket>(ticket).onTap, isNull);
+    expect(find.text('No weak spots yet!'), findsOneWidget);
+    await tester.tap(find.text('Take today’s Daily Test'));
     await tester.pump();
     expect(toHome, 1);
   });
 
-  testWidgets('the list: every saved weak spot as a card, with the total',
-      (tester) async {
+  testWidgets(
+      'the list: every saved weak spot as a card with its latest mistake '
+      'inline, and the total', (tester) async {
     await pump(tester,
         storage: _Storage(weakSpots: _twoSpots, topicStats: const {
           'articles': TopicStats(practiced: 4, weakSpotCount: 2),
-        }));
-    expect(find.text('Saved weak spots'), findsOneWidget);
+        })
+          ..latest = ErrorEntry(
+            topicId: 'articles',
+            errorType: 'missing_article',
+            timestamp: DateTime(2026, 11, 17),
+            source: ErrorSource.dailyTest,
+            userAnswer: 'She is a tallest girl in her class.',
+            correctedAnswer: 'She is the tallest girl in her class.',
+          ));
+    expect(find.text('Weak spots'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
-    expect(find.byType(WeakSpotCard), findsNWidgets(2));
+    expect(find.byType(ReviewSpotCard), findsNWidgets(2));
+    expect(find.byType(InlineMistake), findsNWidgets(2));
+    final parts = InlineMistake.parts(
+        tester.widget<InlineMistake>(find.byType(InlineMistake).first).entry)!;
+    expect(parts.map((p) => p.$1).join(),
+        'She is a the tallest girl in her class.');
+  });
+
+  // Fix round 6 (the smoke walk): a practice started with the ticket
+  // replaces its screen with the results, which ended Review's wait before
+  // the results had saved the new mistakes; "Back to topics" then showed
+  // the old list.
+  testWidgets(
+      'back on Review after routes above it closed (a practice replaced by '
+      'its results, then "Back to topics"): the weak spots are read again',
+      (tester) async {
+    final storage = _Storage(weakSpots: [_spot('missing_article')]);
+    await pump(tester, storage: storage);
+    expect(find.byType(ReviewSpotCard), findsOneWidget);
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    navigator.push(MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('practice'))));
+    await tester.pumpAndSettle();
+    final readsBefore = storage.weakSpotReads.length;
+    navigator.pushReplacement(MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('results'))));
+    await tester.pumpAndSettle();
+    // The results save the new mistake only now.
+    storage.weakSpots = [_spot('a_vs_an'), _spot('missing_article')];
+    expect(find.byType(ReviewSpotCard), findsNothing, reason: 'covered');
+    navigator.popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    expect(storage.weakSpotReads.length, greaterThan(readsBefore));
+    expect(find.byType(ReviewSpotCard), findsNWidgets(2));
   });
 
   group('sort order (unchanged behaviour, moved to the list heading)', () {
@@ -319,12 +383,19 @@ void main() {
       expect(storage.weakSpotReads.last, ReviewSortOrder.frequent);
     });
 
-    testWidgets('a new choice reloads the list and is saved', (tester) async {
+    testWidgets(
+        'the sort sheet (RV06): two options, the current one checked; a new '
+        'choice reloads the list and is saved', (tester) async {
       final storage = _Storage(weakSpots: _twoSpots);
       await pump(tester, storage: storage);
-      await tester.tap(find.text(ReviewSortOrder.recent.label(en)));
+      await tester.ensureVisible(find.byKey(ReviewScreen.sortKey));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
+      await tester.tap(find.byKey(ReviewScreen.sortKey));
+      await tester.pumpAndSettle();
+      expect(find.text('Sort weak spots'), findsOneWidget);
+      expect(find.text('Newest mistakes first'), findsOneWidget);
+      expect(find.text('The ones you miss most'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('review_sort_frequent')));
       await tester.pumpAndSettle();
       expect(storage.savedSorts, [ReviewSortOrder.frequent]);
       expect(storage.weakSpotReads.last, ReviewSortOrder.frequent);

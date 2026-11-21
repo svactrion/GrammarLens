@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/screens/practice_length_picker.dart';
@@ -55,7 +56,7 @@ void main() {
     expect(find.text('Extended'), findsOneWidget);
     expect(find.text('A deep, thorough workout'), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, 'Start 10 questions'),
+      find.widgetWithText(PressableButton, 'Start 10 questions'),
       findsOneWidget,
     );
   });
@@ -74,11 +75,11 @@ void main() {
 
     expect(find.text('Quick'), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, 'Start 3 questions'),
+      find.widgetWithText(PressableButton, 'Start 3 questions'),
       findsOneWidget,
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Start 3 questions'));
+    await tester.tap(find.widgetWithText(PressableButton, 'Start 3 questions'));
     await tester.pumpAndSettle();
 
     expect(harness.resolved, isTrue);
@@ -97,31 +98,19 @@ void main() {
     expect(harness.result, isNull);
   });
 
-  testWidgets('changing the slider stop fires a selection-click haptic once',
+  testWidgets('changing the slider stop fires a selection haptic once',
       (tester) async {
-    final hapticCalls = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'HapticFeedback.vibrate') hapticCalls.add(call);
-        return null;
-      },
-    );
-    addTearDown(() {
-      tester.binding.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null);
-    });
-
     await _openPicker(tester, initial: PracticeLength.standard);
+    HapticMap.log = [];
 
     tester.widget<Slider>(find.byType(Slider)).onChanged!(2); // -> Extended
     await tester.pump();
-    expect(hapticCalls, hasLength(1));
+    expect(HapticMap.log, ['selection']);
 
     // Re-reporting the same stop is not a change and must not re-fire it.
     tester.widget<Slider>(find.byType(Slider)).onChanged!(2);
     await tester.pump();
-    expect(hapticCalls, hasLength(1));
+    expect(HapticMap.log, ['selection']);
   });
 
   testWidgets('semanticFormatterCallback reports the count and name',
@@ -152,18 +141,46 @@ void main() {
   });
 
   testWidgets(
-      'normal motion animates the selection-card transitions over 180ms',
-      (tester) async {
+      'normal motion: the text cross-fades over 180 ms, the count rolls over '
+      '250 ms (R02)', (tester) async {
     await _openPicker(tester, initial: PracticeLength.standard);
 
-    for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
+    for (final (key, ms) in [
+      ('lengthTextSwitcher', 180),
+      ('lengthNumberSwitcher', 250),
+    ]) {
       final switcher = tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
-      expect(
-        switcher.duration,
-        const Duration(milliseconds: 180),
-        reason: key,
-      );
+      expect(switcher.duration, Duration(milliseconds: ms), reason: key);
     }
+  });
+
+  testWidgets(
+      'R02: the count rolls — a longer length comes in from below and the old '
+      'one leaves upwards; a shorter one the other way', (tester) async {
+    await _openPicker(tester, initial: PracticeLength.standard);
+    final dial = find.byKey(const Key('lengthNumberSwitcher'));
+    double y(String text) => tester
+        .getCenter(find.descendant(of: dial, matching: find.text(text)))
+        .dy;
+    final rest = y('5');
+
+    // 5 → 10: drag the knob to the last stop.
+    await tester.drag(find.byType(Slider), const Offset(400, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(y('10'), greaterThan(rest + 1), reason: 'comes in from below');
+    expect(y('5'), lessThan(rest - 1), reason: 'leaves upwards');
+    await tester.pumpAndSettle();
+    expect(y('10'), closeTo(rest, .5));
+
+    // 10 → 3: down.
+    await tester.drag(find.byType(Slider), const Offset(-800, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(y('3'), lessThan(rest - 1), reason: 'comes in from above');
+    expect(y('10'), greaterThan(rest + 1), reason: 'leaves downwards');
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: dial, matching: find.text('10')), findsNothing);
   });
 
   testWidgets(

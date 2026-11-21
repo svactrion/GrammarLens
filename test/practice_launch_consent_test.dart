@@ -166,11 +166,11 @@ void main() {
             analyticsService: AnalyticsService(),
             subscriptionService: _Subscription(hasAccess: premium),
           ),
-      // 1.2.0 (N3): a free user's button says "Start free practice", a
-      // premium user's still "Practice this".
+      // UI polish R03: a free user uses today's ticket (it tears, then the
+      // launch runs), a premium user taps "Practice this".
       start: (tester) async => tester.tap(find.byWidgetPredicate((w) =>
           w is Text &&
-          (w.data == 'Practice this' || w.data == 'Start free practice'))),
+          (w.data == 'Practice this' || w.data == 'Use today’s ticket'))),
     ),
   };
 

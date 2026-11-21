@@ -1,14 +1,23 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart' show HitTestResult;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/app_colors.dart';
+import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/motion.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/screens/premium_on_screen.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
@@ -16,8 +25,8 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
 
+import 'support/fix3_render.dart';
 import 'support/l10n_support.dart';
 
 /// Records every call instead of the real (best-effort, silently
@@ -264,7 +273,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // "Maybe later"/post-success "Continue" both pop this screen — that's
+  // The close button / post-success "Continue" both pop this screen — that's
   // only observable by actually pushing it onto a real stack first, unlike
   // [pumpPremium] above which plants it as the app's sole route.
   Future<void> pumpPremiumPushed(
@@ -315,7 +324,9 @@ void main() {
   // alone would do it.
   Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(finder, 300);
-    await tester.ensureVisible(finder);
+    // Centred, not at the top: the longer V13c page (fix round 2) can now
+    // scroll a plan under the pinned top bar.
+    await Scrollable.ensureVisible(tester.element(finder), alignment: .5);
     await tester.pumpAndSettle();
     await tester.tap(finder);
     await tester.pumpAndSettle();
@@ -363,62 +374,6 @@ void main() {
     // carry this claim entirely, rather than relocating it — its absence
     // is the fix, not a specific replacement sentence.
     expect(find.textContaining('forever'), findsNothing);
-  });
-
-  testWidgets(
-      'the comparison table lists exactly the four real features (merged '
-      'down from five), Daily Test free on both sides, weak-spot practice '
-      'free at its real quota, and the rest Premium-only', (tester) async {
-    // bySemanticsLabel needs the semantics tree actually built, which
-    // (unlike a real device with an accessibility service running) is off
-    // by default in a plain widget test. Disposed explicitly at the end
-    // of this test body — addTearDown runs too late for the framework's
-    // own end-of-test "no handle left open" check.
-    final semantics = tester.ensureSemantics();
-
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    await openComparison(tester);
-    final header = find.text('FREE');
-    await tester.scrollUntilVisible(header, 300);
-
-    expect(header, findsOneWidget);
-    expect(find.text('PREMIUM'), findsOneWidget);
-
-    expect(find.text('Daily Test, refreshed every day'), findsOneWidget);
-    expect(find.text('Topic Practice, all five topics'), findsOneWidget);
-    // "Questions from your own mistakes" and "Targeted weak-spot practice"
-    // used to be two separate rows, both wrongly showing free as "—" —
-    // merged into one, with the real per-day quota
-    // (StorageService.freeDailyPracticeLimit) shown as text, not a
-    // checkmark/dash.
-    expect(find.text('Questions from your own mistakes'), findsNothing);
-    expect(find.text('Targeted weak-spot practice'), findsNothing);
-    // 1.2.0: the benefits card has a line of the same name; the row is the
-    // table's own.
-    expect(
-        find.descendant(
-            of: find.byKey(const Key('comparisonTable')),
-            matching: find.text('Practice your weak spots')),
-        findsOneWidget);
-    expect(
-      find.text('${StorageService.freeDailyPracticeLimit} a day'),
-      findsOneWidget,
-    );
-    // Session lengths read off PracticeLength, not hardcoded — see
-    // premium_screen.dart's _joinWithOr.
-    expect(find.text('Sessions of 3, 5 or 10 questions'), findsOneWidget);
-    // Never claims unlimited anywhere on the table.
-    expect(find.textContaining('Unlimited'), findsNothing);
-    expect(find.textContaining('unlimited'), findsNothing);
-
-    // Daily Test is free (checkmark); Topic Practice and Sessions are not
-    // (dash); the merged weak-spot row uses its own text value instead of
-    // either glyph, so it contributes to neither count. Premium includes
-    // all four rows.
-    expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
-    expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(2));
-    expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
-    semantics.dispose();
   });
 
   testWidgets(
@@ -590,11 +545,12 @@ void main() {
     });
   });
 
-  testWidgets('Restore Purchases is always reachable and never crashes',
+  testWidgets(
+      'Restore (V13 v12: the short label) is always reachable and never crashes',
       (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
-    await scrollAndTap(tester, find.text('Restore Purchases'));
+    await scrollAndTap(tester, find.text('Restore'));
 
     expect(
       find.textContaining('No previous purchases found'),
@@ -604,19 +560,20 @@ void main() {
 
   group('legal links (App Store required)', () {
     testWidgets(
-        'Privacy Policy / Terms are present and enabled now that '
-        "AppLinks' URLs are real", (tester) async {
+        'Privacy / Terms (V13 v12: the short labels; VoiceOver reads the '
+        "full names) are present and enabled now that AppLinks' URLs are "
+        'real', (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
       await scrollToEnd(tester);
 
-      expect(find.text('Privacy Policy'), findsOneWidget);
-      expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Privacy'), findsOneWidget);
+      expect(find.text('Terms'), findsOneWidget);
 
       final privacyButton = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Privacy Policy'),
+        find.widgetWithText(TextButton, 'Privacy'),
       );
       final termsButton = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Terms of Service'),
+        find.widgetWithText(TextButton, 'Terms'),
       );
       // AppLinks.privacyPolicyUrl / termsUrl are real, permanent URLs as
       // of the custom-domain batch (see app_links.dart) — the buttons
@@ -630,17 +587,26 @@ void main() {
     });
   });
 
+  // V13 v12 (SPEC §1.23): no "Maybe later" anywhere; the close button is
+  // the way out (V13b once per session).
   testWidgets(
-      '"Maybe later" is always present, calls onDone, and returns to '
+      'no "Maybe later": the close button calls onDone and returns to '
       'whatever pushed this screen', (tester) async {
+    PremiumScreen.resetExitReminder();
     var doneCalled = false;
     await pumpPremiumPushed(
       tester,
       _FakeSubscriptionService(offering: null),
       onDone: () => doneCalled = true,
     );
+    expect(find.text('Maybe later'), findsNothing);
+    await scrollToEnd(tester);
+    expect(find.text('Maybe later'), findsNothing);
 
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    // Without prices there is nothing to remind of: no V13b.
+    expect(find.byKey(PremiumScreen.exitContinueFreeKey), findsNothing);
 
     expect(doneCalled, isTrue);
     expect(find.byType(PremiumScreen), findsNothing);
@@ -648,11 +614,13 @@ void main() {
   });
 
   testWidgets(
-      'with no onDone provided (Home-reached), "Maybe later" just pops '
+      'with no onDone provided (Home-reached), the close button just pops '
       'without crashing', (tester) async {
+    PremiumScreen.resetExitReminder();
     await pumpPremiumPushed(tester, _FakeSubscriptionService(offering: null));
 
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsNothing);
     expect(find.text('open premium'), findsOneWidget);
@@ -800,8 +768,12 @@ void main() {
       await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(service.purchaseCalls, 1);
+      // PW05 opens over the paywall, which keeps its success state.
+      expect(find.byType(PremiumOnScreen), findsOneWidget);
+      expect(find.text('Premium is on!'), findsOneWidget);
       expect(
-        find.textContaining('Trial started — Topic Practice is unlocked'),
+        find.textContaining('Trial started — Topic Practice is unlocked',
+            skipOffstage: false),
         findsOneWidget,
       );
     });
@@ -853,14 +825,17 @@ void main() {
 
       await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
-      expect(find.text('Continue'), findsOneWidget);
+      // PW05: the celebration, with the trial's end date written plainly.
+      expect(find.byType(PremiumOnScreen), findsOneWidget);
+      expect(find.textContaining('Your free trial ends on'), findsOneWidget);
       expect(find.text('Start my 7-day free trial'), findsNothing);
-      // Redundant with "Continue" once a trial has actually started.
       expect(find.text('Maybe later'), findsNothing);
 
-      await scrollAndTap(tester, find.text('Continue'));
+      await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+      await tester.pumpAndSettle();
 
       expect(doneCalled, isTrue);
+      expect(find.byType(PremiumOnScreen), findsNothing);
       expect(find.byType(PremiumScreen), findsNothing);
     });
   });
@@ -995,9 +970,9 @@ void main() {
     }
 
     testWidgets(
-        'pricing-unavailable: the footer shows only "Maybe later" — no CTA, '
-        'no disclosure (the retry card stays in the scrollable body, not '
-        'duplicated here)', (tester) async {
+        'pricing-unavailable: the footer shows only the links (V13 v12: no '
+        '"Maybe later") — no CTA, no disclosure (the retry card stays in the '
+        'scrollable body, not duplicated here)', (tester) async {
       await pumpAt(
         tester,
         size: const Size(375, 667),
@@ -1006,8 +981,9 @@ void main() {
       );
 
       final footer = find.byKey(const Key('premiumFooter'));
+      expect(find.text('Maybe later'), findsNothing);
       expect(
-        find.descendant(of: footer, matching: find.text('Maybe later')),
+        find.descendant(of: footer, matching: find.text('Privacy')),
         findsOneWidget,
       );
       expect(
@@ -1026,8 +1002,8 @@ void main() {
     });
 
     testWidgets(
-        'loading: the footer shows a disabled spinner CTA and "Maybe '
-        'later", no disclosure yet', (tester) async {
+        'loading: the footer shows a disabled spinner CTA and the links, '
+        'no disclosure yet', (tester) async {
       final completer = Completer<Offering?>();
       // Not the pumpAt helper: it pumpAndSettle()s internally, which would
       // hang forever against a completer that's deliberately never
@@ -1064,9 +1040,10 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: footer, matching: find.text('Maybe later')),
+        find.descendant(of: footer, matching: find.text('Restore')),
         findsOneWidget,
       );
+      expect(find.text('Maybe later'), findsNothing);
 
       completer.complete(null);
       await tester.pumpAndSettle();
@@ -1111,30 +1088,6 @@ void main() {
     // (about twice as wide as the real one) and predates the legal links
     // moving into the footer (2026-09-22, owner decision); it is replaced by
     // real-font assertions.
-
-    testWidgets(
-        "the PREMIUM header doesn't overflow at 1.3x or 2.0x text scale "
-        '(replaces the old FittedBox(scaleDown) safety net with a real '
-        'measured width)', (tester) async {
-      for (final scale in [1.3, 2.0]) {
-        await pumpAt(
-          tester,
-          size: const Size(375, 667),
-          textScale: scale,
-          service: _FakeSubscriptionService(offering: null),
-        );
-        await openComparison(tester);
-        // At large scales the table falls back to the stacked layout (see
-        // the "stacked comparison" group); either way nothing may overflow.
-        await tester.scrollUntilVisible(
-          find.byKey(const ValueKey('comparisonRow_Practice your weak spots')),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(tester.takeException(), isNull,
-            reason: 'overflow at ${scale}x text scale');
-      }
-    });
 
     testWidgets(
         'no overflow anywhere at 320pt or 375pt width, default text scale',
@@ -1202,7 +1155,9 @@ void main() {
       avatar: Avatar.values[6], // avatar_07, arbitrary but fixed
     );
 
-    // Reads each AvatarTile's own `avatar` property directly rather than
+    // Fix round 2 (V13): the trio is three CompanionViews (the side ones
+    // float, the middle one hops) instead of round AvatarTiles.
+    // Reads each CompanionView's own `hero` property directly rather than
     // scanning semantics labels — the hero collapses to one semantic node
     // (see _AvatarHero's own doc comment: the other four are decorative,
     // not individually meaningful to a screen reader), so which avatars
@@ -1217,8 +1172,10 @@ void main() {
     }
 
     List<Avatar?> avatarsShown(WidgetTester tester) => tester
-        .widgetList<AvatarTile>(find.byType(AvatarTile))
-        .map((tile) => tile.avatar)
+        .widgetList<CompanionView>(find.descendant(
+            of: find.byKey(PremiumScreen.heroKey),
+            matching: find.byType(CompanionView)))
+        .map((tile) => tile.hero)
         .toList();
 
     testWidgets(
@@ -1292,10 +1249,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AvatarTile), findsNWidgets(3));
-      for (final tile
-          in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
-        expect(tile.avatar, isNotNull,
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNWidgets(3));
+      for (final tile in tester.widgetList<CompanionView>(find.descendant(
+          of: find.byKey(PremiumScreen.heroKey),
+          matching: find.byType(CompanionView)))) {
+        expect(tile.hero, isNotNull,
             reason: 'no tile should fall back to the null/placeholder '
                 'branch in the hero');
       }
@@ -1340,7 +1302,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(AvatarTile), findsNWidgets(3));
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNWidgets(3));
     });
 
     for (final width in [320.0, 390.0]) {
@@ -1362,7 +1328,9 @@ void main() {
             ),
           ));
           await tester.pumpAndSettle();
-          final tiles = find.byType(AvatarTile);
+          final tiles = find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView));
           // 1.2.0 (O11): three at every width.
           const count = 3;
           expect(tiles, findsNWidgets(count));
@@ -1370,18 +1338,32 @@ void main() {
           final rects =
               List.generate(count, (i) => tester.getRect(tiles.at(i)));
           final center = rects[count ~/ 2];
-          expect(center.center.dx, closeTo(width / 2, 0.01));
+          // The board's side companions are 70 and 64 pt (V13), so the
+          // centred row puts the middle one 3 pt off the centre.
+          expect(center.center.dx, closeTo(width / 2, 3.01));
           for (var i = 0; i < count; i++) {
             expect(rects[i].left, greaterThanOrEqualTo(0));
             expect(rects[i].right, lessThanOrEqualTo(width));
             if (i != count ~/ 2) expect(rects[i].width, lessThan(center.width));
             if (i > 0) {
+              // The board's 4 pt gap (V13, fix round 2).
               expect(
-                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(8));
+                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(4));
             }
           }
           expect(find.ancestor(of: tiles, matching: find.byType(Opacity)),
               findsNothing);
+          // The side ones float, the middle one hops.
+          expect(
+              tester
+                  .widgetList<CompanionView>(tiles)
+                  .map((c) => c.ambient)
+                  .toList(),
+              [
+                CompanionAmbient.float,
+                CompanionAmbient.hop,
+                CompanionAmbient.float
+              ]);
           expect(tester.takeException(), isNull);
         });
       }
@@ -1428,28 +1410,71 @@ void main() {
     });
 
     testWidgets(
-        'tapping "Maybe later" logs paywall_dismissed with method '
-        'maybe_later', (tester) async {
+        'V13b: the first close of a session asks once (the sad companion, no '
+        'discount); "Continue with free" closes with close_button',
+        (tester) async {
+      PremiumScreen.resetExitReminder();
       final analytics = _FakeAnalyticsService();
       await pumpPremiumPushed(
         tester,
-        _FakeSubscriptionService(offering: null),
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
         analyticsService: analytics,
       );
+      HapticMap.log = [];
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(HapticMap.log, contains('light'));
+      expect(find.byKey(PremiumScreen.exitStartKey), findsOneWidget);
+      expect(find.text('Continue with free'), findsOneWidget);
+      // No discount: the pop-up's line is about the weak spots only.
+      expect(
+          find.text('Your weak spots are waiting. Premium turns each one into '
+              'practice with AI feedback.'),
+          findsOneWidget);
+      final companion =
+          tester.widgetList<CompanionView>(find.byType(CompanionView)).last;
+      expect(companion.mood, CompanionMood.sad);
+      expect(
+          analytics.calls.where((c) => c.name == 'paywall_dismissed'), isEmpty);
 
-      await scrollAndTap(tester, find.text('Maybe later'));
-
+      await tester.tap(find.byKey(PremiumScreen.exitContinueFreeKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsNothing);
       final dismissed =
           analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
-      expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
-          AnalyticsService.paywallDismissMaybeLater);
+          AnalyticsService.paywallDismissCloseButton);
+
+      // Once per session: the next paywall closes at once.
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PremiumScreen.exitStartKey), findsNothing);
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+
+    testWidgets('V13b: its primary button starts the purchase', (tester) async {
+      PremiumScreen.resetExitReminder();
+      final service = _FakeSubscriptionService(
+        offering: _offeringWithBothPlans(),
+        purchaseOutcome: PurchaseOutcome.cancelled,
+      );
+      await pumpPremiumPushed(tester, service);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(PremiumScreen.exitStartKey));
+      await tester.pumpAndSettle();
+      expect(service.purchaseCalls, 1);
+      expect(find.byType(PremiumScreen), findsOneWidget);
     });
 
     testWidgets(
-        'a system back gesture (no button tapped) logs paywall_dismissed '
-        'with method system_back, via PopScope observing the pop rather '
-        'than a specific onPressed', (tester) async {
+        'fix round 5 (V13 v13): a system back gesture (no button tapped) '
+        'does not close the paywall and logs no paywall_dismissed; the X '
+        'still closes it with method close_button', (tester) async {
       final analytics = _FakeAnalyticsService();
       await pumpPremiumPushed(
         tester,
@@ -1458,18 +1483,23 @@ void main() {
       );
 
       // The standard way to simulate a hardware/gesture back in a widget
-      // test — this reaches the same Navigator.maybePop() path a real
-      // system back would, without going through any of this screen's
-      // own buttons.
+      // test — the same Navigator.maybePop() path a real system back takes,
+      // without going through any of this screen's own buttons.
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
+      expect(find.byType(PremiumScreen), findsOneWidget);
+      expect(
+          analytics.calls.where((c) => c.name == 'paywall_dismissed'), isEmpty);
+
+      await tester.tap(find.byKey(PremiumScreen.closeKey));
+      await tester.pumpAndSettle();
       expect(find.byType(PremiumScreen), findsNothing);
       final dismissed =
           analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
       expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
-          AnalyticsService.paywallDismissSystemBack);
+          AnalyticsService.paywallDismissCloseButton);
     });
 
     testWidgets(
@@ -1498,7 +1528,8 @@ void main() {
       expect(result.parameters['plan'], AnalyticsService.planAnnual);
       expect(result.parameters['outcome'], 'success');
 
-      await scrollAndTap(tester, find.text('Continue'));
+      await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+      await tester.pumpAndSettle();
       expect(
         analytics.calls.where((c) => c.name == 'paywall_dismissed'),
         isEmpty,
@@ -1543,208 +1574,76 @@ void main() {
     });
   });
 
-  group(
-      'the free-value column (bugfix batch: no longer shares a flex '
-      "factor with the row label, which used to squeeze the weak-spot "
-      'row\'s "1 a day" into a narrow sliver that silently overflowed '
-      "its row vertically — a failure mode ordinary overflow tests don't "
-      'catch, since Flutter only reports a *horizontal* RenderFlex '
-      'overflow as an exception)', () {
-    Future<void> pumpAt(
-      WidgetTester tester, {
-      required Size size,
-      required double textScale,
-    }) async {
-      tester.view.physicalSize = size * 2.0;
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      tester.platformDispatcher.textScaleFactorTestValue = textScale;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService:
-                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-    }
-
-    for (final size in [
-      const Size(320, 700),
-      const Size(375, 700),
-      const Size(393, 852),
-    ]) {
-      for (final scale in [1.0, 1.3]) {
-        testWidgets(
-            'the weak-spot row\'s label, its free value, and the row '
-            'itself never overlap at ${size.width.toInt()}x'
-            '${size.height.toInt()} @${scale}x textScale', (tester) async {
-          await pumpAt(tester, size: size, textScale: scale);
-          expect(tester.takeException(), isNull);
-
-          final row = find.byKey(
-            const ValueKey('comparisonRow_Practice your weak spots'),
-          );
-          await tester.scrollUntilVisible(row, 300);
-          final rowRect = tester.getRect(row);
-
-          final labelRect = tester.getRect(
-            find.descendant(
-              of: row,
-              matching: find.text('Practice your weak spots'),
-            ),
-          );
-          // Either "1 a day" (the common case) or the "1/day" fallback at
-          // the narrowest widths — either way, exactly one free-value
-          // text renders, on one line.
-          final freeValueFinder = find.descendant(
-            of: row,
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is Text &&
-                  (widget.data == '1 a day' || widget.data == '1/day'),
-            ),
-          );
-          expect(freeValueFinder, findsOneWidget);
-          final freeValueRect = tester.getRect(freeValueFinder);
-
-          expect(labelRect.overlaps(freeValueRect), isFalse,
-              reason: 'the label and the free-value text must never '
-                  'occupy the same screen space');
-          expect(
-            rowRect.top <= freeValueRect.top &&
-                freeValueRect.bottom <= rowRect.bottom,
-            isTrue,
-            reason: 'the free value must stay within its own row\'s '
-                'vertical bounds, not spill into the divider or the row '
-                'below it — this is exactly the silent, non-throwing '
-                'overflow this batch fixed',
-          );
-        });
-      }
-    }
-  });
-
   testWidgets(
-      'the FREE header shares a horizontal center with the checkmarks '
-      'below it, not just a right edge', (tester) async {
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    await openComparison(tester);
-    final freeHeader = find.text('FREE');
-    await tester.scrollUntilVisible(freeHeader, 300);
-    final freeHeaderCenterX = tester.getCenter(freeHeader).dx;
-
-    final firstRow = find.byKey(
-      const ValueKey('comparisonRow_Daily Test, refreshed every day'),
-    );
-    // Row 1 is free (a checkmark, not text) — its free-column check mark
-    // is the first "Included in Free" glyph in the tree, distinct from
-    // that same row's Premium-column check mark.
-    final freeCheck = find
-        .descendant(of: firstRow, matching: find.byIcon(Icons.check_rounded))
-        .first;
-    final freeCheckCenterX = tester.getCenter(freeCheck).dx;
-
-    expect((freeHeaderCenterX - freeCheckCenterX).abs(), lessThan(1.0),
-        reason: 'FREE and the column of checkmarks/dashes beneath it must '
-            'share one x-center, not just happen to line up at the right '
-            'edge');
-  });
-
-  group(
-      'the Premium strip\'s fill color (visual-polish batch: dark mode '
-      'no longer uses the same saturated secondaryContainer as light '
-      'mode)', () {
-    testWidgets(
-        'dark theme: the strip fills with the calmer surfaceContainerHighest',
-        (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(Brightness.dark),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(offering: null),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-
-      final strip = find.byKey(const Key('premiumStripHeader'));
-      await tester.scrollUntilVisible(strip, 300);
-      final container = tester.widget<Container>(
-        find.descendant(of: strip, matching: find.byType(Container)).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(
-        decoration.color,
-        buildAppTheme(Brightness.dark).colorScheme.surfaceContainerHighest,
-      );
-    });
-
-    testWidgets('light theme: the strip keeps secondaryContainer, unchanged',
-        (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(offering: null),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-
-      final strip = find.byKey(const Key('premiumStripHeader'));
-      await tester.scrollUntilVisible(strip, 300);
-      final container = tester.widget<Container>(
-        find.descendant(of: strip, matching: find.byType(Container)).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(
-        decoration.color,
-        buildAppTheme(Brightness.light).colorScheme.secondaryContainer,
-      );
-    });
-  });
-
-  testWidgets(
-      '"Compare Free & Premium" opens and closes the comparison table; it '
-      'starts closed and says so to screen readers', (tester) async {
-    final semantics = tester.ensureSemantics();
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    final toggle = find.byKey(PremiumScreen.compareToggleKey);
-    expect(find.byKey(const Key('comparisonTable')), findsNothing);
-    expect(tester.getSemantics(toggle),
-        isSemantics(hasExpandedState: true, isExpanded: false, isButton: true));
-
-    await openComparison(tester);
-    expect(find.byKey(const Key('comparisonTable')), findsOneWidget);
-    expect(tester.getSemantics(toggle),
-        isSemantics(hasExpandedState: true, isExpanded: true, isButton: true));
-
-    await tester.tap(toggle);
+      'V13c (v11): Free vs Premium is on the page before the plans, with no '
+      'toggle; "Compare plans" scrolls to it, "Choose your plan" on to the '
+      'plans', (tester) async {
+    await pumpPremium(
+        tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+    expect(find.byKey(PremiumScreen.compareToggleKey), findsNothing);
+    final table = find.byKey(PremiumScreen.compareKey);
+    expect(table, findsOneWidget);
+    final plansTitle = find.descendant(
+        of: find.byKey(const Key('premiumBody')),
+        matching: find.text('Choose your plan'));
+    expect(tester.getTopLeft(plansTitle.last).dy,
+        greaterThan(tester.getTopLeft(table).dy));
+    await tester.tap(find.byKey(PremiumScreen.comparePlansKey));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('comparisonTable')), findsNothing);
-    semantics.dispose();
+    expect(tester.getTopLeft(table).dy, lessThan(200));
+    await tester.tap(find.byKey(PremiumScreen.choosePlanHintKey));
+    await tester.pumpAndSettle();
+    // The plans end the page: scrolled as far as it goes, the title in the
+    // upper half of the screen.
+    expect(tester.getTopLeft(plansTitle.last).dy, lessThan(844 / 2));
+  });
+
+  testWidgets(
+      'V13a / V13c: below the first view the plans wait; scrolled in, they '
+      'rise in 60 ms apart and the table rows fade in 40 ms apart; their '
+      'semantics stay while they wait', (tester) async {
+    await pumpPremium(
+        tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+    double opacity(Key key) => tester
+        .widget<Opacity>(find
+            .descendant(of: find.byKey(key), matching: find.byType(Opacity))
+            .first)
+        .opacity;
+    final first = PremiumScreen.planRevealKey(0);
+    final second = PremiumScreen.planRevealKey(1);
+    // Under the first view: not played yet, still read by VoiceOver.
+    if (tester.getTopLeft(find.byKey(first)).dy > 844 * .8) {
+      expect(opacity(first), 0);
+      expect(
+          tester
+              .widget<Opacity>(find
+                  .descendant(
+                      of: find.byKey(first), matching: find.byType(Opacity))
+                  .first)
+              .alwaysIncludeSemantics,
+          isTrue);
+    }
+    await scrollAndTap(tester, find.byKey(PremiumScreen.choosePlanHintKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 420));
+    await tester.pump(const Duration(milliseconds: 80));
+    // The first plan is ahead of the second.
+    expect(opacity(first), greaterThanOrEqualTo(opacity(second)));
+    await tester.pumpAndSettle();
+    expect(opacity(first), 1);
+    expect(opacity(second), 1);
+    expect(opacity(PremiumScreen.rowRevealKey(0)), 1);
+    // Nothing is left offset once played.
+    final plan = tester.widget<Transform>(find
+        .descendant(of: find.byKey(second), matching: find.byType(Transform))
+        .first);
+    expect(plan.transform.getTranslation().y, 0);
   });
 
   group(
-      'the footer keeps its top border in every state: the legal links now sit '
-      'above "Maybe later", so the rule separates them from the body', () {
-    testWidgets('pricing unavailable: links and "Maybe later" under a border',
+      'the footer keeps its top border in every state, so the rule separates '
+      'it from the body', () {
+    testWidgets('pricing unavailable: the links under a border',
         (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
@@ -1761,7 +1660,7 @@ void main() {
       expect(
           find.descendant(
               of: find.byKey(const Key('premiumFooter')),
-              matching: find.text('Privacy Policy')),
+              matching: find.text('Privacy')),
           findsOneWidget);
     });
 
@@ -1911,7 +1810,9 @@ void main() {
           lessThanOrEqualTo(viewportHeight));
 
       final monthly = find.byKey(const ValueKey('planCard_Monthly'));
-      await tester.ensureVisible(monthly);
+      // Centred (fix round 2: the longer V13c page can scroll a card to the
+      // very top, which says nothing about reaching both).
+      await Scrollable.ensureVisible(tester.element(monthly), alignment: .5);
       await tester.pumpAndSettle();
       expect(tester.getRect(monthly).bottom, lessThanOrEqualTo(footerTop));
       expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))).top,
@@ -1970,10 +1871,10 @@ void main() {
           Rect disclosure,
           Rect privacy,
           Rect terms,
-          Rect maybeLater,
+          Rect restore,
           Rect privacyTarget,
           Rect termsTarget,
-          Rect maybeLaterTarget,
+          Rect restoreTarget,
           bool disclosureTruncated,
         })> measure(WidgetTester tester) async {
       final disclosureFinder = find.textContaining('auto-renews');
@@ -2010,12 +1911,12 @@ void main() {
             matching: find.byType(SingleChildScrollView))),
         cta: tester.getRect(find.byKey(PremiumScreen.ctaKey)),
         disclosure: tester.getRect(disclosureFinder),
-        privacy: tester.getRect(find.text('Privacy Policy')),
-        terms: tester.getRect(find.text('Terms of Service')),
-        maybeLater: tester.getRect(find.text('Maybe later')),
-        privacyTarget: target('Privacy Policy'),
-        termsTarget: target('Terms of Service'),
-        maybeLaterTarget: target('Maybe later'),
+        privacy: tester.getRect(find.text('Privacy')),
+        terms: tester.getRect(find.text('Terms')),
+        restore: tester.getRect(find.text('Restore')),
+        privacyTarget: target('Privacy'),
+        termsTarget: target('Terms'),
+        restoreTarget: target('Restore'),
         disclosureTruncated: tester
             .renderObject<RenderParagraph>(disclosureFinder)
             .didExceedMaxLines,
@@ -2028,7 +1929,7 @@ void main() {
         'the disclosure sentence': m.disclosure as Rect,
         'the Privacy Policy link': m.privacy as Rect,
         'the Terms of Service link': m.terms as Rect,
-        'Maybe later': m.maybeLater as Rect,
+        'Restore': m.restore as Rect,
       }.entries) {
         expect(entry.value.top, greaterThanOrEqualTo(m.scrollRegion.top),
             reason: '${entry.key} starts inside the screen');
@@ -2040,20 +1941,25 @@ void main() {
       expect(m.terms.top, greaterThanOrEqualTo(m.footer.top));
       expect(m.disclosureTruncated, isFalse,
           reason: 'the disclosure sentence is never cut off');
-      // The footer was tightened without shrinking any target: the legal links
-      // and "Maybe later" are at least 44 pt tall, and the purchase button
-      // keeps the app's button height (48 since 1.2.0, 52 before).
+      // The footer was tightened without shrinking any target: Restore and
+      // the legal links are at least 44 pt tall, and the purchase button
+      // keeps its height (V13 v12: 54).
       for (final entry in {
         'the Privacy Policy link': m.privacyTarget as Rect,
         'the Terms of Service link': m.termsTarget as Rect,
-        'Maybe later': m.maybeLaterTarget as Rect,
+        'Restore': m.restoreTarget as Rect,
       }.entries) {
         expect(entry.value.height, greaterThanOrEqualTo(44),
             reason: '${entry.key} keeps a 44 pt target');
         expect(entry.value.width, greaterThanOrEqualTo(44),
             reason: '${entry.key} is at least 44 pt wide');
       }
-      expect((m.cta as Rect).height, greaterThanOrEqualTo(48));
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(54));
+      // V13 v12: the three on one row.
+      expect((m.privacy as Rect).center.dy,
+          closeTo((m.restore as Rect).center.dy, 1));
+      expect((m.terms as Rect).center.dy,
+          closeTo((m.restore as Rect).center.dy, 1));
     }
 
     // The two sizes the owner asked for, at the sizes the app offers: on an
@@ -2078,7 +1984,11 @@ void main() {
         // The text above it keeps more room than before (373 and 369 pt).
         expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
-        expect(find.byType(AvatarTile), findsNothing);
+        expect(
+            find.descendant(
+                of: find.byKey(PremiumScreen.heroKey),
+                matching: find.byType(CompanionView)),
+            findsNothing);
         // ...which lifts the content: the headline and the start of the
         // benefits card are in view (1.2.0: the comparison table is behind
         // "Compare Free & Premium" and the plan cards come after the
@@ -2097,9 +2007,9 @@ void main() {
         expect(
             find.descendant(
                 of: find.byKey(const Key('premiumFooter')),
-                matching: find.text('Restore Purchases')),
+                matching: find.text('Restore')),
             findsOneWidget);
-        expect(tester.getRect(find.text('Restore Purchases')).bottom,
+        expect(tester.getRect(find.text('Restore')).bottom,
             lessThanOrEqualTo(667));
       });
 
@@ -2118,12 +2028,10 @@ void main() {
       });
     }
 
-    // The new Large (1.31, final pass): everything above still holds except
-    // the footer's share. Measured: 233 pt of 667 (0.349, over a third) at
-    // 1x and 308 pt (0.462) at a 1.6x system scale; the text area above it
-    // is 362 pt at 1x. Keeping the links in
-    // the footer on the first screen and the footer under a third cannot
-    // both hold at this size without smaller text; reported to the owner.
+    // The new Large (1.31, final pass). Measured before fix round 4: 233 pt
+    // of 667 (0.349, over a third) at 1x and 308 pt (0.462) at a 1.6x
+    // system scale. With V13 v12's compact footer (no "Maybe later", the
+    // links on one row): 144 pt (0.216) and 243 pt (0.364).
     for (final systemScale in [1.0, 1.6]) {
       testWidgets(
           '375x667, large (the new Large), system text ${systemScale}x: the '
@@ -2137,7 +2045,7 @@ void main() {
 
         expectOnFirstScreen(m, 667);
         expect(m.footer.height / 667,
-            closeTo(systemScale == 1 ? 0.349 : 0.462, 0.01));
+            closeTo(systemScale == 1 ? 0.216 : 0.364, 0.01));
         // The text area above: 362 pt at 1x (385+ at Small and Medium).
         expect(
             m.scrollRegion.height, greaterThan(systemScale == 1 ? 355 : 285));
@@ -2145,30 +2053,25 @@ void main() {
     }
 
     testWidgets(
-        '375x667 Medium: the footer stack is tight: the disclosure sits close '
-        'under the button, the links directly under the disclosure, and '
-        '"Maybe later" directly under the links, each a 44 pt target',
-        (tester) async {
+        '375x667 Medium (V13 v12): the footer stack is tight: the price line '
+        '6 pt under the button, the links 6 pt under it on one row, each a '
+        '44 pt target', (tester) async {
       await pumpMeasured(tester,
           size: const Size(375, 667), textSize: AppTextSize.medium);
       final m = await measure(tester);
 
-      // Button to disclosure: a small gap, never more than 6 pt.
+      // Button to the price line: 6 pt (the lip's 5 pt included in the
+      // button's box).
       expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
-      // Disclosure to the links row, and the links row to "Maybe later":
-      // the targets are stacked with no space between them. Since Batch 13
-      // the links' targets reach up over the (non-interactive) disclosure's
-      // lower edge, so they may start above its bottom: still no dead gap.
+      // The price line to the links' drawn row; the links' targets reach up
+      // over the (non-interactive) price line's lower edge.
       final linksTop = m.privacyTarget.top;
-      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-14, 1));
-      expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
-          inInclusiveRange(0, 1));
-      // Padding above the button and under "Maybe later".
-      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
-      expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
-      // The whole footer, 375x667 Medium: 165 pt since Batch 13 (176 in
-      // Batch 12, 196 before 1.2.0, 218 before that).
-      expect(m.footer.height, lessThanOrEqualTo(196));
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-12, 7));
+      // Padding above the button and under the links.
+      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(12));
+      expect(m.footer.bottom - m.privacyTarget.bottom, lessThanOrEqualTo(1));
+      // The whole footer, 375x667 Medium (no home indicator inset).
+      expect(m.footer.height, lessThanOrEqualTo(150));
     });
 
     testWidgets(
@@ -2181,14 +2084,14 @@ void main() {
           systemScale: 3);
       final footer = find.byKey(const Key('premiumFooter'));
 
-      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+      expect(find.descendant(of: footer, matching: find.text('Privacy')),
           findsNothing);
       expect(tester.takeException(), isNull);
       // Still there, at the end of the body.
-      await tester.scrollUntilVisible(find.text('Privacy Policy'), 300,
+      await tester.scrollUntilVisible(find.text('Privacy'), 300,
           scrollable: bodyScrollable);
-      expect(find.text('Privacy Policy'), findsOneWidget);
-      expect(find.text('Terms of Service'), findsOneWidget);
+      expect(find.text('Privacy'), findsOneWidget);
+      expect(find.text('Terms'), findsOneWidget);
     });
 
     testWidgets(
@@ -2214,13 +2117,11 @@ void main() {
           pricingLoaded: false);
       final footer = find.byKey(const Key('premiumFooter'));
 
-      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+      expect(find.descendant(of: footer, matching: find.text('Privacy')),
           findsOneWidget);
-      expect(
-          find.descendant(of: footer, matching: find.text('Terms of Service')),
+      expect(find.descendant(of: footer, matching: find.text('Terms')),
           findsOneWidget);
-      expect(tester.getRect(find.text('Terms of Service')).bottom,
-          lessThanOrEqualTo(667));
+      expect(tester.getRect(find.text('Terms')).bottom, lessThanOrEqualTo(667));
     });
 
     testWidgets(
@@ -2228,282 +2129,28 @@ void main() {
         (tester) async {
       await pumpMeasured(tester,
           size: const Size(390, 844), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsWidgets);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsWidgets);
 
       await pumpMeasured(tester,
           size: const Size(390, 699), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsNothing);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsNothing);
 
       await pumpMeasured(tester,
           size: const Size(390, 700), textSize: AppTextSize.medium);
-      expect(find.byType(AvatarTile), findsWidgets);
+      expect(
+          find.descendant(
+              of: find.byKey(PremiumScreen.heroKey),
+              matching: find.byType(CompanionView)),
+          findsWidgets);
     });
-  });
-
-  group(
-      'stacked comparison layout (launch checklist item 3): when the three '
-      'table columns do not fit, rows stack — no horizontal scroll, no '
-      'dropped content, no overflow', () {
-    Future<void> pumpAt(
-      WidgetTester tester, {
-      required Size size,
-      required double textScale,
-      required Brightness brightness,
-      required bool pricingLoaded,
-    }) async {
-      tester.view.physicalSize = size * 2.0;
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      tester.platformDispatcher.textScaleFactorTestValue = textScale;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(brightness),
-          home: PremiumScreen(
-            storageService: _FakeStorageServiceForAvatar(),
-            analyticsService: _FakeAnalyticsService(),
-            analyticsSource: AnalyticsService.paywallSourceHome,
-            subscriptionService: _FakeSubscriptionService(
-              offering: pricingLoaded ? _offeringWithBothPlans() : null,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openComparison(tester);
-    }
-
-    const labels = [
-      'Daily Test, refreshed every day',
-      'Topic Practice, all five topics',
-      'Practice your weak spots',
-      'Sessions of 3, 5 or 10 questions',
-    ];
-
-    // The two launch-checklist targets: 320x667 at 2x text and 375x667 at 3x.
-    for (final target in [
-      (size: const Size(320, 667), scale: 2.0),
-      (size: const Size(375, 667), scale: 3.0),
-    ]) {
-      for (final brightness in Brightness.values) {
-        for (final pricingLoaded in [true, false]) {
-          testWidgets(
-              'stacks cleanly at ${target.size.width.toInt()}x'
-              '${target.size.height.toInt()} @${target.scale}x text, '
-              '$brightness, pricing ${pricingLoaded ? 'loaded' : 'unavailable'}',
-              (tester) async {
-            await pumpAt(
-              tester,
-              size: target.size,
-              textScale: target.scale,
-              brightness: brightness,
-              pricingLoaded: pricingLoaded,
-            );
-            final stacked = find.byKey(const Key('comparisonStacked'));
-            await tester.scrollUntilVisible(stacked, 300,
-                scrollable: find.byType(Scrollable).first);
-            await tester.pumpAndSettle();
-
-            expect(tester.takeException(), isNull,
-                reason: 'no overflow anywhere on the screen');
-            expect(find.byKey(const Key('comparisonTable')), findsNothing);
-
-            // Never a sideways scroller inside the comparison.
-            expect(
-              find.descendant(
-                of: stacked,
-                matching: find.byWidgetPredicate((w) =>
-                    w is SingleChildScrollView &&
-                    w.scrollDirection == Axis.horizontal),
-              ),
-              findsNothing,
-            );
-
-            // Nothing dropped: every label is present in full (no maxLines /
-            // ellipsis on a stacked label), plus the free quota phrase.
-            for (final label in labels) {
-              final text =
-                  find.descendant(of: stacked, matching: find.text(label));
-              expect(text, findsOneWidget, reason: label);
-              expect(tester.widget<Text>(text).maxLines, isNull);
-              expect(tester.widget<Text>(text).overflow, isNull);
-            }
-            expect(find.descendant(of: stacked, matching: find.text('1 a day')),
-                findsOneWidget);
-
-            // Every row and everything in it stays inside the screen width.
-            final screenWidth = target.size.width;
-            for (final label in labels) {
-              final row = find.byKey(ValueKey('comparisonRow_$label'));
-              final rowRect = tester.getRect(row);
-              expect(rowRect.left, greaterThanOrEqualTo(0));
-              expect(rowRect.right, lessThanOrEqualTo(screenWidth));
-              for (final tier in ['FREE', 'PREMIUM']) {
-                final chip =
-                    find.descendant(of: row, matching: find.text(tier));
-                final chipRect = tester.getRect(chip);
-                expect(chipRect.left, greaterThanOrEqualTo(rowRect.left));
-                expect(chipRect.right, lessThanOrEqualTo(rowRect.right),
-                    reason: '$tier chip inside its row');
-              }
-            }
-
-            // Screen readers still get one explicit sentence per cell.
-            expect(
-                find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
-            expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
-            expect(find.bySemanticsLabel('Not included in Free'),
-                findsNWidgets(2));
-          });
-        }
-      }
-    }
-
-    // The pricing-unavailable card has its own icon + sentence + retry row.
-    // It keeps that row on normal screens and drops the retry below the
-    // sentence only when the row cannot fit.
-    for (final config in [
-      (size: const Size(393, 852), scale: 1.0, stacked: false),
-      (size: const Size(375, 667), scale: 1.0, stacked: false),
-      (size: const Size(320, 667), scale: 2.0, stacked: true),
-      (size: const Size(375, 667), scale: 3.0, stacked: true),
-    ]) {
-      testWidgets(
-          'the unavailable card ${config.stacked ? 'stacks its retry' : 'stays one row'} '
-          'at ${config.size.width.toInt()}x${config.size.height.toInt()} '
-          '@${config.scale}x text', (tester) async {
-        await pumpAt(
-          tester,
-          size: config.size,
-          textScale: config.scale,
-          brightness: Brightness.light,
-          pricingLoaded: false,
-        );
-        final card = find.byKey(const Key('pricingUnavailableCard'));
-        await tester.scrollUntilVisible(card, 300,
-            scrollable: find.byType(Scrollable).first);
-        final message = find.descendant(
-            of: card, matching: find.textContaining("Prices aren't"));
-        final retry =
-            find.descendant(of: card, matching: find.text('Try again'));
-        expect(tester.takeException(), isNull);
-        final cardRect = tester.getRect(card);
-        expect(tester.getRect(retry).right, lessThanOrEqualTo(cardRect.right));
-        expect(
-            tester.getRect(message).right, lessThanOrEqualTo(cardRect.right));
-        if (config.stacked) {
-          expect(tester.getRect(retry).top,
-              greaterThanOrEqualTo(tester.getRect(message).bottom));
-        } else {
-          expect(tester.getRect(retry).left,
-              greaterThanOrEqualTo(tester.getRect(message).right));
-        }
-      });
-    }
-
-    // Which layout each size gets, measured in the real font. The rule: the
-    // three-column table only where every label reads in full in its two
-    // lines; anywhere a label would be cut off with an ellipsis, stacked.
-    // Sizes with no clipping keep the existing table unchanged.
-    const keepTable = <(double, double)>[
-      (360, 1.0),
-      (375, 1.0),
-      (390, 1.0),
-      (393, 1.0),
-      (414, 1.0),
-      (430, 1.0),
-      (360, 1.1),
-      (375, 1.1),
-      (390, 1.1),
-      (393, 1.1),
-      (414, 1.1),
-      (430, 1.1),
-      (375, 1.15),
-      (390, 1.15),
-      (393, 1.15),
-      (414, 1.15),
-      (430, 1.15),
-      (414, 1.3),
-      (430, 1.3),
-    ];
-    // Sizes where the previous table cut a label to two lines with an
-    // ellipsis (320 @1x among them) plus every size beyond. 1.2.0 Batch 1:
-    // the type scale's smaller default text (batch0-report.md Q5) fits the
-    // labels at 360 @1.15x and 393 @1.3x, so those two moved to keepTable;
-    // the rule itself is unchanged. 1.2.0 Q18: the 14 pt side padding below
-    // 360 pt (16 before) gives the table room to fit at 320 @1x too.
-    // 1.2.0 Batch 12: the paywall's page edge is the mockup's 20 pt (15
-    // under 360 pt; 18 and 14 before), so the table is 2 pt narrower on each
-    // side and three more sizes stack: 320 @1x, 360 @1.15x, 393 @1.3x. The
-    // rule is unchanged: a table only where no label is cut.
-    const nowStacked = <(double, double)>[
-      (320, 1.0),
-      (360, 1.15),
-      (393, 1.3),
-      (320, 1.1),
-      (320, 1.15),
-      (320, 1.3),
-      (360, 1.3),
-      (375, 1.3),
-      (390, 1.3),
-      (375, 1.5),
-      (393, 1.5),
-      (430, 1.5),
-      (320, 2.0),
-      (375, 2.0),
-      (430, 2.0),
-      (320, 3.0),
-      (375, 3.0),
-      (430, 3.0),
-    ];
-
-    for (final entry in [
-      ...keepTable.map((c) => (c, true)),
-      ...nowStacked.map((c) => (c, false)),
-    ]) {
-      final (size, scale) = entry.$1;
-      final expectTable = entry.$2;
-      for (final pricingLoaded in [true, false]) {
-        testWidgets(
-            '${expectTable ? 'keeps the table' : 'stacks'} at '
-            '${size.toInt()}x667 @${scale}x text, pricing '
-            '${pricingLoaded ? 'loaded' : 'unavailable'}', (tester) async {
-          await pumpAt(
-            tester,
-            size: Size(size, 667),
-            textScale: scale,
-            brightness: Brightness.light,
-            pricingLoaded: pricingLoaded,
-          );
-          final layout = find.byKey(
-              Key(expectTable ? 'comparisonTable' : 'comparisonStacked'));
-          await tester.scrollUntilVisible(layout, 300,
-              scrollable: find.byType(Scrollable).first);
-          expect(tester.takeException(), isNull);
-          expect(
-            find.byKey(
-                Key(expectTable ? 'comparisonStacked' : 'comparisonTable')),
-            findsNothing,
-          );
-
-          // The invariant behind the rule: whichever layout is on screen,
-          // no label is cut off.
-          for (final label in labels) {
-            final text = find.descendant(
-              of: find.byKey(ValueKey('comparisonRow_$label')),
-              matching: find.text(label),
-            );
-            expect(tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
-                isFalse,
-                reason: '"$label" is clipped at ${size.toInt()} @${scale}x');
-          }
-          if (expectTable) {
-            expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
-          }
-        });
-      }
-    }
   });
 
   group('the 1.2.0 paywall (additional screens Batch 12)', () {
@@ -2598,11 +2245,10 @@ void main() {
     });
 
     testWidgets(
-        'footer rhythm (Batch 13): the terms, the links and "Maybe later" '
-        'sit about 14 pt apart, while a tap up to 44 pt still reaches each '
-        'button: above Restore (over the terms) and below "Maybe later"',
+        'footer rhythm (V13 v12): the price line and the links 6 pt apart, '
+        'while a tap up to 44 pt still reaches each link: above Restore '
+        '(over the price line) and below it (the bottom margin)',
         (tester) async {
-      var done = false;
       final service = _FakeSubscriptionService(
           offering: _offeringWithBothPlans(), restoreResult: true);
       tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -2611,49 +2257,49 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(
         theme: buildAppTheme(Brightness.light),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => PremiumScreen(
-                    storageService: _FakeStorageServiceForAvatar(),
-                    analyticsService: _FakeAnalyticsService(),
-                    analyticsSource: AnalyticsService.paywallSourceHome,
-                    subscriptionService: service,
-                    onDone: () => done = true,
-                  ),
-                )),
-                child: const Text('open premium'),
-              ),
-            ),
-          ),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService: service,
         ),
       ));
-      await tester.tap(find.text('open premium'));
       await tester.pumpAndSettle();
       final terms = tester.getRect(find.textContaining('auto-renews'));
-      final links = tester.getRect(find.text('Terms of Service'));
-      final later = tester.getRect(find.text('Maybe later'));
-      expect(links.top - terms.bottom, inInclusiveRange(12, 16));
-      expect(later.top - links.bottom, inInclusiveRange(10, 16));
-
-      // 13 pt above Restore's drawn button: over the terms' lower edge.
       final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
-      await tester.tapAt(Offset(restore.center.dx, restore.top - 13));
+      expect(restore.top - terms.bottom, inInclusiveRange(5, 7));
+      expect(restore.height, lessThan(44));
+
+      // 11 pt above Restore's drawn button: over the price line's edge.
+      await tester.tapAt(Offset(restore.center.dx, restore.top - 11));
       await tester.pumpAndSettle();
       expect(find.text('Purchases restored — full access is active.'),
           findsOneWidget);
+    });
 
-      // 13 pt below "Maybe later"'s drawn button: the empty margin.
-      final laterButton = tester.getRect(find.ancestor(
-          of: find.text('Maybe later'), matching: find.byType(TextButton)));
-      expect(laterButton.height, lessThan(44));
-      await tester
-          .tapAt(Offset(laterButton.center.dx, laterButton.bottom + 13));
+    testWidgets('a tap just below a link (the bottom margin) still reaches it',
+        (tester) async {
+      final service = _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(), restoreResult: true);
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      tester.view.padding = const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService: service,
+        ),
+      ));
       await tester.pumpAndSettle();
-      expect(done, isTrue);
-      expect(find.byType(PremiumScreen), findsNothing);
+      final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
+      await tester.tapAt(Offset(restore.center.dx, restore.bottom + 11));
+      await tester.pumpAndSettle();
+      expect(find.text('Purchases restored — full access is active.'),
+          findsOneWidget);
     });
 
     testWidgets('a second tap while purchasing sends no second request',
@@ -2698,7 +2344,8 @@ void main() {
       expect(results, hasLength(1));
       expect(results.single.parameters,
           {'plan': AnalyticsService.planAnnual, 'outcome': 'pending'});
-      expect(find.text('Maybe later'), findsOneWidget);
+      // The way out stays: the close button (no "Maybe later", V13 v12).
+      expect(find.byTooltip('Close'), findsOneWidget);
     });
 
     testWidgets(
@@ -2712,8 +2359,12 @@ void main() {
               purchaseOutcome: PurchaseOutcome.success));
       await tester.tap(find.byKey(PremiumScreen.ctaKey));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Premium is active'), findsOneWidget);
-      expect(find.textContaining('Trial started'), findsNothing);
+      expect(find.textContaining('Premium is active', skipOffstage: false),
+          findsOneWidget);
+      expect(find.textContaining('Trial started', skipOffstage: false),
+          findsNothing);
+      // PW05 names no trial end date without a trial.
+      expect(find.textContaining('Your free trial ends'), findsNothing);
     });
 
     for (final restored in [true, false]) {
@@ -2814,14 +2465,18 @@ void main() {
           ),
         ));
         await tester.pumpAndSettle();
-        final tiles =
-            tester.widgetList<AvatarTile>(find.byType(AvatarTile)).toList();
+        // Fix round 2: the board's companions (V13: 70, 110, 64).
+        final tiles = tester
+            .widgetList<CompanionView>(find.descendant(
+                of: find.byKey(PremiumScreen.heroKey),
+                matching: find.byType(CompanionView)))
+            .toList();
         expect(tiles, hasLength(3));
-        expect(tiles[1].avatar, avatar);
-        expect(tiles[1].radius * 2, 124);
-        expect(tiles[0].radius * 2, 66);
-        expect(tiles[2].radius * 2, 66);
-        expect({tiles[0].avatar, tiles[2].avatar}.contains(avatar), isFalse);
+        expect(tiles[1].hero, avatar);
+        expect(tiles[1].size, 110);
+        expect(tiles[0].size, 70);
+        expect(tiles[2].size, 64);
+        expect({tiles[0].hero, tiles[2].hero}.contains(avatar), isFalse);
       }
     });
 
@@ -3066,6 +2721,487 @@ void main() {
       expect(find.textContaining('59.88'), findsOneWidget);
       expect(find.textContaining('\$3.33'), findsNothing);
     });
+  });
+
+  group('V13c Free vs Premium (fix round 2, item 3: the board)', () {
+    Future<void> pumpTable(WidgetTester tester,
+        {Size size = const Size(390, 844),
+        double textScale = 1,
+        Brightness brightness = Brightness.light}) async {
+      tester.view.physicalSize = size * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(brightness),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(UserProfile(
+              name: 'Ada',
+              learningGoal: LearningGoal.work,
+              avatar: Avatar.values[3])),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+          find.byKey(PremiumScreen.compareNoteKey), 300);
+      await tester.pumpAndSettle();
+    }
+
+    final table = find.byKey(const Key('comparisonTable'));
+
+    String rowText(WidgetTester tester, String label) => tester
+        .widgetList<Text>(find.descendant(
+            of: find.byKey(ValueKey('comparisonRow_$label')),
+            matching: find.byType(Text)))
+        .map((t) => t.data)
+        .join(' | ');
+
+    testWidgets(
+        'the heading, the companion at its end, the six rows with '
+        'the real rules, the green note', (tester) async {
+      await pumpTable(tester);
+      expect(find.text('Free vs Premium'), findsOneWidget);
+      final companion = tester
+          .widget<CompanionView>(find.byKey(PremiumScreen.compareCompanionKey));
+      expect(companion.hero, Avatar.values[3]);
+      expect(companion.ambient, CompanionAmbient.hop);
+      expect(tester.getCenter(find.byKey(PremiumScreen.compareCompanionKey)).dx,
+          greaterThan(tester.getCenter(find.text('Free vs Premium')).dx));
+
+      expect(rowText(tester, 'Daily Test'), 'Daily Test | 1 a day | 1 a day');
+      expect(
+          rowText(tester, 'AI practice'),
+          'AI practice | ${StorageService.freeDailyPracticeLimit} a day | '
+          '${StorageService.dailySessionLimit} a day');
+      expect(rowText(tester, 'Weak-spot practice'), 'Weak-spot practice');
+      final topics = 'All ${practiceTopics().length} topics';
+      expect(rowText(tester, topics), topics);
+      expect(
+          rowText(tester, 'Session length'), 'Session length | 3 | 3 · 5 · 10');
+      expect(rowText(tester, 'Monthly Climb'), 'Monthly Climb');
+      expect(find.byKey(PremiumScreen.compareNoteKey), findsOneWidget);
+      expect(
+          find.text('Cancel anytime. Your climb, medals and weak spots stay '
+              'if you go back to free.'),
+          findsOneWidget);
+      // Free and Premium headers: the navy pill on the column.
+      expect(find.descendant(of: table, matching: find.text('Free')),
+          findsOneWidget);
+      expect(find.descendant(of: table, matching: find.text('Premium')),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'free checks are grey outlines, Premium checks filled green, '
+        '"—" grey', (tester) async {
+      await pumpTable(tester);
+      const c = AppColors.light;
+      BoxDecoration circle(String label, int index) => tester
+          .widget<Container>(find
+              .ancestor(
+                  of: find
+                      .descendant(
+                          of: find.byKey(ValueKey('comparisonRow_$label')),
+                          matching: find.byType(Icon))
+                      .at(index),
+                  matching: find.byType(Container))
+              .first)
+          .decoration! as BoxDecoration;
+      // Index 0 is the row's icon tile's icon.
+      final free = circle('Weak-spot practice', 1);
+      expect(free.color, isNull);
+      expect((free.border! as Border).top.color, c.disabledLabel);
+      final premium = circle('Weak-spot practice', 2);
+      expect(premium.color, c.green);
+      final none = circle('All ${practiceTopics().length} topics', 1);
+      expect(none.color, c.disabledFill);
+    });
+
+    testWidgets(
+        'the Premium column is one piece from the header to the last '
+        'row: 2 px orange border, soft orange fill, the navy pill on top',
+        (tester) async {
+      await pumpTable(tester);
+      final column = find.byKey(PremiumScreen.premiumColumnKey);
+      final box =
+          tester.widget<DecoratedBox>(column).decoration as BoxDecoration;
+      const c = AppColors.light;
+      expect(
+          (box.border! as Border).top, BorderSide(color: c.orange, width: 2));
+      expect((box.gradient! as LinearGradient).colors, [c.cream, c.orangeSoft]);
+      final rect = tester.getRect(column);
+      expect(rect.width, 92);
+      final pill = tester
+          .getRect(find.descendant(of: table, matching: find.text('Premium')));
+      expect(pill.top, greaterThan(rect.top));
+      final last = tester
+          .getRect(find.byKey(const ValueKey('comparisonRow_Monthly Climb')));
+      expect(rect.bottom, greaterThanOrEqualTo(last.bottom - 4));
+      expect(rect.top, lessThan(pill.top));
+    });
+
+    testWidgets('reads each row as one sentence to VoiceOver', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpTable(tester);
+      expect(
+          find.bySemanticsLabel('AI practice. Free: 1 a day. Premium: 5 a day'),
+          findsOneWidget);
+      expect(
+          find.bySemanticsLabel(
+              'Weak-spot practice. Included in Free. Included in Premium'),
+          findsOneWidget);
+      semantics.dispose();
+    });
+
+    for (final (size, scale) in [
+      (const Size(320, 568), 1.0),
+      (const Size(390, 844), 1.3),
+      (const Size(428, 926), 2.0),
+    ]) {
+      for (final brightness in Brightness.values) {
+        testWidgets('no overflow at $size, text ×$scale, $brightness',
+            (tester) async {
+          await pumpTable(tester,
+              size: size, textScale: scale, brightness: brightness);
+          expect(tester.takeException(), isNull);
+          expect(table, findsOneWidget);
+        });
+      }
+    }
+  });
+
+  group('V13 motion (fix round 2, item 2)', () {
+    setUp(() => AppMotion.loopsEnabled = true);
+    tearDown(() => AppMotion.loopsEnabled = false);
+
+    Future<void> pumpLive(WidgetTester tester, {bool reduce = false}) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      if (reduce) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+            tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      }
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        ),
+      ));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    double lift(WidgetTester tester, Finder f) => tester
+        .widget<Transform>(
+            find.descendant(of: f, matching: find.byKey(CompanionView.bodyKey)))
+        .transform
+        .getTranslation()
+        .y;
+
+    testWidgets('the side companions float, the middle one hops',
+        (tester) async {
+      await pumpLive(tester);
+      final trio = find.descendant(
+          of: find.byKey(PremiumScreen.heroKey),
+          matching: find.byType(CompanionView));
+      expect(trio, findsNWidgets(3));
+      final side = <double>[], middle = <double>[];
+      for (var t = 0; t < 3200; t += 100) {
+        await tester.pump(const Duration(milliseconds: 100));
+        side.add(lift(tester, trio.at(0)));
+        middle.add(lift(tester, trio.at(1)));
+      }
+      double range(List<double> v) =>
+          v.reduce((a, b) => a > b ? a : b) - v.reduce((a, b) => a < b ? a : b);
+      expect(range(side), greaterThan(7));
+      expect(middle.reduce((a, b) => a < b ? a : b), lessThan(-14));
+    });
+
+    testWidgets('"Compare plans" floats every 1.8 s (v11)', (tester) async {
+      await pumpLive(tester);
+      final arrow = find.ancestor(
+          of: find.descendant(
+              of: find.byKey(PremiumScreen.comparePlansKey),
+              matching: find.byIcon(Icons.keyboard_arrow_down_rounded)),
+          matching: find.byType(Transform));
+      final dys = <double>[];
+      for (var t = 0; t < 1800; t += 100) {
+        await tester.pump(const Duration(milliseconds: 100));
+        dys.add(
+            tester.widget<Transform>(arrow.first).transform.getTranslation().y);
+      }
+      expect(dys.reduce((a, b) => a < b ? a : b), lessThan(-7));
+    });
+
+    testWidgets('the CTA shines and pulses; not under Reduce Motion',
+        (tester) async {
+      await pumpLive(tester);
+      expect(find.byKey(CtaGlow.shineKey), findsOneWidget);
+      expect(find.byKey(CtaGlow.pulseKey), findsOneWidget);
+      expect(
+          find.ancestor(
+              of: find.byKey(PremiumScreen.ctaKey),
+              matching: find.byType(CtaGlow)),
+          findsOneWidget);
+      await pumpLive(tester, reduce: true);
+      expect(find.byKey(CtaGlow.shineKey), findsNothing);
+      expect(find.byKey(CtaGlow.pulseKey), findsNothing);
+    });
+  });
+
+  // Fix round 3, C4 (SPEC §1.17, V13, V13c, V13a; v11): value before
+  // price. The page reads first view → Free vs Premium → plans and trial.
+  group('C4: the paywall order 13 → 13c → 13a', () {
+    double top(WidgetTester tester, Finder f) => tester.getTopLeft(f).dy;
+    final body = find.byKey(const Key('premiumBody'));
+    final priceLine = find.textContaining('per year, auto-renews');
+
+    String ctaLabel(WidgetTester tester) => tester
+        .widgetList<Text>(find.descendant(
+            of: find.byKey(PremiumScreen.ctaKey), matching: find.byType(Text)))
+        .map((t) => t.data)
+        .join();
+
+    testWidgets(
+        'the first view: "Compare plans", no plan boxes, the yearly plan '
+        'already driving the pinned button and its full price line',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      final hint = find.byKey(PremiumScreen.comparePlansKey);
+      expect(find.descendant(of: hint, matching: find.text('Compare plans')),
+          findsOneWidget);
+      final footerTop = top(tester, find.byKey(const Key('premiumFooter')));
+      expect(top(tester, hint), lessThan(footerTop));
+      for (final id in ['Annual', 'Monthly']) {
+        final card = find.byKey(ValueKey('planCard_$id'));
+        if (card.evaluate().isNotEmpty) {
+          expect(top(tester, card), greaterThan(footerTop),
+              reason: 'no price box on the first view');
+        }
+      }
+      expect(ctaLabel(tester), 'Start my 7-day free trial');
+      expect(priceLine, findsOneWidget);
+      expect(top(tester, priceLine), greaterThan(footerTop));
+    });
+
+    testWidgets(
+        'the order down the page; the button and its price line stay pinned '
+        'to the end', (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      final order = [
+        find.byKey(PremiumScreen.comparePlansKey),
+        find.byKey(PremiumScreen.compareKey),
+        find.byKey(PremiumScreen.compareNoteKey),
+        find.byKey(PremiumScreen.choosePlanHintKey),
+        find.descendant(of: body, matching: find.text('Choose your plan')).last,
+        find.byKey(const ValueKey('planCard_Annual')),
+        find.byKey(const ValueKey('planCard_Monthly')),
+        find.byKey(PremiumScreen.timelineKey),
+      ];
+      for (var i = 1; i < order.length; i++) {
+        expect(top(tester, order[i]), greaterThan(top(tester, order[i - 1])),
+            reason: 'item $i after item ${i - 1}');
+      }
+      for (var i = 0; i < 10; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+        await tester.pumpAndSettle();
+      }
+      expect(find.byKey(PremiumScreen.ctaKey).hitTestable(), findsOneWidget);
+      expect(priceLine.hitTestable(), findsOneWidget);
+      expect(ctaLabel(tester), 'Start my 7-day free trial');
+    });
+
+    testWidgets('in each plan row the billed amount is the largest price',
+        (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+      for (final (id, billed) in [
+        ('Annual', r'$49.99'),
+        ('Monthly', r'$5.99')
+      ]) {
+        final card = find.byKey(ValueKey('planCard_$id'));
+        await tester.scrollUntilVisible(card, 300);
+        double sizeOf(Finder text) =>
+            tester.renderObject<RenderParagraph>(text).text.style!.fontSize!;
+        final price = find.descendant(of: card, matching: find.text(billed));
+        expect(price, findsOneWidget, reason: id);
+        final priceSize = sizeOf(price);
+        for (final e in find
+            .descendant(of: card, matching: find.byType(RichText))
+            .evaluate()) {
+          final p = e.renderObject! as RenderParagraph;
+          final text = p.text.toPlainText();
+          if (text == billed) continue;
+          expect(p.text.style?.fontSize ?? 0, lessThan(priceSize),
+              reason: '$id: "$text" is smaller than $billed');
+        }
+      }
+    });
+
+    testWidgets('V13r shares the page: the same order under the rest top',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          rest: const PaywallRest(
+              theme: ClimbThemes.emberPeak,
+              weakSpot: 'Articles',
+              hero: Avatar.fox,
+              name: 'Ada'),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+      final compare = top(tester, find.byKey(PremiumScreen.compareKey));
+      expect(
+          top(tester, find.byKey(PremiumScreen.restTopKey)), lessThan(compare));
+      expect(top(tester, find.byKey(const ValueKey('planCard_Annual'))),
+          greaterThan(compare));
+    });
+  });
+
+  // Fix round 4, item 2 (SPEC V13 v12, §1.23): the compact footer at the
+  // five phone sizes, in the app's font at the default text size: about
+  // 150 pt at 390 × 844 (it was about 207 on the owner's phone), no "Maybe
+  // later", the full price line and the three links on one row on the
+  // first view, and "Compare plans" on the first view at 390 × 844 and
+  // 402 × 874 too (closes F3-26). FIX4_CAPTURE=1 records the heights in
+  // build/fix4-captures/v13-footer.md and renders V13, V13c, V13a and V13r
+  // at 390 × 844 and 428 × 926, light and dark.
+  group('V13 v12: the compact footer', () {
+    const phones = [
+      (Size(375, 667), 20.0, 0.0),
+      (Size(390, 844), 47.0, 34.0),
+      (Size(402, 874), 62.0, 34.0),
+      (Size(428, 926), 47.0, 34.0),
+      (Size(440, 956), 62.0, 34.0),
+    ];
+    Widget paywall({PaywallRest? rest}) => PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          sourceContext: rest == null ? 'The With Superlatives' : null,
+          rest: rest,
+        );
+    for (final (size, top, bottom) in phones) {
+      testWidgets(
+          '${size.width.toInt()} × ${size.height.toInt()}: compact, the '
+          'price line and the links on the first view, no "Maybe later"',
+          (tester) async {
+        await pumpFix3(tester, paywall(), size: size, top: top, bottom: bottom);
+        final footer = tester.getRect(find.byKey(const Key('premiumFooter')));
+        final cta = tester.getRect(find.byKey(PremiumScreen.ctaKey));
+        final price = tester.getRect(find.byKey(PremiumScreen.priceLineKey));
+        final restore = tester.getRect(find.text('Restore'));
+        final terms = tester.getRect(find.text('Terms'));
+        final privacy = tester.getRect(find.text('Privacy'));
+        expect(find.text('Maybe later'), findsNothing);
+        // 24 pt side margins, the 54 pt button.
+        expect(cta.left, closeTo(24, .5));
+        expect(cta.right, closeTo(size.width - 24, .5));
+        expect(cta.height, closeTo(54, .5));
+        // The price line: centred, at most 300 pt wide, on the first view.
+        expect(price.width, lessThanOrEqualTo(300));
+        expect(price.center.dx, closeTo(size.width / 2, 1));
+        expect(price.bottom, lessThanOrEqualTo(size.height));
+        // The links on one centred row, on the first view.
+        expect(terms.center.dy, closeTo(restore.center.dy, 1));
+        expect(privacy.center.dy, closeTo(restore.center.dy, 1));
+        expect((restore.left + privacy.right) / 2, closeTo(size.width / 2, 2));
+        // The board's 26 pt under the links over the home indicator (its
+        // 34 pt inset less 8).
+        expect(privacy.bottom,
+            lessThanOrEqualTo(size.height - math.max(bottom - 8, 12)));
+        // "Compare plans" on the first view wherever there is room for
+        // the companions (6.1" and up).
+        final hint = find.byKey(PremiumScreen.comparePlansKey);
+        final hintBottom = tester.getRect(hint).bottom;
+        final label = tester.getRect(
+            find.descendant(of: hint, matching: find.text('Compare plans')));
+        recordFix4(
+            'v13-footer.md',
+            '| ${size.width.toInt()} × ${size.height.toInt()} | '
+                '${footer.height.toStringAsFixed(1)} | '
+                '${(footer.top - label.bottom).toStringAsFixed(1)} | '
+                '${(footer.top - hintBottom).toStringAsFixed(1)} |');
+        if (size.height >= 800) {
+          expect(hintBottom, lessThanOrEqualTo(footer.top),
+              reason: '"Compare plans" and its arrow above the footer');
+        }
+        if (size.height >= 844) {
+          expect(footer.height, lessThanOrEqualTo(160),
+              reason: 'about 150 pt at 390 × 844');
+        }
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    for (final size in const [Size(390, 844), Size(428, 926)]) {
+      for (final brightness in Brightness.values) {
+        testWidgets(
+            'renders V13, V13c, V13a, V13r at ${size.width.toInt()} × '
+            '${size.height.toInt()}, ${brightness.name}', (tester) async {
+          final dark = brightness == Brightness.dark;
+          final tag = '${size.width.toInt()}x${size.height.toInt()}';
+          await pumpFix3(tester, paywall(), size: size, brightness: brightness);
+          await fix4Capture(tester, 'V13-Paywall-$tag', dark: dark);
+          // V13c: the comparison at the top of the page.
+          await tester.ensureVisible(find.byKey(PremiumScreen.compareKey));
+          await tester.pumpAndSettle();
+          Scrollable.ensureVisible(
+              tester.element(find.byKey(PremiumScreen.compareKey)),
+              alignment: .08);
+          await tester.pumpAndSettle();
+          await fix4Capture(tester, 'V13c-PaywallCompare-$tag', dark: dark);
+          // V13a: "Choose your plan" and the plans.
+          Scrollable.ensureVisible(
+              tester.element(find.byKey(PremiumScreen.choosePlanHintKey)),
+              alignment: .02);
+          await tester.pumpAndSettle();
+          await fix4Capture(tester, 'V13a-PaywallPlans-$tag', dark: dark);
+          // A new page (not the scrolled one).
+          await tester.pumpWidget(const SizedBox());
+          await pumpFix3(
+              tester,
+              paywall(
+                  rest: const PaywallRest(
+                      theme: ClimbThemes.emberPeak,
+                      weakSpot: 'The With Superlatives',
+                      hero: Avatar.fox,
+                      name: 'Ada')),
+              size: size,
+              brightness: brightness);
+          await fix4Capture(tester, 'V13r-PaywallRest-$tag', dark: dark);
+          expect(find.text('Maybe later'), findsNothing);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 }
 

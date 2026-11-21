@@ -15,6 +15,8 @@ import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
 import 'climb_zoom.dart';
+import '../../app_colors.dart';
+import '../../motion.dart';
 import '../../theme.dart';
 import '../../l10n/l10n.dart';
 
@@ -74,6 +76,12 @@ class MonthlyMountain extends StatefulWidget {
   /// mounts at, and not for a move that another move interrupts.
   final VoidCallback? onMotionEnd;
 
+  /// Called after [onMotionEnd], once everything the arrival shows has
+  /// ended: a save point just reached has lit up and its name label has
+  /// gone. Right after [onMotionEnd] when the step reached no save point.
+  /// Home's rest scene waits for it (fix round 6, item 1).
+  final VoidCallback? onArrivalEnd;
+
   /// The month's theme: its images, its dark-mode object filter and
   /// whether it draws the flag. Home passes the month's recorded theme
   /// (`StorageService.resolveClimbMonthTheme`).
@@ -101,6 +109,16 @@ class MonthlyMountain extends StatefulWidget {
   /// `CLIMB_DEBUG_MILESTONE` does at launch. Display only.
   final ({ClimbSavePoint point, int id})? debugHop;
 
+  /// V15: today's test is waiting, so the step it will reach gets a gold
+  /// ring that pulses every [NextStepPulse.period] (an ambient loop; under
+  /// Reduce Motion the ring stays, still). Not while the pawn moves, not
+  /// at the summit.
+  final bool nextStepPulse;
+
+  /// The window's height: Home's fitted window ([fitWindowHeight],
+  /// INTEGRATE 3b), else the full one.
+  final double windowHeight;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -109,13 +127,62 @@ class MonthlyMountain extends StatefulWidget {
       this.theme = ClimbThemes.greenSlope,
       this.showPassedDayDots = passedDayDots,
       this.onMotionEnd,
+      this.onArrivalEnd,
       this.zoom,
       this.zoomCrossFade = false,
       this.labelAvoid,
-      this.debugHop});
+      this.debugHop,
+      this.nextStepPulse = false,
+      this.windowHeight = ClimbCamera.fullWindowHeight});
+
+  /// How far above the floating nav bar's top the pawn and the next step's
+  /// ring stay on Home's first view (INTEGRATE 3b).
+  static const firstViewClearance = 16.0;
+
+  /// INTEGRATE 3b: the tallest window, at most
+  /// [ClimbCamera.fullWindowHeight], in which the pawn's feet and the next
+  /// step's ring stay within [room] points of the window's top on every day
+  /// of a [days]-day month, for a window [width] wide; never below
+  /// [ClimbCamera.minWindowHeight]. Day 0 decides on most phones: there the
+  /// camera is held by the art's bottom edge, so only a shorter window
+  /// lifts the pawn. One height for the whole month, so the card does not
+  /// change size from day to day.
+  static double fitWindowHeight(
+      {required double width, required int days, required double room}) {
+    final route = ClimbRoute(days);
+    double lowest(double height) {
+      final camera = ClimbCamera(width, windowHeight: height);
+      var bottom = 0.0;
+      for (var d = 0; d <= days; d++) {
+        final offset = camera.offsetFor(route.stepAt(d));
+        final tile = camera.avatarTileAt(route.arcAt(d.toDouble()));
+        // The feet stand on the step; the tile ends 3/58 of its side below.
+        final feet =
+            route.stepAt(d).dy * camera.scale - offset.dy + tile * 3 / 58;
+        bottom = math.max(bottom, feet);
+        if (d < days) {
+          final ring = route.stepAt(d + 1).dy * camera.scale -
+              offset.dy +
+              NextStepPulse.size / 2;
+          bottom = math.max(bottom, ring);
+        }
+      }
+      return bottom;
+    }
+
+    for (var h = ClimbCamera.fullWindowHeight;
+        h > ClimbCamera.minWindowHeight;
+        h -= 1) {
+      if (lowest(h) <= room) return h;
+    }
+    return ClimbCamera.minWindowHeight;
+  }
 
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
+
+  /// V15's ring on the next step.
+  static const nextStepKey = ValueKey('climb_next_step_pulse');
 
   /// The K-c blurred backdrop (M22), present only during a zoom.
   static const kcBackdropKey = ValueKey('climb_kc_backdrop');
@@ -143,6 +210,10 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   /// Under Reduce Motion the label is not animated at all: it shows, and
   /// this ends it.
   Timer? _labelTimer;
+
+  /// A move has ended and [MonthlyMountain.onArrivalEnd] is still owed:
+  /// reported once the save point's fade and its label are over.
+  bool _arrivalPending = false;
   late ClimbRoute _route;
   double _from = 0, _to = 0;
   bool _reduceMotion = false;
@@ -204,6 +275,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed && mounted) {
           setState(() => _labelled = null);
+          _checkArrivalEnded();
         }
       });
     // The position the scene mounts at shows no label: only a step taken
@@ -252,6 +324,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         _lit.addAll(_fading);
         _fading.clear();
       });
+      _checkArrivalEnded();
     }, onError: (_) {});
   }
 
@@ -332,7 +405,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     if (_reduceMotion) {
       _label.stop();
       _labelTimer = Timer(MonthlyMountain.labelShownReduceMotion, () {
-        if (mounted) setState(() => _labelled = null);
+        if (!mounted) return;
+        setState(() => _labelled = null);
+        _checkArrivalEnded();
       });
       return;
     }
@@ -392,6 +467,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       _lit
         ..clear()
         ..addAll(_reached());
+      // A fade this cut short no longer reports its end.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkArrivalEnded());
     }
     if (oldWidget.days != widget.days ||
         oldWidget.completedDays != widget.completedDays) {
@@ -414,6 +491,18 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     if (!mounted) return;
     _updateSavePoints();
     widget.onMotionEnd?.call();
+    _arrivalPending = true;
+    _checkArrivalEnded();
+  }
+
+  /// Reports [MonthlyMountain.onArrivalEnd] once nothing of the arrival is
+  /// still showing: no move, no save point fading in, no name label. Asked
+  /// again whenever one of them ends.
+  void _checkArrivalEnded() {
+    if (!_arrivalPending || !mounted) return;
+    if (_motion.isAnimating || _fading.isNotEmpty || _labelled != null) return;
+    _arrivalPending = false;
+    widget.onArrivalEnd?.call();
   }
 
   @override
@@ -449,10 +538,11 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       label: l10n.climbMountainSemantics(theme.title(l10n), _shownSteps,
           widget.days, widget.avatar.name(l10n), savePoints),
       child: LayoutBuilder(builder: (context, constraints) {
-        final camera = ClimbCamera(constraints.maxWidth);
+        final camera = ClimbCamera(constraints.maxWidth,
+            windowHeight: widget.windowHeight);
         final image = camera.imageSize;
         return SizedBox(
-            height: ClimbCamera.windowHeight,
+            height: camera.windowHeight,
             child: ClipRect(
               child: ColoredBox(
                 // Shown only until the images have decoded.
@@ -542,6 +632,25 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                               ]),
                             ),
                           ),
+                          // Outside the scene's repaint boundary: the
+                          // pulse never repaints the scene.
+                          if (widget.nextStepPulse &&
+                              widget.completedDays < widget.days &&
+                              !_motion.isAnimating)
+                            Builder(builder: (context) {
+                              final next =
+                                  _route.stepAt(widget.completedDays + 1) *
+                                      camera.scale;
+                              const d = NextStepPulse.size;
+                              return Positioned(
+                                left: next.dx - offset.dx - d / 2,
+                                top: next.dy - offset.dy - d / 2,
+                                child: const IgnorePointer(
+                                  child: NextStepPulse(
+                                      key: MonthlyMountain.nextStepKey),
+                                ),
+                              );
+                            }),
                         ]);
                     final zoom = widget.zoom;
                     final labelled = _labelled;
@@ -774,4 +883,75 @@ class ClimbTrailDots extends CustomPainter {
   @override
   bool shouldRepaint(ClimbTrailDots oldDelegate) =>
       oldDelegate.color != color || !listEquals(oldDelegate.points, points);
+}
+
+/// V15: a gold ring on the step today's test will reach, and a second ring
+/// that grows from it to 1.45× and fades, every [period] (the board's
+/// gl-pulse). An ambient loop: still under Reduce Motion, off screen and in
+/// tests.
+class NextStepPulse extends StatefulWidget {
+  const NextStepPulse({super.key});
+
+  static const size = 26.0;
+  static const period = Duration(milliseconds: 1800);
+
+  @override
+  State<NextStepPulse> createState() => _NextStepPulseState();
+}
+
+class _NextStepPulseState extends State<NextStepPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: NextStepPulse.period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context)) {
+      if (!_pulse.isAnimating) _pulse.repeat();
+    } else {
+      _pulse
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = AppColors.of(context).gold;
+    Widget ring(double width, Color color) => DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: width),
+          ),
+        );
+    return SizedBox.square(
+      dimension: NextStepPulse.size,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, _) {
+          final t = _pulse.value;
+          return Stack(fit: StackFit.expand, children: [
+            if (_pulse.isAnimating)
+              Transform.scale(
+                scale: 1 + .45 * t,
+                child: ring(3, gold.withValues(alpha: .5 * (1 - t))),
+              ),
+            ring(3, gold),
+          ]);
+        },
+      ),
+    );
+  }
 }

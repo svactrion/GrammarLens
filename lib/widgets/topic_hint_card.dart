@@ -3,6 +3,7 @@ import 'package:flutter/physics.dart';
 
 import '../l10n/l10n.dart';
 import '../models/topic.dart';
+import '../motion.dart';
 import '../theme.dart';
 
 /// A topic's hint card (docs/question-screen-plan.md, item 2): the topic's
@@ -128,13 +129,24 @@ class TopicHintSlider extends StatefulWidget {
   /// Skip/Next bar (plan §3).
   static const double minScreenWidth = 375;
 
+  /// V07: the resting knob nudges towards the track's end every 2.8 s (an
+  /// ambient loop: not under Reduce Motion, not off screen).
+  static const nudgePeriod = Duration(milliseconds: 2800);
+
+  /// The nudge's offset at [t] of its period, in points (the board's
+  /// keyframes: still until 60 %, out to 12 at 75 %, back to 4 at 88 %, home
+  /// at 100 %).
+  @visibleForTesting
+  static double nudgeAt(double t) => 12 * AppMotion.nudge(t);
+
   @override
   State<TopicHintSlider> createState() => _TopicHintSliderState();
 }
 
 class _TopicHintSliderState extends State<TopicHintSlider>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _reveal;
+  late final AnimationController _nudge;
   double _travel = 0;
   double _dragDistance = 0;
   bool _holding = false;
@@ -154,6 +166,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   void initState() {
     super.initState();
     _reveal = AnimationController(vsync: this);
+    _nudge =
+        AnimationController(vsync: this, duration: TopicHintSlider.nudgePeriod);
   }
 
   @override
@@ -161,6 +175,13 @@ class _TopicHintSliderState extends State<TopicHintSlider>
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
     _rtl = Directionality.of(context) == TextDirection.rtl;
+    if (AppMotion.loopsOn(context)) {
+      if (!_nudge.isAnimating) _nudge.repeat();
+    } else {
+      _nudge
+        ..stop()
+        ..value = 0;
+    }
   }
 
   @override
@@ -176,6 +197,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   @override
   void dispose() {
     _reveal.dispose();
+    _nudge.dispose();
     super.dispose();
   }
 
@@ -339,21 +361,34 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                   onLongPressStart: _onLongPressStart,
                   onLongPressEnd: (_) => _end(),
                   onLongPressCancel: _end,
-                  child: Padding(
-                    padding: const EdgeInsets.all(TopicHintSlider.knobInset),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      // No `matchTextDirection` on this icon: chosen by hand.
-                      child: Icon(
-                        Directionality.of(context) == TextDirection.rtl
-                            ? Icons.keyboard_double_arrow_left_rounded
-                            : Icons.keyboard_double_arrow_right_rounded,
-                        // Scaled with the knob (22 pt in the 40 pt knob).
-                        size: 26,
-                        color: colorScheme.onPrimary,
+                  child: AnimatedBuilder(
+                    animation: _nudge,
+                    // Only while the knob rests at the start.
+                    builder: (context, child) => Transform.translate(
+                      offset: Offset(
+                          value == 0 && !_holding
+                              ? TopicHintSlider.nudgeAt(_nudge.value) *
+                                  (_rtl ? -1 : 1)
+                              : 0,
+                          0),
+                      child: child,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(TopicHintSlider.knobInset),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        // No `matchTextDirection` on this icon: chosen by hand.
+                        child: Icon(
+                          Directionality.of(context) == TextDirection.rtl
+                              ? Icons.keyboard_double_arrow_left_rounded
+                              : Icons.keyboard_double_arrow_right_rounded,
+                          // Scaled with the knob (22 pt in the 40 pt knob).
+                          size: 26,
+                          color: colorScheme.onPrimary,
+                        ),
                       ),
                     ),
                   ),

@@ -1,10 +1,21 @@
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'dart:ui' as ui;
+import 'dart:io';
+import 'dart:math' as math;
 import 'dart:async';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'support/recording_analytics_sink.dart';
+import 'package:grammar_lens/utils/text_format.dart';
+import 'package:grammar_lens/screens/premium_on_screen.dart';
+import 'package:grammar_lens/widgets/rest_scene.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
-import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/topic.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
@@ -13,29 +24,45 @@ import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/reminder_settings.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
-import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/daily_test_result_screen.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:grammar_lens/screens/reminder_soft_ask.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
+import 'package:grammar_lens/services/native_bridge.dart';
+import 'package:grammar_lens/services/reminder_controller.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
+import 'package:grammar_lens/widgets/score_capsule.dart';
+import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
-import 'package:grammar_lens/widgets/weak_spot_card.dart';
+import 'package:grammar_lens/widgets/speech_bubble.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
+import 'package:grammar_lens/widgets/home_practice.dart';
+import 'package:grammar_lens/widgets/rest_reminder_row.dart';
+import 'package:grammar_lens/widgets/step_bar.dart';
+import 'package:grammar_lens/widgets/ticket.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart'
+    show climbImageAspect;
+import 'package:grammar_lens/widgets/monthly_climb/mountain_scene.dart';
 
+import 'support/fake_native_bridge.dart';
 import 'support/l10n_support.dart';
 import 'support/celebration_support.dart';
+import 'support/paywall_close.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
 /// swallowed) Firebase call, so a test can assert which Home entry point a
@@ -72,7 +99,31 @@ class _FakeSubscriptionService extends SubscriptionService {
   bool hasAccess;
   AccessListener? _listener;
 
-  _FakeSubscriptionService({this.hasAccess = false});
+  /// Fix round 2 (V24f → V13r → PW05r): an offering with a 7-day trial,
+  /// eligible, and a purchase that succeeds. Null: the real calls (they
+  /// never answer in a widget test).
+  final Offering? offering;
+  int purchases = 0;
+
+  _FakeSubscriptionService({this.hasAccess = false, this.offering});
+
+  @override
+  Future<Offering?> getOfferings() {
+    final o = offering;
+    return o == null ? super.getOfferings() : Future.value(o);
+  }
+
+  @override
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+          List<String> productIds) async =>
+      {for (final id in productIds) id: TrialEligibility.eligible};
+
+  @override
+  Future<PurchaseOutcome> purchasePackage(Package package) async {
+    purchases++;
+    emitAccessChange(true);
+    return PurchaseOutcome.success;
+  }
 
   @override
   Future<bool> get hasFullAccess async => hasAccess;
@@ -103,6 +154,24 @@ class _FakeSubscriptionService extends SubscriptionService {
 /// which this fake supplies.
 class _FakeStorageService extends StorageService {
   DailyTestSet? todaysDailyTest;
+
+  /// The reminder settings (TASK-widgets W5); null reads as a storage
+  /// failure, so Home never asks (every older test).
+  ReminderSettings? reminderSettings;
+
+  /// The first Daily Test on record (N01 after the second one).
+  DateTime? firstCompletion;
+
+  @override
+  Future<ReminderSettings> getReminderSettings() async =>
+      reminderSettings ?? (throw StateError('no reminder settings'));
+
+  @override
+  Future<void> setReminderSettings(ReminderSettings settings) async =>
+      reminderSettings = settings;
+
+  @override
+  Future<DateTime?> getFirstDailyTestCompletion() async => firstCompletion;
   List<WeakSpot> weakSpots = const [];
 
   /// What `getTopicStats` answers (Home's weak spot total); empty by
@@ -177,6 +246,16 @@ class _FakeStorageService extends StorageService {
 
   @override
   Future<Map<String, TopicStats>> getTopicStats() async => topicStats;
+
+  /// Today's free practices (the ticket) and practice sessions.
+  int freeUsed = 0;
+  int sessions = 0;
+
+  @override
+  Future<int> getFreePracticeCountForToday() async => freeUsed;
+
+  @override
+  Future<int> getSessionCountForToday() async => sessions;
 }
 
 DailyTestSet _completedDailyTestSet(
@@ -224,7 +303,7 @@ void main() {
     WidgetTester tester, {
     String userName = 'Ada',
     Avatar? avatar,
-    VoidCallback? onAvatarTap,
+    VoidCallback? onOpenProfile,
     VoidCallback? onGoToReview,
     AnalyticsService? analyticsService,
     ClaudeService? claudeService,
@@ -237,6 +316,8 @@ void main() {
     bool reduceMotion = false,
     bool active = true,
     AppTextSize textSize = AppTextSize.medium,
+    ValueListenable<int>? dailyTestLinks,
+    ReminderController? reminders,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = size * 3.0;
@@ -268,8 +349,10 @@ void main() {
           analyticsService: analyticsService ?? AnalyticsService(),
           subscriptionService:
               subscriptionService ?? _FakeSubscriptionService(),
-          onAvatarTap: onAvatarTap,
+          onOpenProfile: onOpenProfile,
           onGoToReview: onGoToReview,
+          dailyTestLinks: dailyTestLinks,
+          reminders: reminders,
           // Fixed at a mid-morning instant by default so the greeting text
           // this file asserts on doesn't depend on when the suite happens
           // to run — timeOfDayGreeting's own boundary tests live in
@@ -433,18 +516,23 @@ void main() {
             questions: _completedDailyTestSet(correct: 0, total: 5).questions);
       final claude = _CountingClaudeService();
       await pumpHome(tester, storageService: storage, claudeService: claude);
-      await tester.tap(find.text('Start daily test'));
+      await tester.tap(find.text('Start today’s test'));
       await tester.pumpAndSettle();
       if (answer.isNotEmpty) {
         await tester.enterText(find.byType(TextField).first, answer);
       }
       await tester.pump();
       for (var i = 0; i < 4; i++) {
-        await tester
-            .tap(find.text(i == 0 && answer.isNotEmpty ? 'Next' : 'Skip'));
+        if (i == 0 && answer.isNotEmpty) {
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
+        } else {
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
+        }
         await tester.pumpAndSettle();
       }
-      await tester.tap(find.text('Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
@@ -464,9 +552,9 @@ void main() {
               .widget<MonthlyMountain>(find.byType(MonthlyMountain))
               .completedDays,
           answer.isEmpty ? 0 : 1);
-      await tester.ensureVisible(find.text('Review results'));
+      await tester.ensureVisible(find.text('Review answers'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Review results'));
+      await tester.tap(find.text('Review answers'));
       await tester.pumpAndSettle();
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
       tester.state<NavigatorState>(find.byType(Navigator)).pop();
@@ -500,14 +588,18 @@ void main() {
           day: '2026-01-01',
           questions: _completedDailyTestSet(correct: 0, total: 1).questions);
     await pumpHome(tester, storageService: storage);
-    await tester.tap(find.text('Start daily test'));
+    await tester.tap(find.text('Start today’s test'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
-    await tester.tap(find.text('Finish'));
+    // V07: the last question's "Finish" checks; the sheet's button goes on.
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.pageBack();
+    // V10 has no app bar; the system back gesture pops the route.
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
     await pumpHome(tester, storageService: storage, active: false);
     storage.pendingCompletion!.complete();
@@ -552,22 +644,24 @@ void main() {
             .top!;
         final oldTop = pawnTop();
         final oldState = tester.state(mountain);
-        await tester.tap(find.text('Start daily test'));
+        await tester.tap(find.text('Start today’s test'));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField).first, 'wrong');
         await tester.pump();
-        await tester.tap(find.text('Finish'));
+        await tester.tap(find.byKey(DailyTestScreen.checkKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(DailyTestScreen.continueKey));
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 2));
         expect(storage.steps, 9); // Persisted while results are still open.
         expect(tester.widget<MonthlyMountain>(mountain).completedDays, 8);
         expect(pawnTop(), oldTop); // No hidden animation.
         if (useButton) {
-          await tester.scrollUntilVisible(find.text('See your climb'), 250,
-              scrollable: find.byType(Scrollable).last);
+          // V10: the button sits in the screen's bottom slot.
           await tester.tap(find.text('See your climb'));
         } else {
-          await tester.pageBack();
+          // V10 has no app bar: the system back gesture pops the route.
+          tester.state<NavigatorState>(find.byType(Navigator)).pop();
         }
         // Observe the first frame that receives the committed target, rather
         // than pumpAndSettle (which would hide an already-consumed animation).
@@ -597,9 +691,9 @@ void main() {
           // (design decision D8: 14 units, 10.2 pt with the camera).
           expect(middleTop, lessThan((startTop + endTop) / 2 - 8));
         }
-        await tester.ensureVisible(find.text('Review results'));
+        await tester.ensureVisible(find.text('Review answers'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Review results'));
+        await tester.tap(find.text('Review answers'));
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(find.text('Back to Home'), 250,
             scrollable: find.byType(Scrollable).last);
@@ -633,23 +727,23 @@ void main() {
             .last)
         .top!;
     final oldTop = pawnTop();
-    await tester.tap(find.text('Start daily test'));
+    await tester.tap(find.text('Start today’s test'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
-    await tester.tap(find.text('Finish'));
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     expect(storage.steps, 9);
-    // Batch 5 (N15): the celebration over the results first; its own
-    // confetti went with it.
-    await closeCelebration(tester);
-    expect(find.byType(ConfettiBurst), findsNothing);
-    expect(find.text('Start my climb'), findsOneWidget);
+    // Fix round 3 (A1): the results first, then "Climb my first step"
+    // opens the Welcome badge; closing it pops the results.
+    expect(find.text('Climb my first step'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
+    await climbThroughWelcome(tester);
 
     // N36: no confetti of its own; the results pop and Home steps.
-    await tester.tap(find.text('Start my climb'));
     await tester.pump();
     expect(find.byType(ConfettiBurst), findsNothing);
     for (var i = 0;
@@ -674,11 +768,11 @@ void main() {
   });
 
   testWidgets(
-      'the score bar under the mountain reads the month\'s score and '
-      'thresholds (D9)', (tester) async {
+      'the score capsule reads the month\'s score and the next medal (D9, '
+      'V14: the score bar moved from under the mountain)', (tester) async {
     final semantics = tester.ensureSemantics();
-    // October 2026: 31 days, 310 points at most; Bronze 78, Silver 155,
-    // Gold 233 (rule v1). 20 correct and 10 wrong = 50 points.
+    // October 2026: 31 days, Bronze at 78 (rule v1). 20 correct and 10
+    // wrong = 50 points.
     final storage = _FakeStorageService()
       ..steps = 6
       ..correct = 20
@@ -686,22 +780,13 @@ void main() {
     await pumpHome(tester,
         storageService: storage, clock: () => DateTime(2026, 10, 12, 9));
     await tester.pumpAndSettle();
-    final bar = find.byType(ClimbScoreBar);
-    expect(bar, findsOneWidget);
-    final widget = tester.widget<ClimbScoreBar>(bar);
-    expect(widget.score, 50);
-    expect(widget.maxScore, 310);
-    expect(widget.thresholds,
-        {MedalTier.bronze: 78, MedalTier.silver: 155, MedalTier.gold: 233});
-    expect(
-        find.bySemanticsLabel('Monthly score: 50 of 310 points. Bronze at 78, '
-            'Silver at 155, Gold at 233.'),
-        findsOneWidget);
-    // A strip of its own directly under the window, not over the scene.
-    final window = tester.getRect(find.byType(MonthlyMountain));
-    final strip = tester.getRect(bar);
-    expect(strip.top, closeTo(window.bottom, .01));
-    expect(strip.width, window.width);
+    expect(find.byType(ClimbScoreBar), findsNothing);
+    final capsule =
+        tester.widget<ScoreCapsule>(find.byKey(HomeScreen.capsuleKey));
+    expect(capsule.points, 50);
+    expect((capsule.year, capsule.month), (2026, 10));
+    expect(ScoreCapsule.nextTier(50, 2026, 10), MedalTier.bronze);
+    expect(find.text('28 to Bronze'), findsOneWidget);
     semantics.dispose();
   });
 
@@ -734,7 +819,10 @@ void main() {
     expect(find.text('Couldn’t load your monthly progress.'), findsOneWidget);
     storage.failProgress = false;
     storage.steps = 4;
-    await tester.tap(find.text('Retry progress'));
+    // R11: the shared error state's "Try again".
+    await tester.ensureVisible(find.byKey(ErrorState.retryKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ErrorState.retryKey));
     await tester.pumpAndSettle();
     expect(
         tester
@@ -780,8 +868,8 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(_greeting('Good morning, Ada'), findsOneWidget);
-    expect(find.textContaining('New test tomorrow'), findsNothing);
-    expect(find.text('Start daily test'), findsOneWidget);
+    expect(find.text('Review answers'), findsNothing);
+    expect(find.text('Start today’s test'), findsOneWidget);
   });
 
   testWidgets('greets the user by their onboarding name', (tester) async {
@@ -806,370 +894,632 @@ void main() {
     expect(_greeting('Good morning, Ada'), findsNothing);
   });
 
-  testWidgets('shows a placeholder avatar when none has been picked',
-      (tester) async {
-    await pumpHome(tester);
-    final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(circle.avatar, isNull);
-  });
-
-  testWidgets('shows the picked avatar next to the greeting', (tester) async {
-    final penguin =
-        Avatar.values.firstWhere((a) => a.semanticLabel == 'Penguin');
-    await pumpHome(tester, avatar: penguin);
-    final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(circle.avatar, penguin);
-  });
-
-  testWidgets(
-      'avatar sits trailing at the far right, after the greeting text, not '
-      'leading before it', (tester) async {
-    await pumpHome(tester);
-
-    final greetingLeft = tester.getTopLeft(_greeting('Good morning, Ada')).dx;
-    final avatarRect = tester.getRect(find.byType(AvatarTile));
-    final screenWidth =
-        tester.view.physicalSize.width / tester.view.devicePixelRatio;
-
-    // To the right of the greeting text, not before it.
-    expect(avatarRect.left, greaterThan(greetingLeft));
-    // Flush against the trailing screen edge (within the row's own
-    // padding), not floating in the middle.
-    expect(avatarRect.right, greaterThan(screenWidth - 60));
-  });
-
-  testWidgets(
-      'no edit badge on the hero (owner, after Batch 3); the avatar itself is '
-      'the "Change your avatar" control', (tester) async {
-    final semantics = tester.ensureSemantics();
-    var tapped = false;
-    await pumpHome(tester, onAvatarTap: () => tapped = true);
-
-    expect(find.byIcon(Icons.edit_rounded), findsNothing);
-    expect(find.bySemanticsLabel('Change your avatar'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Change your avatar'));
-    await tester.pump();
-    expect(tapped, isTrue);
-    semantics.dispose();
-  });
-
-  for (final brightness in Brightness.values) {
-    testWidgets(
-        'the hero\'s backlight (owner, Batch 5; dark only since Batch 7): the '
-        'palette colour, inside the hero\'s square, clear of the greeting; '
-        'light mode\'s one ground shadow, ${brightness.name}', (tester) async {
-      for (final width in [320.0, 430.0]) {
-        await pumpHome(tester,
-            brightness: brightness,
-            size: Size(width, 844),
-            textSize: AppTextSize.large);
-        final heroTile = find.descendant(
-            of: find.byType(Hero), matching: find.byType(AvatarTile));
-        final hero = tester.getRect(heroTile);
-        final context = tester.element(heroTile);
-        final light = find.byKey(HomeScreen.heroBacklightKey);
-        final ground = find.byKey(HomeScreen.heroGroundKey);
-        if (brightness == Brightness.dark) {
-          final gradient =
-              (tester.widget<DecoratedBox>(light).decoration as BoxDecoration)
-                  .gradient! as RadialGradient;
-          expect(gradient.colors.first, AppPalette.of(context).heroBacklight);
-          expect(gradient.colors.last.a, 0);
-          final rect = tester.getRect(light);
-          expect(rect, hero, reason: 'the hero\'s own square');
-          expect(rect.right, lessThanOrEqualTo(width));
-          expect(tester.getRect(find.byType(HomeGreeting)).right,
-              lessThanOrEqualTo(rect.left));
-          // Behind the Hero, not inside it: the flight carries the avatar
-          // only.
-          expect(find.descendant(of: find.byType(Hero), matching: light),
-              findsNothing);
-          // No ground shadow in dark (the glow does it); the avatar keeps
-          // its own ellipse.
-          expect(ground, findsNothing);
-          expect(tester.widget<AvatarTile>(heroTile).groundShadow, isTrue);
-        } else {
-          // Batch 7 (owner): light mode keeps only the ground shadow.
-          expect(light, findsNothing);
-          expect(AppPalette.of(context).heroBacklight, isNull);
-          // Its visible blur (about 2 sigma, 10 pt; 12 checked) stays clear
-          // of the greeting and inside the screen, under the hero's feet.
-          final g = tester.getRect(ground);
-          expect(g.inflate(12).left,
-              greaterThan(tester.getRect(find.byType(HomeGreeting)).right));
-          expect(g.inflate(12).right, lessThanOrEqualTo(width));
-          expect(g.left, greaterThanOrEqualTo(hero.left));
-          expect(g.right, lessThanOrEqualTo(hero.right));
-          expect(g.bottom, lessThanOrEqualTo(hero.bottom));
-          expect(find.descendant(of: find.byType(Hero), matching: ground),
-              findsNothing);
-          expect(AppPalette.of(context).heroGround, isNotNull);
-          // One shadow at the feet, not two: the avatar's own ellipse is
-          // left out here.
-          expect(tester.widget<AvatarTile>(heroTile).groundShadow, isFalse);
-        }
-        expect(tester.takeException(), isNull);
-      }
-    });
-  }
-
-  testWidgets('tapping the avatar calls onAvatarTap', (tester) async {
-    var tapped = false;
-    await pumpHome(tester, onAvatarTap: () => tapped = true);
-
-    await tester.tap(find.byType(AvatarTile));
-    await tester.pump();
-
-    expect(tapped, isTrue);
-  });
-
-  group(
-      'avatar tap opens the picker via a real route push, with a Hero '
-      'flight (app.dart, batch: Home avatar → Settings picker transition)', () {
-    // Mirrors app.dart's real _openAvatarPickerFromHome exactly (a real
-    // Navigator.push, branching on MediaQuery.disableAnimationsOf the same
-    // manual way this app already gates motion everywhere else) — the
-    // same "minimal harness reproducing the real wiring" approach this
-    // suite's sibling files already use (avatar_picker_screen_test.dart's
-    // own pumpPushed) rather than driving the whole GrammarLensApp through
-    // onboarding just to reach Home.
-    Future<void> pumpHomeInNavigator(
-      WidgetTester tester, {
-      required ValueChanged<Avatar> onAvatarChanged,
-    }) async {
-      tester.view.physicalSize = const Size(390, 844) * 3.0;
-      tester.view.devicePixelRatio = 3.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: Builder(
-            builder: (context) => HomeScreen(
-              userName: 'Ada',
-              avatar: Avatar.values[3],
-              claudeService: ClaudeService(),
-              storageService: StorageService(),
-              analyticsService: AnalyticsService(),
-              subscriptionService: _FakeSubscriptionService(),
-              clock: () => DateTime(2026, 1, 1, 9, 0),
-              onAvatarTap: () {
-                final reduceMotion = MediaQuery.disableAnimationsOf(context);
-                final picker = AvatarPickerScreen(
-                  currentAvatar: Avatar.values[3],
-                  onAvatarChanged: onAvatarChanged,
-                  heroTag: homeAvatarHeroTag,
-                );
-                Navigator.of(context).push(
-                  reduceMotion
-                      ? PageRouteBuilder(
-                          transitionDuration: Duration.zero,
-                          reverseTransitionDuration: Duration.zero,
-                          pageBuilder: (_, __, ___) => picker,
-                        )
-                      : MaterialPageRoute(builder: (_) => picker),
-                );
-              },
-            ),
-          ),
-        ),
-      );
+  // UI polish (SPEC §5 Home, V14 / V15 / H04 / V24): the wordmark with the
+  // score capsule, the greeting, the Daily Test card, the mountain with its
+  // bubble, the free ticket and the topic showcase (free) or the practice
+  // card (Premium); the rest scene once every daily right is used. Home's
+  // avatar, its weak spot list, the topic strip and the Review call-out are
+  // gone (PROGRESS.md D5-1).
+  // TASK-widgets W1: a `grammarlens://daily-test` link (widget or reminder).
+  group('Daily Test link', () {
+    testWidgets('opens today\'s Daily Test when it is not done',
+        (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      await pumpHome(tester,
+          storageService: _FakeStorageService(), dailyTestLinks: links);
+      expect(find.byType(DailyTestScreen), findsNothing);
+      links.value++;
       await tester.pumpAndSettle();
-    }
-
-    testWidgets(
-        'tapping the avatar opens AvatarPickerScreen, not a tab '
-        'switch', (tester) async {
-      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
-
-      expect(find.byType(AvatarPickerScreen), findsNothing);
-      await tester.tap(find.byType(AvatarTile).first);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(AvatarPickerScreen), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing,
-          reason: 'a real push covers Home, unlike the old tab switch');
+      expect(find.byType(DailyTestScreen), findsOneWidget);
     });
 
-    testWidgets('Done on the picker pops back to Home', (tester) async {
-      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
-      await tester.tap(find.byType(AvatarTile).first);
+    testWidgets('stays on Home when today\'s test is done', (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+      await pumpHome(tester, storageService: storage, dailyTestLinks: links);
+      links.value++;
       await tester.pumpAndSettle();
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Done'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(AvatarPickerScreen), findsNothing);
-      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(DailyTestScreen), findsNothing);
+      expect(find.byType(DailyTestResultScreen), findsNothing);
+      expect(find.byKey(HomeScreen.dailyTestCardKey), findsOneWidget);
     });
 
-    testWidgets(
-        'with MediaQuery.disableAnimations on, the route has a zero-duration '
-        'transition — no flight, an instant switch', (tester) async {
-      tester.platformDispatcher.accessibilityFeaturesTestValue =
-          const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(
-          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
-
-      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
-      await tester.tap(find.byType(AvatarTile).first);
-      await tester.pump();
-
-      final route = ModalRoute.of(
-        tester.element(find.byType(AvatarPickerScreen)),
-      ) as PageRoute;
-      expect(route.transitionDuration, Duration.zero);
-    });
-
-    testWidgets(
-        'with normal motion, the route animates with MaterialPageRoute\'s '
-        'own (non-zero) transition duration', (tester) async {
-      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
-      await tester.tap(find.byType(AvatarTile).first);
-      // A normal (non-zero-duration) route needs two pumps here: the
-      // first only processes the tap's own push() call, the second
-      // actually builds the incoming route's page.
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
-
-      final route = ModalRoute.of(
-        tester.element(find.byType(AvatarPickerScreen)),
-      ) as PageRoute;
-      expect(route.transitionDuration, isNot(Duration.zero));
+    testWidgets('re-reads today\'s set first (a link right after midnight)',
+        (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+      await pumpHome(tester, storageService: storage, dailyTestLinks: links);
+      // The new day: no completed set any more.
+      storage.todaysDailyTest = null;
+      links.value++;
       await tester.pumpAndSettle();
+      expect(find.byType(DailyTestScreen), findsOneWidget);
     });
   });
 
-  // 1.2.0 Batch 3: the Daily Test card (brief, "Home"; batch0-report.md
-  // §6 N4). These replace the old whole-card "Today" tests: the entry is the
-  // card's button now, with the same two handlers behind it.
-  group('Daily Test card (1.2.0)', () {
+  // TASK-widgets W5: N01 opens on its own once, at the first rest scene or
+  // after the second Daily Test; V24 carries the reminder row.
+  group('Reminder question (N01) and V24\'s row', () {
+    ReminderController controllerFor(_FakeStorageService storage) =>
+        ReminderController(
+            storage: storage,
+            bridge: FakeNativeBridge()
+              ..permission = NotificationPermission.notDetermined);
+
+    testWidgets('the first rest scene opens N01 once; Not now is final',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..freeUsed = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      expect(find.byKey(RestReminderRow.switchKey), findsOneWidget);
+      await tester.tap(find.byKey(ReminderSoftAsk.notNowKey));
+      await tester.pumpAndSettle();
+      expect(storage.reminderSettings!.ask, ReminderAsk.declined);
+      // Home rebuilds (a resume): it is not asked again.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+    });
+
+    testWidgets('already answered: the rest scene does not ask',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..freeUsed = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings(ask: ReminderAsk.declined);
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+    });
+
+    testWidgets('back from a Daily Test that is not the first: N01 opens',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 2
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..firstCompletion = DateTime(2025, 12, 31, 20)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+      await tester.tap(find.text('Review answers'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DailyTestResultScreen), findsOneWidget);
+      Navigator.of(tester.element(find.byType(DailyTestResultScreen))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+    });
+
+    testWidgets('the very first Daily Test does not ask', (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..firstCompletion = DateTime(2026, 1, 1, 8)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = controllerFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester, storageService: storage, reminders: reminders);
+      await tester.tap(find.text('Review answers'));
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.byType(DailyTestResultScreen))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReminderSoftAsk), findsNothing);
+    });
+  });
+
+  group('Home, UI polish', () {
     testWidgets(
-        'not started: the real question count and "Start daily test", no '
-        'progress bar; the button opens the Daily Test', (tester) async {
+        'before the test: the card\'s line and "Start today’s test" opens '
+        'the Daily Test; the bubble says the next step is one test away',
+        (tester) async {
       await pumpHome(tester, storageService: _FakeStorageService());
       final card = find.byKey(HomeScreen.dailyTestCardKey);
-
       expect(find.descendant(of: card, matching: find.text('Your next step.')),
           findsOneWidget);
       expect(
           find.descendant(
-              of: card, matching: find.text('${DailyTestSet.questionCount}')),
+              of: card,
+              matching: find.text(
+                  '${DailyTestSet.questionCount} questions · about 2 minutes')),
           findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text('questions')),
-          findsOneWidget);
-      // The same order as the done state: the label above the number.
-      expect(
-          tester
-              .getRect(
-                  find.descendant(of: card, matching: find.text('questions')))
-              .bottom,
-          lessThanOrEqualTo(tester
-              .getRect(find.descendant(
-                  of: card,
-                  matching: find.text('${DailyTestSet.questionCount}')))
-              .top));
-      expect(find.descendant(of: card, matching: find.text('Review results')),
-          findsNothing);
-      expect(
-          find.descendant(
-              of: card, matching: find.byType(LinearProgressIndicator)),
-          findsNothing);
+      expect(find.text('Review answers'), findsNothing);
+      expect(find.text('Step 1 is one test away!'), findsOneWidget);
+      // V15: the step the test will reach pulses in gold.
+      expect(find.byKey(MonthlyMountain.nextStepKey), findsOneWidget);
 
-      await tester.tap(find.text('Start daily test'));
+      await tester.tap(find.text('Start today’s test'));
       await tester.pumpAndSettle();
       expect(find.byType(DailyTestScreen), findsOneWidget);
     });
 
     testWidgets(
-        'done: the real score, "Review results" and tomorrow\'s line, not '
-        'the invitation', (tester) async {
+        'after the test: today\'s points and step, "Review answers" opens '
+        'the result, and the bubble points at tomorrow', (tester) async {
       final storage = _FakeStorageService()
+        ..steps = 1
         ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
       await pumpHome(tester, storageService: storage);
       final card = find.byKey(HomeScreen.dailyTestCardKey);
-
-      expect(find.descendant(of: card, matching: find.text('3/5')),
-          findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text('correct')),
-          findsOneWidget);
+      // 3 right (+2 each) and 2 wrong (+1 each).
       expect(
           find.descendant(
-              of: card,
-              matching:
-                  find.text('New test tomorrow. Review today’s answers.')),
+              of: card, matching: find.text('+8 points · step 1 reached')),
           findsOneWidget);
-      expect(find.text('Start daily test'), findsNothing);
-      expect(find.text('Review results'), findsOneWidget);
-      // The label above the value, one step larger than the card's 11 pt
-      // labels (owner, after Batch 3).
-      final label = find.descendant(of: card, matching: find.text('correct'));
-      final value = find.descendant(of: card, matching: find.text('3/5'));
-      expect(tester.getRect(label).bottom,
-          lessThanOrEqualTo(tester.getRect(value).top));
-      final theme = Theme.of(tester.element(card));
-      expect(tester.widget<Text>(label).style!.fontSize,
-          theme.textTheme.labelMedium!.fontSize);
-    });
+      expect(find.descendant(of: card, matching: find.text('Day 1 complete!')),
+          findsOneWidget);
+      expect(find.text('Start today’s test'), findsNothing);
+      expect(find.text('Step 2 opens tomorrow'), findsOneWidget);
+      expect(find.byKey(MonthlyMountain.nextStepKey), findsNothing);
 
-    testWidgets(
-        'done: the button views the result again (onViewResult), not a new '
-        'test', (tester) async {
-      final storage = _FakeStorageService()
-        ..todaysDailyTest = _completedDailyTestSet(correct: 2, total: 5);
-      await pumpHome(tester, storageService: storage);
-
-      await tester.tap(find.text('Review results'));
+      await tester.tap(find.text('Review answers'));
       await tester.pumpAndSettle();
-
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
       expect(find.byType(DailyTestScreen), findsNothing);
-      // The real score, reconstructed from the persisted answers, not
-      // recomputed from nothing.
-      expect(find.textContaining('2/5 correct'), findsOneWidget);
     });
 
-    testWidgets(
-        'only the button is the entry: a tap on the card\'s text does '
-        'nothing', (tester) async {
-      final analyticsService = _RecordingAnalyticsService();
-      await pumpHome(tester, analyticsService: analyticsService);
-      await tester.tap(find.text('Your next step.'));
+    testWidgets('the score capsule opens Profile', (tester) async {
+      var opened = 0;
+      await pumpHome(tester, onOpenProfile: () => opened++);
+      await tester.tap(find.byKey(HomeScreen.capsuleKey));
       await tester.pumpAndSettle();
-      expect(analyticsService.modesSelected, isEmpty);
-      expect(find.byType(DailyTestScreen), findsNothing);
+      expect(opened, 1);
     });
 
     testWidgets(
-        'the card is orange with onOrange text in both themes, the button '
-        'the app\'s navy', (tester) async {
-      for (final brightness in Brightness.values) {
-        await pumpHome(tester, brightness: brightness);
-        final card = find.byKey(HomeScreen.dailyTestCardKey);
-        final theme = Theme.of(tester.element(card));
-        final material = tester.widget<Card>(
-            find.descendant(of: card, matching: find.byType(Card)));
-        expect(material.color, theme.colorScheme.primary,
-            reason: '$brightness');
-        final title = tester.widget<Text>(find.text('Your next step.'));
-        expect(title.style!.color, theme.colorScheme.onPrimary,
-            reason: '$brightness: dark text on orange, never white');
-        expect(find.descendant(of: card, matching: find.byType(FilledButton)),
-            findsOneWidget);
-      }
-    });
-
-    testWidgets(
-        'the month card peek (M21) is the button and the padding below it',
+        'a free user: the ticket names the weak spot and switches to Review',
         (tester) async {
-      await pumpHome(tester);
-      final card = tester.getRect(find.byKey(HomeScreen.dailyTestCardKey));
-      final button = tester.getRect(find.ancestor(
-          of: find.text('Start daily test'),
-          matching: find.byType(FilledButton)));
+      var toReview = 0;
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
+          onGoToReview: () => toReview++);
+      final ticket = find.byKey(HomeScreen.ticketKey);
+      await tester.ensureVisible(ticket);
+      await tester.pumpAndSettle();
+      expect(find.text('1 free practice'), findsOneWidget);
+      expect(find.text('Use it on: Missing Article'), findsOneWidget);
+      await tester.tap(ticket);
+      await tester.pumpAndSettle();
+      expect(toReview, 1);
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+
+    testWidgets('a free user with no weak spot: the ticket points at Review',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService());
+      expect(find.text('Pick a weak spot in Review.'), findsOneWidget);
+    });
+
+    testWidgets('a free user who used the ticket: the used line',
+        (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..freeUsed = 1);
+      expect(find.text('Nice work, Ada.'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a free user: the showcase picks the weak spot\'s topic, and every '
+        'tap opens the paywall', (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()
+            ..weakSpots = [_weakSpot(topicId: 'modalVerbs')]);
+      final showcase = find.byType(TopicShowcase);
       expect(
-          card.bottom - button.top, closeTo(HomeScreen.monthCardTodayPeek, 1));
+          find.descendant(
+              of: showcase,
+              matching: find.text(kTopics
+                  .firstWhere((t) => t.id.name == 'modalVerbs')
+                  .title(en))),
+          findsOneWidget);
+      final unlock = find.text('Unlock all ${practiceTopics().length} topics');
+      await tester.ensureVisible(unlock);
+      await tester.pumpAndSettle();
+      await tester.tap(unlock);
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsOneWidget);
+      expect(find.byType(TopicPracticeScreen), findsNothing);
+    });
+
+    // 1.5.0: a weak spot in a first-wave topic picks that topic, not the
+    // first one (the lookup knew only the Daily Test's five).
+    testWidgets('a free user: a weak spot in a new topic is "Picked for you"',
+        (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()
+            ..weakSpots = [_weakSpot(topicId: 'prepositions')]);
+      final showcase = find.byType(TopicShowcase);
+      expect(tester.widget<TopicShowcase>(showcase).picked?.id,
+          TopicId.prepositions);
+      expect(find.descendant(of: showcase, matching: find.text('Prepositions')),
+          findsOneWidget);
+      expect(find.text('Unlock all 10 topics'), findsOneWidget);
+    });
+
+    testWidgets(
+        'v13: the paywall from a Home topic card stays on a swipe, a drag '
+        'down and a system back; X → V13b once', (tester) async {
+      PremiumScreen.resetExitReminder();
+      await pumpHome(tester,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _restOffering()),
+          storageService: _FakeStorageService()
+            ..weakSpots = [_weakSpot(topicId: 'modalVerbs')]);
+      final unlock = find.text('Unlock all ${practiceTopics().length} topics');
+      await tester.ensureVisible(unlock);
+      await tester.pumpAndSettle();
+      await tester.tap(unlock);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      await closeWithX(tester, reminder: true);
+      expect(find.byType(TopicShowcase), findsOneWidget);
+      // The second time this session the X closes at once.
+      await tester.ensureVisible(unlock);
+      await tester.pumpAndSettle();
+      await tester.tap(unlock);
+      await tester.pumpAndSettle();
+      await expectPaywallHolds(tester);
+      await closeWithX(tester, reminder: false);
+    }, variant: iOSOnly);
+
+    testWidgets(
+        'a Premium user: no ticket, the practice card; a topic opens Topic '
+        'Practice', (tester) async {
+      await pumpHome(tester,
+          subscriptionService: _FakeSubscriptionService(hasAccess: true),
+          storageService: _FakeStorageService()..sessions = 2);
+      expect(find.byKey(HomeScreen.ticketKey), findsNothing);
+      expect(find.byType(TopicShowcase), findsNothing);
+      expect(find.byType(PracticeCard), findsOneWidget);
+      expect(
+          find.text('2/${StorageService.dailySessionLimit}'), findsOneWidget);
+      final tile = find.descendant(
+          of: find.byType(PracticeCard),
+          matching: find.text(kTopics.first.title(en)));
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+      expect(find.byType(TopicPracticeScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'a Premium user: "Practice your weak spot" opens that weak spot',
+        (tester) async {
+      await pumpHome(tester,
+          subscriptionService: _FakeSubscriptionService(hasAccess: true),
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()]);
+      final button = find.byKey(PracticeCard.weakSpotKey);
+      await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'reacts live to an entitlement change: a trial starting swaps the '
+        'showcase for the practice card', (tester) async {
+      final subscriptionService = _FakeSubscriptionService();
+      await pumpHome(tester, subscriptionService: subscriptionService);
+      expect(find.byType(TopicShowcase), findsOneWidget);
+      subscriptionService.emitAccessChange(true);
+      await tester.pumpAndSettle();
+      expect(find.byType(TopicShowcase), findsNothing);
+      expect(find.byType(PracticeCard), findsOneWidget);
+    });
+
+    testWidgets(
+        'stacks in order: the capsule row, the Daily Test card, the '
+        'mountain, the ticket, the showcase', (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()]);
+      double top(Finder f) => tester.getTopLeft(f).dy;
+      final capsule = top(find.byKey(HomeScreen.capsuleKey));
+      final daily = top(find.byKey(HomeScreen.dailyTestCardKey));
+      final mountain = top(find.byType(MonthlyMountain));
+      final ticket = top(find.byKey(HomeScreen.ticketKey));
+      final showcase = top(find.byType(TopicShowcase));
+      expect(daily, greaterThan(capsule));
+      expect(mountain, greaterThan(daily));
+      expect(ticket, greaterThan(mountain));
+      expect(showcase, greaterThan(ticket));
+    });
+
+    testWidgets('every daily right used (free): the rest scene replaces Home',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..freeUsed = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5);
+      await pumpHome(tester, storageService: storage);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byKey(HomeScreen.dailyTestCardKey), findsNothing);
+      expect(find.text('All done for today'), findsOneWidget);
+      // Fix round 2: free users get V24f (SPEC §1.15); v13: the used
+      // ticket and the deck, no done tiles.
+      expect(find.byKey(RestScene.usedTicketKey), findsOneWidget);
+      expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
+      expect(find.byKey(RestScene.doneTilesKey), findsNothing);
+      expect(find.byKey(HomeScreen.capsuleKey), findsOneWidget);
+    });
+
+    testWidgets(
+        'every daily right used (Premium): every session, then the rest scene',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..sessions = StorageService.dailySessionLimit
+        ..todaysDailyTest = _completedDailyTestSet(correct: 5, total: 5);
+      await pumpHome(tester,
+          storageService: storage,
+          subscriptionService: _FakeSubscriptionService(hasAccess: true));
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      const limit = StorageService.dailySessionLimit;
+      // Premium users keep V24: no Premium card, no dream; the Zzz and
+      // "See you tomorrow". Fix round 5 (SPEC V24 v13): its own board
+      // again — the two done tiles and the next test's card with its step
+      // bar and countdown.
+      expect(find.byKey(RestScene.premiumCardKey), findsNothing);
+      expect(find.byKey(RestScene.usedTicketKey), findsNothing);
+      expect(find.byKey(RestScene.dreamKey), findsNothing);
+      expect(find.byKey(RestScene.seeYouKey), findsOneWidget);
+      expect(
+          find.text('Your buddy is resting until tomorrow.'), findsOneWidget);
+      expect(find.byKey(RestScene.doneTilesKey), findsOneWidget);
+      expect(find.text('Daily Test'), findsOneWidget);
+      expect(find.text('5/5 · +10 points'), findsOneWidget);
+      expect(find.text('Practice'), findsOneWidget);
+      expect(find.text('$limit/$limit sessions'), findsOneWidget);
+      expect(find.byKey(RestScene.nextTestKey), findsOneWidget);
+      expect(find.text('NEXT DAILY TEST · STEP 4'), findsOneWidget);
+      // Clock 9:00: 15 h to the next test.
+      expect(find.text('15:00'), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(RestScene.nextTestKey),
+              matching: find.byType(StepBar)),
+          findsOneWidget);
+    });
+
+    group(
+        'fix round 2, item 11: the free rest scene leads to Premium '
+        '(V24f → V24s → V13r → PW05r)', () {
+      Future<(RecordingAnalyticsSink, _FakeSubscriptionService)> pumpRest(
+          WidgetTester tester,
+          {bool weakSpot = true}) async {
+        final sink = RecordingAnalyticsSink();
+        final subs = _FakeSubscriptionService(offering: _restOffering());
+        final storage = _FakeStorageService()
+          ..steps = 3
+          ..freeUsed = 1
+          ..weakSpots = weakSpot ? [_weakSpot()] : const []
+          ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5);
+        await pumpHome(tester,
+            storageService: storage,
+            subscriptionService: subs,
+            analyticsService: AnalyticsService(sink: sink),
+            size: const Size(428, 926));
+        return (sink, subs);
+      }
+
+      testWidgets(
+          'V24f v13: the dream bubble names today\'s weak spot; no Zzz and '
+          'no "See you tomorrow"; the used ticket with the next one\'s '
+          'time; the deck of four with NEXT UP, the weak spot and +4 TODAY; '
+          'the button states the store\'s trial; the paywall never opens '
+          'by itself', (tester) async {
+        final (sink, _) = await pumpRest(tester);
+        expect(find.byKey(RestScene.dreamKey), findsOneWidget);
+        expect(find.textContaining('IS DREAMING OF'), findsOneWidget);
+        expect(find.byKey(RestScene.seeYouKey), findsNothing);
+        // The title alone (no done ticks, no countdown in the header).
+        expect(find.text('All done for today'), findsOneWidget);
+        expect(find.text('Daily Test 4/5'), findsNothing);
+        // Today's free ticket, used: USED and the time to the next one
+        // (clock 9:00 → 15:00), and the two lines beside it.
+        final used = find.byKey(RestScene.usedTicketKey);
+        expect(tester.getSize(used), const Size(150, 53));
+        expect(find.descendant(of: used, matching: find.text('USED')),
+            findsOneWidget);
+        expect(find.descendant(of: used, matching: find.text('15:00')),
+            findsOneWidget);
+        expect(find.descendant(of: used, matching: find.text('NEXT')),
+            findsOneWidget);
+        expect(
+            find.textContaining('Today’s free ticket is used.',
+                findRichText: true),
+            findsOneWidget);
+        expect(find.textContaining('Not sleepy yet?', findRichText: true),
+            findsOneWidget);
+        // The Premium card: the tag, the allowance, the deck.
+        final card = find.byKey(RestScene.premiumCardKey);
+        expect(find.descendant(of: card, matching: find.text('PREMIUM')),
+            findsOneWidget);
+        expect(
+            find.descendant(of: card, matching: find.text('5 practices a day')),
+            findsOneWidget);
+        final deck = find.byKey(RestScene.deckKey);
+        for (var i = 0; i < TicketDeck.tickets; i++) {
+          expect(find.byKey(TicketDeck.ticketKey(i)), findsOneWidget);
+        }
+        final spot = humanizeSlug(_weakSpot().errorType);
+        for (final text in [
+          'NEXT UP',
+          spot,
+          'AI feedback on every answer',
+          '+4',
+          'TODAY',
+        ]) {
+          expect(find.descendant(of: deck, matching: find.text(text)),
+              findsOneWidget,
+              reason: text);
+        }
+        expect(
+            tester.getSemantics(deck).label, 'Premium: 4 more practices today');
+        // The back tickets 7 pt apart diagonally once settled.
+        final front = tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0)));
+        for (var i = 1; i < TicketDeck.tickets; i++) {
+          expect(tester.getTopLeft(find.byKey(TicketDeck.ticketKey(i))) - front,
+              Offset(7.0 * i, 7.0 * i));
+        }
+        final hero = Avatar.values.first.name(en);
+        expect(find.text('Wake $hero up · 7 days free'), findsOneWidget);
+        expect(tester.getSize(find.byKey(RestScene.wakeKey)).height,
+            greaterThanOrEqualTo(50));
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(sink.named('paywall_viewed'), isEmpty);
+      });
+
+      testWidgets('no weak spot: no dream bubble, the deck names the topics',
+          (tester) async {
+        await pumpRest(tester, weakSpot: false);
+        expect(find.byKey(RestScene.dreamKey), findsNothing);
+        expect(
+            find.descendant(
+                of: find.byKey(RestScene.deckKey),
+                matching:
+                    find.text('Any of ${practiceTopics().length} topics')),
+            findsOneWidget);
+      });
+
+      testWidgets(
+          'Wake → the companion wakes ("I\'m awake!"), then V13r rises with '
+          'source rest_scene; X → V13b once → back to the scene, asleep',
+          (tester) async {
+        PremiumScreen.resetExitReminder();
+        final (sink, _) = await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pump();
+        // v13: the deck gathers into the front ticket first (150 ms) …
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(RestScene.awakeBubbleKey), findsNothing);
+        await tester.pump(const Duration(milliseconds: 60));
+        final front = tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0)));
+        for (var i = 1; i < TicketDeck.tickets; i++) {
+          expect(tester.getTopLeft(find.byKey(TicketDeck.ticketKey(i))), front);
+        }
+        // … then the companion wakes, then the paywall rises.
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(RestScene.awakeBubbleKey), findsOneWidget);
+        expect(find.byType(PremiumScreen), findsNothing);
+        await tester.pumpAndSettle();
+        expect(find.byType(PremiumScreen), findsOneWidget);
+        expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+        expect(find.byKey(PremiumScreen.restSpotKey), findsOneWidget);
+        final viewed = sink.named('paywall_viewed');
+        expect(viewed, hasLength(1));
+        expect(viewed.single.parameters!['source'],
+            AnalyticsService.paywallSourceRestScene);
+        expect(AnalyticsService.paywallSourceRestScene, 'rest_scene');
+
+        await tester.tap(find.byKey(PremiumScreen.closeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.exitContinueFreeKey), findsOneWidget);
+        await tester.tap(find.byKey(PremiumScreen.exitContinueFreeKey));
+        await tester.pumpAndSettle();
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+        expect(find.byKey(RestScene.awakeBubbleKey), findsNothing);
+        expect(find.byKey(RestScene.dreamKey), findsOneWidget);
+        // The deck spreads again.
+        expect(
+            tester.getTopLeft(find.byKey(TicketDeck.ticketKey(3))) -
+                tester.getTopLeft(find.byKey(TicketDeck.ticketKey(0))),
+            const Offset(21, 21));
+      });
+
+      testWidgets(
+          'v13: V13r from Wake stays on a swipe, a drag down and a system '
+          'back; X → V13b → back to the scene', (tester) async {
+        PremiumScreen.resetExitReminder();
+        await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.restTopKey), findsOneWidget);
+        await expectPaywallHolds(tester);
+        await closeWithX(tester, reminder: true);
+        expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      }, variant: iOSOnly);
+
+      testWidgets(
+          'trial started → PW05r ("<Hero> is ready", "Practise <weak spot>") '
+          '→ straight into that weak spot\'s practice, not Home',
+          (tester) async {
+        final (_, subs) = await pumpRest(tester);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(PremiumScreen.ctaKey));
+        await tester.pumpAndSettle();
+        expect(subs.purchases, 1);
+        // The paywall's hero is the stored profile's (none in this fake).
+        expect(find.textContaining('is ready. Let’s go!'), findsOneWidget);
+        expect(find.text('4 more sessions today, 5 every day'), findsOneWidget);
+        final spot = humanizeSlug(_weakSpot().errorType);
+        expect(find.text('Practise $spot'), findsOneWidget);
+        await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(PremiumScreen), findsNothing);
+        expect(find.byKey(HomeScreen.restPractiseKey), findsOneWidget);
+        expect(
+            tester
+                .widget<WeakSpotDetailScreen>(
+                    find.byKey(HomeScreen.restPractiseKey))
+                .startPractice,
+            isTrue);
+      });
+
+      testWidgets(
+          'no weak spot: PW05r says "Pick a topic" and opens the topics',
+          (tester) async {
+        await pumpRest(tester, weakSpot: false);
+        await tester.ensureVisible(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(RestScene.wakeKey));
+        await tester.pumpAndSettle();
+        expect(find.byKey(PremiumScreen.restSpotKey), findsNothing);
+        await tester.tap(find.byKey(PremiumScreen.ctaKey));
+        await tester.pumpAndSettle();
+        expect(find.text('Pick a topic'), findsOneWidget);
+        await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(TopicPracticeScreen), findsOneWidget);
+      });
+    });
+
+    testWidgets('a done test with practice left is not a rest day',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5);
+      await pumpHome(tester, storageService: storage);
+      expect(find.byKey(HomeScreen.restSceneKey), findsNothing);
+      expect(find.byKey(HomeScreen.dailyTestCardKey), findsOneWidget);
     });
   });
 
@@ -1179,7 +1529,7 @@ void main() {
     final analyticsService = _RecordingAnalyticsService();
     await pumpHome(tester, analyticsService: analyticsService);
 
-    await tester.tap(find.text('Start daily test'));
+    await tester.tap(find.text('Start today’s test'));
     await tester.pump();
 
     expect(analyticsService.modesSelected, [AnalyticsService.modeDailyTest]);
@@ -1196,371 +1546,34 @@ void main() {
     }
   });
 
-  group('Topic practice strip (1.2.0, Q9, Q10)', () {
-    Future<void> revealStrip(WidgetTester tester) async {
-      await tester.ensureVisible(find.text('Explore all topics'));
-      await tester.pumpAndSettle();
-    }
-
-    testWidgets('shows the real topics, not the mockup\'s examples',
-        (tester) async {
-      await pumpHome(tester);
-      await revealStrip(tester);
-      for (final topic in kTopics) {
-        expect(find.text(topic.title(en)), findsOneWidget,
-            reason: topic.title(en));
-      }
-      expect(find.text('Tenses'), findsNothing);
-      expect(find.text('Prepositions'), findsNothing);
-      // Streak Mode and Voice Practice stay gone from Home.
-      expect(find.text('Streak Mode'), findsNothing);
-      expect(find.text('Voice Practice'), findsNothing);
-    });
-
-    testWidgets(
-        'a free user: the heading carries the Premium tag, and a topic opens '
-        'the Premium screen, not Topic Practice', (tester) async {
-      await pumpHome(tester); // default fake: hasAccess: false
-      await revealStrip(tester);
-      expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
-
-      await tester.tap(find.text(kTopics.first.title(en)));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(TopicPracticeScreen), findsNothing);
-      expect(find.byType(PremiumScreen), findsOneWidget);
-    });
-
-    testWidgets('a free user: "Explore all topics" opens the Premium screen',
-        (tester) async {
-      await pumpHome(tester);
-      await revealStrip(tester);
-      await tester.tap(find.text('Explore all topics'));
-      await tester.pumpAndSettle();
-      expect(find.byType(PremiumScreen), findsOneWidget);
-    });
-
-    testWidgets(
-        'a premium user: a topic and "Explore all topics" open the existing '
-        'Topic Practice screen; no Premium tag', (tester) async {
-      await pumpHome(
-        tester,
-        subscriptionService: _FakeSubscriptionService(hasAccess: true),
-      );
-      await revealStrip(tester);
-      expect(find.byIcon(Icons.lock_rounded), findsNothing);
-
-      await tester.tap(find.text(kTopics.first.title(en)));
-      await tester.pumpAndSettle();
-      expect(find.byType(TopicPracticeScreen), findsOneWidget);
-
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Explore all topics'));
-      await tester.pumpAndSettle();
-      expect(find.byType(TopicPracticeScreen), findsOneWidget);
-    });
-
-    testWidgets(
-        'reacts live to an entitlement change — a trial starting unlocks the '
-        'strip without rebuilding the screen', (tester) async {
-      final subscriptionService = _FakeSubscriptionService();
-      await pumpHome(tester, subscriptionService: subscriptionService);
-      await revealStrip(tester);
-      expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
-
-      subscriptionService.emitAccessChange(true);
-      await tester.pump();
-      expect(find.byIcon(Icons.lock_rounded), findsNothing);
-
-      await tester.tap(find.text(kTopics.first.title(en)));
-      await tester.pumpAndSettle();
-      expect(find.byType(TopicPracticeScreen), findsOneWidget);
-    });
-
-    testWidgets('the strip scrolls sideways and leaves the page where it is',
-        (tester) async {
-      await pumpHome(tester);
-      await revealStrip(tester);
-      final page =
-          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
-      final pageBefore = page.pixels;
-      final strip = find.descendant(
-          of: find.byKey(const ValueKey('home_topic_strip')),
-          matching: find.byType(Scrollable));
-      final stripPosition = tester.state<ScrollableState>(strip).position;
-
-      await tester.drag(
-          find.text(kTopics.first.title(en)), const Offset(-200, 0));
-      await tester.pumpAndSettle();
-
-      expect(stripPosition.pixels, greaterThan(0));
-      expect(page.pixels, pageBefore);
-    });
-  });
-
   testWidgets(
-      'stacks in order: the Daily Test card, the mountain, Topic practice, '
-      'the weak spots, the Review call-out', (tester) async {
-    final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
-    await pumpHome(tester, storageService: storage);
-    double top(Finder f) => tester.getTopLeft(f).dy;
-
-    final daily = top(find.byKey(HomeScreen.dailyTestCardKey));
-    final mountain = top(find.byType(MonthlyMountain));
-    final topics = top(find.text('Topic practice'));
-    final weak = top(find.text('Your weak spots'));
-    final review = top(find.text('One free practice. Every day.'));
-    expect(mountain, greaterThan(daily));
-    expect(topics, greaterThan(mountain));
-    expect(weak, greaterThan(topics));
-    expect(review, greaterThan(weak));
-  });
-
-  group('weak spots (PRD v2 §13.5 item 4)', () {
-    testWidgets(
-        'the action is a label of the card\'s one tap target: a tap on the '
-        'title does the same (free: the paywall), with no button inside',
-        (tester) async {
-      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
-      await pumpHome(tester, storageService: storage);
-      final card = find.byType(WeakSpotCard);
-      expect(
-          find.descendant(
-              of: card,
-              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
-          findsNothing);
-      await tester.ensureVisible(find.text('Missing Article'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Missing Article'));
-      await tester.pumpAndSettle();
-      expect(
-          tester
-              .widget<PremiumScreen>(find.byType(PremiumScreen))
-              .sourceContext,
-          'Missing Article');
-    });
-
-    testWidgets('no section at all when there are none — no empty state',
-        (tester) async {
-      await pumpHome(tester, storageService: _FakeStorageService());
-      expect(find.text('Your weak spots'), findsNothing);
-    });
-
-    testWidgets(
-        'shows up to the most frequent, tappable through when '
-        'unlocked', (tester) async {
-      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
-      await pumpHome(
-        tester,
-        storageService: storage,
-        subscriptionService: _FakeSubscriptionService(hasAccess: true),
-      );
-
-      tester
-          .state<ScrollableState>(find.byType(Scrollable).first)
-          .position
-          .jumpTo(550);
-      await tester.pumpAndSettle();
-      expect(find.text('Your weak spots'), findsOneWidget);
-      // 1.2.0 Batch 5: Home's card is the mockup's — no excerpt; its action
-      // line says "Practice this" for a premium user.
-      expect(find.text('Practice this'), findsOneWidget);
-      expect(find.byIcon(Icons.lock_rounded), findsNothing);
-
-      await tester.ensureVisible(find.text('Practice this'));
-      // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
-      // drawn before the tap lands on the card.
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Practice this'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
-    });
-
-    testWidgets(
-        'shows locked when the entitlement is not active, and tapping '
-        'opens the Premium screen naming that weak spot', (tester) async {
-      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
-      await pumpHome(tester, storageService: storage); // hasAccess: false
-
-      tester
-          .state<ScrollableState>(find.byType(Scrollable).first)
-          .position
-          .jumpTo(550);
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.lock_rounded), findsWidgets);
-      // 1.2.0 Batch 5: the mockup's action line for a free user.
-      expect(find.text('Practice with Premium'), findsOneWidget);
-
-      await tester.ensureVisible(find.text('Practice with Premium'));
-      // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
-      // drawn before the tap lands on the card.
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Practice with Premium'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(WeakSpotDetailScreen), findsNothing);
-      final premium = tester.widget<PremiumScreen>(
-        find.byType(PremiumScreen),
-      );
-      expect(premium.sourceContext, 'Missing Article');
-    });
-  });
-
-  // 1.2.0 (owner decision Q15): the Premium row that used to end Home is
-  // gone; a pointer to Review's free daily practice takes its place.
-  group('Review call-out (1.2.0, Q15)', () {
-    testWidgets('no Premium row any more, for a free user either',
-        (tester) async {
-      await pumpHome(tester,
-          storageService: _FakeStorageService()..weakSpots = [_weakSpot()]);
-      expect(find.text('Unlock targeted practice on your weak spots'),
-          findsNothing);
-    });
-
-    testWidgets(
-        'a free user with weak spots: shown, and it switches to the Review '
-        'tab', (tester) async {
-      var toReview = 0;
-      await pumpHome(tester,
-          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
-          onGoToReview: () => toReview++);
-      final link = find.text('Go to Review');
-      await tester.ensureVisible(link);
-      await tester.pumpAndSettle();
-      expect(find.text('One free practice. Every day.'), findsOneWidget);
-
-      await tester.tap(link);
-      await tester.pumpAndSettle();
-      expect(toReview, 1);
-      // A tab switch, not a pushed route.
-      expect(find.byType(PremiumScreen), findsNothing);
-    });
-
-    testWidgets(
-        'the whole card is the tap target (owner, Batch 5): any point of it '
-        'switches to Review', (tester) async {
-      var toReview = 0;
-      await pumpHome(tester,
-          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
-          onGoToReview: () => toReview++);
-      final card = find.byKey(HomeScreen.reviewCalloutKey);
-      await tester.ensureVisible(card);
-      await tester.pumpAndSettle();
-      final rect = tester.getRect(card);
-      final points = [
-        rect.topLeft + const Offset(6, 6),
-        rect.topRight + const Offset(-6, 6),
-        rect.center,
-        rect.bottomLeft + const Offset(6, -6),
-        rect.bottomRight + const Offset(-6, -6),
-      ];
-      for (final point in points) {
-        await tester.tapAt(point);
-        await tester.pumpAndSettle();
-      }
-      expect(toReview, points.length);
-    });
-
-    testWidgets(
-        'one semantics button, no button inside it, labelled by its text',
-        (tester) async {
-      final semantics = tester.ensureSemantics();
-      await pumpHome(tester,
-          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
-          onGoToReview: () {});
-      final card = find.byKey(HomeScreen.reviewCalloutKey);
-      expect(
-          find.descendant(
-              of: card,
-              matching: find.byWidgetPredicate(
-                  (w) => w is ButtonStyleButton || w is InkWell)),
-          findsNothing);
-      final data = tester.getSemantics(card).getSemanticsData();
-      expect(data.flagsCollection.isButton, isTrue);
-      expect(data.hasAction(SemanticsAction.tap), isTrue);
-      expect(data.label, contains('One free practice. Every day.'));
-      expect(data.label, contains('Go to Review'));
-      semantics.dispose();
-    });
-
-    testWidgets('not shown to a premium user (no quota to describe)',
-        (tester) async {
-      await pumpHome(tester,
-          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
-          subscriptionService: _FakeSubscriptionService(hasAccess: true));
-      expect(find.text('One free practice. Every day.'), findsNothing);
-    });
-
-    testWidgets('not shown when there is no weak spot to choose',
-        (tester) async {
-      await pumpHome(tester, storageService: _FakeStorageService());
-      expect(find.text('One free practice. Every day.'), findsNothing);
-    });
-  });
-
-  testWidgets(
-      'the greeting word is larger than a section title and smaller than '
-      'the name and the brand (owner, after Batch 3)', (tester) async {
-    await pumpHome(tester);
-    double size(Finder f) => tester.widget<Text>(f).style!.fontSize!;
-    final greeting = size(find.text('Good morning,'));
-    final name = size(find.text('Ada'));
-    final brand = size(find.text('GrammarLens'));
-    final section = size(find.text('Topic practice'));
-    expect(greeting, closeTo(section * HomeScreen.greetingScale, .01));
-    expect(greeting, greaterThan(section));
-    expect(greeting, lessThan(name));
-    expect(greeting, lessThan(brand));
-  });
-
-  testWidgets('320 pt, Large text: a long name wraps under the greeting',
-      (tester) async {
-    await pumpHome(tester,
-        size: const Size(320, 844),
-        textSize: AppTextSize.large,
-        userName: 'Maximiliana Alexandra Konstantinopoulou');
-    expect(tester.takeException(), isNull);
-    final name = find.text('Maximiliana Alexandra Konstantinopoulou');
-    final paragraph = tester.renderObject<RenderParagraph>(name);
-    expect(paragraph.didExceedMaxLines, isFalse);
-    // More than one line: it wraps instead of running under the hero.
-    final lineHeight = tester.widget<Text>(name).style!.fontSize! *
-        tester.widget<Text>(name).style!.height!;
-    expect(tester.getSize(name).height, greaterThan(lineHeight * 1.5));
-    expect(tester.getRect(name).right,
-        lessThanOrEqualTo(tester.getRect(find.byType(AvatarTile)).left));
-  });
-
-  testWidgets(
-      'the weak spots badge shows the real total, while Home shows at most '
-      'three cards (owner, after Batch 3)', (tester) async {
-    final storage = _FakeStorageService()
-      ..weakSpots = [
-        for (var i = 0; i < 7; i++) _weakSpot(frequency: 7 - i),
-      ]
-      ..topicStats = const {
-        'articles': TopicStats(practiced: 10, weakSpotCount: 4),
-        'modalVerbs': TopicStats(practiced: 5, weakSpotCount: 3),
-        'tenseSelection': TopicStats(practiced: 2, weakSpotCount: 0),
-      };
-    await pumpHome(tester, storageService: storage);
-    expect(find.text('7 weak spots'), findsOneWidget);
-    expect(find.byType(WeakSpotCard), findsNWidgets(3));
-  });
-
-  testWidgets('the weak spots heading counts the weak spots shown',
-      (tester) async {
-    await pumpHome(tester,
-        storageService: _FakeStorageService()
-          ..weakSpots = [_weakSpot(), _weakSpot(topicId: 'modalVerbs')]);
-    expect(find.text('2 weak spots'), findsOneWidget);
+      'the greeting is larger than a section title and smaller than the '
+      'brand; the name is the same size, bolder (V15)', (tester) async {
+    // Wide enough that the test font's square glyphs fit at full size.
+    await pumpHome(tester, size: const Size(700, 844));
+    // Fix round 2 (V14 / V15): one line, the name bold inside it.
+    final line = tester.widget<Text>(find.byKey(HomeGreeting.lineKey));
+    final root = line.textSpan! as TextSpan;
+    final greeting = root.style!;
+    final name = root.children!
+        .whereType<TextSpan>()
+        .firstWhere((t) => t.text == 'Ada')
+        .style!;
+    TextStyle style(Finder f) => tester.widget<Text>(f).style!;
+    final brand = style(find.text('GrammarLens'));
+    final section = style(find.text('Topic practice'));
+    expect(root.toPlainText(), 'Good morning, Ada');
+    expect(greeting.fontSize,
+        closeTo(section.fontSize! * HomeScreen.greetingScale, .01));
+    expect(greeting.fontSize, greaterThan(section.fontSize!));
+    expect(name.fontSize, greeting.fontSize);
+    expect(name.fontWeight!.value, greaterThan(greeting.fontWeight!.value));
+    expect(greeting.fontSize, lessThan(brand.fontSize!));
   });
 
   // 1.2.0 Batch 3: no overflow anywhere on Home at the three widths, the
-  // largest app text size, in both themes; and the greeting row's 1.1.0
-  // fix (the name never lost at 320 pt) holds with the larger hero.
+  // largest app text size, in both themes; the name is never lost at 320 pt
+  // (the 1.1.0 fix), now beside the score capsule.
   for (final width in [320.0, 390.0, 430.0]) {
     for (final brightness in Brightness.values) {
       testWidgets(
@@ -1575,16 +1588,22 @@ void main() {
             userName: 'Maximiliana Alexandra');
         expect(tester.takeException(), isNull);
 
-        // The greeting and the hero share a row without overlapping, and
-        // the whole name is there.
+        // The greeting stays inside the page, and the whole name is there.
         final greeting = tester.getRect(find.byType(HomeGreeting));
-        final hero = tester.getRect(find.byType(AvatarTile).first);
-        expect(greeting.right, lessThanOrEqualTo(hero.left));
-        expect(hero.right, lessThanOrEqualTo(width));
-        expect(find.text('Maximiliana Alexandra'), findsOneWidget);
-        final name = tester
-            .renderObject<RenderParagraph>(find.text('Maximiliana Alexandra'));
-        expect(name.didExceedMaxLines, isFalse);
+        expect(greeting.right, lessThanOrEqualTo(width));
+        expect(tester.getRect(find.byKey(HomeScreen.capsuleKey)).right,
+            lessThanOrEqualTo(width));
+        // Fix round 2: one line (scaled down, never wrapped); the whole
+        // name is read out (the fit itself, in the real font:
+        // fix_round2_greeting_test).
+        final line = find.byKey(HomeGreeting.lineKey);
+        expect(tester.getRect(line).right, lessThanOrEqualTo(width));
+        final size =
+            (tester.widget<Text>(line).textSpan! as TextSpan).style!.fontSize!;
+        expect(tester.getSize(line).height, lessThan(size * 1.6));
+        // What VoiceOver reads (HomeGreeting's one label): the whole name.
+        expect(tester.widget<HomeGreeting>(find.byType(HomeGreeting)).text,
+            'Good morning, Maximiliana Alexandra');
 
         final page = tester
             .state<ScrollableState>(find.byType(Scrollable).first)
@@ -1596,9 +1615,623 @@ void main() {
           expect(tester.takeException(), isNull, reason: 'at ${page.pixels}');
         }
         // The last thing on Home scrolls fully into view.
-        expect(tester.getRect(find.text('Go to Review')).bottom,
+        expect(tester.getRect(find.byKey(TopicShowcase.unlockKey)).bottom,
             lessThanOrEqualTo(844));
       });
     }
   }
+
+  // Fix round 2, item 12 (V15): when Home first opens, the pawn and its
+  // next step are above the floating nav bar, on the owner's 6.7" phone and
+  // the 6.3" / 6.9" classes, early and late in the month. Measured in the
+  // app's font (loaded here, last in this file, so the tests above keep
+  // the test font's metrics).
+  for (final size in [
+    const Size(428, 926),
+    const Size(402, 874),
+    const Size(440, 956),
+  ]) {
+    for (final steps in [0, 3, 15, 28]) {
+      testWidgets(
+          'V15 first view at ${size.width.toInt()} × ${size.height.toInt()}, '
+          'step $steps: the pawn and its next step clear the nav bar',
+          (tester) async {
+        final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+        await (FontLoader('NunitoSans')..addFont(bytes)).load();
+        tester.view.physicalSize = size * 3.0;
+        tester.view.devicePixelRatio = 3.0;
+        tester.view.padding =
+            const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: FloatingNavShell(
+            selectedIndex: 0,
+            onTabChange: (_) {},
+            tabs: const [
+              NavShellTab(
+                  icon: Icons.landscape,
+                  activeIcon: Icons.landscape,
+                  label: 'Climb'),
+              NavShellTab(
+                  icon: Icons.history,
+                  activeIcon: Icons.history,
+                  label: 'Review'),
+              NavShellTab(
+                  icon: Icons.person,
+                  activeIcon: Icons.person,
+                  label: 'Profile'),
+            ],
+            body: HomeScreen(
+              active: true,
+              userName: 'Maximiliana Johanson',
+              claudeService: ClaudeService(),
+              storageService: _FakeStorageService()..steps = steps,
+              analyticsService: AnalyticsService(),
+              subscriptionService: _FakeSubscriptionService(),
+              clock: () => DateTime(2026, 11, 4, 15, 0),
+            ),
+          ),
+        ));
+        await tester.pumpAndSettle();
+        final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+        final pawn = tester.getRect(find
+            .descendant(
+                of: find.byType(MonthlyMountain),
+                matching: find.byType(AvatarTile))
+            .first);
+        // INTEGRATE 3b: 16 pt of air on every size (fix round 2 allowed
+        // 0 at 6.3" on day 0; the window is fitted now).
+        const margin = MonthlyMountain.firstViewClearance;
+        expect(pawn.bottom, lessThanOrEqualTo(bar.top - margin),
+            reason: 'pawn $pawn, bar $bar');
+        final next = find.byKey(MonthlyMountain.nextStepKey);
+        if (next.evaluate().isNotEmpty) {
+          expect(
+              tester.getRect(next).bottom, lessThanOrEqualTo(bar.top - margin));
+        }
+      });
+    }
+  }
+
+  // INTEGRATE: Home inside the real floating nav shell, at a phone's size
+  // with its own safe-area insets, in the app's font.
+  Future<void> pumpShell(WidgetTester tester,
+      {required Size size,
+      required double top,
+      required double bottom,
+      required _FakeStorageService storage,
+      _FakeSubscriptionService? subs,
+      ReminderController? reminders,
+      AppTextSize textSize = AppTextSize.medium,
+      Locale? locale,
+      Brightness brightness = Brightness.light}) async {
+    final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+    await (FontLoader('NunitoSans')..addFont(bytes)).load();
+    try {
+      await (FontLoader('MaterialIcons')
+            ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
+          .load();
+    } catch (_) {
+      // Without the icon font the icons draw as boxes; same layout.
+    }
+    tester.view.physicalSize = size * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    tester.view.padding = FakeViewPadding(top: top * 3, bottom: bottom * 3);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(RepaintBoundary(
+        key: _shellBoundary,
+        child: MaterialApp(
+          theme: buildAppTheme(brightness, textSize: textSize),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: locale,
+          home: FloatingNavShell(
+            selectedIndex: 0,
+            onTabChange: (_) {},
+            tabs: const [
+              NavShellTab(
+                  icon: Icons.landscape,
+                  activeIcon: Icons.landscape,
+                  label: 'Climb'),
+              NavShellTab(
+                  icon: Icons.history,
+                  activeIcon: Icons.history,
+                  label: 'Review'),
+              NavShellTab(
+                  icon: Icons.person,
+                  activeIcon: Icons.person,
+                  label: 'Profile'),
+            ],
+            body: HomeScreen(
+              active: true,
+              userName: 'Ada',
+              claudeService: ClaudeService(),
+              storageService: storage,
+              analyticsService: AnalyticsService(),
+              subscriptionService: subs ?? _FakeSubscriptionService(),
+              reminders: reminders,
+              clock: () => DateTime(2026, 11, 4, 15, 0),
+            ),
+          ),
+        )));
+    await tester.pumpAndSettle();
+  }
+
+  // The phones INTEGRATE 3a / 3b name, with their safe-area insets: 6.1"
+  // (390 × 844), 6.1" Pro class (393 × 852), 6.3" (402 × 874), the
+  // iPhone SE (375 × 667), and the 6.7" / 6.9" classes.
+  const phones = [
+    (Size(390, 844), 47.0, 34.0),
+    (Size(393, 852), 59.0, 34.0),
+    (Size(402, 874), 62.0, 34.0),
+    (Size(375, 667), 20.0, 0.0),
+    (Size(428, 926), 47.0, 34.0),
+    (Size(440, 956), 62.0, 34.0),
+  ];
+
+  group('INTEGRATE 3b: the pawn and its next step on first view', () {
+    // November 2026 has 30 days: day 0, mid-month, the last step waiting
+    // (29 done) and the summit (30).
+    for (final (size, top, bottom) in phones) {
+      final se = size.height < 700;
+      for (final steps in [0, 15, 29, 30]) {
+        testWidgets(
+            '${size.width.toInt()} × ${size.height.toInt()}, step $steps: '
+            '${se ? 'not covered by' : '16 pt above'} the nav bar',
+            (tester) async {
+          await pumpShell(tester,
+              size: size,
+              top: top,
+              bottom: bottom,
+              storage: _FakeStorageService()..steps = steps);
+          final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+          final pawn = tester.getRect(find
+              .descendant(
+                  of: find.byType(MonthlyMountain),
+                  matching: find.byType(AvatarTile))
+              .first);
+          final margin = se ? 0.0 : MonthlyMountain.firstViewClearance;
+          expect(pawn.bottom, lessThanOrEqualTo(bar.top - margin),
+              reason: 'pawn $pawn, bar $bar');
+          expect(pawn.top, greaterThan(0));
+          final next = find.byKey(MonthlyMountain.nextStepKey);
+          if (steps < 30) {
+            expect(next, findsOneWidget);
+            expect(tester.getRect(next).bottom,
+                lessThanOrEqualTo(bar.top - margin));
+          }
+          final window = tester.getSize(find.byType(MonthlyMountain)).height;
+          // 6.7" and 6.9" keep the full window; smaller phones get a
+          // shorter one, never below the minimum.
+          if (size.height >= 900) {
+            expect(window, ClimbCamera.fullWindowHeight);
+          } else {
+            expect(window, lessThan(ClimbCamera.fullWindowHeight));
+            expect(window, greaterThanOrEqualTo(ClimbCamera.minWindowHeight));
+          }
+          // The bubble never covers the pawn; on the SE's short window it
+          // is left out.
+          final bubble = find.byType(SpeechBubble);
+          if (se) {
+            expect(bubble, findsNothing);
+          } else if (steps < 25) {
+            expect(tester.getRect(bubble).bottom, lessThan(pawn.top));
+          }
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+
+    testWidgets('a screen shown alone (no nav bar) keeps the full window',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService()..steps = 3);
+      expect(tester.getSize(find.byType(MonthlyMountain)).height,
+          ClimbCamera.fullWindowHeight);
+    });
+  });
+
+  group('INTEGRATE 3a: V24f with "Remind me tomorrow"', () {
+    _FakeStorageService restDay({bool asked = true}) => _FakeStorageService()
+      ..steps = 3
+      ..freeUsed = 1
+      ..weakSpots = [_weakSpot()]
+      ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+      ..reminderSettings = ReminderSettings(
+          ask: asked ? ReminderAsk.declined : ReminderAsk.notAsked);
+
+    ReminderController remindersFor(_FakeStorageService storage) =>
+        ReminderController(
+            storage: storage,
+            bridge: FakeNativeBridge()
+              ..permission = NotificationPermission.notDetermined);
+
+    // Fix round 5, items 1 and 2 (SPEC V24f v13 "Panel", V24 v13, §1.27,
+    // §1.30): the scene full-bleed from the top, the night panel attached
+    // under it; the panel fits its content and ends just above the nav bar
+    // (the reminder row 8 pt above it: no empty band), the scene fills the
+    // rest, the art never scaled (the sheet never starts below its lower
+    // edge), the camp whole at least 12 pt above the panel; no scroll
+    // extent at 390 × 844 and larger at the default and the next text
+    // size; the SE and the largest text size may scroll, the row
+    // reachable. "Default" is the app's Medium, "next" its Large,
+    // "largest" its Large with the system's largest standard size
+    // (xxxLarge, × 1.35) on top (F4-2). The five sizes are the phones from
+    // 390 × 844 up; the SE is checked too.
+    const textSizes = [
+      ('default', AppTextSize.medium, 1.0),
+      ('next', AppTextSize.large, 1.0),
+      ('largest', AppTextSize.large, 1.35),
+    ];
+    for (final premium in [false, true]) {
+      for (final (label, textSize, system) in textSizes) {
+        for (final (size, top, bottom) in phones) {
+          testWidgets(
+              'v13 ${premium ? 'V24' : 'V24f'} ${size.width.toInt()} × '
+              '${size.height.toInt()}, $label text: the panel ends just '
+              'above the bar, the scene fills the rest', (tester) async {
+            tester.platformDispatcher.textScaleFactorTestValue = system;
+            addTearDown(
+                tester.platformDispatcher.clearTextScaleFactorTestValue);
+            final storage = restDay()
+              ..sessions = premium ? StorageService.dailySessionLimit : 0;
+            final reminders = remindersFor(storage);
+            addTearDown(reminders.dispose);
+            Future<void> pump(Brightness brightness) => pumpShell(tester,
+                size: size,
+                top: top,
+                bottom: bottom,
+                storage: storage,
+                subs: premium
+                    ? _FakeSubscriptionService(hasAccess: true)
+                    : _FakeSubscriptionService(offering: _restOffering()),
+                reminders: reminders,
+                textSize: textSize,
+                brightness: brightness);
+            await pump(Brightness.light);
+            expect(tester.takeException(), isNull);
+            _expectRestLayout(tester,
+                size: size,
+                top: top,
+                premium: premium,
+                oneScreen: size.height >= 800 && label != 'largest',
+                record: '${premium ? 'V24' : 'V24f'} | ${size.width.toInt()} × '
+                    '${size.height.toInt()} | $label');
+            if (label != 'largest') {
+              final name = '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
+                  '${size.height.toInt()}-$label';
+              await _captureShell(tester, name, round: 5);
+              if (Platform.environment['FIX5_CAPTURE'] == '1') {
+                await pump(Brightness.dark);
+                await _captureShell(tester, name, dark: true, round: 5);
+                await pump(Brightness.light);
+              }
+            }
+            // Reachable: scrolled to the end, the row above the bar and
+            // its switch hit-testable (the position read again: the
+            // captures pump the page anew).
+            final end = tester
+                .state<ScrollableState>(find.byType(Scrollable).first)
+                .position;
+            end.jumpTo(end.maxScrollExtent);
+            await tester.pumpAndSettle();
+            expect(
+                tester.getRect(find.byType(RestReminderRow)).bottom,
+                lessThanOrEqualTo(
+                    tester.getRect(find.byKey(FloatingNavShell.barKey)).top));
+            expect(find.byKey(RestReminderRow.switchKey).hitTestable(),
+                findsOneWidget);
+            expect(tester.takeException(), isNull);
+          });
+        }
+      }
+    }
+
+    // Late in the month the camp stands high on the mountain, where the
+    // art's top edge would come into view: the art starts lower and its
+    // sky is mirrored above it; the camp keeps its place, whole, and the
+    // dream bubble stays under the status bar's edge. Early in the month
+    // (step 0, 1) on the tallest phones the camp and the art move down
+    // together so the art still reaches the panel.
+    for (final (steps, size, top, bottom) in [
+      (20, const Size(390, 844), 47.0, 34.0),
+      (26, const Size(390, 844), 47.0, 34.0),
+      (30, const Size(390, 844), 47.0, 34.0),
+      (0, const Size(440, 956), 62.0, 34.0),
+      (1, const Size(428, 926), 47.0, 34.0),
+    ]) {
+      for (final premium in [false, true]) {
+        testWidgets(
+            'v13 ${premium ? 'V24' : 'V24f'} step $steps, '
+            '${size.width.toInt()} × ${size.height.toInt()}: the camp '
+            'whole, the art unscaled, no empty band', (tester) async {
+          final storage = restDay()
+            ..steps = steps
+            ..sessions = premium ? StorageService.dailySessionLimit : 0;
+          final reminders = remindersFor(storage);
+          addTearDown(reminders.dispose);
+          await pumpShell(tester,
+              size: size,
+              top: top,
+              bottom: bottom,
+              storage: storage,
+              subs: premium
+                  ? _FakeSubscriptionService(hasAccess: true)
+                  : _FakeSubscriptionService(offering: _restOffering()),
+              reminders: reminders);
+          expect(tester.takeException(), isNull);
+          _expectRestLayout(tester,
+              size: size,
+              top: top,
+              premium: premium,
+              oneScreen: true,
+              record: '${premium ? 'V24' : 'V24f'} step $steps | '
+                  '${size.width.toInt()} × ${size.height.toInt()} | default');
+          if (steps >= 20) {
+            final companion = tester.getRect(find
+                .descendant(
+                    of: find.byKey(RestScene.sceneKey),
+                    matching: find.byType(CompanionView))
+                .first);
+            // The board's place: the companion's top 127 pt (V24f) or 207
+            // pt (V24) under the safe area.
+            expect(
+                companion.top,
+                closeTo(
+                    top +
+                        (premium
+                            ? RestScene.bandAboveCampPremium
+                            : RestScene.bandAboveCamp),
+                    1));
+          }
+          await _captureShell(
+              tester,
+              '${premium ? 'V24' : 'V24f'}-${size.width.toInt()}x'
+              '${size.height.toInt()}-step$steps',
+              round: 5);
+        });
+      }
+    }
+
+    // v13 in Turkish on the owner's phone (428 × 926, the app's Large
+    // text): one screen, the row just above the bar.
+    for (final premium in [false, true]) {
+      testWidgets(
+          'v13 ${premium ? 'V24' : 'V24f'} in Turkish, 428 × 926, next text: '
+          'one screen', (tester) async {
+        final storage = restDay()
+          ..sessions = premium ? StorageService.dailySessionLimit : 0;
+        final reminders = remindersFor(storage);
+        addTearDown(reminders.dispose);
+        Future<void> pump(Brightness brightness) => pumpShell(tester,
+            size: const Size(428, 926),
+            top: 47,
+            bottom: 34,
+            storage: storage,
+            subs: premium
+                ? _FakeSubscriptionService(hasAccess: true)
+                : _FakeSubscriptionService(offering: _restOffering()),
+            reminders: reminders,
+            textSize: AppTextSize.large,
+            locale: const Locale('tr'),
+            brightness: brightness);
+        await pump(Brightness.light);
+        expect(tester.takeException(), isNull);
+        _expectRestLayout(tester,
+            size: const Size(428, 926),
+            top: 47,
+            premium: premium,
+            oneScreen: true,
+            record: '${premium ? 'V24' : 'V24f'} (tr) | 428 × 926 | next');
+        if (!premium) {
+          final deck = find.byKey(RestScene.deckKey);
+          expect(find.descendant(of: deck, matching: find.text('SIRADAKİ')),
+              findsOneWidget);
+          expect(find.descendant(of: deck, matching: find.text('BUGÜN')),
+              findsOneWidget);
+        } else {
+          expect(find.text('SONRAKİ GÜNLÜK TEST · 4. ADIM'), findsOneWidget);
+        }
+        final name = '${premium ? 'V24' : 'V24f'}-428x926-next-tr';
+        await _captureShell(tester, name, round: 5);
+        if (Platform.environment['FIX5_CAPTURE'] == '1') {
+          await pump(Brightness.dark);
+          await _captureShell(tester, name, dark: true, round: 5);
+        }
+      });
+    }
+
+    testWidgets(
+        'N01 opens over whichever rest scene comes first: V24 (Premium)',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..steps = 3
+        ..sessions = StorageService.dailySessionLimit
+        ..todaysDailyTest = _completedDailyTestSet(correct: 4, total: 5)
+        ..reminderSettings = const ReminderSettings();
+      final reminders = remindersFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester,
+          storageService: storage,
+          subscriptionService: _FakeSubscriptionService(hasAccess: true),
+          reminders: reminders);
+      expect(find.byKey(HomeScreen.restSceneKey), findsOneWidget);
+      expect(find.byKey(RestScene.premiumCardKey), findsNothing);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      await tester.tap(find.byKey(ReminderSoftAsk.notNowKey));
+      await tester.pumpAndSettle();
+      expect(storage.reminderSettings!.ask, ReminderAsk.declined);
+      expect(find.byKey(RestReminderRow.switchKey), findsOneWidget);
+    });
+
+    testWidgets('N01 opens over whichever rest scene comes first: V24f (free)',
+        (tester) async {
+      final storage = restDay(asked: false);
+      final reminders = remindersFor(storage);
+      addTearDown(reminders.dispose);
+      await pumpHome(tester,
+          storageService: storage,
+          subscriptionService:
+              _FakeSubscriptionService(offering: _restOffering()),
+          reminders: reminders);
+      expect(find.byKey(RestScene.premiumCardKey), findsOneWidget);
+      expect(find.byType(ReminderSoftAsk), findsOneWidget);
+      // The question opened by itself; the paywall did not.
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+  });
+}
+
+/// V24f → V13r: an annual plan with a 7-day free trial (the paywall's
+/// preselected plan) and a monthly one.
+Offering _restOffering() {
+  const context = PresentedOfferingContext('default', null, null);
+  const annual = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    StoreProduct(
+        'grammarlens_premium_annual', '', 'Annual', 49.99, '\$49.99', 'USD',
+        introductoryPrice:
+            IntroductoryPrice(0, '\$0.00', 'P1W', 1, PeriodUnit.week, 1),
+        subscriptionPeriod: 'P1Y'),
+    context,
+  );
+  const monthly = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    StoreProduct(
+        'grammarlens_premium_monthly', '', 'Monthly', 5.99, '\$5.99', 'USD',
+        subscriptionPeriod: 'P1M'),
+    context,
+  );
+  return const Offering('default', '', {}, [monthly, annual],
+      monthly: monthly, annual: annual);
+}
+
+final _shellBoundary = GlobalKey();
+
+/// Fix round 3: with `FIX3_CAPTURE=1`, writes what [pumpShell] shows to
+/// `build/fix3-captures/[dark/]<name>.png` (the sizes no simulator has).
+/// Fix round 4, item 1: the measured numbers, one table row per render
+/// (`FIX4_CAPTURE=1`: `build/fix4-captures/v24-numbers.md`).
+void _recordV24(String row, {int round = 4}) {
+  if (Platform.environment['FIX${round}_CAPTURE'] != '1') return;
+  final out = File('build/fix$round-captures/v24-numbers.md');
+  out.parent.createSync(recursive: true);
+  out.writeAsStringSync('| $row |\n', mode: FileMode.append);
+}
+
+/// Fix round 5 (SPEC V24f v13 "Panel", V24 v13): the rest scene's layout
+/// on [size]: full-bleed scene, the panel attached under it, the camp
+/// whole at least 12 pt above the panel and the fire at the companion's
+/// front right on its ground, the art never scaled (the scene no taller
+/// than the art below its top), the dream bubble under the status bar;
+/// with [oneScreen], no scroll extent and the reminder row 8 pt above the
+/// nav bar (the panel ends just above the bar: no empty band).
+void _expectRestLayout(WidgetTester tester,
+    {required Size size,
+    required double top,
+    required bool premium,
+    required bool oneScreen,
+    required String record}) {
+  final scene = tester.getRect(find.byKey(RestScene.sceneKey));
+  final sheet = tester.getRect(find.byKey(RestScene.sheetKey));
+  final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+  expect(scene.top, 0);
+  expect(scene.left, 0);
+  expect(scene.width, size.width);
+  expect(sheet.left, 0);
+  expect(sheet.width, size.width);
+  expect(sheet.top, closeTo(scene.bottom - RestScene.sheetRadius, .5));
+  final companion = tester.getRect(find
+      .descendant(
+          of: find.byKey(RestScene.sceneKey),
+          matching: find.byType(CompanionView))
+      .first);
+  final fire = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey), matching: find.byType(Campfire)));
+  final tent = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey),
+      matching: find.byWidgetPredicate((w) =>
+          w is Image &&
+          w.image is AssetImage &&
+          (w.image as AssetImage).assetName.contains('tent'))));
+  final campTop = [tent.top, companion.top, fire.top].reduce(math.min);
+  final campBottom =
+      [tent.bottom, companion.bottom, fire.bottom].reduce(math.max);
+  expect(campTop, greaterThanOrEqualTo(top), reason: 'camp top');
+  expect(campBottom, lessThanOrEqualTo(sheet.top - 12 + .5),
+      reason: 'camp $campBottom, sheet ${sheet.top}');
+  expect(fire.left, greaterThanOrEqualTo(0));
+  expect(fire.right, lessThanOrEqualTo(size.width));
+  final s = companion.height;
+  expect(fire.left, greaterThan(companion.center.dx));
+  expect(
+      fire.bottom -
+          Campfire.logsHeight /
+              Campfire.boxHeight *
+              fire.height *
+              (1 - Campfire.pileBase),
+      closeTo(companion.top + RestScene.feetShare * s, .5));
+  // The art at the boards' scale, never scaled up: the mountain's box is
+  // no taller than the art.
+  final art = tester.getRect(find.descendant(
+      of: find.byKey(RestScene.sceneKey),
+      matching: find.byType(MountainScene)));
+  final artHeight = size.width * RestScene.artWidthShare / climbImageAspect;
+  expect(art.height, lessThanOrEqualTo(artHeight + .5), reason: 'art scaled');
+  expect(art.bottom, closeTo(scene.bottom, .5));
+  if (!premium) {
+    expect(tester.getRect(find.byKey(RestScene.dreamKey)).top,
+        greaterThanOrEqualTo(top));
+    expect(find.byKey(RestScene.usedTicketKey), findsOneWidget);
+    expect(find.byKey(RestScene.deckKey), findsOneWidget);
+  } else {
+    expect(find.byKey(RestScene.doneTilesKey), findsOneWidget);
+    expect(find.byKey(RestScene.nextTestKey), findsOneWidget);
+  }
+  final row = tester.getRect(find.byType(RestReminderRow));
+  final extent = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position
+      .maxScrollExtent;
+  double? wakeClear;
+  if (!premium) {
+    wakeClear = bar.top - tester.getRect(find.byKey(RestScene.wakeKey)).bottom;
+  }
+  final rowClear = bar.top - row.bottom;
+  if (oneScreen) {
+    expect(extent, 0, reason: 'scroll extent');
+    expect(rowClear, closeTo(RestScene.anchorClearance, .5),
+        reason: 'row ${rowClear}pt above the bar');
+    if (wakeClear != null) expect(wakeClear, greaterThan(rowClear));
+  }
+  _recordV24(
+      '$record | ${sheet.top.toStringAsFixed(1)} | '
+      '${(sheet.top - campBottom).toStringAsFixed(1)} | '
+      '${rowClear.toStringAsFixed(1)} | '
+      '${wakeClear?.toStringAsFixed(1) ?? '–'} | '
+      '${extent.toStringAsFixed(1)}',
+      round: 5);
+}
+
+Future<void> _captureShell(WidgetTester tester, String name,
+    {bool dark = false, int round = 3}) async {
+  if (Platform.environment['FIX${round}_CAPTURE'] != '1') return;
+  await tester.runAsync(() async {
+    for (final element in find.byType(Image).evaluate()) {
+      await precacheImage((element.widget as Image).image, element);
+    }
+  });
+  await tester.pumpAndSettle();
+  await tester.runAsync(() async {
+    final render = _shellBoundary.currentContext!.findRenderObject()!
+        as RenderRepaintBoundary;
+    final image = await render.toImage(pixelRatio: 2);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    final out =
+        File('build/fix$round-captures/${dark ? 'dark/' : ''}$name.png');
+    out.parent.createSync(recursive: true);
+    out.writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
 }

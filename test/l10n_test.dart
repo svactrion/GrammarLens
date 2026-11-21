@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/screens/language_picker_screen.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 /// 1.4.0 B3: the interface-language model, the locale resolution and the
 /// picker (docs/1.4.0-b3-batch0-report.md §2.3–§2.5).
@@ -216,11 +218,61 @@ void main() {
               hasSelectedState: true,
               isInMutuallyExclusiveGroup: true,
               isButton: true,
-              hasTapAction: true,
               isFocusable: true,
+              hasTapAction: true,
               hasFocusAction: true));
-      expect(find.byIcon(Icons.radio_button_checked_rounded), findsOneWidget);
+      // R07: the selected language's check.
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
       semantics.dispose();
+    });
+
+    testWidgets(
+        'D9-4: Tab moves through the options in order, Enter picks one; the '
+        'focus ring shows only with keyboard focus', (tester) async {
+      tester.view.physicalSize = const Size(390, 1400) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final picked =
+          await pumpPicker(tester, current: AppLanguage.en, choices: [
+        AppLanguage.system,
+        AppLanguage.en,
+        AppLanguage.tr,
+      ]);
+      final ring = find.byKey(PressableCard.focusRingKey);
+      expect(ring, findsNothing);
+      // A touch never shows it.
+      final touch = await tester.press(
+          find.byKey(LanguagePickerScreen.optionKey(AppLanguage.system)));
+      await tester.pump();
+      expect(ring, findsNothing);
+      await touch.cancel();
+      await tester.pump();
+
+      final order = <AppLanguage>[];
+      for (var i = 0; i < 6 && order.length < 3; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        for (final language in [
+          AppLanguage.system,
+          AppLanguage.en,
+          AppLanguage.tr
+        ]) {
+          if (find
+              .descendant(
+                  of: find.byKey(LanguagePickerScreen.optionKey(language)),
+                  matching: ring)
+              .evaluate()
+              .isNotEmpty) {
+            if (!order.contains(language)) order.add(language);
+          }
+        }
+      }
+      expect(ring, findsOneWidget);
+      expect(order, [AppLanguage.system, AppLanguage.en, AppLanguage.tr]);
+      // The last one has focus: Enter picks it.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(picked, [AppLanguage.tr]);
     });
 
     testWidgets('a tap applies the choice and goes back', (tester) async {
@@ -273,8 +325,7 @@ void main() {
   // iOS's CFBundleLocalizations (Settings → GrammarLens → Language) agree.
   test('eight languages ship, and iOS lists the same eight', () {
     const shipped = {'en', 'tr', 'de', 'es', 'pt', 'ja', 'ko', 'ar'};
-    expect(
-        AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet(),
+    expect(AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet(),
         shipped);
     expect({
       for (final l in AppLanguage.available())
@@ -291,6 +342,9 @@ void main() {
         m.group(1)!,
     };
     // Brazilian Portuguese is "pt-BR" to iOS; the app resolves it to `pt`.
-    expect(ios, {...shipped.difference({'pt'}), 'pt-BR'});
+    expect(ios, {
+      ...shipped.difference({'pt'}),
+      'pt-BR'
+    });
   });
 }

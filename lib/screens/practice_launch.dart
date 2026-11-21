@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../models/avatar.dart';
+import '../theme.dart';
+import '../utils/haptics.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/pressable_button.dart';
+import '../widgets/step_bar.dart';
 import '../models/practice_length.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -36,6 +44,8 @@ import 'premium_screen.dart';
 /// responsible for its own `mounted` check, since a `State`'s `setState`
 /// isn't reachable from here). [onReturned] runs after the pushed screen is
 /// popped, e.g. to refresh a list that the practice session may have changed.
+/// [onQuestionCount] gets the set's length just before [setGenerating]
+/// turns on, for V18's message.
 Future<void> launchPracticeSet({
   required BuildContext context,
   required Topic topic,
@@ -46,6 +56,7 @@ Future<void> launchPracticeSet({
   required void Function(bool generating) setGenerating,
   required String errorPrefix,
   VoidCallback? onReturned,
+  void Function(int questionCount)? onQuestionCount,
 }) async {
   bool hasFullAccess;
   try {
@@ -104,7 +115,12 @@ Future<void> launchPracticeSet({
   }
   if (!context.mounted) return;
   if (sessionCount >= StorageService.dailySessionLimit) {
-    await _showDailyLimitReachedDialog(context);
+    Avatar? hero;
+    try {
+      hero = (await storageService.getUserProfile())?.avatar;
+    } catch (_) {}
+    if (!context.mounted) return;
+    await showDailyLimitSheet(context, hero: hero);
     return;
   }
 
@@ -145,6 +161,8 @@ Future<void> launchPracticeSet({
     length = PracticeLength.quick;
   }
 
+  // V18 switches to "Writing your questions on …" (it shows no number).
+  onQuestionCount?.call(length.questionCount);
   setGenerating(true);
   try {
     final deviceId = await storageService.getOrCreateDeviceId();
@@ -190,23 +208,72 @@ Future<void> launchPracticeSet({
   }
 }
 
-Future<void> _showDailyLimitReachedDialog(BuildContext context) {
-  return showDialog<void>(
+/// P08: the practice limit reached, as the close of a good day: the
+/// companion asleep, the session counter full (one segment at a time), the
+/// existing sentence on when it opens again, and one button.
+Future<void> showDailyLimitSheet(BuildContext context, {Avatar? hero}) {
+  HapticMap.light();
+  return showAppSheet<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(dialogContext.l10n.practiceDailyLimitTitle),
-      content: Text(dialogContext.l10n
-          .practiceDailyLimitBody(StorageService.dailySessionLimit)),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(dialogContext.l10n.commonGotIt),
-          ),
+    builder: (sheetContext) {
+      final c = AppColors.of(sheetContext);
+      final l10n = sheetContext.l10n;
+      final theme = Theme.of(sheetContext);
+      const total = StorageService.dailySessionLimit;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: CompanionView(
+                  hero: hero ?? Avatar.fox,
+                  mood: CompanionMood.sleep,
+                  size: 104,
+                  decorative: true),
+            ),
+            const SizedBox(height: 8),
+            Semantics(
+              header: true,
+              child: Text(l10n.practiceDailyLimitTitle,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall!
+                      .withWeight(FontWeight.w900)
+                      .copyWith(color: c.text)),
+            ),
+            const SizedBox(height: 12),
+            Semantics(
+              label: l10n.dailyLimitCount(total, total),
+              excludeSemantics: true,
+              child: Column(children: [
+                StepBar(
+                  segments: [for (var i = 0; i < total; i++) c.navyText],
+                  track: c.track,
+                  height: 10,
+                  gap: 6,
+                  animateOnMount: true,
+                ),
+                const SizedBox(height: 6),
+                Text(l10n.dailyLimitCount(total, total),
+                    style: theme.textTheme.labelLarge!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(color: c.navyText)),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Text(l10n.practiceDailyLimitBody(total),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium!.copyWith(color: c.muted)),
+            const SizedBox(height: 18),
+            PressableButton(
+              label: l10n.commonGotIt,
+              tone: ButtonTone.navy,
+              onPressed: () => Navigator.of(sheetContext).pop(),
+            ),
+          ],
         ),
-      ],
-    ),
+      );
+    },
   );
 }

@@ -117,7 +117,7 @@ void main() {
     await old.close();
     expect((await storage.getClimbProgress(2026, 9)).steps, 0);
     final db = await inspect();
-    expect(await db.getVersion(), 26);
+    expect(await db.getVersion(), 27);
     for (final table in rows.keys) {
       // v19 removed age and occupation from user_profile, v21 added the
       // daily_test_sets source (every old set was generated) and v24 added
@@ -188,7 +188,7 @@ void main() {
     expect(row['id'], 9);
     expect(row['source'], 'topic_practice');
     expect((await storage.getWeakSpots()).single.frequency, 1);
-    expect(await db.getVersion(), 26);
+    expect(await db.getVersion(), 27);
   });
 
   test('concurrent and stale retries persist one completion, gain and mistake',
@@ -286,6 +286,21 @@ void main() {
     await saveCompletion(completion(set, {'q0': 'wrong'}));
     expect((await storage.getClimbProgress(2026, 9)).steps, 1);
     await inspect();
+  });
+
+  test(
+      'getFirstDailyTestCompletion: null before any test, then the earliest '
+      'completion on record (V23 "since")', () async {
+    expect(await storage.getFirstDailyTestCompletion(), isNull);
+    final first = await storage.saveDailyTestSet(questions);
+    // Skipped only: still a completed test.
+    await saveCompletion(completion(first, {'q0': ''}));
+    StorageService.clockForTesting = () => DateTime(2026, 10, 3);
+    final later = await storage.saveDailyTestSet(questions);
+    await storage.completeDailyTest({'q0': 'cooking'}, const [],
+        day: later.day, completedAt: DateTime(2026, 10, 3, 9));
+    expect(await storage.getFirstDailyTestCompletion(),
+        DateTime(2026, 10, 1, 0, 3));
   });
 
   group('Welcome badge earned via completeDailyTest', () {

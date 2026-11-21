@@ -9,8 +9,6 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_debug_month_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
-import 'support/l10n_support.dart';
-
 import 'support/month_card_support.dart';
 import 'support/recording_analytics_sink.dart';
 
@@ -125,7 +123,7 @@ void main() {
         final storage = _NoFlagsStorage()..usedBefore = false;
         await pumpHome(tester, storage, sink: sink);
         expect(sheetFinder, findsOneWidget);
-        await tester.fling(sheetFinder, const Offset(0, 500), 1500);
+        await closeMonthCard(tester);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
         expect(tester.widget<MonthlyMountain>(mountainFinder).zoom, isNotNull);
@@ -142,7 +140,7 @@ void main() {
       final storage = _NoFlagsStorage();
       await pumpHome(tester, storage, key: const ValueKey(1));
       expect(sheetFinder, findsOneWidget);
-      await tester.tapAt(const Offset(20, 120));
+      await closeMonthCard(tester);
       await settleZoom(tester);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -177,9 +175,10 @@ void main() {
       ClimbDebugTheme.valueForTesting = 'red_canyon';
       ClimbDebugDay.valueForTesting = 12;
       await pumpHome(tester, _NoFlagsStorage());
-      expect(find.textContaining('Red Canyon'), findsWidgets);
-      expect(find.text(ClimbThemes.redCanyon.tagline(en)), findsOneWidget);
-      await tester.tapAt(const Offset(20, 120));
+      // R04b (full screen; Home is under it) names the new month's
+      // mountain.
+      expect(find.textContaining('RED CANYON'), findsOneWidget);
+      await closeMonthCard(tester);
       await settleZoom(tester);
       expect(tester.widget<MonthlyMountain>(mountainFinder).zoom, isNull);
     });
@@ -190,7 +189,7 @@ void main() {
       ClimbDebugMonthCard.eventsForTesting = true;
       final sink = RecordingAnalyticsSink();
       await pumpHome(tester, _NoFlagsStorage(), sink: sink);
-      await tester.tapAt(const Offset(20, 120));
+      await closeMonthCard(tester);
       await settleZoom(tester);
       expect(
           sink.events.map((e) => e.name).where((n) => n.startsWith('month_')),

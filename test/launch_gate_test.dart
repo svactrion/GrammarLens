@@ -35,20 +35,15 @@ void main() {
 
   Finder app() => find.byKey(appKey);
 
-  double logoScale(WidgetTester tester) {
-    final transition = tester.widget<ScaleTransition>(find.descendant(
-      of: splash(),
-      matching: find.byType(ScaleTransition),
-    ));
-    return transition.scale.value;
-  }
+  // V01: the square's scale, read from the logo the splash draws.
+  double logoScale(WidgetTester tester) =>
+      tester.widgetList<LaunchLogo>(find.byType(LaunchLogo)).last.tileScale;
 
   double wordmarkOpacity(WidgetTester tester) {
-    final fade = tester.widget<FadeTransition>(find
-        .ancestor(
-            of: find.text('GrammarLens'), matching: find.byType(FadeTransition))
+    final fade = tester.widget<Opacity>(find
+        .ancestor(of: find.text('GrammarLens'), matching: find.byType(Opacity))
         .first);
-    return fade.opacity.value;
+    return fade.opacity;
   }
 
   double splashOpacity(WidgetTester tester) {
@@ -64,12 +59,22 @@ void main() {
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
   }
 
-  test('the intro and the fade together stay within 1.2 s', () {
-    expect(intro + exit, lessThanOrEqualTo(const Duration(milliseconds: 1200)));
+  // V01 (fix round 3, C1; SPEC v11): the first launch takes about 2.2 s
+  // with the small lens scanning the word in 900 ms (1.4 s felt rushed on
+  // the device); later launches at most 800 ms.
+  test(
+      'the first launch takes about 2.2 s with a 900 ms scan that ends '
+      'inside it; later launches within 800 ms', () {
+    expect(intro, const Duration(milliseconds: 2200));
+    expect(LaunchTiming.scan, const Duration(milliseconds: 900));
+    expect(LaunchTiming.scanStart, greaterThan(LaunchTiming.wordStart));
+    expect(LaunchTiming.scanStart + LaunchTiming.scan, lessThan(intro));
+    expect(LaunchTiming.introShort,
+        lessThanOrEqualTo(const Duration(milliseconds: 800)));
   });
 
   testWidgets(
-      'the first frame matches the static launch screen: logo at 92 %, '
+      'the first frame matches the static launch screen: the square at 50 %, '
       'no wordmark', (tester) async {
     await tester.pumpWidget(gate(Completer<void>().future));
 
@@ -173,11 +178,14 @@ void main() {
     await tester.pumpWidget(gate(done.future));
     await tester.pump();
 
-    expect(find.byType(ScaleTransition), findsNothing);
-    final logo = tester.widget<LaunchLogo>(find.byType(LaunchLogo));
-    expect(logo.scale, LaunchSplashLayout.initialLogoScale,
+    // V01: one fade from the static launch screen's square to the finished
+    // icon and the wordmark (150 ms), then nothing moves.
+    final first = tester.widget<LaunchLogo>(find.byType(LaunchLogo).first);
+    expect(first.scale, LaunchSplashLayout.initialLogoScale,
         reason: 'no jump from the static launch screen');
+    await tester.pump(LaunchTiming.reducedFade);
     expect(wordmarkOpacity(tester), 1);
+    await tester.pump();
     expect(tester.binding.transientCallbackCount, 0,
         reason: 'nothing is animating');
 

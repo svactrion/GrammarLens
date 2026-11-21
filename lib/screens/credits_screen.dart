@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../models/avatar.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/home_practice.dart' show FloatingTile;
 import '../theme.dart';
 import '../utils/app_links.dart';
 import '../widgets/brand_scaffold.dart';
@@ -47,7 +50,47 @@ class CreditsScreen extends StatelessWidget {
         PageHeader(
             title: context.l10n.creditsTitle,
             subtitle: context.l10n.creditsSubtitle),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        // R09: three companions greet on top (the middle one waves).
+        const ExcludeSemantics(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingTile(
+                index: 0,
+                // R09: FloatingTile floats it (gl-float); no loop of its
+                // own on top (fix round 2).
+                child: CompanionView(
+                    hero: Avatar.panda,
+                    size: 70,
+                    ambient: CompanionAmbient.none,
+                    decorative: true),
+              ),
+              SizedBox(width: 8),
+              FloatingTile(
+                index: 1,
+                child: CompanionView(
+                    hero: Avatar.fox,
+                    mood: CompanionMood.wave,
+                    size: 96,
+                    decorative: true),
+              ),
+              SizedBox(width: 8),
+              FloatingTile(
+                index: 2,
+                // R09: FloatingTile floats it (gl-float); no loop of its
+                // own on top (fix round 2).
+                child: CompanionView(
+                    hero: Avatar.frog,
+                    size: 70,
+                    ambient: CompanionAmbient.none,
+                    decorative: true),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         Card(
           key: cardKey,
           child: Column(

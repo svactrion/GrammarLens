@@ -212,6 +212,12 @@ Future<void> _skip(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// The bar under the question: the Practice footer, or the Daily Test's
+/// (UI polish V07: the buddy, Skip and Check).
+Finder get _footer => find.byType(PracticeStepFooter).evaluate().isNotEmpty
+    ? find.byType(PracticeStepFooter)
+    : find.byKey(DailyTestScreen.footerKey);
+
 /// Holds the knob down long enough for a long-press.
 Future<TestGesture> _press(WidgetTester tester) async {
   final gesture = await tester.startGesture(tester.getCenter(_knob));
@@ -284,7 +290,7 @@ Future<void> _pumpPractice(
 /// The open card's last line of text is whole: above the Skip/Next bar and
 /// inside the question area's clip. Returns the space under it.
 double _textClear(WidgetTester tester, TopicId topic) {
-  final footer = tester.getRect(find.byType(PracticeStepFooter));
+  final footer = tester.getRect(_footer);
   final lastLine = tester.getRect(find.descendant(
       of: _card, matching: find.text(kTopicHints[topic]!.last)));
   return math.min(footer.top, _clipBottom(tester)) - lastLine.bottom;
@@ -301,8 +307,13 @@ void main() {
       expect(kTopicHints.keys.toSet(), TopicId.values.toSet());
     });
 
-    test("are the owner's, verbatim (2026-10-12)", () {
-      expect(kTopicHints, {
+    test("are the owner's, verbatim (2026-10-12; Modal Past Forms 1.5.0)", () {
+      // The five Daily Test topics' cards; the first-wave topics' cards
+      // (UI polish §1.11) are checked for shape below. Modal Past Forms
+      // covers both uses since 1.5.0 (owner decision 2026-11-19).
+      expect({
+        for (final t in kTopics) t.id: kTopicHints[t.id],
+      }, {
         TopicId.gerundVsInfinitive: [
           '+ -ing: enjoy, avoid, finish, keep',
           '+ to: want, decide, hope, plan',
@@ -316,10 +327,10 @@ void main() {
           "mustn't ≠ don't have to",
         ],
         TopicId.modalPastForms: [
-          'modal + have + past participle',
-          "must / can't have: sure it did / didn't",
-          'might / could have: maybe it did',
-          "should have: right, but it didn't happen",
+          'could / would: the past of can / will',
+          'Reported: "I can" → she said she could',
+          'modal + have + past participle: past events',
+          'must have: sure · should have: regret',
         ],
         TopicId.tenseSelection: [
           'Past simple: finished time (ago, in 2020)',
@@ -334,6 +345,18 @@ void main() {
           'No article: general plural or uncountable',
         ],
       });
+    });
+
+    test(
+        'the first-wave topics have cards of the same shape: four short '
+        'lines', () {
+      for (final t in kFirstWaveTopics) {
+        final lines = kTopicHints[t.id]!;
+        expect(lines, hasLength(4), reason: t.id.name);
+        for (final line in lines) {
+          expect(line.length, lessThanOrEqualTo(44), reason: line);
+        }
+      }
     });
   });
 
@@ -763,9 +786,11 @@ void main() {
       expect(daily.sink.events, eventsBefore);
       expect(daily.finished, isEmpty);
 
-      // Next keeps the answer (Skip would discard it); then Skip through
+      // Check keeps the answer (Skip would discard it); then Skip through
       // the rest, and Skip on the last question finishes.
-      await tester.tap(find.text('Next'));
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(DailyTestScreen.continueKey));
       await tester.pumpAndSettle();
       for (var i = 1; i < kTopics.length; i++) {
         await _skip(tester);
@@ -801,7 +826,7 @@ void main() {
             final question = tester.getRect(_questionCard);
             final gesture = await _press(tester);
             final card = tester.getRect(_card);
-            final footer = tester.getRect(find.byType(PracticeStepFooter));
+            final footer = tester.getRect(_footer);
             expect(_shownHeight(tester),
                 moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
                 reason: topic.title(en));

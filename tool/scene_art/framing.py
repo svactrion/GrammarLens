@@ -30,7 +30,7 @@ from extract_trail import font
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # --- The Home card today (lib/widgets/monthly_climb/, tool/design_measure) --
-WINDOW_H = 350.0  # ClimbCamera.windowHeight
+WINDOW_H = 350.0  # ClimbCamera.fullWindowHeight
 PAWN_AT = 0.72  # ClimbCamera.pawnAt: the avatar at 72 % of the window
 SCREENS = (320, 375, 430)
 
