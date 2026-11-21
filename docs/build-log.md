@@ -15086,3 +15086,39 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   signing change. Store texts and screenshots not started.
 - Record and decisions R-1 to R-8: `docs/1.5.0-release-progress.md`; the
   owner's steps: `docs/1.5.0-release-steps.md`.
+
+## 2026-11-21 (Fix round 7 on `main`: N01 after the day's step, sheets follow an appearance change; version unchanged, not built for the store)
+
+- **[Owner]** Decided to fix two findings of the iPad tour before the store
+  build (`docs/design/ui-polish/handoff/FIX7.md`).
+- **[Fix, app]** N01 after the day's step. On a second day, "See your climb"
+  brought Home with N01 already open; the pawn walked only after it was
+  closed. N01 waited only for `_climbAnimating`, which the climb load sets
+  after several awaits, so it opened in that window (reproduced in a test
+  before the change). It now waits while today's step is pending or
+  walking, until the arrival and what follows it (a save point's name, a
+  month card) have ended, then the same 1 s beat as fix round 6; on a rest
+  day it still follows the rest scene. With no step to show, or a failed
+  climb load, it opens at once; it is never lost. SPEC v15, §1.8.
+- **[Fix, app]** The app's sheets (N01, the length picker, the name, the
+  sort, the time wheel, the daily limit) follow an appearance change while
+  open: `showAppSheet` fixed the opener's card colour as the route's
+  background; the surface is now painted in the sheet's own build. The
+  mountain intro, listed with it, was not a defect (the tour's capture was
+  taken before the redraw); a test holds it. Scrims and the toast's
+  background are left (readability unaffected).
+- **[Verified]** `flutter analyze` clean; 2939 Flutter tests (14 new) and 23
+  Swift tests pass; the simulator build and the release build
+  (`--no-codesign`; app and widget extension 1.5.0 (8)) succeed. A walk on
+  the iPhone 18 Pro simulator in Turkish, a second day: the step, Halfway
+  Hut's name, the beat, then N01 6.0 s after the tap; with N01 open the
+  appearance switched to dark and back and the sheet followed.
+- **[Simulators]** The two iPad simulators of part 1 erased (not deleted);
+  one simulator booted at a time; none left booted by this run; the owner's
+  "BirdPerch" simulator untouched.
+- **[Disk]** 5.7 GiB free at the start, 13 after the erase, 12 at the end
+  (after the allowed deletions).
+- **[Not done]** No store build, no upload, no submission, no deploy, no API
+  call, no signing or version change. Nothing on a device.
+- Record and decisions R-9 to R-15: `docs/1.5.0-release-progress.md`, "Fix
+  round 7".

@@ -19,6 +19,9 @@ versions:
 recent:
   - version: 1.5.0
     date: 2026-11-21
+    notes: "Fix round 7, before the 1.5.0 store build: two findings of the iPad walk fixed on main, version unchanged (1.5.0 build 8). On the day of a learner's second Daily Test, the question about daily reminders opened over Home before the day's step was seen; it now comes after the step, a save point's name and a one-second pause. The app's bottom sheets kept their old background when the phone switched between light and dark mode while one was open, leaving its text hard to read; they now change with it. 2939 app tests and 23 widget and reminder tests pass, both builds succeed, checked on the simulator. Not built for the store, not uploaded, not submitted."
+  - version: 1.5.0
+    date: 2026-11-21
     notes: "1.5.0 release preparation, part 1: on the owner's word after his device checks of 19 to 21 November, the UI polish, the home-screen widgets, the daily reminders and the five new practice topics were merged into main, with the two unreleased November fixes (the lira symbol, the storage reset), and the version set to 1.5.0 build 8. On main the code checks are clean, all 2925 app tests and 23 widget and reminder tests pass, and the release build (unsigned) carries the app and the widget extension both at 1.5.0 (8). The release IPA check now also checks the widget extension. Nothing new is collected or shared (the reminders are local, the widgets read what the app wrote on the device). An iPad walk on the simulator found nothing blocking. Release steps written for the owner; not built for the store, not uploaded, not submitted."
   - version:
     date: 2026-11-19
@@ -29,9 +32,6 @@ recent:
   - version:
     date: 2026-11-19
     notes: "First-wave practice topics: on the owner's decisions the first scoring prompt candidate is dropped and the two scoring criteria are read on all 1,190 labelled answers together. Read that way the production scoring prompt passes Passive Voice, Prepositions and Relative Clauses; Conditionals (false 'correct' 5 of 132) and Comparatives & Superlatives (2 of 95) do not pass yet. Three small scoring candidates (spelling, conditional types, both) are in the proxy's source beside the production prompt, none live, with the tooling to score the labelled answers with each (dry run 960 calls, about $1.19); the run is the owner's. No API call, nothing deployed, the topics stay hidden."
-  - version:
-    date: 2026-11-19
-    notes: "First-wave practice topics: the final configuration is measured, labelled (225 questions, 651 built answers) and reported. With the production scoring prompt Passive Voice and Relative Clauses pass the owner's three criteria; Prepositions and Comparatives & Superlatives fail on false 'correct' by one answer each, Conditionals by two. The practice-path changes did what they were for: no fill-in-the-blank question without a blank in 300, and practice sets of one topic no longer repeat each other. The scoring prompt candidate is recommended against (worse on the 1,163 labelled answers both prompts scored) and stays out of production. Found on the way: the Modal Past Forms hint card teaches another structure than the topic's description asks the generator for. Nothing is deployed; $2.52 of the $15 cap spent. The topics stay switched off; not on main, not shipped."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix: inside 1.5.0 (no 1.4.1), on main at 1.5.0+8 since 2026-11-21; not built for the store yet"
