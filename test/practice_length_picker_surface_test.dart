@@ -37,8 +37,13 @@ void main() {
         'track is at least 3:1 against it', (tester) async {
       final theme = buildAppTheme(brightness);
       await open(tester, theme);
-      final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
-      expect(sheet.backgroundColor, theme.colorScheme.surfaceContainerHigh);
+      // The surface is the sheet's own Material (fix round 7: painted in
+      // the sheet's build, so it follows an appearance change).
+      final surface = tester
+          .widgetList<Material>(find.descendant(
+              of: find.byType(BottomSheet), matching: find.byType(Material)))
+          .firstWhere((m) => m.color != null && m.color!.a == 1);
+      expect(surface.color, theme.colorScheme.surfaceContainerHigh);
       final slider = tester.widget<SliderTheme>(find
           .ancestor(of: find.byType(Slider), matching: find.byType(SliderTheme))
           .first);
