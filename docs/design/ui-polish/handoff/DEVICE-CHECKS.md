@@ -16,6 +16,36 @@ Each item gives what to do, what you should see, and the board ID (the
 boards are in `boards/`). Write down anything that differs: the item
 number and what you saw is enough.
 
+## The owner's result (2026-11-21)
+
+Recorded before the merge into `main` (`docs/RELEASE-1.5.0.md` step 1). On
+2026-11-21 the owner reported his device checks of 19 to 21 November and
+gave his word for the merge and the 1.5.0 version bump:
+
+- the day's step plays before the rest scene (FR6-3 item 6, fix round 6
+  item 1): **seen**;
+- the Daily Test card's companion (FR6-2 item 2, fix round 6 item 2): **his
+  decision: it stays as specified, no change**;
+- Review's inline mistakes on the new topics (FR6-4 item 9, fix round 6
+  item 3): **seen on 2026-11-19**;
+- the reminders arrive and the widgets work: **seen** (in general; the
+  widget and reminder items below are not itemised beyond that);
+- in his words, everything else works flawlessly; he did not report the
+  remaining items one by one.
+
+From his check of 2026-11-19: T-1 seen; T-2 seen for Conditionals, Passive
+Voice, Prepositions and Relative Clauses (Comparatives & Superlatives: not
+reported); T-3 seen; T-5 and T-6 could not be checked with a new topic
+(his most repeated weak spot is in an older topic; the rest scene's deck
+and the widget were seen with that one), so they stay covered by tests
+only.
+
+Every other item on this list that is not marked seen is **covered by the
+owner's general report of 2026-11-21, not itemised**; in the older
+sections (FR5, "Still open from the third pass", FR4, FR3 and sections
+1–4) that note is given once at the top of the section and applies to
+each of its items not otherwise marked.
+
 ## Fix round 6 — the next morning (start here)
 
 Fix round 6 (`FIX6.md`, SPEC v14) changed three things after your check of
@@ -63,6 +93,7 @@ Keep the interface in Turkish and your larger text size, as before.
 
 1. **Home's first view.** Scrolled to the top: the pawn and the gold ring
    on the next step are above the floating nav bar. — V15, FR3-3 item 1
+   *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 2. **The card companion (item 2).** On the Daily Test card the companion
    hops while the test waits: up by about a sixth of its height and down
    again in a little over half a second, a small squash on landing, still
@@ -72,10 +103,12 @@ Keep the interface in Turkish and your larger text size, as before.
    called "as if breathing" and whether the hop should be larger at this
    size; nothing was changed. Check that Reduce Motion is off (Settings →
    Accessibility → Motion): with it on, the companion stands still. — X05
+   *(Owner's decision, 2026-11-21: it stays as specified; no change.)*
 3. **The widgets' "before the test" state**: "Step N is waiting" / "one
    test away", your mountain at your step; a tap opens the Daily Test. —
-   W01, FR3-3 item 3
-4. **T-4** below (the copy that counts topics says 10).
+   W01, FR3-3 item 3 *(Owner, 2026-11-21: the widgets work; seen in
+   general, not itemised.)*
+4. **T-4** below (the copy that counts topics says 10). *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 
 ### FR6-3. The ticket first, then the Daily Test (item 1)
 
@@ -83,6 +116,7 @@ Keep the interface in Turkish and your larger text size, as before.
    → submit → "Konulara dön". **Review's list is up to date at once** (the
    new weak spots are there with "yeni", without leaving the tab). Home:
    the ordinary Home, the ticket "used", the test still waiting.
+   *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 6. **The Daily Test, then "Tırmanışını gör".** On Home:
    - the mountain comes into view and **the pawn walks to its new step**;
    - on a save point day (a hut, a camp, the spring) the save point lights
@@ -94,11 +128,13 @@ Keep the interface in Turkish and your larger text size, as before.
    Write down if the rest scene comes before the walk, if the wait feels
    too long or too short (the second is a number that is easy to change),
    or if anything jumps. — V24f, §1.8
+   *(Seen by the owner: the day's step plays before the rest scene; his
+   checks of 19 to 21 November, reported 2026-11-21.)*
 7. **Leave and come back.** Another tab and back, then the app to the
    background and back: the rest scene is there, the step is not played
-   again.
+   again. *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 8. **T-5** below (V24f with a new topic's weak spot), if your most repeated
-   weak spot is in a new topic.
+   weak spot is in a new topic. *(Not checked with a new topic: see T-5.)*
 
 Not needed for this check, but if you have a Premium day: the same order
 there is all five sessions first, then the Daily Test; the step, the rest
@@ -116,6 +152,8 @@ and then V24.
    its detail screen ("Senin yazdığın" / "Düzeltilmiş hali") is as before.
    If a card still looks wrong, a screenshot of the card and of its detail
    screen is what is needed to go on. — V16, R03
+   *(Seen by the owner on 2026-11-19: Review's inline mistakes on the new
+   topics; reported 2026-11-21.)*
 
 ## First-wave topics (1.5.0) — after the Worker's deploy
 
@@ -124,7 +162,8 @@ and then V24.
 Conditionals practice request `200`) and installed this branch's build. On
 his phone: the ten topic cards show (T-1), practice sets of the new topics
 generate and are scored, and their weak spots appear in Review (T-3). The
-other items are open.
+other items are open. *(2026-11-21: the owner's result is recorded on
+each item below and in "The owner's result (2026-11-21)" at the top.)*
 
 Phase D of `docs/TOPICS.md` switched the five new practice topics on
 (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives &
@@ -173,6 +212,9 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
      judged wrongly, with the topic. In Conditionals in particular: an
      answer that mixes two conditional types and is still called correct is
      the known weakness (5 of 132 in the measurement).
+   *(Seen by the owner on 2026-11-19 for Conditionals, Passive Voice,
+   Prepositions and Relative Clauses; Comparatives & Superlatives: not
+   reported. Reported 2026-11-21.)*
 3. **T-3. A new topic's weak spot on Review.** *(Seen by the owner on
    2026-11-19: the new topics' weak spots appear in Review.)* After T-2 you
    will have
@@ -188,6 +230,7 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
    Free vs Premium table has "10 konunun tümü", and the page opened from
    the rest scene says "10 dilbilgisi konusunun tümü". Nowhere a "5" for
    the number of topics. — V14, V13, V13c, V13r
+   *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 5. **T-5. V24f with a new topic's weak spot.** As a free user, on a day
    when the Daily Test is done, the free ticket is used and your most
    repeated weak spot is one from a new topic: the dream bubble and the
@@ -196,11 +239,17 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
    uyansın" and the trial, "practise" opens that weak spot in its own
    topic. If your most repeated weak spot is an old one, skip this and say
    so. — V24f, V13r, PW05r
+   *(Not checked with a new topic, owner 2026-11-19: his most repeated weak
+   spot is in an older topic; the rest scene's deck was seen with that one.
+   Covered by tests only.)*
 6. **T-6. The tip widget.** With the tip widget on the Home Screen and a
    weak spot in a new topic as your most repeated one: the widget's label
    is that topic's name in capitals and the tip is a line of that topic's
    card (it changes daily). Without such a weak spot the daily tip stays
    on the five Daily Test topics; that is intended. — W01
+   *(Not checked with a new topic, owner 2026-11-19: his most repeated weak
+   spot is in an older topic; the widget was seen with that one. Covered by
+   tests only.)*
 7. **T-7. The Modal Past Forms card.** Topic Practice → Modal Past Forms →
    a set: on the loading screen and in a question's hint the card now has
    these four lines, each on one line at your text size:
@@ -209,10 +258,13 @@ Topic Practice is the Premium part. Five sets are a whole day's sessions
    "modal + have + past participle: past events" ·
    "must have: sure · should have: regret". In the Daily Test, a Modal Past
    Forms question's hint shows the same card. — V18, the hint card
+   *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 8. **T-8. The Daily Test is as it was.** Its five questions come from the
-   five old topics only; no new topic appears in it.
+   five old topics only; no new topic appears in it. *(Covered by the owner's general report of 2026-11-21, not itemised.)*
 
 ## Fix round 5 — fourth pass
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 Fix round 5 (`FIX5.md`, SPEC v13) built the panel you chose for V24f, the
 new month progress card and a paywall that closes only with its X. This
@@ -301,6 +353,8 @@ These need **today's Daily Test done and today's free ticket used** (Review
 
 ### Still open from the third pass
 
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
+
 These need **today's Daily Test not yet done** (the next day, or a fresh
 install); they were not reached on the third pass.
 
@@ -316,9 +370,11 @@ install); they were not reached on the third pass.
 5. **The Daily Test card's companion** hops while it waits. — FR3-3 item 2
 6. **The widgets' "before the test" state**: "Step N is waiting" / "one
    test away", your mountain at your step; a tap opens the Daily Test. —
-   FR3-3 item 3, FR4-2 item 8
+   FR3-3 item 3, FR4-2 item 8 *(Owner, 2026-11-21: the widgets work; seen in general, not itemised.)*
 
 ## Fix round 4 — third pass
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 Fix round 4 (`FIX4.md`, SPEC v12) changed what you found on the second
 pass. This section was the third pass; its items you could not reach are
@@ -418,9 +474,11 @@ done**; the rest need it done.
    the phone to dark mode: every widget has its own dark look (a dark plum
    card, the small waiting widget a deeper orange with cream text, the done
    box dark navy), none of them system grey; the medium mountain widget is
-   unchanged. — W01
+   unchanged. — W01 *(Owner, 2026-11-21: the widgets work; seen in general, not itemised.)*
 
 ## Fix round 3 — second pass
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 Fix round 3 (`FIX3.md`, SPEC v11) changed what you found on the first
 device test. This section is the second pass, in order; sections 1–4 below
@@ -510,7 +568,7 @@ done**; the rest need it done.
 2. **The Daily Test card's companion** hops while it waits. — X05
 3. **The widgets' "before the test" state**: "Step N is waiting" / "one
    test away", your mountain at your step; a tap opens the Daily Test.
-   — W01
+   — W01 *(Owner, 2026-11-21: the widgets work; seen in general, not itemised.)*
 
 ### FR3-4. Delete the app and install again (the first run)
 
@@ -544,6 +602,8 @@ Delete GrammarLens from the home screen, then run the `flutter run
     at once. — A2
 
 ## 1. Before the first device build (once)
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 The widget extension is a new target, `GrammarLensWidgets`, and it shares
 an App Group with the app. Xcode needs your team on it once. No signing
@@ -638,6 +698,8 @@ built `Runner.app` with the widget extension inside, for arm64, version
 
 ## 2. Install over the current 1.4.0 app (do not delete it first)
 
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
+
 Step 1c installs over the App Store 1.4.0 and keeps its data. The new build
 moves the database from schema 26 to 27 in one step (tested on the
 simulator with a 1.4.0-shaped database). First, Settings → Accessibility →
@@ -694,7 +756,7 @@ still at the first test).
      mountain; a tap opens Home.
    - The text is in **Nunito Sans** (the app's typeface; rounded, heavy
      titles), nothing cut off; dark mode; Arabic if you switch the app to
-     it (the Arabic letters use the system font). — W01
+     it (the Arabic letters use the system font). — W01 *(Owner, 2026-11-21: the widgets work; seen in general, not itemised.)*
 10. **Reminders.**
     - N01 opens by itself once: on the first rest scene (V24 or V24f), or
       when you finish a Daily Test on a second day. "Turn on reminders" →
@@ -706,11 +768,15 @@ still at the first test).
     - "Don't Allow" (or turn it off in iOS Settings): Profile →
       Notifications shows "Notifications are off" and **Open Settings**
       works. — N03
+    *(Owner, 2026-11-21: the reminders arrive; seen in general, not
+    itemised.)*
 11. **Haptics:** Wake (medium) and the wake hop (light); Save name and the
     pencil (light); See all (light); the paywall button (medium); the goal
     cards (selection); each Daily Test answer.
 
 ## 3. Then delete the app and install again (the first run)
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 Delete GrammarLens from the home screen (this removes its data and the
 widgets), then run the command of step 1c again.
@@ -730,6 +796,8 @@ widgets), then run the command of step 1c again.
    day or the first rest scene).
 
 ## 4. Performance (release build)
+
+*(2026-11-21: each item in this section not otherwise marked is covered by the owner's general report of 2026-11-21, not itemised.)*
 
 1. The turntable drag and the wheel spin are smooth. — V03, V03b
 2. Scrolling Home up and down (mountain, ticket, topics) is smooth, and the
