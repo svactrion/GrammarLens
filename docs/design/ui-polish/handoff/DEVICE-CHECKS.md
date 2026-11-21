@@ -46,6 +46,25 @@ sections (FR5, "Still open from the third pass", FR4, FR3 and sections
 1–4) that note is given once at the top of the section and applies to
 each of its items not otherwise marked.
 
+## Fix round 7 — one item for the TestFlight check
+
+Fix round 7 (`FIX7.md`, SPEC v15, on `main`) is not a new device pass. Do
+this once, during the short TestFlight check of
+[`docs/1.5.0-release-steps.md`](../../../1.5.0-release-steps.md) §3:
+
+- **A sheet follows dark mode while it is open** (item 2). Open any of the
+  app's sheets — Review → the sort button ("Recent" by Weak spots), or Profile → the pencil by your
+  name — then switch the phone to dark mode from Control Centre (and back)
+  without closing it: the sheet's background, its grabber and its text
+  change together and everything stays readable. — SPEC §3.6
+
+**N01 after the day's step (item 1) is not on this list:** N01 is asked
+once per install and your phone has answered it, so it cannot be seen
+there again. It was checked on the simulator only (an iPhone 18 Pro, in
+Turkish, a second day: the step walked, the save point's name, the beat,
+then N01, 6.0 s after "See your climb"; captures in
+`build/fix7-captures/`), and by widget tests.
+
 ## Fix round 6 — the next morning (start here)
 
 Fix round 6 (`FIX6.md`, SPEC v14) changed three things after your check of

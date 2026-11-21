@@ -1,4 +1,4 @@
-# GrammarLens UI polish — design specification (final, v14, 2026-11-19)
+# GrammarLens UI polish — design specification (final, v15, 2026-11-21)
 
 v10 (after the owner's first device test): §1.14–§1.16, V05, V05b, V24, the new V24f, V24s, V13r and PW05r.
 
@@ -15,6 +15,9 @@ V24 (its own board again), V23 (the new month progress card, board V23p), V13 (c
 
 v14 (after the owner's device check of 2026-11-19, fix round 6): §1.8 (the rest scene follows the day's step and a
 short beat). Nothing else changes.
+
+v15 (fix round 7, after the iPad tour of 2026-11-21): §1.8 (N01 too follows the day's step and the beat). Nothing
+else changes.
 
 The design was made on a claude.ai design canvas ("GrammarLens — Tüm Ekranlar
 ve Senaryolar", page "Yeni tasarım — gruplar"). This folder is a complete,
@@ -90,6 +93,8 @@ Reading the boards:
    point shows its light and its name, the pawn rests for one second, then
    the scene fades in over Home), in the same visit; it does not replace
    them.
+   v15: N01 too follows the day's step and the same beat on any day (after
+   the rest scene on a rest day), never over the walk.
 9. **Practice length keeps the existing slider** (3 / 5 / 10), restyled (R02).
 10. **Out of this run, separate task later:** home-screen widgets (W01) and the
     daily reminder notification (N01, N02, N03, and the reminder switch/time
