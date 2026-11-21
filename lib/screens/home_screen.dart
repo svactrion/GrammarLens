@@ -276,6 +276,23 @@ class _HomeScreenState extends State<HomeScreen>
   /// (`MonthlyMountain.onArrivalEnd`); the beat starts once Home is quiet.
   bool _stepArrived = false;
 
+  /// Fix round 7, item 1 (SPEC §1.8, v15): N01 waits for the day's step too.
+  /// Set with [_restWaitsForStep] when a Daily Test's completion is saved;
+  /// while it is set N01 stays closed: the step is pending (Home not
+  /// visible yet, or the climb still loading), walking, or followed by what
+  /// a step brings (a save point's light and name, a month card), then
+  /// [HomeScreen.restBeat]. On a rest day it is released with the rest
+  /// scene ([_endRestWait]), which N01 follows as before. Released at once
+  /// when there is no step to show or the climb fails to load, so N01 is
+  /// never lost for the install.
+  bool _softAskWaitsForStep = false;
+
+  /// The pawn has landed while [_softAskWaitsForStep] was set.
+  bool _softAskStepLanded = false;
+
+  /// [HomeScreen.restBeat] between the landing and N01 on an ordinary day.
+  Timer? _softAskBeat;
+
   /// [HomeScreen.restBeat], then the cross-fade to the rest scene.
   late final AnimationController _restArrival;
 
@@ -413,6 +430,7 @@ class _HomeScreenState extends State<HomeScreen>
     final initialClimb = widget.initialPendingClimb;
     if (initialClimb != null && initialClimb.step > 0) {
       _restWaitsForStep = true;
+      _softAskWaitsForStep = true;
       _pendingClimbDay = initialClimb.day;
       _pendingClimbStep = initialClimb.step;
     }
@@ -456,6 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (widget.reminders == null) _reminders.dispose();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
+    _softAskBeat?.cancel();
     _restArrival.dispose();
     _zoom.removeListener(_onZoomChanged);
     _zoom.dispose();
@@ -676,8 +695,9 @@ class _HomeScreenState extends State<HomeScreen>
         _climbAnimating = true;
         _stepArrived = false;
       } else if (!_climbAnimating) {
-        // No step to show: the rest scene has nothing to wait for.
+        // No step to show: the rest scene and N01 have nothing to wait for.
         if (!_stepArrived) _endRestWait();
+        if (!_softAskStepLanded) _releaseSoftAskHold();
         _armDay0Paywall(Duration.zero);
       }
     } catch (_) {
@@ -688,6 +708,7 @@ class _HomeScreenState extends State<HomeScreen>
       });
       if (!_climbAnimating) {
         if (!_stepArrived) _endRestWait();
+        if (!_softAskStepLanded) _releaseSoftAskHold();
         _armDay0Paywall(Duration.zero);
       }
     }
@@ -828,6 +849,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     // The card and its zoom were the last thing after the day's step.
     _tryRestArrival();
+    _trySoftAskBeat();
     _presentDebugMilestone();
     _onDebugPlay();
   }
@@ -967,14 +989,43 @@ class _HomeScreenState extends State<HomeScreen>
   /// The pawn has landed and a save point it reached has shown its light
   /// and its name: on a rest day the beat before the rest scene can start.
   void _onMountainArrivalEnd() {
-    if (!_restWaitsForStep) return;
-    if (!_restDay) {
-      // An ordinary day: nothing waits for this step.
-      _restWaitsForStep = false;
-      return;
+    if (_softAskWaitsForStep) _softAskStepLanded = true;
+    if (_restWaitsForStep) {
+      if (!_restDay) {
+        // An ordinary day: the rest scene does not wait for this step.
+        _restWaitsForStep = false;
+      } else {
+        _stepArrived = true;
+        _tryRestArrival();
+      }
     }
-    _stepArrived = true;
-    _tryRestArrival();
+    _trySoftAskBeat();
+  }
+
+  /// Starts [HomeScreen.restBeat] before N01 once the day's step and
+  /// everything after it have ended (fix round 7). On a rest day the rest
+  /// scene's own beat and fade come first, and N01 follows the scene.
+  void _trySoftAskBeat() {
+    if (!mounted || !_softAskWaitsForStep || !_softAskStepLanded) return;
+    if (_softAskBeat != null || _climbAnimating || _restHeld) return;
+    if (_monthCardShowing || _pendingMonthCard != null || _zoom.active) return;
+    _softAskBeat = Timer(HomeScreen.restBeat, _releaseSoftAskHold);
+  }
+
+  /// N01 no longer waits for the day's step: the beat has passed, the rest
+  /// scene came, there was no step to show, or the user left Home once the
+  /// walk had begun. A check follows (it still needs Home visible).
+  void _releaseSoftAskHold() {
+    _softAskBeat?.cancel();
+    _softAskBeat = null;
+    if (!_softAskWaitsForStep && !_softAskStepLanded) return;
+    _softAskWaitsForStep = false;
+    _softAskStepLanded = false;
+    if (!mounted) return;
+    _scheduleSoftAskCheck();
+    // The beat ends on a timer, with nothing else drawing a frame: ask for
+    // one so the check above runs.
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   /// Whether the rest scene is held back for the day's step (fix round 6).
@@ -1025,6 +1076,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// show, or the user left Home. With [rebuild] false the caller is
   /// already in a build.
   void _endRestWait({bool rebuild = true}) {
+    // Whatever ended the wait, N01 no longer waits for the step either; on
+    // an ordinary day the landing's own beat ([_trySoftAskBeat]) is kept.
+    if (!_softAskStepLanded || _softAskBeat == null) _releaseSoftAskHold();
     if (!_restWaitsForStep && !_stepArrived && !_restRevealing) return;
     _restWaitsForStep = false;
     _stepArrived = false;
@@ -1148,6 +1202,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (!_homeVisible || _climbAnimating || _monthCardShowing) return;
     // Fix round 6: on a rest day N01 follows the delayed rest scene.
     if (_restHeld) return;
+    // Fix round 7: on any day N01 follows the day's step and the beat.
+    if (_softAskWaitsForStep) return;
     _softAskQueued = false;
     _reminders.askOpened();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1156,6 +1212,8 @@ class _HomeScreenState extends State<HomeScreen>
       await showReminderSoftAsk(context,
           controller: _reminders, hero: widget.avatar ?? Avatar.values.first);
     });
+    // After the step's beat (a timer) nothing else may draw a frame.
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   /// Today's free practices and practice sessions (best effort: a failed
@@ -1294,6 +1352,10 @@ class _HomeScreenState extends State<HomeScreen>
             if (!mounted) return;
             _restWaitsForStep = true;
             _stepArrived = false;
+            _softAskBeat?.cancel();
+            _softAskBeat = null;
+            _softAskWaitsForStep = true;
+            _softAskStepLanded = false;
             _pendingClimbDay = result.$1.day;
             _refreshAfterDailyTest();
           },
