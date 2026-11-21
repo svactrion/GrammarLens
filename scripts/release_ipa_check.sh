@@ -7,7 +7,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 # build from the app's Info.plist, and fails if any developer tool's text is
 # in the compiled Dart code (App Review audit, finding #10: the tools sit
 # behind kDebugMode / kReleaseMode, so a release build should not carry
-# them).
+# them). From 1.5.0 it also fails if the widget extension is missing, if its
+# version or build differ from the app's, or if the app or the extension is
+# not signed with the shared App Group.
 #
 # Usage: scripts/release_ipa_check.sh [path/to/App.ipa]
 # Without a path it takes the one .ipa in build/ios/ipa/.
@@ -57,6 +59,38 @@ plist="$app_dir/Info.plist"
 version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")
 build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")
 echo "✓ $ipa: version $version, build $build"
+
+# The home-screen widget extension (1.5.0). App Store Connect rejects an
+# upload whose extension's version or build differ from the app's, and a
+# widget without the shared App Group reads no data. A missing extension
+# fails the check: every build from 1.5.0 on carries it.
+app_group="group.com.ahmettayfur.grammarlens"
+appex="$app_dir/PlugIns/GrammarLensWidgets.appex"
+if [[ ! -d "$appex" ]]; then
+  echo "✗ $(basename "$app_dir")/PlugIns/GrammarLensWidgets.appex is missing: the widget extension is not in the IPA."
+  exit 1
+fi
+appex_plist="$appex/Info.plist"
+appex_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$appex_plist")
+appex_build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$appex_plist")
+if [[ "$appex_version" != "$version" || "$appex_build" != "$build" ]]; then
+  echo "✗ Widget extension: version $appex_version, build $appex_build; the app has $version ($build). They must be equal."
+  exit 1
+fi
+echo "✓ Widget extension: version $appex_version, build $appex_build (equal to the app's)"
+
+# The App Group, read from each bundle's signature (an IPA exported for the
+# store is signed; an unsigned bundle has nothing to read and fails here).
+for bundle in "$app_dir" "$appex"; do
+  name=$(basename "$bundle")
+  entitlements=$(codesign -d --entitlements - --xml "$bundle" 2>/dev/null || true)
+  if [[ "$entitlements" == *"$app_group"* ]]; then
+    echo "✓ $name is signed with the App Group $app_group"
+  else
+    echo "✗ $name: the App Group $app_group is not in its signed entitlements (unsigned, or signed without it)."
+    exit 1
+  fi
+done
 
 binary="$app_dir/Frameworks/App.framework/App"
 if [[ ! -f "$binary" ]]; then
