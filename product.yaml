@@ -13,10 +13,13 @@ status: live
 
 versions:
   live: 1.4.0
-  in_review:
-  in_progress: 1.5.0
+  in_review: 1.5.0
+  in_progress:
 
 recent:
+  - version: 1.5.0
+    date: 2026-11-23
+    notes: "1.5.0 (build 8) submitted for App Review by the owner, manual release: the new design, Home Screen widgets, daily reminders and ten practice topics. The store page was uploaded and verified through the API in eight languages (texts, Notes for Review, 96 screenshots, the header); the owner then replaced the first iPhone screenshot in seven languages by hand. Iteration material not tracked in git was cleaned up to free disk space."
   - version: 1.5.0
     date: 2026-11-23
     notes: "Uploaded and verified the 1.5.0 App Store Connect draft with build 8, eight localizations, 96 screenshots, the shared header and Notes for Review. Manual release. Waiting for the owner to submit."
@@ -29,17 +32,14 @@ recent:
   - version:
     date: 2026-11-19
     notes: "Fix round 6 on branch ui-polish-widgets, after the owner's device check of the same day (he had deployed the proxy for 1.5.0 himself). Fixed: when the practice allowance is used before the Daily Test, Home now plays the day's step (the walk, a save point's light and name), lets the pawn rest for a second and only then fades to the rest scene, where it used to show the rest scene at once and never the step. Fixed: Review's weak-spot card struck a long piece of the learner's line, with instruction words and bracketed cues, on multi-blank practice answers; the wrong word is now struck in place. Fixed on the way: Review's list was not refreshed after a practice started with the ticket. Measured, not changed: the Daily Test card's companion hops as specified (16 pt every 1.2 s). Not merged, not released, no version bump; waiting for the owner's next device check."
-  - version:
-    date: 2026-11-19
-    notes: "First-wave practice topics, release prep: on the owner's decision all five (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives) ship in 1.5.0 with the scoring prompt as it is. Passive Voice, Prepositions and Relative Clauses meet all three quality criteria; Comparatives & Superlatives and Conditionals are over the false 'correct' line and ship on the owner's acceptance, not as a pass. The topics are switched on in the app (ten topics in Topic Practice) and in the proxy's source, with three small fixes (a scoring retry on the server, a loading screen without a number of questions, an empty practice set treated as a failed generation) and a rewritten Modal Past Forms hint card. On branch ui-polish-widgets; the proxy is not deployed, nothing is merged or released, no version bump."
 
 planned:
-  - "Ship the ₺ symbol fix and the storage reset fix: inside 1.5.0 (no 1.4.1), on main at 1.5.0+8 since 2026-11-21; not built for the store yet"
-  - "Home-screen widgets (1.5.0) and daily reminder notifications: merged into main on 2026-11-21 (1.5.0+8) after the owner saw them work on his phone; not built for the store, not submitted; next, the owner's: the store build with the extension's signing, texts, screenshots and submission (docs/1.5.0-release-steps.md)"
+  - "Ship the ₺ symbol fix and the storage reset fix: inside 1.5.0 (no 1.4.1), on main at 1.5.0+8 since 2026-11-21; in build 8, submitted for review on 2026-11-23"
+  - "Home-screen widgets (1.5.0) and daily reminder notifications: merged into main on 2026-11-21 (1.5.0+8) after the owner saw them work on his phone; in build 8, submitted for review on 2026-11-23 (docs/1.5.0-release-steps.md)"
   - "P15: outage detection"
-  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4, 5 and 6 done there after the owner's device passes; checked by the owner on his phone and merged into main on 2026-11-21 for 1.5.0, not built for the store, not submitted), then a new feature as a 4th navbar tab (not started)"
-  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): measured, labelled and reported (docs/1.5.0-topics-report.md, its Decision section); on the owner's decision of 2026-11-19 all five ship, three as meeting the quality criteria and Conditionals and Comparatives & Superlatives on his acceptance; switched on in the app on branch ui-polish-widgets; the proxy deployed by the owner on 2026-11-19; seen on the owner's phone (2026-11-19 and his report of 2026-11-21; a Comparatives & Superlatives set not reported); merged into main on 2026-11-21 (1.5.0+8); no build for the store yet; next, the owner's: the 1.5.0 store build and submission"
-  - "Practice path changes for all ten topics, deployed with the proxy by the owner on 2026-11-19: a guard that removes a fill-in-the-blank question without a blank, the prompt's line on blanks, a scenario theme per practice set, and one retry when the scorer leaves an answer without a verdict; the production scoring prompt is unchanged and no scoring candidate is taken (owner, 2026-11-19); the app side merged into main on 2026-11-21 (1.5.0+8), no build for the store yet"
+  - "UI polish pass: motion and companion redesign (design final, handoff in docs/design/ui-polish/handoff/, built on branch ui-polish with fix rounds 1 and 2, integrated with the widgets and reminders on branch ui-polish-widgets, fix rounds 3, 4, 5 and 6 done there after the owner's device passes; checked by the owner on his phone and merged into main on 2026-11-21, in 1.5.0 build 8, submitted for review on 2026-11-23), then a new feature as a 4th navbar tab (not started)"
+  - "New practice topics, first wave (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives), for 1.5.0 (owner): measured, labelled and reported (docs/1.5.0-topics-report.md, its Decision section); on the owner's decision of 2026-11-19 all five ship, three as meeting the quality criteria and Conditionals and Comparatives & Superlatives on his acceptance; switched on in the app on branch ui-polish-widgets; the proxy deployed by the owner on 2026-11-19; seen on the owner's phone (2026-11-19 and his report of 2026-11-21; a Comparatives & Superlatives set not reported); merged into main on 2026-11-21; in 1.5.0 build 8, submitted for review on 2026-11-23"
+  - "Practice path changes for all ten topics, deployed with the proxy by the owner on 2026-11-19: a guard that removes a fill-in-the-blank question without a blank, the prompt's line on blanks, a scenario theme per practice set, and one retry when the scorer leaves an answer without a verdict; the production scoring prompt is unchanged and no scoring candidate is taken (owner, 2026-11-19); the app side merged into main on 2026-11-21, in 1.5.0 build 8, submitted for review on 2026-11-23"
   - "After 1.5.0 (owner, 2026-11-19): repeated scoring to verify the conditional-types scoring candidate; the wording that makes a correction question's sentence clearly wrong; a look at Articles' scoring; mixed Modal Past Forms questions with a measurement (its hint card already covers both uses, in 1.5.0)"
 
 monetization:
@@ -50,6 +50,7 @@ marketing:
   screenshots_version: 1.5.0
   locales: [en, tr, de, es, pt-BR, ja, ko, ar]
   # Each locale includes six iPhone 6.9-inch and six iPad 13-inch screenshots. The iPad feedback, ticket, film and mountain gallery use the final layouts.
+  # The seven non-Turkish iPhone covers include the localized feedback button cleanup.
   assets_path: screenshots/1.5.0/revizyon-11/ # Shared header in product-page/header.png with options in product-page/alternatifler/
 
 legal:

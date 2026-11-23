@@ -15143,3 +15143,21 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   counts. Dry run and read-back are under `screenshots/1.5.0/asc/`.
 - **[Next, the owner]** Review any App Store Connect prompts and submit the
   draft. The API run did not submit or release the version.
+- **[Screenshots, after the read-back]** The owner had a small revision made
+  to the first iPhone 6.9" screenshot (`01-feedback.png`) in seven locales
+  (en-US, de-DE, es-MX, pt-BR, ja, ko, ar-SA) at about 14:36Z, after the
+  read-back of 14:18Z, and replaced those seven screenshots by hand in App
+  Store Connect. Not verified through the API; `read-back.json` keeps the
+  checksums of the files it verified. Turkish and all iPad files were
+  unchanged.
+- **[Submitted]** The owner checked the draft in App Store Connect (App
+  Privacy unchanged, no export compliance question) and submitted 1.5.0
+  (build 8) for App Review on 2026-11-23, about 18:05 local. Release:
+  manual. `product.yaml`: `versions.in_review: 1.5.0` on his word.
+- **[Clean-up]** On the owner's request, the iteration material of this
+  release that is not tracked in git was deleted to free disk space: the
+  screenshot drafts under `docs/product/store-150-*`, the previews and
+  alternatives in `screenshots/1.5.0/revizyon-11/` (the 96 store images
+  and `header.png` kept), two unused task files, and the build captures
+  and simulator build products under `build/` (the store archive and IPA
+  of build 8 kept until the release).
