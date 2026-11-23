@@ -18,6 +18,9 @@ versions:
 
 recent:
   - version: 1.5.0
+    date: 2026-11-23
+    notes: "Uploaded and verified the 1.5.0 App Store Connect draft with build 8, eight localizations, 96 screenshots, the shared header and Notes for Review. Manual release. Waiting for the owner to submit."
+  - version: 1.5.0
     date: 2026-11-21
     notes: "Fix round 7, before the 1.5.0 store build: two findings of the iPad walk fixed on main, version unchanged (1.5.0 build 8). On the day of a learner's second Daily Test, the question about daily reminders opened over Home before the day's step was seen; it now comes after the step, a save point's name and a one-second pause. The app's bottom sheets kept their old background when the phone switched between light and dark mode while one was open, leaving its text hard to read; they now change with it. 2939 app tests and 23 widget and reminder tests pass, both builds succeed, checked on the simulator. Not built for the store, not uploaded, not submitted."
   - version: 1.5.0
@@ -29,9 +32,6 @@ recent:
   - version:
     date: 2026-11-19
     notes: "First-wave practice topics, release prep: on the owner's decision all five (Conditionals, Passive Voice, Prepositions, Relative Clauses, Comparatives & Superlatives) ship in 1.5.0 with the scoring prompt as it is. Passive Voice, Prepositions and Relative Clauses meet all three quality criteria; Comparatives & Superlatives and Conditionals are over the false 'correct' line and ship on the owner's acceptance, not as a pass. The topics are switched on in the app (ten topics in Topic Practice) and in the proxy's source, with three small fixes (a scoring retry on the server, a loading screen without a number of questions, an empty practice set treated as a failed generation) and a rewritten Modal Past Forms hint card. On branch ui-polish-widgets; the proxy is not deployed, nothing is merged or released, no version bump."
-  - version:
-    date: 2026-11-19
-    notes: "First-wave practice topics: on the owner's decisions the first scoring prompt candidate is dropped and the two scoring criteria are read on all 1,190 labelled answers together. Read that way the production scoring prompt passes Passive Voice, Prepositions and Relative Clauses; Conditionals (false 'correct' 5 of 132) and Comparatives & Superlatives (2 of 95) do not pass yet. Three small scoring candidates (spelling, conditional types, both) are in the proxy's source beside the production prompt, none live, with the tooling to score the labelled answers with each (dry run 960 calls, about $1.19); the run is the owner's. No API call, nothing deployed, the topics stay hidden."
 
 planned:
   - "Ship the ₺ symbol fix and the storage reset fix: inside 1.5.0 (no 1.4.1), on main at 1.5.0+8 since 2026-11-21; not built for the store yet"
@@ -47,9 +47,10 @@ monetization:
   provider: RevenueCat
 
 marketing:
-  screenshots_version: 1.4.0
+  screenshots_version: 1.5.0
   locales: [en, tr, de, es, pt-BR, ja, ko, ar]
-  assets_path: screenshots/1.4.0/
+  # Each locale includes six iPhone 6.9-inch and six iPad 13-inch screenshots. The iPad feedback, ticket, film and mountain gallery use the final layouts.
+  assets_path: screenshots/1.5.0/revizyon-11/ # Shared header in product-page/header.png with options in product-page/alternatifler/
 
 legal:
   privacy_url: https://ahmettayfur.com/products/grammarlens/privacy/
@@ -63,4 +64,4 @@ links:
   app_store: https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346
   site_page: https://ahmettayfur.com/products/grammarlens/
 
-updated_at: 2026-11-21
+updated_at: 2026-11-23

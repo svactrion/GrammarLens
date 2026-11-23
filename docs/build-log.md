@@ -15122,3 +15122,24 @@ The full record, every decision and every gap: `PROGRESS.md` there.
   call, no signing or version change. Nothing on a device.
 - Record and decisions R-9 to R-15: `docs/1.5.0-release-progress.md`, "Fix
   round 7".
+
+## 2026-11-23 (1.5.0 App Store Connect draft upload and verification)
+
+- **[App Store Connect]** The owner uploaded build 8 earlier. After the
+  dry run and the owner's approval, the iOS 1.5.0 draft was created and
+  build 8 attached. The draft is `PREPARE_FOR_SUBMISSION` with manual
+  release.
+- **[Store page]** Descriptions and What’s New were uploaded in eight
+  locales. The six iPhone and six iPad screenshots in each locale were
+  uploaded and ordered (96 total). The shared header was uploaded once
+  and placed in all eight locales. 120 inherited placements were
+  detached from the draft while their library assets were retained.
+- **[Review]** Notes for Review were uploaded and matched exactly. Contact
+  and demo account settings were preserved. App Store Connect reported
+  0 attachment(s) on the draft.
+- **[Verified]** The API read-back passed. It checked the texts, screenshot
+  order, checksums and processing states, and the eight header associations.
+  Live 1.4.0 remained in distribution with its original text and screenshot
+  counts. Dry run and read-back are under `screenshots/1.5.0/asc/`.
+- **[Next, the owner]** Review any App Store Connect prompts and submit the
+  draft. The API run did not submit or release the version.
